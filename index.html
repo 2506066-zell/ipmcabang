@@ -439,7 +439,7 @@
     <header class="public-header">
         <h1>PC IPM PANAWUAN</h1>
         <nav class="public-nav">
-            <a href="index-public.html" class="nav-link active" onclick="setActiveNav(this)">
+            <a href="index.html" class="nav-link active" onclick="setActiveNav(this)">
                 <i class="fas fa-home"></i> Beranda
             </a>
             <a href="struktur-organisasi-redesign.html" class="nav-link" onclick="setActiveNav(this)">
@@ -517,7 +517,7 @@
             
             navLinks.forEach(link => {
                 const href = link.getAttribute('href').split('/').pop();
-                if (href === currentPage || (currentPage === '' && href === 'index-public.html')) {
+                if (href === currentPage || (currentPage === '' && href === 'index.html')) {
                     link.classList.add('active');
                 } else {
                     link.classList.remove('active');
