@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artikel Organisasi</title>
+    <style>
+        :root {
+            --primary-color: #28a745;
+            --secondary-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --meta-color: #6c757d;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        .header {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #218838;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        #article-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .article-card {
+            display: flex;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-decoration: none;
+            color: inherit;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .article-card-image {
+            width: 150px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px 0 0 12px;
+        }
+
+        .article-card-content {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+        }
+
+        .article-card-content h2 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .article-card-content .excerpt {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            flex-grow: 1;
+        }
+
+        .article-card-content .meta {
+            font-size: 0.85rem;
+            color: var(--meta-color);
+            margin-bottom: 0;
+        }
+
+        .article-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            cursor: pointer;
+        }
+
+        #article-reader {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        #back-to-list {
+            display: inline-block;
+            margin-bottom: 2rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #back-to-list:hover {
+            background-color: #218838;
+        }
+        
+        #article-content h1 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        #article-content .meta {
+            color: var(--meta-color);
+            margin-bottom: 2rem;
+        }
+
+        #article-content {
+            font-size: 1.125rem;
+            line-height: 1.9;
+        }
+        
+        #article-content h1,
+        #article-content h2,
+        #article-content h3 {
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+            font-weight: 700;
+        }
+
+        #article-content p {
+            margin-bottom: 1rem;
+        }
+
+        #article-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+            margin-left: 0;
+            font-style: italic;
+            color: var(--meta-color);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="index-public.html" class="back-btn">← Kembali ke Website Utama</a>
+    </header>
+
+    <div class="container">
+        <div id="article-list"></div>
+        <div id="article-reader" style="display:none">
+            <button id="back-to-list">← Kembali</button>
+            <article id="article-content"></article>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const articleListContainer = document.getElementById('article-list');
+            const articleReader = document.getElementById('article-reader');
+            const articleContent = document.getElementById('article-content');
+            const backToListBtn = document.getElementById('back-to-list');
+
+            const totalArticles = 30;
+            const articleFiles = Array.from({ length: totalArticles }, (_, i) => `article-${String(i + 1).padStart(2, '0')}.md`);
+            const articles = [];
+
+            async function fetchArticleData() {
+                for (const file of articleFiles) {
+                    try {
+                        const response = await fetch(`articles/${file}`);
+                        if (!response.ok) {
+                            console.error(`Failed to fetch ${file}`);
+                            continue;
+                        }
+                        const text = await response.text();
+                        const { meta, content } = parseMarkdown(text);
+                        articles.push({
+                            path: `articles/${file}`,
+                            meta,
+                            content
+                        });
+                    } catch (error) {
+                        console.error(`Error fetching or parsing ${file}:`, error);
+                    }
+                }
+                articles.sort((a, b) => new Date(b.meta.date) - new Date(a.meta.date));
+                renderArticleList();
+            }
+
+            function parseMarkdown(text) {
+                const frontmatterRegex = /^---\s*([\s\S]*?)\s*---/;
+                const match = text.match(frontmatterRegex);
+                
+                const meta = {};
+                let content = text;
+
+                if (match) {
+                    const frontmatter = match[1];
+                    content = text.substring(match[0].length).trim();
+                    frontmatter.split('\n').forEach(line => {
+                        const [key, ...valueParts] = line.split(':');
+                        if (key && valueParts.length > 0) {
+                            const value = valueParts.join(':').trim().replace(/^"(.*)"$/, '$1');
+                            meta[key.trim()] = value;
+                        }
+                    });
+                }
+                
+                return { meta, content };
+            }
+
+            function createExcerpt(content) {
+                const cleanedContent = content.replace(/^(#+)\s.*$/gm, '');
+                const paragraphs = cleanedContent.split('\n\n').filter(p => p.trim() !== '');
+                let excerpt = paragraphs.slice(0, 2).join(' ');
+                
+                if (excerpt.length > 150) {
+                    excerpt = excerpt.substring(0, 150).trim();
+                    excerpt = excerpt.substring(0, Math.min(excerpt.length, excerpt.lastIndexOf(" "))) + '...';
+                }
+                return excerpt;
+            }
+
+            function renderArticleList() {
+                articleListContainer.innerHTML = '';
+                articles.forEach(article => {
+                    const card = document.createElement('div');
+                    card.className = 'article-card';
+                    
+                    const title = article.meta.title || 'Tanpa Judul';
+                    const author = article.meta.author || '';
+                    const image = article.meta.image || 'https://via.placeholder.com/150x200.png?text=No+Image';
+
+                    card.innerHTML = `
+                        <img src="${image}" alt="Cover artikel" class="article-card-image">
+                        <div class="article-card-content">
+                            <h2>${title}</h2>
+                            <p class="excerpt">${createExcerpt(article.content)}</p>
+                            <div class="meta">${author}</div>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => openArticle(article.path));
+                    articleListContainer.appendChild(card);
+                });
+            }
+
+            function renderMarkdown(text) {
+                const { meta, content } = parseMarkdown(text);
+                const title = meta.title || 'Tanpa Judul';
+                const author = meta.author || '';
+
+                let htmlContent = content
+                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+                    .split('\n').map(p => {
+                        if (p.startsWith('<blockquote>')) {
+                            return p;
+                        }
+                        return p.trim() ? `<p>${p}</p>` : '';
+                    }).join('');
+
+                articleContent.innerHTML = `
+                    <h1>${title}</h1>
+                    <div class="meta">${author}</div>
+                    ${htmlContent}
+                `;
+            }
+
+            async function openArticle(path) {
+                try {
+                    const response = await fetch(path);
+                    if (!response.ok) {
+                        console.error(`Failed to fetch ${path}`);
+                        articleContent.innerHTML = `<p>Error: Gagal memuat artikel.</p>`;
+                    } else {
+                        const text = await response.text();
+                        renderMarkdown(text);
+                    }
+                } catch (error) {
+                    console.error(`Error fetching article ${path}:`, error);
+                    articleContent.innerHTML = `<p>Error: Gagal memuat artikel.</p>`;
+                }
+                
+                articleListContainer.style.display = 'none';
+                articleReader.style.display = 'block';
+                window.scrollTo(0, 0);
+            }
+
+            function backToList() {
+                articleListContainer.style.display = 'block';
+                articleReader.style.display = 'none';
+            }
+
+            backToListBtn.addEventListener('click', backToList);
+
+            fetchArticleData();
+        });
+    </script>
+</body>
+</html>
