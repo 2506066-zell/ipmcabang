@@ -241,7 +241,7 @@
             async function fetchArticleData() {
                 for (const file of articleFiles) {
                     try {
-                        const response = await fetch(`./articles/${file}`);
+                        const response = await fetch(file);
                         if (!response.ok) {
                             console.error(`Failed to fetch ${file}`);
                             continue;
@@ -249,7 +249,7 @@
                         const text = await response.text();
                         const { meta, content } = parseMarkdown(text);
                         articles.push({
-                            path: `./articles/${file}`,
+                            path: file,
                             meta,
                             content
                         });
