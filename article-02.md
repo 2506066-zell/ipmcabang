@@ -2,6 +2,7 @@
 title: "Membangun Kebiasaan Membaca: Investasi Jangka Panjang untuk Diri"
 date: "2026-03-14"
 author: "Citra Lestari"
+author_photo: "images/members/gilang1.jpeg"
 ---
 
 Di dunia yang serba cepat dan penuh distraksi, meluangkan waktu untuk membaca buku seringkali terasa seperti sebuah kemewahan. Namun, membangun kebiasaan membaca adalah salah satu investasi terbaik yang bisa kita lakukan untuk pengembangan diri. Membaca tidak hanya memperluas wawasan dan kosakata, tetapi juga melatih kemampuan berpikir kritis, meningkatkan konsentrasi, dan merangsang kreativitas. Ini adalah gym untuk otak, yang membuatnya tetap tajam dan sehat seiring berjalannya waktu.
