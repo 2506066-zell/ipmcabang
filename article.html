@@ -155,6 +155,26 @@
             margin-bottom: 2rem;
         }
 
+        .author-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .author-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .author-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--meta-color);
+        }
+
         #article-content {
             font-size: 1.1rem;
             line-height: 1.8;
@@ -184,6 +204,40 @@
             display: none;
         }
 
+        @media (max-width: 768px) {
+            .container {
+                padding: 0;
+                margin: 1rem auto;
+            }
+
+            #article-list {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .article-card {
+                flex-direction: column;
+                border-radius: 0;
+                box-shadow: none;
+                border-bottom: 1px solid #e9ecef;
+                padding: 1.5rem 1rem;
+            }
+
+            .article-card:hover {
+                transform: none;
+                box-shadow: none;
+                background-color: #f8f9fa;
+            }
+
+            .article-card-image {
+                display: none;
+            }
+
+            .article-card-content {
+                padding: 0;
+            }
+        }
+
         .public-footer {
             background-color: #333;
             color: white;
@@ -210,73 +264,6 @@
         .footer-info span {
             margin: 0 10px;
             font-size: 0.9em;
-        }
-
-        @media (max-width: 768px) {
-            #article-list {
-                display: block;
-                width: 100%;
-            }
-
-            .article-card {
-                display: block;
-                width: 100%;
-                padding: 16px;
-                border-bottom: 1px solid #e0e0e0;
-                background-color: transparent;
-                box-shadow: none;
-                border-radius: 0;
-            }
-
-            .article-card:hover {
-                background-color: #f5f5f5;
-            }
-
-            .article-card-content {
-                padding: 0;
-            }
-
-            .article-card h2 {
-                font-size: 1.2rem;
-                line-height: 1.4;
-                margin-bottom: 0.5rem;
-            }
-
-            .article-card .excerpt {
-                font-size: 0.9rem;
-                line-height: 1.5;
-                margin-bottom: 1rem;
-            }
-
-            .article-meta {
-                display: flex;
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .article-author {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .author-avatar {
-                width: 28px;
-                height: 28px;
-                border-radius: 50%;
-                object-fit: cover;
-            }
-
-            .author-name {
-                font-weight: 400;
-                font-size: 0.85rem;
-                color: #555;
-            }
-
-            .article-date {
-                font-size: 0.85rem;
-            }
         }
     </style>
 </head>
@@ -376,17 +363,8 @@
                     const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                     const author = article.meta.author || '';
                     const metaInfo = [author, date].filter(Boolean).join(' • ');
-                    const thumbnail = article.meta.author_photo;
-
-                    let imageHTML = '';
-                    if (thumbnail) {
-                        imageHTML = `<div class="article-card-image" style="background-image: url('${thumbnail}')"></div>`;
-                    } else {
-                        card.style.alignItems = 'center'; 
-                    }
 
                     card.innerHTML = `
-                        ${imageHTML}
                         <div class="article-card-content">
                             <h2>${title}</h2>
                             <div class="meta">${metaInfo}</div>
@@ -403,7 +381,17 @@
                 const title = meta.title || 'Tanpa Judul';
                 const date = meta.date ? new Date(meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                 const author = meta.author || '';
-                const metaInfo = [author, date].filter(Boolean).join(' • ');
+                const authorPhoto = meta.author_photo || '';
+
+                let authorSectionHTML = '';
+                if (author) {
+                    authorSectionHTML = `
+                        <div class="author-section">
+                            ${authorPhoto ? `<img src="${authorPhoto}" alt="${author}" class="author-avatar">` : ''}
+                            <span class="author-name">${author}</span>
+                        </div>
+                    `;
+                }
                 
                 let htmlContent = content
                     .replace(/^# (.*$)/gim, '<h1>$1</h1>')
@@ -420,7 +408,8 @@
 
                 articleContent.innerHTML = `
                     <h1>${title}</h1>
-                    <div class="meta">${metaInfo}</div>
+                    ${authorSectionHTML}
+                    <div class="meta">${date}</div>
                     ${htmlContent}
                 `;
             }
