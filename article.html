@@ -239,13 +239,16 @@
             const articles = [];
 
             async function fetchArticleData() {
+                console.log('Fetching article data...');
                 for (const file of articleFiles) {
                     try {
+                        console.log(`Fetching ${file}...`);
                         const response = await fetch(file);
                         if (!response.ok) {
-                            console.error(`Failed to fetch ${file}`);
+                            console.error(`Failed to fetch ${file}: ${response.status} ${response.statusText}`);
                             continue;
                         }
+                        console.log(`Successfully fetched ${file}`);
                         const text = await response.text();
                         const { meta, content } = parseMarkdown(text);
                         articles.push({
@@ -257,6 +260,7 @@
                         console.error(`Error fetching or parsing ${file}:`, error);
                     }
                 }
+                console.log(`Fetched and parsed ${articles.length} articles.`);
                 articles.sort((a, b) => new Date(b.meta.date) - new Date(a.meta.date));
                 renderArticleList();
             }
@@ -295,6 +299,7 @@
             }
 
             function renderArticleList() {
+                console.log(`Rendering ${articles.length} articles.`);
                 articleListContainer.innerHTML = '';
                 articles.forEach(article => {
                     const card = document.createElement('div');
