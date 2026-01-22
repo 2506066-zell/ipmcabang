@@ -223,22 +223,23 @@
         /* Article List Refinements */
         #article-list {
             grid-template-columns: 1fr;
-            gap: 0;
-            border-top: 1px solid #e9ecef;
+            gap: 1rem; /* Add gap between cards */
+            border-top: none;
         }
 
         .article-card {
             display: block;
             padding: 1.5rem var(--ux-padding);
-            border-radius: 0;
-            box-shadow: none;
-            border-bottom: 1px solid #e9ecef;
+            border-radius: 8px; /* Softer corners */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07); /* Softer shadow */
+            border: none;
+            background-color: var(--card-bg);
             transition: background-color 0.2s ease;
         }
 
         .article-card:hover {
             transform: none;
-            box-shadow: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             background-color: #f8f9fa;
         }
 
@@ -276,6 +277,40 @@
             padding: 2rem var(--ux-padding);
             box-shadow: none;
             border-radius: 0;
+        }
+
+        .article-author-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .author-photo-mini {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+        }
+
+        .author-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .author-name {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        .article-date {
+            font-size: 0.8rem;
+            color: var(--meta-color);
+        }
+
+        .desktop-only-meta {
+            display: none;
         }
 
         #article-content {
@@ -375,6 +410,14 @@
 
             .article-card-content {
                 padding: 1.5rem;
+            }
+
+            .article-author-info {
+                display: none; /* Hide mobile author info on desktop */
+            }
+
+            .desktop-only-meta {
+                display: block; /* Show desktop meta info */
             }
         }
     </style>
@@ -508,7 +551,20 @@
                 const title = meta.title || 'Tanpa Judul';
                 const date = meta.date ? new Date(meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                 const author = meta.author || '';
-                const metaInfo = [author, date].filter(Boolean).join(' • ');
+                const authorPhoto = meta.author_photo;
+
+                let authorHtml = '';
+                if (author) {
+                    authorHtml = `
+                        <div class="article-author-info">
+                            ${authorPhoto ? `<img src="${authorPhoto}" alt="${author}" class="author-photo-mini">` : ''}
+                            <div class="author-meta">
+                                <span class="author-name">${author}</span>
+                                <span class="article-date">${date}</span>
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 let htmlContent = content
                     .replace(/^# (.*$)/gim, '<h1>$1</h1>')
@@ -524,8 +580,9 @@
                     }).join('');
 
                 articleContent.innerHTML = `
+                    ${authorHtml}
                     <h1>${title}</h1>
-                    <div class="meta">${metaInfo}</div>
+                    <div class="meta desktop-only-meta">${date}</div>
                     ${htmlContent}
                 `;
             }
