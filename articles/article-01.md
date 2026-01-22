@@ -1,9 +1,8 @@
 ---
 title: "Menavigasi Era Digital: Kunci Sukses Organisasi Modern"
 date: "2026-03-15"
-author: "Budi Hartono"
+author: "Gilang M Riziq"
 author_photo: "images/members/gilang1.jpeg"
-image: "images/members/gilang1.jpeg"
 ---
 
 Di tengah derasnya arus informasi dan teknologi, kemampuan sebuah organisasi untuk beradaptasi menjadi faktor penentu keberhasilan. Era digital bukan lagi sebuah pilihan, melainkan sebuah keniscayaan yang harus dihadapi dengan strategi yang matang. Organisasi modern dituntut untuk lebih lincah, transparan, dan responsif terhadap perubahan. Kunci utamanya terletak pada pemanfaatan teknologi digital secara cerdas, mulai dari manajemen internal hingga cara berinteraksi dengan publik.

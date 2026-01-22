@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artikel Organisasi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --primary-color: #28a745;
@@ -21,7 +22,6 @@
             background-color: var(--secondary-color);
             color: var(--text-color);
             line-height: 1.6;
-            scroll-behavior: smooth;
         }
 
         .header {
@@ -47,7 +47,7 @@
         }
 
         .back-btn:hover {
-            background-color: #218838;
+            background-color: #b7bdb8;
         }
 
         .container {
@@ -73,11 +73,18 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            cursor: pointer;
+        }
+
         .article-card-image {
-            width: 150px;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 12px 0 0 12px;
+            width: 160px;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            border-right: 1px solid #e9ecef;
         }
 
         .article-card-content {
@@ -85,34 +92,26 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            flex-grow: 1;
         }
 
-        .article-card-content h2 {
+        .article-card h2 {
             margin-top: 0;
             margin-bottom: 0.5rem;
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             color: var(--primary-color);
             font-weight: 700;
         }
 
-        .article-card-content .excerpt {
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-            color: var(--text-color);
-            flex-grow: 1;
-        }
-
-        .article-card-content .meta {
+        .article-card .meta {
             font-size: 0.85rem;
             color: var(--meta-color);
-            margin-bottom: 0;
+            margin-bottom: 0.75rem;
         }
 
-        .article-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-hover);
-            cursor: pointer;
+        .article-card .excerpt {
+            margin-bottom: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
 
         #article-reader {
@@ -120,16 +119,20 @@
             padding: 2rem;
             border-radius: 8px;
             box-shadow: var(--shadow);
-            max-width: 720px;
-            margin: 0 auto;
+        }
+        
+        #article-content img {
+            display: none !important;
         }
 
         #back-to-list {
-            display: inline-block;
-            margin-bottom: 2rem;
-            padding: 0.5rem 1rem;
-            background-color: var(--primary-color);
-            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2.5rem;
+            padding: 0.6rem 1.2rem;
+            background-color: #7c7575;
+            color: #e2e0e0;
             text-decoration: none;
             border-radius: 5px;
             font-weight: 500;
@@ -139,7 +142,7 @@
         }
 
         #back-to-list:hover {
-            background-color: #218838;
+            background-color: #bfc2c0;
         }
         
         #article-content h1 {
@@ -153,17 +156,16 @@
         }
 
         #article-content {
-            font-size: 1.125rem;
-            line-height: 1.9;
+            font-size: 1.1rem;
+            line-height: 1.8;
         }
         
         #article-content h1,
         #article-content h2,
         #article-content h3 {
-            margin-top: 2.5rem;
-            margin-bottom: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
             color: var(--text-color);
-            font-weight: 700;
         }
 
         #article-content p {
@@ -180,6 +182,34 @@
 
         .hidden {
             display: none;
+        }
+
+        .public-footer {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .footer-text {
+            margin: 0 0 10px;
+            font-size: 0.9em;
+        }
+        .footer-socials {
+            margin-bottom: 10px;
+        }
+        .social-link {
+            color: white;
+            margin: 0 10px;
+            font-size: 1.5em;
+            transition: color 0.3s ease;
+        }
+        .social-link:hover {
+            color: #007bff;
+        }
+        .footer-info span {
+            margin: 0 10px;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -244,8 +274,7 @@
                     frontmatter.split('\n').forEach(line => {
                         const [key, ...valueParts] = line.split(':');
                         if (key && valueParts.length > 0) {
-                            const value = valueParts.join(':').trim().replace(/^"(.*)"$/, '$1');
-                            meta[key.trim()] = value;
+                            meta[key.trim()] = valueParts.join(':').trim().replace(/^"(.*)"$/, '$1');
                         }
                     });
                 }
@@ -272,15 +301,17 @@
                     card.className = 'article-card';
                     
                     const title = article.meta.title || 'Tanpa Judul';
+                    const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                     const author = article.meta.author || '';
-                    const image = article.meta.image || 'https://via.placeholder.com/150x200.png?text=No+Image';
+                    const metaInfo = [author, date].filter(Boolean).join(' • ');
+                    const thumbnail = article.meta.author_photo || 'images/bidang/default.jpg';
 
                     card.innerHTML = `
-                        <img src="${image}" alt="Cover artikel" class="article-card-image">
+                        <div class="article-card-image" style="background-image: url('${thumbnail}')"></div>
                         <div class="article-card-content">
                             <h2>${title}</h2>
+                            <div class="meta">${metaInfo}</div>
                             <p class="excerpt">${createExcerpt(article.content)}</p>
-                            <div class="meta">${author}</div>
                         </div>
                     `;
                     card.addEventListener('click', () => openArticle(article.path));
@@ -291,15 +322,18 @@
             function renderMarkdown(text) {
                 const { meta, content } = parseMarkdown(text);
                 const title = meta.title || 'Tanpa Judul';
+                const date = meta.date ? new Date(meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                 const author = meta.author || '';
-
+                const metaInfo = [author, date].filter(Boolean).join(' • ');
+                
                 let htmlContent = content
                     .replace(/^# (.*$)/gim, '<h1>$1</h1>')
                     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
                     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
                     .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+                    .replace(/!\[(.*?)\]\((.*?)\)/g, '') // Remove images
                     .split('\n').map(p => {
-                        if (p.startsWith('<blockquote>')) {
+                        if (p.startsWith('<h1>') || p.startsWith('<h2>') || p.startsWith('<h3>') || p.startsWith('<blockquote>')) {
                             return p;
                         }
                         return p.trim() ? `<p>${p}</p>` : '';
@@ -307,7 +341,7 @@
 
                 articleContent.innerHTML = `
                     <h1>${title}</h1>
-                    <div class="meta">${author}</div>
+                    <div class="meta">${metaInfo}</div>
                     ${htmlContent}
                 `;
             }

@@ -320,6 +320,21 @@
             color: #4a7c5d;
         }
 
+        .footer-socials {
+            margin-bottom: 12px;
+        }
+
+        .social-link {
+            color: #666;
+            margin: 0 10px;
+            font-size: 1.6rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-link:hover {
+            color: #4a7c5d;
+        }
+
         .footer-info {
             display: flex;
             justify-content: center;
@@ -422,7 +437,7 @@
 <body>
     <!-- Header Navigation -->
     <header class="public-header">
-        <h1><i class="fas fa-book"></i> IPM Panawuan</h1>
+        <h1>PC IPM PANAWUAN</h1>
         <nav class="public-nav">
             <a href="index-public.html" class="nav-link active" onclick="setActiveNav(this)">
                 <i class="fas fa-home"></i> Beranda
@@ -466,9 +481,16 @@
     <!-- Footer -->
     <footer class="public-footer">
         <p class="footer-text">© 2026 Ikatan Pelajar Muhammadiyah - PC Panawuan</p>
+        <div class="footer-socials">
+            <a href="https://www.instagram.com/ipmgarut_" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.youtube.com/@ipmchannelgarut" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+        </div>
         <div class="footer-info">
             <span><i class="fas fa-map-marker-alt"></i> Panawuan</span>
-            <span><i class="fas fa-envelope"></i> ipm.panawuan@gmail.com</span>
         </div>
     </footer>
 

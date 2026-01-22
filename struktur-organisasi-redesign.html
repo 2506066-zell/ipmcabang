@@ -680,11 +680,11 @@
             margin-top: 4px;
         }
 
-        .status-active {
+        .status-terlaksana {
             color: #27ae60;
         }
 
-        .status-active::before {
+        .status-terlaksana::before {
             content: '';
             width: 8px;
             height: 8px;
@@ -692,11 +692,11 @@
             background: #27ae60;
         }
 
-        .status-plan {
+        .status-rencana {
             color: #f39c12;
         }
 
-        .status-plan::before {
+        .status-rencana::before {
             content: '';
             width: 8px;
             height: 8px;
@@ -1251,7 +1251,7 @@
             // ketua umum//
             { name: 'Anwar Miftah', role: 'Ketua Umum', quote: 'Kepemimpinan adalah tanggung jawab.', photo: 'images/members/', bidangId: 'ketuaUmum' },
             // sekretaris//
-            { name: 'Hendra Gunawan', role: 'Sekretaris', quote: 'Administrasi adalah fondasi organisasi yang kuat.', photo: 'images/members/hendra-gunawan.jpg', bidangId: 'sekretaris' },
+            { name: 'Nauval', role: 'Sekretaris', quote: 'Administrasi adalah fondasi organisasi yang kuat.', photo: 'images/members/hendra-gunawan.jpg', bidangId: 'sekretaris' },
             // bendahara//
             { name: 'Yasifa Permata', role: 'Bendahara Umum', quote: 'Transparansi keuangan adalah kunci kepercayaan.', photo: '', bidangId: 'bendahara', instagram: 'https://www.instagram.com/username' },
             { name: 'Syifa Nursafitri', role: 'Bendahara I', quote: 'Transparansi keuangan adalah kunci kepercayaan.', photo: '', bidangId: 'bendahara' },
@@ -1286,8 +1286,8 @@
              { name: 'Tegar', role: 'Anggota', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
              { name: 'anwar', role: 'Anggota', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
             // advokasi//
-            { name: 'Muhammad Yopi', role: 'Ketua Bidang', quote: '', photo: '', bidangId: 'advokasi' },
-             { name: 'Rehan Nurfahmi', role: 'Sekretaris Bidang', quote: '', photo: '', bidangId: 'advokasi' },
+            { name: 'Muhammad Yopi', role: 'Ketua Bidang', quote: '', photo: 'images/members/yopi.jpeg', bidangId: 'advokasi' },
+             { name: 'Rehan Nurfahmi', role: 'Sekretaris Bidang', quote: '', photo: 'images/members/rehan.jpeg', bidangId: 'advokasi' },
              { name: 'Raisa Hidayatul Marwah', role: 'Anggota', quote: '', photo: '', bidangId: 'advokasi' },
             // ipmawati//
             { name: 'Raida Rahma Annastasya', role: 'Ketua Bidang', quote: '', photo: '', bidangId: 'ipmawati' },
@@ -1302,16 +1302,19 @@
         ];
 
         const programs = [
-            { bidangId: 'ketuaUmum', name: 'Rapat Koordinasi Rutin', desc: 'Rapat koordinasi dengan semua bidang setiap bulan.', status: 'active' },
-            { bidangId: 'ketuaUmum', name: 'Strategic Planning', desc: 'Perencanaan strategis organisasi setiap semester.', status: 'active' },
-            { bidangId: 'sekretaris', name: 'Pengelolaan Arsip Digital', desc: 'Digitalisasi dan manajemen dokumen organisasi.', status: 'active' },
-            { bidangId: 'bendahara', name: 'Laporan Keuangan Bulanan', desc: 'Penyusunan dan publikasi laporan keuangan setiap bulan.', status: 'active' },
-            { bidangId: 'perkaderan', name: 'Sekolah Kepemimpinan', desc: 'Program training kepemimpinan untuk kader baru.', status: 'active' },
-            { bidangId: 'pengkajianIlmu', name: 'Diskusi Ilmiah Rutin', desc: 'Forum diskusi tema-tema akademis setiap minggu.', status: 'active' },
-            { bidangId: 'kajianDakwah', name: 'Kajian Rutin Setiap Minggu', desc: 'Kajian Islam tematik setiap minggu.', status: 'active' },
-            { bidangId: 'apresiasiBudaya', name: 'Kompetisi Olahraga Internal', desc: 'Turnamen olahraga untuk membangun kebersamaan.', status: 'active' },
-            { bidangId: 'advokasi', name: 'Forum Diskusi Publik', desc: 'Forum terbuka untuk diskusi isu-isu sosial.', status: 'active' },
-            { bidangId: 'ipmawati', name: 'Kelompok Diskusi Perempuan', desc: 'Wadah berbagi pengalaman dan tantangan.', status: 'active' }
+            { bidangId: 'ketuaUmum', name: '', desc: '', status: '' },
+            { bidangId: 'ketuaUmum', name: '', desc: '', status: '' },
+            { bidangId: 'sekretaris', name: '', desc: '', status: '' },
+            { bidangId: 'bendahara', name: '', desc: '', status: '' },
+            { bidangId: 'perkaderan', name: '', desc: '', status: '' },
+            { bidangId: 'perkaderan', name: '', desc: '', status: '' },
+            { bidangId: 'pengkajianIlmu', name: '', desc: '', status: '' },
+            { bidangId: 'pengkajianIlmu', name: '', desc: '', status: '' },
+            { bidangId: 'kajianDakwah', name: '', desc: '', status: '' },
+            { bidangId: 'apresiasiBudaya', name: '', desc: '', status: '' },
+            { bidangId: 'advokasi', name: '', desc: '', status: '' },
+            { bidangId: 'ipmawati', name: '', desc: '', status: '' },
+            { bidangId: 'ipmawati', name: '', desc: '', status: '' }
         ];
 
         let currentBidangId = null;
@@ -1405,8 +1408,8 @@
                 card.className = 'program-card';
                 card.style.setProperty('--color-bidang', selectedBidang.color);
                 
-                const statusClass = program.status === 'active' ? 'status-active' : 'status-plan';
-                const statusText = program.status === 'active' ? 'Aktif' : 'Rencana';
+                const statusClass = program.status === 'terlaksana' ? 'status-terlaksana' : 'status-rencana';
+                const statusText = program.status === 'terlaksana' ? 'Terlaksana' : 'Rencana';
 
                 card.innerHTML = `
                     <div class="program-card-name">${program.name}</div>

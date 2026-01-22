@@ -1,7 +1,7 @@
 ---
 title: "Prinsip Pareto (80/20) dalam Kehidupan Sehari-hari"
 date: "2026-02-24"
-author: "Teguh Santoso"
+author: ""
 ---
 
 Prinsip Pareto, juga dikenal sebagai aturan 80/20, menyatakan bahwa untuk banyak kejadian, sekitar 80% efek berasal dari 20% penyebab. Prinsip ini, yang awalnya diamati oleh ekonom Vilfredo Pareto dalam distribusi kekayaan, dapat diterapkan di hampir setiap aspek kehidupan untuk meningkatkan efisiensi dan fokus. Idenya adalah untuk mengidentifikasi dan fokus pada 20% aktivitas yang memberikan 80% hasil.
