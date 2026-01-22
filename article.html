@@ -229,7 +229,7 @@
 
         .article-card {
             display: block;
-            padding: 1.5rem var(--ux-padding);
+            padding: 1rem;
             border-radius: 8px; /* Softer corners */
             box-shadow: 0 2px 8px rgba(0,0,0,0.07); /* Softer shadow */
             border: none;
@@ -397,23 +397,56 @@
                 box-shadow: var(--shadow);
                 padding: 0;
             }
-            
+            .article-card {
+                background-color: #ffffff;
+                border: 1px solid #e9ecef;
+                border-radius: 0.5rem;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            }
+
             .article-card:hover {
-                transform: translateY(-5px);
-                box-shadow: var(--shadow-hover);
+                border-color: #dee2e6;
             }
 
-            .article-card-image {
-                display: block; /* Show image on desktop */
-                width: 180px;
+            .article-card.active {
+                border-color: var(--primary-color);
+                background-color: #f8f9fa;
             }
 
-            .article-card-content {
-                padding: 1.5rem;
+            .article-header-mobile {
+                display: flex;
+                align-items: center;
+                margin-bottom: 1.5rem;
+                position: relative;
+                height: auto;
+                overflow: visible;
             }
 
-            .article-author-info {
-                display: none; /* Hide mobile author info on desktop */
+            .author-photo-mobile {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                object-fit: cover;
+                margin-right: 12px;
+            }
+
+            .author-meta {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .author-name {
+                font-weight: 600;
+                color: var(--text-color);
+                font-size: 0.95rem;
+            }
+
+            .article-date {
+                font-size: 0.8rem;
+                color: var(--meta-color);
             }
 
             .desktop-only-meta {
@@ -519,6 +552,7 @@
                 articles.forEach(article => {
                     const card = document.createElement('div');
                     card.className = 'article-card';
+                    card.dataset.articleId = article.path;
                     
                     const title = article.meta.title || 'Tanpa Judul';
                     const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
@@ -591,6 +625,15 @@
                 const article = articles.find(a => a.path === path);
                 if (article) {
                     renderMarkdown(article);
+                    
+                    const articleCards = document.querySelectorAll('.article-card');
+                    articleCards.forEach(card => {
+                        card.classList.remove('active');
+                        if (card.dataset.articleId === path) {
+                            card.classList.add('active');
+                        }
+                    });
+
                 } else {
                     articleContent.innerHTML = `<p>Error: Gagal menemukan artikel.</p>`;
                 }
