@@ -326,7 +326,10 @@
                             <p class="excerpt">${createExcerpt(article.content)}</p>
                         </div>
                     `;
-                    card.addEventListener('click', () => openArticle(article.path));
+                    card.addEventListener('click', (event) => {
+                        createRipple(event);
+                        openArticle(article.path);
+                    });
                     articleListContainer.appendChild(card);
                 });
             }
