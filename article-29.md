@@ -1,7 +1,7 @@
 ---
 title: "Pentingnya Literasi Media di Era Informasi"
 date: "2026-02-14"
-author: "Dian Paramita"
+author: "Arif Bijaksana"
 ---
 
 Di era digital, kita dibanjiri informasi dari berbagai sumber: media sosial, situs berita, blog, podcast, dan banyak lagi. Kemampuan untuk mengakses informasi tidak lagi menjadi masalah; tantangannya adalah bagaimana menavigasi lautan konten ini secara kritis. Di sinilah literasi media menjadi sangat penting. Literasi media adalah kemampuan untuk mengakses, menganalisis, mengevaluasi, dan menciptakan media dalam berbagai bentuk.

@@ -1,7 +1,7 @@
 ---
 title: "Seni Memberi dan Menerima Umpan Balik (Feedback)"
 date: "2026-03-05"
-author: "Kartika Sari"
+author: "Halida Muna"
 ---
 
 Umpan balik atau *feedback* adalah salah satu alat paling ampuh untuk pertumbuhan personal dan profesional. Namun, baik memberi maupun menerima umpan balik bisa menjadi hal yang canggung dan sulit. Seni dari proses ini terletak pada cara penyampaian dan penerimaan yang konstruktif, yang bertujuan untuk membangun, bukan menjatuhkan.

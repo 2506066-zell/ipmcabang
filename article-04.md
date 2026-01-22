@@ -1,7 +1,7 @@
 ---
 title: "Manajemen Waktu Efektif untuk Produktivitas Maksimal"
 date: "2026-03-11"
-author: "Eko Prasetyo"
+author: "Arif Bijaksana"
 ---
 
 Waktu adalah sumber daya paling berharga yang kita miliki. Setiap orang memiliki 24 jam yang sama setiap hari, tetapi mengapa sebagian orang bisa mencapai lebih banyak hal daripada yang lain? Jawabannya terletak pada manajemen waktu yang efektif. Mengelola waktu bukan berarti bekerja lebih keras, tetapi bekerja lebih cerdas. Ini adalah tentang menetapkan prioritas, fokus pada tugas-tugas penting, dan menghilangkan gangguan yang tidak perlu.

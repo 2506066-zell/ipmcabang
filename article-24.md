@@ -1,7 +1,7 @@
 ---
 title: "Menjadi Pemimpin yang Melayani (Servant Leadership)"
 date: "2026-02-19"
-author: "Yasmine Putri"
+author: "Arif Bijaksana"
 ---
 
 Model kepemimpinan tradisional seringkali bersifat top-down, di mana pemimpin berada di puncak piramida, memberikan perintah. Namun, ada pendekatan yang berbeda dan semakin relevan: *servant leadership* atau kepemimpinan yang melayani. Seorang *servant leader* membalik piramida tersebut, menempatkan kebutuhan tim dan organisasi di atas kebutuhan mereka sendiri. Fokus utama mereka adalah untuk melayani, memberdayakan, dan mengangkat orang lain.

@@ -1,7 +1,7 @@
 ---
 title: "Mengatasi 'Imposter Syndrome': Merasa Cukup Baik"
 date: "2026-02-17"
-author: "Aulia Rahman"
+author: "Zaldy M Fazri"
 ---
 
 *Imposter syndrome* adalah pengalaman psikologis di mana seseorang meragukan pencapaian mereka dan memiliki ketakutan internal yang terus-menerus bahwa mereka akan terungkap sebagai "penipu". Meskipun sangat umum, terutama di kalangan orang-orang berprestasi tinggi, perasaan ini bisa melumpuhkan. Orang dengan *imposter syndrome* seringkali mengaitkan kesuksesan mereka dengan keberuntungan atau faktor eksternal, bukan dengan kemampuan mereka sendiri.

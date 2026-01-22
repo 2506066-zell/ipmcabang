@@ -1,7 +1,7 @@
 ---
 title: "Menavigasi Era Digital: Kunci Sukses Organisasi Modern"
 date: "2026-03-15"
-author: "Gilang M Riziq"
+author: "Zaldy M Fazri"
 author_photo: "images/members/gilang1.jpeg"
 ---
 

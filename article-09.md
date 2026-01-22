@@ -1,7 +1,7 @@
 ---
 title: "Belajar dari Kegagalan: Batu Loncatan Menuju Sukses"
 date: "2026-03-06"
-author: "Joko Susilo"
+author: "Arif Bijaksana"
 ---
 
 Tidak ada seorang pun yang menyukai kegagalan. Namun, dalam perjalanan menuju kesuksesan, kegagalan seringkali merupakan guru yang paling berharga. Banyak tokoh sukses dunia, dari Thomas Edison hingga J.K. Rowling, mengalami serangkaian penolakan dan kegagalan sebelum akhirnya mencapai puncak. Kuncinya bukanlah menghindari kegagalan, tetapi mengubah cara kita memandangnya: bukan sebagai akhir dari jalan, melainkan sebagai batu loncatan.

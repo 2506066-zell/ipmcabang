@@ -1,7 +1,7 @@
 ---
 title: "Belajar Bahasa Asing: Membuka Jendela Dunia"
 date: "2026-02-20"
-author: "Xavier Putra"
+author: "Anwar Miftah"
 ---
 
 Belajar bahasa asing adalah salah satu investasi terbaik yang dapat Anda lakukan untuk pengembangan pribadi. Ini lebih dari sekadar menghafal kosakata dan tata bahasa; ini adalah tentang membuka jendela baru ke dunia, budaya, dan cara berpikir yang berbeda. Kemampuan berkomunikasi dalam bahasa lain memperkaya pengalaman perjalanan, memperluas peluang karir, dan meningkatkan fungsi kognitif.

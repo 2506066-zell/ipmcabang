@@ -1,7 +1,7 @@
 ---
 title: "Pentingnya Kecerdasan Emosional (EQ) di Tempat Kerja"
 date: "2026-03-10"
-author: "Fitriani"
+author: "Halida Muna"
 ---
 
 Selama bertahun-tahun, kecerdasan intelektual (IQ) dianggap sebagai tolok ukur utama kesuksesan. Namun, penelitian modern menunjukkan bahwa kecerdasan emosional (EQ) memiliki peran yang sama pentingnya, bahkan seringkali lebih krusial, terutama di lingkungan kerja. EQ adalah kemampuan untuk mengenali, memahami, dan mengelola emosi diri sendiri, serta mengenali, memahami, dan memengaruhi emosi orang lain.

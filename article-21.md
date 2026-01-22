@@ -1,7 +1,7 @@
 ---
 title: "Menemukan 'Ikigai': Alasan Anda Bangun di Pagi Hari"
 date: "2026-02-22"
-author: "Vino Bastian"
+author: "Zaldy M Fazri"
 ---
 
 *Ikigai* adalah sebuah konsep Jepang yang secara kasar dapat diterjemahkan sebagai "alasan untuk hidup" atau "alasan untuk bangun di pagi hari." Ini adalah titik temu antara empat elemen: apa yang Anda cintai (passion), apa yang dunia butuhkan (mission), apa yang Anda bisa dibayar untuk melakukannya (profession), dan apa keahlian Anda (vocation). Menemukan *ikigai* Anda berarti menemukan kepuasan dan makna dalam hidup.

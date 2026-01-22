@@ -1,7 +1,7 @@
 ---
 title: "Gamifikasi: Menerapkan Elemen Game dalam Kehidupan Nyata"
 date: "2026-02-13"
-author: "Eko Prasetyo"
+author: "Halida Muna"
 ---
 
 Gamifikasi adalah penerapan elemen desain game dan prinsip-prinsip game dalam konteks non-game. Tujuannya adalah untuk membuat tugas atau aktivitas yang biasa menjadi lebih menarik dan memotivasi. Pikirkan tentang bagaimana game membuat kita ketagihan: ada tujuan yang jelas, umpan balik instan, rasa kemajuan, dan penghargaan. Prinsip-prinsip ini dapat diterapkan pada kebugaran, pendidikan, produktivitas, dan banyak lagi.

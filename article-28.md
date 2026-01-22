@@ -1,7 +1,7 @@
 ---
 title: "Membangun Ketahanan (Resilience) di Tengah Ketidakpastian"
 date: "2026-02-15"
-author: "Cahyo Nugroho"
+author: "Anwar Miftah"
 ---
 
 Ketahanan, atau resiliensi, adalah kemampuan untuk bangkit kembali dari kesulitan, trauma, dan stres. Ini bukan tentang tidak pernah jatuh, tetapi tentang seberapa baik Anda bangkit kembali. Di dunia yang penuh dengan ketidakpastian dan perubahan, ketahanan adalah keterampilan bertahan hidup yang krusial. Kabar baiknya adalah ketahanan bukanlah sifat bawaan yang hanya dimiliki segelintir orang; itu adalah sesuatu yang dapat kita bangun dan kembangkan dari waktu ke waktu.

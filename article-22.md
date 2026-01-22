@@ -1,7 +1,7 @@
 ---
 title: "Kekuatan Empati dalam Hubungan Antarmanusia"
 date: "2026-02-21"
-author: "Wulan Sari"
+author: "Ayudia Cempaka Gratia"
 ---
 
 Empati adalah kemampuan untuk memahami dan berbagi perasaan orang lain. Ini lebih dari sekadar simpati, yang merupakan perasaan kasihan terhadap kemalangan orang lain. Empati adalah tentang mencoba menempatkan diri kita pada posisi orang lain, melihat dunia dari sudut pandang mereka. Keterampilan ini adalah fondasi dari hubungan antarmanusia yang sehat dan bermakna.

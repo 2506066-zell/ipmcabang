@@ -1,7 +1,7 @@
 ---
 title: "Membangun Kebiasaan Membaca: Investasi Jangka Panjang untuk Diri"
 date: "2026-03-14"
-author: "Citra Lestari"
+author: "Ayudia Cempaka Gratia"
 author_photo: "images/members/gilang1.jpeg"
 ---
 

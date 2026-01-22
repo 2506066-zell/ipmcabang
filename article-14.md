@@ -1,7 +1,7 @@
 ---
 title: "Kekuatan Bercerita (Storytelling) dalam Komunikasi"
 date: "2026-03-01"
-author: "Oscar Maulana"
+author: "Arif Bijaksana"
 ---
 
 Sejak zaman kuno, manusia telah menggunakan cerita untuk berbagi pengetahuan, nilai-nilai, dan pengalaman. Otak kita secara alami terhubung untuk merespons cerita. Itulah mengapa *storytelling* atau seni bercerita adalah alat komunikasi yang sangat kuat. Baik dalam presentasi bisnis, kampanye pemasaran, atau bahkan percakapan sehari-hari, sebuah cerita yang bagus dapat membuat pesan Anda lebih mudah diingat, lebih persuasif, dan lebih berkesan.

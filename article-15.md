@@ -1,7 +1,7 @@
 ---
 title: "Adaptabilitas: Keterampilan Wajib di Abad ke-21"
 date: "2026-02-28"
-author: "Putri Anggraini"
+author: "Halida Muna"
 ---
 
 Charles Darwin pernah berkata, "Bukan spesies terkuat yang bertahan hidup, bukan juga yang paling cerdas, tetapi yang paling responsif terhadap perubahan." Konsep ini sangat relevan di dunia modern yang ditandai oleh perubahan yang cepat dan konstan. Adaptabilitas, atau kemampuan untuk menyesuaikan diri dengan kondisi baru, telah menjadi salah satu keterampilan paling krusial untuk kesuksesan pribadi dan profesional.

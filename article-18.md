@@ -1,7 +1,7 @@
 ---
 title: "Minimalisme Digital: Hidup Lebih Tenang di Dunia Maya"
 date: "2026-02-25"
-author: "Sari Wulandari"
+author: "Anwar Miftah"
 ---
 
 Teknologi digital seharusnya menjadi alat yang memberdayakan kita, bukan tuan yang memperbudak kita. Namun, banyak dari kita merasa kewalahan oleh notifikasi yang tak ada habisnya, feed media sosial yang tak berujung, dan tekanan untuk selalu terhubung. Minimalisme digital adalah filosofi penggunaan teknologi secara sadar dan bertujuan, di mana kita fokus pada alat-alat yang benar-benar memberikan nilai bagi hidup kita dan dengan berani menyingkirkan sisanya.

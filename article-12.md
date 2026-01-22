@@ -1,7 +1,7 @@
 ---
 title: "Pentingnya Literasi Keuangan untuk Masa Depan"
 date: "2026-03-03"
-author: "Muhammad Iqbal"
+author: "Ayudia Cempaka Gratia"
 ---
 
 Literasi keuangan adalah pengetahuan dan keterampilan untuk mengelola sumber daya keuangan secara efektif demi kesejahteraan seumur hidup. Sayangnya, banyak orang tidak mendapatkan pendidikan formal mengenai hal ini, sehingga harus belajar melalui trial and error. Memahami dasar-dasar keuangan pribadi—seperti membuat anggaran, menabung, berinvestasi, dan mengelola utang—adalah keterampilan hidup yang esensial.

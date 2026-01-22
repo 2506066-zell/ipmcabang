@@ -1,7 +1,7 @@
 ---
 title: "Berpikir Kritis: Membedah Informasi di Era Digital"
 date: "2026-03-09"
-author: "Gilang Pratama"
+author: "Zaldy M Fazri"
 ---
 
 Di era digital, kita dibanjiri oleh informasi dari berbagai sumber setiap detiknya. Kemampuan untuk berpikir kritis—menganalisis informasi secara objektif dan mengevaluasi argumen—menjadi lebih penting dari sebelumnya. Berpikir kritis bukanlah tentang menjadi sinis atau negatif, melainkan tentang menjadi pemikir yang cermat dan independen. Ini adalah keterampilan untuk membedakan antara fakta, opini, dan disinformasi.

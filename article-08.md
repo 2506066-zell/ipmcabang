@@ -1,7 +1,7 @@
 ---
 title: "Menjaga Kesehatan Mental di Lingkungan Kerja"
 date: "2026-03-07"
-author: "Indra Setiawan"
+author: "Anwar Miftah"
 ---
 
 Tuntutan pekerjaan yang tinggi, tenggat waktu yang ketat, dan tekanan untuk selalu berkinerja maksimal dapat berdampak signifikan pada kesehatan mental. Isu kesehatan mental di tempat kerja bukan lagi topik tabu, melainkan sebuah aspek krusial dari kesejahteraan karyawan yang harus menjadi prioritas bagi setiap organisasi. Menjaga kesehatan mental sama pentingnya dengan menjaga kesehatan fisik.

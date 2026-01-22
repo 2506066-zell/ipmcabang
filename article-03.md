@@ -1,7 +1,7 @@
 ---
 title: "Public Speaking: Seni Berbicara di Depan Umum"
 date: "2026-03-12"
-author: "Dian Permana"
+author: "Anwar Miftah"
 ---
 
 Kemampuan berbicara di depan umum atau *public speaking* adalah salah satu keterampilan paling berharga di dunia profesional maupun personal. Banyak orang merasa cemas atau takut saat harus berbicara di hadapan audiens, namun dengan latihan dan persiapan yang tepat, siapa pun bisa menguasainya. Keterampilan ini bukan hanya tentang menyampaikan informasi, tetapi juga tentang menginspirasi, meyakinkan, dan membangun koneksi dengan pendengar.

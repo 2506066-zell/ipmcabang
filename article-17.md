@@ -1,7 +1,7 @@
 ---
 title: "Membangun Jaringan (Networking) Secara Otentik"
 date: "2026-02-26"
-author: "Rian Ardiansyah"
+author: "Ayudia Cempaka Gratia"
 ---
 
 *Networking* atau membangun jaringan seringkali disalahpahami sebagai tindakan transaksional yang canggung: mengumpulkan kartu nama sebanyak-banyaknya dengan harapan mendapatkan keuntungan. Namun, *networking* yang efektif dan otentik sebenarnya adalah tentang membangun hubungan yang tulus dan saling menguntungkan. Ini bukan tentang apa yang bisa Anda dapatkan, tetapi tentang apa yang bisa Anda berikan.

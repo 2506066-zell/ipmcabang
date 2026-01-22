@@ -1,7 +1,7 @@
 ---
 title: "Pentingnya Tidur Berkualitas untuk Kesehatan Holistik"
 date: "2026-02-23"
-author: "Utami Dewi"
+author: "Halida Muna"
 ---
 
 Di tengah budaya yang sering memuji kesibukan, tidur seringkali menjadi korban pertama. Banyak yang menganggap tidur sebagai kemewahan yang bisa dikorbankan demi produktivitas. Namun, sains menunjukkan bahwa tidur berkualitas bukanlah kemewahan, melainkan kebutuhan biologis yang fundamental bagi kesehatan fisik, mental, dan emosional kita.

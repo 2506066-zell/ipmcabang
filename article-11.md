@@ -1,7 +1,7 @@
 ---
 title: "Creative Thinking: Menemukan Solusi di Luar Kebiasaan"
 date: "2026-03-04"
-author: "Lina Marlina"
+author: "Zaldy M Fazri"
 ---
 
 Dalam dunia yang terus berubah, kemampuan untuk berpikir kreatif menjadi aset yang tak ternilai. Berpikir kreatif bukanlah bakat magis yang hanya dimiliki oleh seniman atau musisi. Ini adalah keterampilan berpikir untuk melihat masalah dari perspektif baru dan menghasilkan solusi yang inovatif. Keterampilan ini dapat dilatih dan dikembangkan oleh siapa saja.

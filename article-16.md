@@ -1,7 +1,7 @@
 ---
 title: "Refleksi Diri: Jeda untuk Pertumbuhan"
 date: "2026-02-27"
-author: "Qori Ramadhan"
+author: "Zaldy M Fazri"
 ---
 
 Dalam kesibukan sehari-hari, kita seringkali berjalan dengan mode autopilot, berpindah dari satu tugas ke tugas berikutnya tanpa banyak berpikir. Refleksi diri adalah tindakan sengaja untuk berhenti sejenak, melihat ke dalam, dan mengevaluasi pikiran, perasaan, dan tindakan kita. Ini adalah jeda yang sangat penting untuk pertumbuhan pribadi, kesadaran diri, dan pembelajaran yang mendalam.

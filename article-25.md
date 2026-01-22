@@ -1,7 +1,7 @@
 ---
 title: "Manfaat Journaling untuk Kesehatan Mental"
 date: "2026-02-18"
-author: "Zainal Abidin"
+author: "Halida Muna"
 ---
 
 *Journaling*, atau menulis jurnal, adalah praktik sederhana namun kuat untuk meningkatkan kesehatan mental dan kesadaran diri. Ini adalah tindakan menuangkan pikiran, perasaan, dan pengalaman Anda ke atas kertas (atau layar) tanpa penilaian. Ini adalah ruang pribadi bagi Anda untuk memproses dunia internal Anda, yang dapat memberikan kejernihan, kelegaan, dan perspektif.

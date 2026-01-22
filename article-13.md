@@ -1,7 +1,7 @@
 ---
 title: "Etika Digital: Bertanggung Jawab di Dunia Maya"
 date: "2026-03-02"
-author: "Nadia Putri"
+author: "Anwar Miftah"
 ---
 
 Internet telah mengubah cara kita berkomunikasi, belajar, dan bekerja. Namun, kebebasan di dunia maya juga datang dengan tanggung jawab. Etika digital, atau *netiquette*, adalah seperangkat prinsip dan norma perilaku yang memandu interaksi kita secara online. Memahami dan mempraktikkan etika digital sangat penting untuk menciptakan lingkungan online yang aman, positif, dan saling menghormati.

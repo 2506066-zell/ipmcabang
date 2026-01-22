@@ -1,7 +1,7 @@
 ---
 title: "Kolaborasi Tim: Kunci Mencapai Tujuan Bersama"
 date: "2026-03-08"
-author: "Hani Wijaya"
+author: "Ayudia Cempaka Gratia"
 ---
 
 "Jika ingin berjalan cepat, berjalanlah sendirian. Jika ingin berjalan jauh, berjalanlah bersama-sama." Pepatah Afrika ini merangkum esensi dari kekuatan kolaborasi tim. Dalam dunia yang semakin kompleks, jarang sekali ada pencapaian besar yang merupakan hasil kerja satu orang saja. Kemampuan untuk berkolaborasi secara efektif dalam sebuah tim adalah kunci untuk memecahkan masalah yang rumit, mendorong inovasi, dan mencapai tujuan yang ambisius.

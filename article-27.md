@@ -1,7 +1,7 @@
 ---
 title: "Seni Mengatakan 'Tidak' untuk Melindungi Energi Anda"
 date: "2026-02-16"
-author: "Bunga Lestari"
+author: "Ayudia Cempaka Gratia"
 ---
 
 Dalam budaya yang seringkali menghargai kesibukan dan kesediaan untuk membantu, mengatakan "tidak" bisa terasa sulit, bahkan egois. Namun, belajar mengatakan "tidak" secara strategis adalah keterampilan penting untuk melindungi waktu, energi, dan kesehatan mental Anda. Setiap kali Anda mengatakan "ya" untuk sesuatu, Anda secara implisit mengatakan "tidak" untuk hal lain—mungkin waktu untuk istirahat, hobi, atau proyek yang lebih penting.
