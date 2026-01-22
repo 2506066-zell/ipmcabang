@@ -304,7 +304,7 @@
                     const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                     const author = article.meta.author || '';
                     const metaInfo = [author, date].filter(Boolean).join(' • ');
-                    const thumbnail = article.meta.author_photo || 'images/bidang/default.jpg';
+                    const thumbnail = article.meta.author_photo || 'images/bidang/umum.jpeg';
 
                     card.innerHTML = `
                         <div class="article-card-image" style="background-image: url('${thumbnail}')"></div>
