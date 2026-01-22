@@ -309,10 +309,17 @@
                     const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                     const author = article.meta.author || '';
                     const metaInfo = [author, date].filter(Boolean).join(' • ');
-                    const thumbnail = article.meta.author_photo || 'images/bidang/umum.jpeg';
+                    const thumbnail = article.meta.author_photo;
+
+                    let imageHTML = '';
+                    if (thumbnail) {
+                        imageHTML = `<div class="article-card-image" style="background-image: url('${thumbnail}')"></div>`;
+                    } else {
+                        card.style.alignItems = 'center'; 
+                    }
 
                     card.innerHTML = `
-                        <div class="article-card-image" style="background-image: url('${thumbnail}')"></div>
+                        ${imageHTML}
                         <div class="article-card-content">
                             <h2>${title}</h2>
                             <div class="meta">${metaInfo}</div>
@@ -324,8 +331,8 @@
                 });
             }
 
-            function renderMarkdown(text) {
-                const { meta, content } = parseMarkdown(text);
+            function renderMarkdown(article) {
+                const { meta, content } = article;
                 const title = meta.title || 'Tanpa Judul';
                 const date = meta.date ? new Date(meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                 const author = meta.author || '';
@@ -351,19 +358,12 @@
                 `;
             }
 
-            async function openArticle(path) {
-                try {
-                    const response = await fetch(path);
-                    if (!response.ok) {
-                        console.error(`Failed to fetch ${path}`);
-                        articleContent.innerHTML = `<p>Error: Gagal memuat artikel.</p>`;
-                    } else {
-                        const text = await response.text();
-                        renderMarkdown(text);
-                    }
-                } catch (error) {
-                    console.error(`Error fetching article ${path}:`, error);
-                    articleContent.innerHTML = `<p>Error: Gagal memuat artikel.</p>`;
+            function openArticle(path) {
+                const article = articles.find(a => a.path === path);
+                if (article) {
+                    renderMarkdown(article);
+                } else {
+                    articleContent.innerHTML = `<p>Error: Gagal menemukan artikel.</p>`;
                 }
                 
                 articleListContainer.style.display = 'none';
