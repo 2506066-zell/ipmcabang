@@ -121,7 +121,7 @@
             box-shadow: var(--shadow);
         }
         
-        #article-content img {
+        .article-body-image {
             display: none !important;
         }
 
@@ -155,26 +155,6 @@
             margin-bottom: 2rem;
         }
 
-        .author-section {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 2rem;
-        }
-
-        .author-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .author-name {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--meta-color);
-        }
-
         #article-content {
             font-size: 1.1rem;
             line-height: 1.8;
@@ -202,40 +182,6 @@
 
         .hidden {
             display: none;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 0;
-                margin: 1rem auto;
-            }
-
-            #article-list {
-                grid-template-columns: 1fr;
-                gap: 0;
-            }
-
-            .article-card {
-                flex-direction: column;
-                border-radius: 0;
-                box-shadow: none;
-                border-bottom: 1px solid #e9ecef;
-                padding: 1.5rem 1rem;
-            }
-
-            .article-card:hover {
-                transform: none;
-                box-shadow: none;
-                background-color: #f8f9fa;
-            }
-
-            .article-card-image {
-                display: none;
-            }
-
-            .article-card-content {
-                padding: 0;
-            }
         }
 
         .public-footer {
@@ -363,8 +309,17 @@
                     const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                     const author = article.meta.author || '';
                     const metaInfo = [author, date].filter(Boolean).join(' • ');
+                    const thumbnail = article.meta.author_photo;
+
+                    let imageHTML = '';
+                    if (thumbnail) {
+                        imageHTML = `<div class="article-card-image" style="background-image: url('${thumbnail}')"></div>`;
+                    } else {
+                        card.style.alignItems = 'center'; 
+                    }
 
                     card.innerHTML = `
+                        ${imageHTML}
                         <div class="article-card-content">
                             <h2>${title}</h2>
                             <div class="meta">${metaInfo}</div>
@@ -381,24 +336,14 @@
                 const title = meta.title || 'Tanpa Judul';
                 const date = meta.date ? new Date(meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                 const author = meta.author || '';
-                const authorPhoto = meta.author_photo || '';
-
-                let authorSectionHTML = '';
-                if (author) {
-                    authorSectionHTML = `
-                        <div class="author-section">
-                            ${authorPhoto ? `<img src="${authorPhoto}" alt="${author}" class="author-avatar">` : ''}
-                            <span class="author-name">${author}</span>
-                        </div>
-                    `;
-                }
+                const metaInfo = [author, date].filter(Boolean).join(' • ');
                 
                 let htmlContent = content
                     .replace(/^# (.*$)/gim, '<h1>$1</h1>')
                     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
                     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
                     .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-                    .replace(/!\[(.*?)\]\((.*?)\)/g, '') // Remove images
+                    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="article-body-image">') // Add class to content images
                     .split('\n').map(p => {
                         if (p.startsWith('<h1>') || p.startsWith('<h2>') || p.startsWith('<h3>') || p.startsWith('<blockquote>')) {
                             return p;
@@ -408,8 +353,7 @@
 
                 articleContent.innerHTML = `
                     <h1>${title}</h1>
-                    ${authorSectionHTML}
-                    <div class="meta">${date}</div>
+                    <div class="meta">${metaInfo}</div>
                     ${htmlContent}
                 `;
             }
