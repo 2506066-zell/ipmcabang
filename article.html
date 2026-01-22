@@ -211,6 +211,73 @@
             margin: 0 10px;
             font-size: 0.9em;
         }
+
+        @media (max-width: 768px) {
+            #article-list {
+                display: block;
+                width: 100%;
+            }
+
+            .article-card {
+                display: block;
+                width: 100%;
+                padding: 16px;
+                border-bottom: 1px solid #e0e0e0;
+                background-color: transparent;
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .article-card:hover {
+                background-color: #f5f5f5;
+            }
+
+            .article-card-content {
+                padding: 0;
+            }
+
+            .article-card h2 {
+                font-size: 1.2rem;
+                line-height: 1.4;
+                margin-bottom: 0.5rem;
+            }
+
+            .article-card .excerpt {
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin-bottom: 1rem;
+            }
+
+            .article-meta {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .article-author {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .author-avatar {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+
+            .author-name {
+                font-weight: 400;
+                font-size: 0.85rem;
+                color: #555;
+            }
+
+            .article-date {
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -304,7 +371,6 @@
                 articles.forEach(article => {
                     const card = document.createElement('div');
                     card.className = 'article-card';
-                    card.dataset.path = article.path;
                     
                     const title = article.meta.title || 'Tanpa Judul';
                     const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
