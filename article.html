@@ -79,14 +79,6 @@
             cursor: pointer;
         }
 
-        .article-card-image {
-            width: 160px;
-            flex-shrink: 0;
-            background-size: cover;
-            background-position: center;
-            border-right: 1px solid #e9ecef;
-        }
-
         .article-card-content {
             padding: 1.5rem;
             display: flex;
@@ -121,7 +113,7 @@
             box-shadow: var(--shadow);
         }
         
-        .article-body-image {
+        #article-content img {
             display: none !important;
         }
 
@@ -343,7 +335,7 @@
                     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
                     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
                     .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-                    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="article-body-image">') // Add class to content images
+                    .replace(/!\[(.*?)\]\((.*?)\)/g, '') // Remove images
                     .split('\n').map(p => {
                         if (p.startsWith('<h1>') || p.startsWith('<h2>') || p.startsWith('<h3>') || p.startsWith('<blockquote>')) {
                             return p;
