@@ -304,6 +304,7 @@
                 articles.forEach(article => {
                     const card = document.createElement('div');
                     card.className = 'article-card';
+                    card.dataset.path = article.path;
                     
                     const title = article.meta.title || 'Tanpa Judul';
                     const date = article.meta.date ? new Date(article.meta.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
@@ -326,10 +327,7 @@
                             <p class="excerpt">${createExcerpt(article.content)}</p>
                         </div>
                     `;
-                    card.addEventListener('click', (event) => {
-                        createRipple(event);
-                        openArticle(article.path);
-                    });
+                    card.addEventListener('click', () => openArticle(article.path));
                     articleListContainer.appendChild(card);
                 });
             }
