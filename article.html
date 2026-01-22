@@ -211,21 +211,193 @@
             margin: 0 10px;
             font-size: 0.9em;
         }
+
+        /*--- Mobile Article UX Refinement ---*/
+        .article-ux-wrapper {
+            --ux-padding: 1rem;
+            --ux-max-width: 680px;
+            --ux-line-height: 1.8;
+            --ux-font-size: 1.05rem;
+        }
+
+        /* Article List Refinements */
+        #article-list {
+            grid-template-columns: 1fr;
+            gap: 0;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .article-card {
+            display: block;
+            padding: 1.5rem var(--ux-padding);
+            border-radius: 0;
+            box-shadow: none;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+
+        .article-card:hover {
+            transform: none;
+            box-shadow: none;
+            background-color: #f8f9fa;
+        }
+
+        .article-card-image {
+            display: none; /* Hide image on mobile list */
+        }
+
+        .article-card-content {
+            padding: 0;
+        }
+
+        .article-card h2 {
+            font-size: 1.4rem;
+            line-height: 1.4;
+            margin-bottom: 0.25rem;
+            color: #212529;
+        }
+
+        .article-card .meta {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .article-card .excerpt {
+            font-size: 0.9rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Article Reader Refinements */
+        #article-reader {
+            padding: 2rem var(--ux-padding);
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        #article-content {
+            max-width: var(--ux-max-width);
+            margin: 0 auto;
+            font-size: var(--ux-font-size);
+            line-height: var(--ux-line-height);
+        }
+
+        #article-content h1 {
+            font-size: 1.8rem;
+            line-height: 1.3;
+            margin-bottom: 0.5rem;
+        }
+
+        #article-content .meta {
+            margin-bottom: 2.5rem;
+        }
+
+        #article-content p:first-of-type {
+            font-size: 1.15em;
+            color: #495057;
+        }
+        
+        #article-content h2 {
+            margin-top: 3rem;
+        }
+
+        /* Progress Bar & Scroll Top Button */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1001;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--primary-color);
+            width: 0%;
+        }
+
+        #scrollTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            padding: 12px 15px;
+            border-radius: 50%;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            visibility: hidden;
+        }
+
+        #scrollTopBtn:hover {
+            background-color: #218838;
+        }
+
+        /* Desktop Overrides */
+        @media (min-width: 768px) {
+            .article-ux-wrapper {
+                --ux-padding: 1.5rem;
+            }
+
+            #article-list {
+                gap: 1.5rem;
+                border-top: none;
+            }
+
+            .article-card {
+                display: flex;
+                border: none;
+                border-radius: 12px;
+                box-shadow: var(--shadow);
+                padding: 0;
+            }
+            
+            .article-card:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--shadow-hover);
+            }
+
+            .article-card-image {
+                display: block; /* Show image on desktop */
+                width: 180px;
+            }
+
+            .article-card-content {
+                padding: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
 
     <header class="header">
         <a href="index.html" class="back-btn">← Kembali ke Website Utama</a>
     </header>
 
-    <div class="container">
+    <div class="container article-ux-wrapper">
         <div id="article-list"></div>
         <div id="article-reader" style="display:none">
             <button id="back-to-list">← Kembali</button>
             <article id="article-content"></article>
         </div>
     </div>
+
+    <button id="scrollTopBtn" title="Go to top">↑</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -377,6 +549,35 @@
             }
 
             backToListBtn.addEventListener('click', backToList);
+
+            // --- UX Refinement Scripts ---
+            const progressBar = document.getElementById('progressBar');
+            const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+            function updateProgressBar() {
+                const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+                const scrollPercent = (scrollTop / (scrollHeight - clientHeight)) * 100;
+                progressBar.style.width = `${scrollPercent}%`;
+            }
+
+            function handleScroll() {
+                if (document.documentElement.scrollTop > 300) {
+                    scrollTopBtn.style.visibility = 'visible';
+                    scrollTopBtn.style.opacity = '1';
+                } else {
+                    scrollTopBtn.style.opacity = '0';
+                    scrollTopBtn.style.visibility = 'hidden';
+                }
+                updateProgressBar();
+            }
+
+            function scrollToTop() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            window.addEventListener('scroll', handleScroll);
+            scrollTopBtn.addEventListener('click', scrollToTop);
+            // --- End UX Refinement Scripts ---
 
             fetchArticleData();
         });
