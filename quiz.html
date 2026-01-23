@@ -243,20 +243,44 @@
 
             let questionsData = [];
 
-            async function fetchQuestions() {
-                try {
-                    const response = await fetch(API_URL);
-                    if (!response.ok) throw new Error('Gagal mengambil data soal.');
-                    
-                    questionsData = await response.json();
-                    renderQuiz(questionsData);
-                    
-                    loader.style.display = 'none';
-                    quizForm.style.display = 'block';
-                } catch (error) {
-                    loader.innerHTML = `Gagal memuat kuis. Coba lagi nanti. <br><small>${error.message}</small>`;
-                    console.error(error);
-                }
+            function fetchQuestions() {
+                // JSONP: Membuat tag <script> secara dinamis
+                const script = document.createElement('script');
+                // Buat nama fungsi callback yang unik untuk menghindari cache
+                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                
+                // Definisikan fungsi callback ini di scope global (window)
+                window[callbackName] = function(response) {
+                    try {
+                        if (response.status === "success") {
+                            questionsData = response.data;
+                            renderQuiz(questionsData);
+                            loader.style.display = 'none';
+                            quizForm.style.display = 'block';
+                        } else {
+                            throw new Error(response.message || 'Format respons tidak dikenal.');
+                        }
+                    } catch (error) {
+                        loader.innerHTML = `Gagal memproses data kuis. <br><small>${error.message}</small>`;
+                        console.error(error);
+                    }
+
+                    // Bersihkan setelah selesai
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                };
+
+                // Atur URL sumber skrip ke API Anda dengan parameter callback
+                script.src = API_URL + '?callback=' + callbackName;
+                
+                // Tangani error jika skrip gagal dimuat (mis. URL salah, tidak ada internet)
+                script.onerror = () => {
+                    loader.innerHTML = `Gagal memuat kuis. Periksa URL API atau koneksi internet Anda.`;
+                    delete window[callbackName];
+                };
+
+                // Tambahkan skrip ke body untuk memicu request
+                document.body.appendChild(script);
             }
 
             function renderQuiz(questions) {
