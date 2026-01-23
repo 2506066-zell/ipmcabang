@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #28a745;
+            --secondary-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --meta-color: #6c757d;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-color: #e9ecef;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #218838;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        #quiz-container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        #quiz-description {
+            text-align: center;
+            color: var(--meta-color);
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .question-block {
+            margin-bottom: 2rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        .question-block p {
+            font-weight: 600;
+            margin-top: 0;
+        }
+
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            display: block;
+            background-color: var(--secondary-color);
+            padding: 0.75rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid var(--secondary-color);
+        }
+
+        .option:hover {
+            background-color: #e2e6ea;
+        }
+
+        .option input {
+            margin-right: 10px;
+        }
+        
+        .option.selected {
+            background-color: #d4edda;
+            border-color: var(--primary-color);
+        }
+
+        #submit-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #submit-btn:hover {
+            background-color: #218838;
+        }
+        
+        #submit-btn:disabled {
+            background-color: var(--meta-color);
+            cursor: not-allowed;
+        }
+
+        #result-container {
+            text-align: center;
+        }
+
+        #result-container h2 {
+            color: var(--primary-color);
+        }
+
+        #validation-message {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .loader {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--meta-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+                padding: 0;
+            }
+            #quiz-container {
+                padding: 1.5rem 1rem;
+                border-radius: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="index.html" class="back-btn">← Kembali ke Website Utama</a>
+    </header>
+
+    <div class="container">
+        <div id="quiz-container">
+            <h1>Kuis Pengetahuan IPM</h1>
+            <p id="quiz-description">Uji wawasanmu tentang Ikatan Pelajar Muhammadiyah!</p>
+
+            <div id="loader" class="loader">
+                <i class="fas fa-spinner fa-spin"></i> Memuat soal...
+            </div>
+
+            <form id="quiz-form" style="display:none;">
+                <div class="input-group">
+                    <label for="username">Nama Lengkap:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+
+                <div id="questions-wrapper"></div>
+
+                <button type="submit" id="submit-btn">Kirim Jawaban</button>
+                <p id="validation-message">Harap jawab semua pertanyaan sebelum mengirim.</p>
+            </form>
+
+            <div id="result-container" style="display:none;">
+                <h2>Hasil Kuis</h2>
+                <p>Terima kasih, <strong id="result-username"></strong>!</p>
+                <p>Skor akhir Anda adalah:</p>
+                <h3 id="score"></h3>
+                <p>Hasil Anda telah berhasil disimpan.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = 'https://script.google.com/macros/s/AKfycbwtQTDsbpB_Ovj7WfjsUwCvU5ougcZPMKJuiEHBnPCW3_1BWpBHXJBwiXexSPabziux/exec';
+            
+            const loader = document.getElementById('loader');
+            const quizForm = document.getElementById('quiz-form');
+            const questionsWrapper = document.getElementById('questions-wrapper');
+            const resultContainer = document.getElementById('result-container');
+            const validationMessage = document.getElementById('validation-message');
+            const submitBtn = document.getElementById('submit-btn');
+
+            let questionsData = [];
+
+            async function fetchQuestions() {
+                try {
+                    const response = await fetch(API_URL);
+                    if (!response.ok) throw new Error('Gagal mengambil data soal.');
+                    
+                    questionsData = await response.json();
+                    renderQuiz(questionsData);
+                    
+                    loader.style.display = 'none';
+                    quizForm.style.display = 'block';
+                } catch (error) {
+                    loader.innerHTML = `Gagal memuat kuis. Coba lagi nanti. <br><small>${error.message}</small>`;
+                    console.error(error);
+                }
+            }
+
+            function renderQuiz(questions) {
+                questionsWrapper.innerHTML = '';
+                questions.forEach((q, index) => {
+                    const questionBlock = document.createElement('div');
+                    questionBlock.className = 'question-block';
+                    
+                    let optionsHTML = '';
+                    for (const key in q.options) {
+                        if (q.options[key]) {
+                            optionsHTML += `
+                                <label class="option">
+                                    <input type="radio" name="question-${q.id}" value="${key}">
+                                    ${q.options[key]}
+                                </label>
+                            `;
+                        }
+                    }
+
+                    questionBlock.innerHTML = `
+                        <p>${index + 1}. ${q.question}</p>
+                        <div class="options-group" id="q-group-${q.id}">
+                            ${optionsHTML}
+                        </div>
+                    `;
+                    questionsWrapper.appendChild(questionBlock);
+                });
+
+                document.querySelectorAll('.options-group').forEach(group => {
+                    group.addEventListener('change', (e) => {
+                        // Remove 'selected' class from all options in the same group
+                        group.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                        // Add 'selected' class to the parent label of the checked radio
+                        if(e.target.checked) {
+                            e.target.parentElement.classList.add('selected');
+                        }
+                    });
+                });
+            }
+
+            quizForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Mengirim...';
+
+                const formData = new FormData(quizForm);
+                const username = formData.get('username');
+                const answers = {};
+                let allAnswered = true;
+
+                questionsData.forEach(q => {
+                    const answer = formData.get(`question-${q.id}`);
+                    if (answer) {
+                        answers[q.id] = answer;
+                    } else {
+                        allAnswered = false;
+                    }
+                });
+
+                if (!allAnswered || !username) {
+                    validationMessage.style.display = 'block';
+                    validationMessage.textContent = !username ? 'Harap isi nama Anda.' : 'Harap jawab semua pertanyaan sebelum mengirim.';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Kirim Jawaban';
+                    return;
+                }
+                
+                validationMessage.style.display = 'none';
+
+                let score = 0;
+                questionsData.forEach(q => {
+                    if (answers[q.id] === q.correct_answer) {
+                        score++;
+                    }
+                });
+
+                const finalScore = Math.round((score / questionsData.length) * 100);
+
+                try {
+                    const postResponse = await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // Use no-cors for simple POST to Apps Script
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username, score: finalScore }),
+                    });
+                    
+                    // With no-cors, we can't read the response, but we assume it's successful
+                    displayResult(username, finalScore);
+
+                } catch (error) {
+                    validationMessage.textContent = 'Gagal mengirim hasil. Coba lagi.';
+                    validationMessage.style.display = 'block';
+                    console.error('Error submitting score:', error);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Kirim Jawaban';
+                }
+            });
+
+            function displayResult(username, score) {
+                quizForm.style.display = 'none';
+                document.getElementById('result-username').textContent = username;
+                document.getElementById('score').textContent = score;
+                resultContainer.style.display = 'block';
+            }
+
+            fetchQuestions();
+        });
+    </script>
+</body>
+</html>
