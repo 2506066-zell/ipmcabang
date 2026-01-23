@@ -232,7 +232,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const API_URL = 'https://script.google.com/macros/s/AKfycbywUnujt2-vx1yk07n9LBv6RMC7dISPwcp2FLZn2-MYaBJFqblCi_sisBdgwNG19Ws-/exec';
+            const API_URL = 'https://script.google.com/macros/s/AKfycbwtQTDsbpB_Ovj7WfjsUwCvU5ougcZPMKJuiEHBnPCW3_1BWpBHXJBwiXexSPabziux/exec';
             
             const loader = document.getElementById('loader');
             const quizForm = document.getElementById('quiz-form');
@@ -243,44 +243,20 @@
 
             let questionsData = [];
 
-            function fetchQuestions() {
-                // JSONP: Membuat tag <script> secara dinamis
-                const script = document.createElement('script');
-                // Buat nama fungsi callback yang unik untuk menghindari cache
-                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-                
-                // Definisikan fungsi callback ini di scope global (window)
-                window[callbackName] = function(response) {
-                    try {
-                        if (response.status === "success") {
-                            questionsData = response.data;
-                            renderQuiz(questionsData);
-                            loader.style.display = 'none';
-                            quizForm.style.display = 'block';
-                        } else {
-                            throw new Error(response.message || 'Format respons tidak dikenal.');
-                        }
-                    } catch (error) {
-                        loader.innerHTML = `Gagal memproses data kuis. <br><small>${error.message}</small>`;
-                        console.error(error);
-                    }
-
-                    // Bersihkan setelah selesai
-                    delete window[callbackName];
-                    document.body.removeChild(script);
-                };
-
-                // Atur URL sumber skrip ke API Anda dengan parameter callback
-                script.src = API_URL + '?callback=' + callbackName;
-                
-                // Tangani error jika skrip gagal dimuat (mis. URL salah, tidak ada internet)
-                script.onerror = () => {
-                    loader.innerHTML = `Gagal memuat kuis. Periksa URL API atau koneksi internet Anda.`;
-                    delete window[callbackName];
-                };
-
-                // Tambahkan skrip ke body untuk memicu request
-                document.body.appendChild(script);
+            async function fetchQuestions() {
+                try {
+                    const response = await fetch(API_URL);
+                    if (!response.ok) throw new Error('Gagal mengambil data soal.');
+                    
+                    questionsData = await response.json();
+                    renderQuiz(questionsData);
+                    
+                    loader.style.display = 'none';
+                    quizForm.style.display = 'block';
+                } catch (error) {
+                    loader.innerHTML = `Gagal memuat kuis. Coba lagi nanti. <br><small>${error.message}</small>`;
+                    console.error(error);
+                }
             }
 
             function renderQuiz(questions) {
@@ -363,28 +339,18 @@
                 try {
                     const postResponse = await fetch(API_URL, {
                         method: 'POST',
+                        mode: 'no-cors', // Use no-cors for simple POST to Apps Script
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ username, score: finalScore }),
                     });
-
-                    if (!postResponse.ok) {
-                        let errorBody = await postResponse.json().catch(() => null);
-                        let errorMessage = errorBody ? errorBody.message : 'Gagal mengirimkan data.';
-                        throw new Error(errorMessage);
-                    }
                     
-                    const result = await postResponse.json();
-
-                    if (result.status === "success") {
-                        displayResult(username, finalScore);
-                    } else {
-                        throw new Error(result.message || 'Terjadi kesalahan pada server.');
-                    }
+                    // With no-cors, we can't read the response, but we assume it's successful
+                    displayResult(username, finalScore);
 
                 } catch (error) {
-                    validationMessage.textContent = `Gagal mengirim hasil: ${error.message}`;
+                    validationMessage.textContent = 'Gagal mengirim hasil. Coba lagi.';
                     validationMessage.style.display = 'block';
                     console.error('Error submitting score:', error);
                 } finally {
