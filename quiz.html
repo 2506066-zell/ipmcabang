@@ -339,18 +339,28 @@
                 try {
                     const postResponse = await fetch(API_URL, {
                         method: 'POST',
-                        mode: 'no-cors', // Use no-cors for simple POST to Apps Script
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ username, score: finalScore }),
                     });
+
+                    if (!postResponse.ok) {
+                        let errorBody = await postResponse.json().catch(() => null);
+                        let errorMessage = errorBody ? errorBody.message : 'Gagal mengirimkan data.';
+                        throw new Error(errorMessage);
+                    }
                     
-                    // With no-cors, we can't read the response, but we assume it's successful
-                    displayResult(username, finalScore);
+                    const result = await postResponse.json();
+
+                    if (result.status === "success") {
+                        displayResult(username, finalScore);
+                    } else {
+                        throw new Error(result.message || 'Terjadi kesalahan pada server.');
+                    }
 
                 } catch (error) {
-                    validationMessage.textContent = 'Gagal mengirim hasil. Coba lagi.';
+                    validationMessage.textContent = `Gagal mengirim hasil: ${error.message}`;
                     validationMessage.style.display = 'block';
                     console.error('Error submitting score:', error);
                 } finally {
