@@ -4,200 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kuis Interaktif</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/quiz.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #28a745;
-            --secondary-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --meta-color: #6c757d;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --border-color: #e9ecef;
-            --danger-color: #dc3545;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            background-color: var(--secondary-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        .header {
-            background-color: var(--card-bg);
-            padding: 1rem 2rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .back-btn {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background-color: var(--primary-color);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        .back-btn:hover {
-            background-color: #218838;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        #quiz-container {
-            background-color: var(--card-bg);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-        }
-
-        h1 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 0.5rem;
-        }
-
-        #quiz-description {
-            text-align: center;
-            color: var(--meta-color);
-            margin-bottom: 2rem;
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-
-        .question-block {
-            margin-bottom: 2rem;
-            border-top: 1px solid var(--border-color);
-            padding-top: 1.5rem;
-        }
-
-        .question-block p {
-            font-weight: 600;
-            margin-top: 0;
-        }
-
-        .options-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .option {
-            display: block;
-            background-color: var(--secondary-color);
-            padding: 0.75rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border: 1px solid var(--secondary-color);
-        }
-
-        .option:hover {
-            background-color: #e2e6ea;
-        }
-
-        .option input {
-            margin-right: 10px;
-        }
-        
-        .option.selected {
-            background-color: #d4edda;
-            border-color: var(--primary-color);
-        }
-
-        #submit-btn {
-            display: block;
-            width: 100%;
-            padding: 1rem;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        #submit-btn:hover {
-            background-color: #218838;
-        }
-        
-        #submit-btn:disabled {
-            background-color: var(--meta-color);
-            cursor: not-allowed;
-        }
-
-        #result-container {
-            text-align: center;
-        }
-
-        #result-container h2 {
-            color: var(--primary-color);
-        }
-
-        #validation-message {
-            color: var(--danger-color);
-            text-align: center;
-            margin-top: 1rem;
-            display: none;
-        }
-        
-        .loader {
-            text-align: center;
-            padding: 2rem;
-            font-size: 1.2rem;
-            color: var(--meta-color);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 1rem auto;
-                padding: 0;
-            }
-            #quiz-container {
-                padding: 1.5rem 1rem;
-                border-radius: 0;
-                box-shadow: none;
-            }
-        }
-    </style>
 </head>
 <body>
 
-    <header class="header">
-        <a href="index.html" class="back-btn">← Kembali ke Website Utama</a>
+    <!-- Header Navigation -->
+    <header class="public-header">
+        <div class="header-content">
+            <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            <h1 class="header-title">PC IPM PANAWUAN</h1>
+        </div>
+        <button class="hamburger-menu" id="hamburgerMenu">
+            <i class="fas fa-bars"></i>
+        </button>
     </header>
+    <nav class="dropdown-nav" id="dropdownNav">
+        <a href="index.html">Beranda</a>
+        <a href="struktur-organisasi-redesign.html">Tentang Kami</a>
+        <a href="article.html">Artikel</a>
+        <a href="quiz.html">Kuis</a>
+    </nav>
 
     <div class="container">
         <div id="quiz-container">
@@ -232,6 +60,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const dropdownNav = document.getElementById('dropdownNav');
+
+            hamburgerMenu.addEventListener('click', () => {
+                dropdownNav.classList.toggle('show');
+            });
+
             const API_URL = 'https://script.google.com/macros/s/AKfycbwtQTDsbpB_Ovj7WfjsUwCvU5ougcZPMKJuiEHBnPCW3_1BWpBHXJBwiXexSPabziux/exec';
             
             const loader = document.getElementById('loader');
