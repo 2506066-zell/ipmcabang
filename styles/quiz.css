@@ -30,6 +30,26 @@ body {
     box-shadow: var(--shadow);
 }
 
+.quiz-topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+.admin-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-decoration: none;
+    border: 1px solid var(--primary-color);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.admin-link:hover {
+    background-color: rgba(40, 167, 69, 0.12);
+}
+
 h1 {
     color: var(--primary-color);
     text-align: center;

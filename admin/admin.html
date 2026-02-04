@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Kuis</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="page-admin">
+    <header class="public-header">
+        <div class="header-content">
+            <img src="../ipm (2).png" alt="Logo IPM" class="header-logo">
+            <h1 class="header-title">ADMIN KUIS</h1>
+        </div>
+        <button class="hamburger-menu" id="hamburger-button" aria-label="Menu">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+    <nav class="dropdown-nav" id="dropdown-nav">
+        <a href="../index.html">Beranda</a>
+        <a href="../struktur-organisasi-redesign.html">Tentang Kami</a>
+        <a href="../article.html">Artikel</a>
+        <a href="../quiz.html">Kuis</a>
+        <a href="./admin.html">Admin</a>
+    </nav>
+
+    <main class="admin-container">
+        <section class="card">
+            <h1 class="card-title">Admin Kuis</h1>
+            <p class="card-subtitle">
+                Kelola soal & lihat hasil kuis. Halaman ini pakai <span class="code">Login Admin</span> (username + password) yang diset di Apps Script.
+            </p>
+
+            <div class="grid-2">
+                <div class="field">
+                    <label for="admin-username">Username</label>
+                    <input id="admin-username" type="text" autocomplete="username" placeholder="Masukkan username admin">
+                </div>
+                <div class="field">
+                    <label for="admin-password">Password</label>
+                    <input id="admin-password" type="password" autocomplete="current-password" placeholder="Masukkan password admin">
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" id="connect-btn">
+                    <i class="fas fa-right-to-bracket"></i> Login
+                </button>
+                <button class="btn btn-secondary hidden" id="logout-btn">
+                    <i class="fas fa-right-from-bracket"></i> Keluar
+                </button>
+                <span class="status" id="status"></span>
+            </div>
+        </section>
+
+        <section class="card hidden" id="app-card">
+            <div class="tabs" role="tablist" aria-label="Admin tabs">
+                <button class="tab active" type="button" data-tab="questions" role="tab" aria-selected="true">Soal</button>
+                <button class="tab" type="button" data-tab="results" role="tab" aria-selected="false">Hasil</button>
+            </div>
+
+            <div id="tab-questions" class="tab-panel">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <input id="search-input" class="search-input" type="search" placeholder="Cari soal...">
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-ghost" type="button" id="refresh-questions-btn">
+                            <i class="fas fa-rotate"></i> Refresh
+                        </button>
+                        <button class="btn btn-primary" type="button" id="new-question-btn">
+                            <i class="fas fa-plus"></i> Tambah Soal
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table id="questions-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 72px;">ID</th>
+                                <th>Soal</th>
+                                <th style="width: 92px;">Aktif</th>
+                                <th style="width: 92px;">Jawaban</th>
+                                <th style="width: 200px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="questions-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-results" class="tab-panel hidden">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <span class="small">Menampilkan hasil terbaru.</span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-ghost" type="button" id="refresh-results-btn">
+                            <i class="fas fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 170px;">Waktu</th>
+                                <th>Nama</th>
+                                <th style="width: 120px;">Skor</th>
+                                <th style="width: 120px;">Persen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal hidden" id="question-modal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal-header">
+                <h2 id="modal-title">Tambah Soal</h2>
+                <button class="modal-close" type="button" id="modal-close-btn" aria-label="Tutup">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="question-form">
+                <input type="hidden" id="q-id">
+
+                <div class="field">
+                    <label for="q-question">Pertanyaan</label>
+                    <textarea id="q-question" required></textarea>
+                </div>
+
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="q-a">Opsi A</label>
+                        <input id="q-a" type="text" required>
+                    </div>
+                    <div class="field">
+                        <label for="q-b">Opsi B</label>
+                        <input id="q-b" type="text" required>
+                    </div>
+                    <div class="field">
+                        <label for="q-c">Opsi C</label>
+                        <input id="q-c" type="text">
+                    </div>
+                    <div class="field">
+                        <label for="q-d">Opsi D</label>
+                        <input id="q-d" type="text" required>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="q-correct">Jawaban Benar</label>
+                        <select id="q-correct" required>
+                            <option value="a">A</option>
+                            <option value="b">B</option>
+                            <option value="c">C</option>
+                            <option value="d">D</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="q-active">Status</label>
+                        <select id="q-active" required>
+                            <option value="true">Aktif</option>
+                            <option value="false">Nonaktif</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" type="button" id="cancel-btn">Batal</button>
+                    <button class="btn btn-primary" type="submit" id="save-btn">
+                        <i class="fas fa-floppy-disk"></i> Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../scripts/main.js"></script>
+    <script src="./admin.js"></script>
+</body>
+</html>

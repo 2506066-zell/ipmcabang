@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kuis Interaktif</title>
     <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="styles/quiz.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
+<body class="page-quiz">
 
     <!-- Header Navigation -->
     <header class="public-header">
@@ -29,6 +28,9 @@
 
     <div class="container">
         <div id="quiz-container">
+            <div class="quiz-topbar">
+                <a href="admin/admin.html" class="admin-link">Admin</a>
+            </div>
             <h1>Kuis Pengetahuan IPM</h1>
             <p id="quiz-description">Uji wawasanmu tentang Ikatan Pelajar Muhammadiyah!</p>
 
@@ -78,12 +80,22 @@
 
             let questionsData = [];
 
+            function normalizeQuestionsResponse(data) {
+                if (!data) return [];
+                if (Array.isArray(data)) return data;
+                if (Array.isArray(data.questions)) return data.questions;
+                if (Array.isArray(data.value)) return data.value;
+                return [];
+            }
+
             async function fetchQuestions() {
                 try {
-                    const response = await fetch(API_URL);
+                    const response = await fetch(`${API_URL}?action=questions`);
                     if (!response.ok) throw new Error('Gagal mengambil data soal.');
                     
-                    questionsData = await response.json();
+                    const payload = await response.json();
+                    questionsData = normalizeQuestionsResponse(payload);
+                    if (!questionsData.length) throw new Error('Soal kosong / format data tidak sesuai.');
                     renderQuiz(questionsData);
                     
                     loader.style.display = 'none';
@@ -162,27 +174,20 @@
                 
                 validationMessage.style.display = 'none';
 
-                let score = 0;
-                questionsData.forEach(q => {
-                    if (answers[q.id] === q.correct_answer) {
-                        score++;
-                    }
-                });
-
-                const finalScore = Math.round((score / questionsData.length) * 100);
-
                 try {
                     const postResponse = await fetch(API_URL, {
                         method: 'POST',
-                        mode: 'no-cors', // Use no-cors for simple POST to Apps Script
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': 'text/plain;charset=utf-8',
                         },
-                        body: JSON.stringify({ username, score: finalScore }),
+                        body: JSON.stringify({ action: 'submitQuiz', username, answers }),
                     });
                     
-                    // With no-cors, we can't read the response, but we assume it's successful
-                    displayResult(username, finalScore);
+                    const result = await postResponse.json();
+                    if (!postResponse.ok || !result || result.status !== 'success') {
+                        throw new Error(result && result.message ? result.message : 'Gagal menyimpan hasil.');
+                    }
+                    displayResult(username, result);
 
                 } catch (error) {
                     validationMessage.textContent = 'Gagal mengirim hasil. Coba lagi.';
@@ -194,10 +199,14 @@
                 }
             });
 
-            function displayResult(username, score) {
+            function displayResult(username, result) {
                 quizForm.style.display = 'none';
                 document.getElementById('result-username').textContent = username;
-                document.getElementById('score').textContent = score;
+                const percent = typeof result.percent === 'number' ? result.percent : result.score;
+                const detail = (result && typeof result.score === 'number' && typeof result.total === 'number')
+                    ? ` (${result.score}/${result.total})`
+                    : '';
+                document.getElementById('score').textContent = `${percent}%${detail}`;
                 resultContainer.style.display = 'block';
             }
 
