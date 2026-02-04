@@ -12,49 +12,58 @@
 <body class="page-home">
     <!-- Header Navigation -->
     <header class="public-header">
-        <div class="header-content">
+        <a href="index.html" class="header-logo-link">
             <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
-            <h1 class="header-title">PC IPM PANAWUAN</h1>
-        </div>
-        <button class="hamburger-menu" id="hamburger-button">
-            <i class="fas fa-bars"></i>
+        </a>
+        <h1 class="header-title">PC IPM PANAWUAN</h1>
+        <nav class="navbar">
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fas fa-home"></i> Beranda</a></li>
+                <li><a href="struktur-organisasi-redesign.html"><i class="fas fa-sitemap"></i> Tentang Kami</a></li>
+                <li><a href="article.html"><i class="fas fa-feather-alt"></i> Artikel</a></li>
+                <li><a href="quiz.html"><i class="fas fa-brain"></i> Kuis</a></li>
+            </ul>
+        </nav>
+        <button class="nav-toggle" id="nav-toggle">
+            <div class="line line-1"></div>
+            <div class="line line-2"></div>
+            <div class="line line-3"></div>
         </button>
     </header>
-    <nav class="dropdown-nav" id="dropdown-nav">
-        <a href="index.html">Beranda</a>
-        <a href="struktur-organisasi-redesign.html">Tentang Kami</a>
-        <a href="article.html">Artikel</a>
-        <a href="quiz.html">Kuis</a>
-    </nav>
 
-    <!-- Under Construction Modal -->
-    <div class="under-construction-overlay" id="underConstructionOverlay" onclick="closeUnderConstruction(event)">
-        <div class="under-construction-modal" onclick="event.stopPropagation()">
-            <i class="fas fa-tools"></i>
-            <h2>Sedang Dikembangkan</h2>
-            <p>Halaman artikel sedang dalam tahap pengembangan. Silakan kembali lagi nanti untuk konten terbaru!</p>
-            <button onclick="closeUnderConstruction()">Tutup</button>
-        </div>
-    </div>
-
-    <!-- Hero Section -->
-    <div class="hero-section" id="hero">
-        <div class="hero-content">
-            <img src="ipm (2).png" alt="Logo IPM Panawuan" class="hero-logo">
-            <h2 class="hero-title">Ikatan Pelajar Muhammadiyah</h2>
-            <p class="hero-tagline">PC Panawuan</p>
-            <p class="hero-subtitle">"Dari Pemahaman, Menata Arah Gerak"</p>
-            
-            <div class="hero-buttons">
-                <a href="struktur-organisasi-redesign.html" class="btn-hero btn-hero-primary">
-                    <i class="fas fa-building"></i> Tentang Kami
-                </a>
-                <a href="article.html" class="btn-hero btn-hero-secondary"">
-                    <i class="fas fa-newspaper"></i> Tulisan Kader
-                </a>
+    <main class="main-content">
+        <!-- Under Construction Modal -->
+        <div class="under-construction-overlay" id="underConstructionOverlay" onclick="closeUnderConstruction(event)">
+            <div class="under-construction-modal" onclick="event.stopPropagation()">
+                <i class="fas fa-tools"></i>
+                <h2>Sedang Dikembangkan</h2>
+                <p>Halaman artikel sedang dalam tahap pengembangan. Silakan kembali lagi nanti untuk konten terbaru!</p>
+                <button onclick="closeUnderConstruction()">Tutup</button>
             </div>
         </div>
-    </div>
+
+        <!-- Hero Section -->
+        <div class="hero-section" id="hero">
+            <div class="hero-content">
+                <img src="ipm (2).png" alt="Logo IPM Panawuan" class="hero-logo">
+                <h2 class="hero-title">Ikatan Pelajar Muhammadiyah</h2>
+                <p class="hero-tagline">PC Panawuan</p>
+                <p class="hero-subtitle">"Dari Pemahaman, Menata Arah Gerak"</p>
+                
+                <div class="hero-buttons">
+                    <a href="struktur-organisasi-redesign.html" class="btn-hero btn-hero-primary">
+                        <i class="fas fa-building"></i> Tentang Kami
+                    </a>
+                    <a href="article.html" class="btn-hero btn-hero-secondary"">
+                        <i class="fas fa-newspaper"></i> Tulisan Kader
+                    </a>
+                    <a href="quiz.html" class="btn-hero btn-hero-primary">
+                        <i class="fas fa-pencil-alt"></i> Asah Wawasan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <!-- Footer -->
     <footer class="public-footer">

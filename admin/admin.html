@@ -4,26 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Kuis</title>
-    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="page-admin">
-    <header class="public-header">
-        <div class="header-content">
-            <img src="../ipm (2).png" alt="Logo IPM" class="header-logo">
-            <h1 class="header-title">ADMIN KUIS</h1>
-        </div>
-        <button class="hamburger-menu" id="hamburger-button" aria-label="Menu">
-            <i class="fas fa-bars"></i>
-        </button>
-    </header>
-    <nav class="dropdown-nav" id="dropdown-nav">
-        <a href="../index.html">Beranda</a>
-        <a href="../struktur-organisasi-redesign.html">Tentang Kami</a>
-        <a href="../article.html">Artikel</a>
-        <a href="../quiz.html">Kuis</a>
-        <a href="./admin.html">Admin</a>
-    </nav>
+
 
     <main class="admin-container">
         <section class="card">
@@ -44,11 +29,11 @@
             </div>
 
             <div class="actions">
-                <button class="btn btn-primary" id="connect-btn">
-                    <i class="fas fa-right-to-bracket"></i> Login
+                <button class="btn btn-primary" id="connect-btn" type="button">
+                    <i class="fas fa-right-to-bracket" aria-hidden="true"></i> Login
                 </button>
-                <button class="btn btn-secondary hidden" id="logout-btn">
-                    <i class="fas fa-right-from-bracket"></i> Keluar
+                <button class="btn btn-secondary hidden" id="logout-btn" type="button">
+                    <i class="fas fa-right-from-bracket" aria-hidden="true"></i> Keluar
                 </button>
                 <span class="status" id="status"></span>
             </div>
@@ -67,10 +52,10 @@
                     </div>
                     <div class="toolbar-right">
                         <button class="btn btn-ghost" type="button" id="refresh-questions-btn">
-                            <i class="fas fa-rotate"></i> Refresh
+                            <i class="fas fa-rotate" aria-hidden="true"></i> Refresh
                         </button>
                         <button class="btn btn-primary" type="button" id="new-question-btn">
-                            <i class="fas fa-plus"></i> Tambah Soal
+                            <i class="fas fa-plus" aria-hidden="true"></i> Tambah Soal
                         </button>
                     </div>
                 </div>
@@ -98,7 +83,7 @@
                     </div>
                     <div class="toolbar-right">
                         <button class="btn btn-ghost" type="button" id="refresh-results-btn">
-                            <i class="fas fa-rotate"></i> Refresh
+                            <i class="fas fa-rotate" aria-hidden="true"></i> Refresh
                         </button>
                     </div>
                 </div>
@@ -175,9 +160,11 @@
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-secondary" type="button" id="cancel-btn">Batal</button>
+                    <button class="btn btn-secondary" type="button" id="cancel-btn">
+                        <i class="fas fa-xmark" aria-hidden="true"></i> Batal
+                    </button>
                     <button class="btn btn-primary" type="submit" id="save-btn">
-                        <i class="fas fa-floppy-disk"></i> Simpan
+                        <i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan
                     </button>
                 </div>
             </form>

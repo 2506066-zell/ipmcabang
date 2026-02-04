@@ -5,213 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kuis Interaktif</title>
     <link rel="stylesheet" href="styles/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="page-quiz">
 
-    <!-- Header Navigation -->
+    <!-- Header Navigation (tetap sama) -->
     <header class="public-header">
-        <div class="header-content">
+        <a href="index.html" class="header-logo-link">
             <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
-            <h1 class="header-title">PC IPM PANAWUAN</h1>
-        </div>
-        <button class="hamburger-menu" id="hamburgerMenu">
-            <i class="fas fa-bars"></i>
+        </a>
+        <h1 class="header-title">PC IPM PANAWUAN</h1>
+        <a href="admin/admin.html" class="admin-icon-link">
+            <i class="fas fa-cog"></i>
+        </a>
+        <nav class="navbar">
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fas fa-home"></i> Beranda</a></li>
+                <li><a href="struktur-organisasi-redesign.html"><i class="fas fa-sitemap"></i> Tentang Kami</a></li>
+                <li><a href="article.html"><i class="fas fa-feather-alt"></i> Artikel</a></li>
+                <li><a href="quiz.html"><i class="fas fa-brain"></i> Kuis</a></li>
+            </ul>
+        </nav>
+        <button class="nav-toggle" id="nav-toggle">
+            <div class="line line-1"></div>
+            <div class="line line-2"></div>
+            <div class="line line-3"></div>
         </button>
     </header>
-    <nav class="dropdown-nav" id="dropdownNav">
-        <a href="index.html">Beranda</a>
-        <a href="struktur-organisasi-redesign.html">Tentang Kami</a>
-        <a href="article.html">Artikel</a>
-        <a href="quiz.html">Kuis</a>
-    </nav>
 
-    <div class="container">
-        <div id="quiz-container">
-            <div class="quiz-topbar">
-                <a href="admin/admin.html" class="admin-link">Admin</a>
-            </div>
-            <h1>Kuis Pengetahuan IPM</h1>
-            <p id="quiz-description">Uji wawasanmu tentang Ikatan Pelajar Muhammadiyah!</p>
-
-            <div id="loader" class="loader">
-                <i class="fas fa-spinner fa-spin"></i> Memuat soal...
-            </div>
-
-            <form id="quiz-form" style="display:none;">
-                <div class="input-group">
-                    <label for="username">Nama Lengkap:</label>
-                    <input type="text" id="username" name="username" required>
-                </div>
-
-                <div id="questions-wrapper"></div>
-
-                <button type="submit" id="submit-btn">Kirim Jawaban</button>
-                <p id="validation-message">Harap jawab semua pertanyaan sebelum mengirim.</p>
-            </form>
-
-            <div id="result-container" style="display:none;">
-                <h2>Hasil Kuis</h2>
-                <p>Terima kasih, <strong id="result-username"></strong>!</p>
-                <p>Skor akhir Anda adalah:</p>
-                <h3 id="score"></h3>
-                <p>Hasil Anda telah berhasil disimpan.</p>
+    <div class="quiz-container">
+        <div id="user-info-screen">
+            <h1>Uji Wawasanmu!</h1>
+            <p>Masukkan namamu untuk memulai kuis seputar Ikatan Pelajar Muhammadiyah.</p>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Nama Lengkap" required>
+                <button id="start-quiz-btn">Mulai Kuis</button>
             </div>
         </div>
+
+        <div id="quiz-header" style="display:none;">
+            <div class="progress-indicator">
+                <div class="progress-text-container">
+                    <span id="progress-text">0/10</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div id="progress-bar" class="progress-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-body" style="display:none;">
+            <!-- Konten kuis akan dirender oleh JavaScript di sini -->
+        </div>
+
+        <div id="result-container" style="display:none;">
+            <div class="particle-container"></div>
+            <h2>Hasil Akhir</h2>
+            <p>Skor Kamu:</p>
+            <h3 id="score-text">100%</h3>
+            <p id="score-details"></p>
+            <div class="result-actions">
+                <button id="restart-btn" class="result-button">Ulangi Kuis</button>
+                <button id="share-btn" class="result-button">Bagikan</button>
+            </div>
+        </div>
+
+        <button id="next-btn" class="floating-action-btn" disabled>
+            <i class="fas fa-arrow-right"></i>
+        </button>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const hamburgerMenu = document.getElementById('hamburgerMenu');
-            const dropdownNav = document.getElementById('dropdownNav');
-
-            hamburgerMenu.addEventListener('click', () => {
-                dropdownNav.classList.toggle('show');
-            });
-
-            const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
-            
-            const loader = document.getElementById('loader');
-            const quizForm = document.getElementById('quiz-form');
-            const questionsWrapper = document.getElementById('questions-wrapper');
-            const resultContainer = document.getElementById('result-container');
-            const validationMessage = document.getElementById('validation-message');
-            const submitBtn = document.getElementById('submit-btn');
-
-            let questionsData = [];
-
-            function normalizeQuestionsResponse(data) {
-                if (!data) return [];
-                if (Array.isArray(data)) return data;
-                if (Array.isArray(data.questions)) return data.questions;
-                if (Array.isArray(data.value)) return data.value;
-                return [];
-            }
-
-            async function fetchQuestions() {
-                try {
-                    const response = await fetch(`${API_URL}?action=questions`);
-                    if (!response.ok) throw new Error('Gagal mengambil data soal.');
-                    
-                    const payload = await response.json();
-                    questionsData = normalizeQuestionsResponse(payload);
-                    if (!questionsData.length) throw new Error('Soal kosong / format data tidak sesuai.');
-                    renderQuiz(questionsData);
-                    
-                    loader.style.display = 'none';
-                    quizForm.style.display = 'block';
-                } catch (error) {
-                    loader.innerHTML = `Gagal memuat kuis. Coba lagi nanti. <br><small>${error.message}</small>`;
-                    console.error(error);
-                }
-            }
-
-            function renderQuiz(questions) {
-                questionsWrapper.innerHTML = '';
-                questions.forEach((q, index) => {
-                    const questionBlock = document.createElement('div');
-                    questionBlock.className = 'question-block';
-                    
-                    let optionsHTML = '';
-                    for (const key in q.options) {
-                        if (q.options[key]) {
-                            optionsHTML += `
-                                <label class="option">
-                                    <input type="radio" name="question-${q.id}" value="${key}">
-                                    ${q.options[key]}
-                                </label>
-                            `;
-                        }
-                    }
-
-                    questionBlock.innerHTML = `
-                        <p>${index + 1}. ${q.question}</p>
-                        <div class="options-group" id="q-group-${q.id}">
-                            ${optionsHTML}
-                        </div>
-                    `;
-                    questionsWrapper.appendChild(questionBlock);
-                });
-
-                document.querySelectorAll('.options-group').forEach(group => {
-                    group.addEventListener('change', (e) => {
-                        // Remove 'selected' class from all options in the same group
-                        group.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
-                        // Add 'selected' class to the parent label of the checked radio
-                        if(e.target.checked) {
-                            e.target.parentElement.classList.add('selected');
-                        }
-                    });
-                });
-            }
-
-            quizForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Mengirim...';
-
-                const formData = new FormData(quizForm);
-                const username = formData.get('username');
-                const answers = {};
-                let allAnswered = true;
-
-                questionsData.forEach(q => {
-                    const answer = formData.get(`question-${q.id}`);
-                    if (answer) {
-                        answers[q.id] = answer;
-                    } else {
-                        allAnswered = false;
-                    }
-                });
-
-                if (!allAnswered || !username) {
-                    validationMessage.style.display = 'block';
-                    validationMessage.textContent = !username ? 'Harap isi nama Anda.' : 'Harap jawab semua pertanyaan sebelum mengirim.';
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Kirim Jawaban';
-                    return;
-                }
-                
-                validationMessage.style.display = 'none';
-
-                try {
-                    const postResponse = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'text/plain;charset=utf-8',
-                        },
-                        body: JSON.stringify({ action: 'submitQuiz', username, answers }),
-                    });
-                    
-                    const result = await postResponse.json();
-                    if (!postResponse.ok || !result || result.status !== 'success') {
-                        throw new Error(result && result.message ? result.message : 'Gagal menyimpan hasil.');
-                    }
-                    displayResult(username, result);
-
-                } catch (error) {
-                    validationMessage.textContent = 'Gagal mengirim hasil. Coba lagi.';
-                    validationMessage.style.display = 'block';
-                    console.error('Error submitting score:', error);
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Kirim Jawaban';
-                }
-            });
-
-            function displayResult(username, result) {
-                quizForm.style.display = 'none';
-                document.getElementById('result-username').textContent = username;
-                const percent = typeof result.percent === 'number' ? result.percent : result.score;
-                const detail = (result && typeof result.score === 'number' && typeof result.total === 'number')
-                    ? ` (${result.score}/${result.total})`
-                    : '';
-                document.getElementById('score').textContent = `${percent}%${detail}`;
-                resultContainer.style.display = 'block';
-            }
-
-            fetchQuestions();
-        });
-    </script>
+    <script src="quiz.js" defer></script>
+    <script src="scripts/main.js" defer></script>
 </body>
 </html>

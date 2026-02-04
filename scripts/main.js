@@ -1,32 +1,29 @@
-
 document.addEventListener('DOMContentLoaded', () => {
-    const hamburgerMenu = document.getElementById('hamburger-button');
-    const dropdownNav = document.getElementById('dropdown-nav');
-    const navLinks = dropdownNav.querySelectorAll('a');
+    const navToggle = document.getElementById('nav-toggle');
+    const navLinks = document.getElementById('nav-links');
 
-    if (hamburgerMenu && dropdownNav) {
-        hamburgerMenu.addEventListener('click', (event) => {
-            toggleMenu();
-            event.stopPropagation();
-        });
-
-        document.addEventListener('click', (event) => {
-            if (dropdownNav.classList.contains('show') && !dropdownNav.contains(event.target) && !hamburgerMenu.contains(event.target)) {
-                toggleMenu();
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (dropdownNav.classList.contains('show')) {
-                    toggleMenu();
-                }
-            });
+    if (navToggle && navLinks) {
+        navToggle.addEventListener('click', () => {
+            // Toggle the 'show' class on the nav links to display/hide them
+            navLinks.classList.toggle('show');
+            
+            // Toggle the 'active' class on the button to animate the icon
+            navToggle.classList.toggle('active');
+            
+            // Lock/unlock body scroll when the mobile menu is open/closed
+            const isMenuOpen = navLinks.classList.contains('show');
+            document.body.classList.toggle('body-no-scroll', isMenuOpen);
         });
     }
 
-    function toggleMenu() {
-        const isMenuOpen = dropdownNav.classList.toggle('show');
-        document.body.classList.toggle('body-no-scroll', isMenuOpen);
-    }
+    // Set active nav link based on current page
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const links = navLinks.querySelectorAll('a');
+    
+    links.forEach(link => {
+        const href = link.getAttribute('href').split('/').pop();
+        if (href === currentPage) {
+            link.classList.add('active');
+        }
+    });
 });

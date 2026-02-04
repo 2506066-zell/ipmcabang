@@ -10,20 +10,24 @@
 <body class="page-article">
 
     <header class="public-header">
-        <div class="header-content">
+        <a href="index.html" class="header-logo-link">
             <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
-            <h1 class="header-title">PC IPM PANAWUAN</h1>
-        </div>
-        <button class="hamburger-menu" id="hamburger-button">
-            <i class="fas fa-bars"></i>
+        </a>
+        <h1 class="header-title">PC IPM PANAWUAN</h1>
+        <nav class="navbar">
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fas fa-home"></i> Beranda</a></li>
+                <li><a href="struktur-organisasi-redesign.html"><i class="fas fa-sitemap"></i> Tentang Kami</a></li>
+                <li><a href="article.html"><i class="fas fa-feather-alt"></i> Artikel</a></li>
+                <li><a href="quiz.html"><i class="fas fa-brain"></i> Kuis</a></li>
+            </ul>
+        </nav>
+        <button class="nav-toggle" id="nav-toggle">
+            <div class="line line-1"></div>
+            <div class="line line-2"></div>
+            <div class="line line-3"></div>
         </button>
     </header>
-    <nav class="dropdown-nav" id="dropdown-nav">
-        <a href="index.html">Beranda</a>
-        <a href="struktur-organisasi-redesign.html">Tentang Kami</a>
-        <a href="article.html">Artikel</a>
-        <a href="quiz.html">Kuis</a>
-    </nav>
 
     <div class="container">
         <div id="article-list"></div>
