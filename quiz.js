@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const scoreSpan = document.getElementById('score');
     const usernameInput = document.getElementById('username');
 
-    const API_URL = 'https://script.google.com/macros/s/AKfycbz52KPpNn9d763MW3Ka0SGdLMdlstfSq5qmlz-i16JK-c3B4y8s5uK9MBplnwPLDpXT5g/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
 
     async function fetchQuiz() {
         try {
