@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (data.status === 'error') throw new Error(data.message || 'Kesalahan server.');
 
-            allData = data.sort((a, b) => b.percent - a.percent || new Date(a.timestamp) - new Date(b.timestamp));
+            allData = data.sort((a, b) => b.score - a.score);
             
             renderPage(allData);
             renderAchievements(allData);
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userRankCard.innerHTML = `
                 <div class="position">⭐ Posisi Anda: #${rank}</div>
                 <div class="details">
-                    <span>Skor: ${user.score}/${user.total_questions * 10}</span>
+                    <span>Skor: ${user.score}/${user.total_questions}</span>
                     <span>Waktu: ${user.time_spent} dtk</span>
                     <span>Percobaan: ${user.attempt_count}x</span>
                 </div>
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="avatar-sm">${p.username.charAt(0).toUpperCase()}</div>
                     <span>${p.username}</span>
                 </div>
-                <div class="score">${p.percent}%</div>
+                <div class="score">${p.score} (${p.percent}%)</div>
                 <div class="time">${new Date(p.timestamp).toLocaleDateString('id-ID')}</div>
             `;
             rankingList.appendChild(listItem);

@@ -1,26 +1,22 @@
 :root {
-    --primary-bg: #0A1929;
-    --accent-yellow: #FFD700;
-    --accent-yellow-light: #FFE55C;
-    --text-light: #F5F5F5;
-    --text-dark: #FFFFFF;
-    --neon-green: #00FFA3;
-    --card-bg: #1E293B;
-    --container-bg: #2D3748;
-    --glass-bg: rgba(30, 41, 59, 0.5);
-    --border-color: rgba(100, 116, 139, 0.3);
-    --gold-gradient: linear-gradient(135deg, #FFD700, #FFE55C);
-    --silver-gradient: linear-gradient(135deg, #C0C0C0, #E8E8E8);
-    --bronze-gradient: linear-gradient(135deg, #CD7F32, #E6B17A);
+    --primary-bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --accent-green: #1d8d27;
+    --accent-green-light: #28a745;
+    --border-color: #dee2e6;
+    --gold-color: #ffc107;
+    --silver-color: #adb5bd;
+    --bronze-color: #cd7f32;
+    --gold-gradient: linear-gradient(135deg, #ffc107, #ffca2c);
+    --silver-gradient: linear-gradient(135deg, #ced4da, #e9ecef);
+    --bronze-gradient: linear-gradient(135deg, #d9a671, #e6b98a);
 }
 
 .page-ranking {
     background-color: var(--primary-bg);
-    color: var(--text-light);
-    background-image: 
-        radial-gradient(circle at 25px 25px, rgba(0, 255, 163, 0.1) 2%, transparent 0%),
-        radial-gradient(circle at 75px 75px, rgba(255, 229, 92, 0.05) 2%, transparent 0%);
-    background-size: 100px 100px;
+    color: var(--text-primary);
     min-height: 100vh;
     font-family: 'Poppins', sans-serif;
 }
@@ -29,57 +25,54 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
-    position: relative;
 }
 
 .ranking-header {
     text-align: center;
     margin-bottom: 2rem;
-    background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     padding: 1.5rem;
+    background-color: var(--card-bg);
     border-radius: 16px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .ranking-header h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    color: var(--accent-yellow);
-    text-shadow: 0 0 10px var(--accent-yellow), 0 0 20px rgba(255, 215, 0, 0.5);
+    color: var(--accent-green);
 }
 
 .ranking-header p {
     font-size: 1.1rem;
-    color: var(--text-light);
-    opacity: 0.8;
+    color: var(--text-secondary);
 }
 
 /* User Rank Card */
 .user-rank-card {
-    background: linear-gradient(145deg, var(--container-bg), var(--card-bg));
-    border: 1px solid var(--accent-yellow);
+    background: var(--card-bg);
+    border: 2px solid var(--accent-green);
     border-radius: 16px;
     padding: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(29, 141, 39, 0.1);
     text-align: center;
 }
 
 .user-rank-card .position {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--accent-yellow);
+    color: var(--accent-green);
 }
 .user-rank-card .details {
     display: flex;
     justify-content: space-around;
     margin-top: 1rem;
+    color: var(--text-secondary);
 }
 .user-rank-card .details span {
     font-size: 1rem;
+    font-weight: 500;
 }
 
 /* Top 3 Showcase */
@@ -92,30 +85,28 @@
 }
 
 .rank-card {
-    background: var(--glass-bg);
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 1.5rem;
     text-align: center;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .rank-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 0 20px rgba(0, 255, 163, 0.4);
+    transform: translateY(-8px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .rank-card.rank-1 {
     order: 2;
-    transform: scale(1.1);
-    border-color: var(--accent-yellow);
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    transform: scale(1.05);
+    border: 2px solid var(--gold-color);
+    box-shadow: 0 0 25px rgba(255, 193, 7, 0.3);
 }
 
-.rank-card.rank-2 { order: 1; border-color: #C0C0C0; }
-.rank-card.rank-3 { order: 3; border-color: #CD7F32; }
+.rank-card.rank-2 { order: 1; border: 2px solid var(--silver-color); }
+.rank-card.rank-3 { order: 3; border: 2px solid var(--bronze-color); }
 
 .rank-card .rank-position {
     font-size: 2rem;
@@ -144,13 +135,13 @@
     height: 70px;
     border-radius: 50%;
     margin: 0 auto 1rem;
-    background: linear-gradient(135deg, var(--neon-green), var(--accent-yellow));
+    background: linear-gradient(135deg, var(--accent-green), var(--accent-green-light));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2rem;
     font-weight: 600;
-    color: var(--primary-bg);
+    color: #fff;
 }
 
 .rank-card.rank-1 .avatar {
@@ -163,12 +154,13 @@
     font-size: 1.2rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
+    color: var(--text-primary);
 }
 
 .rank-card .score {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--neon-green);
+    color: var(--accent-green);
 }
 
 /* Ranking List */
@@ -177,7 +169,6 @@
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 1.5rem;
-    backdrop-filter: blur(5px);
 }
 
 .ranking-controls {
@@ -190,17 +181,19 @@
 }
 
 #search-input {
-    background: rgba(255, 255, 255, 0.05);
+    background: #fff;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 0.6rem 1rem;
-    color: var(--text-light);
+    color: var(--text-primary);
     font-family: 'Poppins', sans-serif;
     transition: all 0.3s ease;
+    flex-grow: 1;
+    max-width: 400px;
 }
 #search-input:focus {
-    border-color: var(--neon-green);
-    box-shadow: 0 0 10px rgba(0, 255, 163, 0.3);
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 3px rgba(29, 141, 39, 0.1);
 }
 
 .filter-buttons {
@@ -211,19 +204,19 @@
 .filter-btn {
     background: transparent;
     border: 1px solid var(--border-color);
-    color: var(--text-light);
+    color: var(--text-secondary);
     padding: 0.5rem 1rem;
     border-radius: 20px;
     cursor: pointer;
+    font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .filter-btn.active,
 .filter-btn:hover {
-    background: var(--neon-green);
-    color: var(--primary-bg);
-    border-color: var(--neon-green);
-    box-shadow: 0 0 15px rgba(0, 255, 163, 0.5);
+    background: var(--accent-green);
+    color: #fff;
+    border-color: var(--accent-green);
 }
 
 #ranking-list .list-item {
@@ -233,29 +226,31 @@
     align-items: center;
     padding: 0.8rem 1rem;
     border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.3s, transform 0.3s;
-    border-radius: 12px;
+    transition: background-color 0.3s;
+    border-radius: 8px;
+}
+
+#ranking-list .list-item:last-child {
+    border-bottom: none;
 }
 
 #ranking-list .list-item:hover {
-    background-color: rgba(0, 255, 163, 0.05);
-    transform: scale(1.02);
+    background-color: #f1f3f5;
 }
 
 /* Rank Change Animations */
 @keyframes rankChange {
-    0%, 100% { background-color: transparent; transform: scale(1); }
-    50% { transform: scale(1.03); }
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(29, 141, 39, 0.1); }
 }
 
 .list-item.rank-up {
     animation: rankChange 1.5s ease-out;
-    background-color: rgba(0, 255, 163, 0.1);
 }
 
 .list-item.rank-down {
     animation: rankChange 1.5s ease-out;
-    background-color: rgba(255, 82, 82, 0.1);
+    background-color: rgba(220, 53, 69, 0.05);
 }
 
 .name-avatar::after {
@@ -267,42 +262,45 @@
 
 .rank-up .name-avatar::after {
     content: '↑';
-    color: var(--neon-green);
+    color: var(--accent-green);
     opacity: 1;
 }
 
 .rank-down .name-avatar::after {
     content: '↓';
-    color: #ff5252;
+    color: #dc3545;
     opacity: 1;
 }
 
 #ranking-list .list-item.user-highlight {
-    background: rgba(255, 229, 92, 0.1);
-    border-left: 4px solid var(--accent-yellow);
+    background: rgba(29, 141, 39, 0.08);
+    border-left: 4px solid var(--accent-green);
 }
 
 #ranking-list .list-item .rank {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--text-light);
+    color: var(--text-secondary);
 }
 
 #ranking-list .list-item .name-avatar {
     display: flex;
     align-items: center;
     gap: 1rem;
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 #ranking-list .list-item .avatar-sm {
     width: 35px;
     height: 35px;
     border-radius: 50%;
-    background: var(--container-bg);
+    background: var(--primary-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
+    color: var(--accent-green);
 }
 
 #ranking-list .list-item .score,
@@ -310,38 +308,56 @@
     font-weight: 600;
     text-align: right;
     font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 #ranking-list .list-item .score {
-    color: var(--neon-green);
+    color: var(--accent-green);
+    font-weight: 700;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
     .ranking-header h1 { font-size: 2rem; }
-    .top-3-container {
+    
+    /* .top-3-container {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 1.5rem;
     }
-    .rank-card { transform: scale(1) !important; }
-    .rank-card.rank-1 { order: 1; }
-    .rank-card.rank-2 { order: 2; }
-    .rank-card.rank-3 { order: 3; }
+    .rank-card { 
+        transform: scale(1) !important; 
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .rank-card.rank-1, .rank-card.rank-2, .rank-card.rank-3 {
+        order: 0; /* Reset order for mobile */
+    } */
     
     .ranking-controls {
         flex-direction: column;
         align-items: stretch;
     }
+
+    #search-input {
+        max-width: 100%;
+    }
+
     #ranking-list .list-item {
         grid-template-columns: 30px 1fr 80px;
         grid-template-areas: 
             "rank name-avatar score"
             ". time time";
-        gap: 0.5rem 1rem;
+        gap: 0.25rem 1rem;
+        padding: 0.75rem;
     }
     #ranking-list .list-item .rank { grid-area: rank; }
     #ranking-list .list-item .name-avatar { grid-area: name-avatar; }
     #ranking-list .list-item .score { grid-area: score; }
-    #ranking-list .list-item .time { grid-area: time; text-align: right; font-size: 0.8rem; opacity: 0.7;}
+    #ranking-list .list-item .time { 
+        grid-area: time; 
+        text-align: right; 
+        font-size: 0.8rem; 
+        color: var(--text-secondary);
+        opacity: 0.9;
+    }
 }
 
 /* Achievements and Stats */
@@ -355,19 +371,20 @@
 
 .achievements-container h2, .stats-container h2 {
     font-size: 1.5rem;
-    color: var(--accent-yellow);
+    color: var(--accent-green);
     margin-bottom: 1.5rem;
     text-align: center;
 }
 
 .badges-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 1rem;
 }
 
 .badge {
-    background: var(--container-bg);
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1rem;
     text-align: center;
@@ -375,17 +392,20 @@
 }
 .badge:hover {
     transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 .badge-icon {
     font-size: 2rem;
+    color: var(--accent-green);
 }
 .badge-title {
     font-weight: 600;
     margin: 0.5rem 0;
+    font-size: 0.9rem;
 }
 .badge-user {
-    font-size: 0.9rem;
-    color: var(--neon-green);
+    font-size: 0.8rem;
+    color: var(--accent-green-light);
 }
 
 .stats-visualization {
@@ -401,28 +421,19 @@
 .stat-item span {
     width: 120px;
     font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 .progress-bar {
     flex-grow: 1;
     height: 15px;
-    background: var(--container-bg);
+    background: #e9ecef;
     border-radius: 10px;
     overflow: hidden;
 }
 .progress-bar div {
     height: 100%;
-    background: linear-gradient(90deg, var(--neon-green), var(--accent-yellow));
+    background: linear-gradient(90deg, var(--accent-green-light), var(--accent-green));
     border-radius: 10px;
-}
-
-/* Particles.js Background */
-#particles-js {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    z-index: -1;
 }
 
 /* Loading Indicator */
@@ -432,7 +443,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(10, 25, 41, 0.9);
+    background: rgba(255, 255, 255, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -448,7 +459,7 @@
 }
 
 .loading-content h2 {
-    color: var(--accent-yellow);
+    color: var(--accent-green);
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
     text-transform: uppercase;
@@ -458,21 +469,12 @@
 .scanner {
     width: 100%;
     height: 3px;
-    background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
-    box-shadow: 0 0 15px var(--neon-green);
-    position: absolute;
-    left: 0;
+    background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
     animation: scan 2s infinite cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @keyframes scan {
-    0% {
-        top: 0;
-    }
-    50% {
-        top: 100%;
-    }
-    100% {
-        top: 0;
-    }
+    0% { top: 0; }
+    50% { top: 100%; }
+    100% { top: 0; }
 }

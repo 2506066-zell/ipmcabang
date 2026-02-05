@@ -321,6 +321,11 @@ td::before {
     color: var(--text-secondary);
 }
 
+.question-cell-content {
+    text-align: left;
+    width: 100%;
+}
+
 .option b {
     color: var(--text-primary);
 }

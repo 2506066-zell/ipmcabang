@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
     // Tambahkan di bagian atas file quiz.js
     let quizStartTime;
     const userInfoScreen = document.getElementById('user-info-screen');
@@ -34,11 +36,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return [];
     }
 
+    function showLoader(text = 'Memuat...') {
+        if (loadingOverlay) {
+            loadingText.textContent = text;
+            loadingOverlay.classList.add('show');
+        }
+    }
+
+    function hideLoader() {
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('show');
+        }
+    }
+
     // --- Quiz Initialization ---
     async function fetchQuestions() {
-        // Show loading state in the main quiz body
-        quizBody.style.display = 'block';
-        quizBody.innerHTML = `<div class="loading-state">Memuat soal... <i class="fas fa-spinner fa-spin"></i></div>`;
+        showLoader('Mempersiapkan Soal...');
         nextBtn.style.display = 'none';
         quizHeader.style.display = 'none';
 
@@ -51,13 +64,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!questionsData.length) throw new Error('Soal kosong atau format data tidak sesuai.');
             
-            // Hide loading and start the quiz
             quizBody.innerHTML = '';
             startQuiz();
 
         } catch (error) {
+            quizBody.style.display = 'block';
             quizBody.innerHTML = `<div class="error-state">Gagal memuat kuis. Coba lagi nanti.<br><small>${error.message}</small></div>`;
             console.error(error);
+        } finally {
+            hideLoader();
         }
     }
 
@@ -146,10 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function submitAndShowResults() {
-        // Show a submitting state on the button
-        nextBtn.disabled = true;
-        nextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
+        showLoader('Mengirim Jawaban...');
         const username = usernameInput.value;
         const time_spent = Date.now() - quizStartTime; // Calculate duration in milliseconds
 
@@ -169,9 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             alert(`Gagal mengirim hasil: ${error.message}`);
-            // Reset button if submission fails
-            nextBtn.innerHTML = '<i class="fas fa-check"></i>';
-            nextBtn.disabled = false;
+        } finally {
+            hideLoader();
         }
     }
 

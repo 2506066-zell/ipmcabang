@@ -212,26 +212,23 @@
                 `;
             }
 
-            function openArticle(path) {
-                const article = articles.find(a => a.path === path);
-                if (article) {
-                    renderMarkdown(article);
-                } else {
-                    articleContent.innerHTML = `<p>Error: Gagal menemukan artikel.</p>`;
-                }
-                
-                document.querySelector('.public-header').style.display = 'none';
-                document.querySelector('.dropdown-nav').style.display = 'none';
-                articleListContainer.style.display = 'none';
-                articleReader.style.display = 'block';
-                window.scrollTo(0, 0);
-            }
+           function openArticle(path) {
+    const article = articles.find(a => a.path === path);
+    if (article) {
+        renderMarkdown(article);
+    } else {
+        articleContent.innerHTML = `<p>Error: Gagal menemukan artikel.</p>`;
+    }
+    
+    articleListContainer.style.display = 'none';
+    articleReader.style.display = 'block';
+    window.scrollTo(0, 0);
+}
 
-            function backToList() {
-                document.querySelector('.public-header').style.display = 'flex';
-                articleListContainer.style.display = 'grid';
-                articleReader.style.display = 'none';
-            }
+function backToList() {
+    articleListContainer.style.display = 'grid';
+    articleReader.style.display = 'none';
+}
 
             backToListBtn.addEventListener('click', backToList);
 

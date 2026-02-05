@@ -264,14 +264,15 @@ function handleAdminDeleteQuestionPost_(body) {
 
 function handlePublicResultsGet_() {
   const { resultsSheet } = getSheets_();
+
   const values = resultsSheet.getDataRange().getValues();
   if (values.length <= 1) return json_([]);
 
   const header = values[0].map(v => String(v || '').trim().toLowerCase());
   const map = buildResultsMap_(header);
 
-  if (map.username === -1 || map.score === -1 || map.timestamp === -1 || map.time_spent === -1) {
-    return json_({ status: 'error', message: 'Header kolom tidak sesuai di sheet Results.' });
+  if (map.username === -1 || map.score === -1 || map.total === -1 || map.time_spent === -1) {
+    return json_({ status: 'error', message: 'Header kolom tidak sesuai di sheet Results (membutuhkan username, score, total, time_spent).' });
   }
 
   const allResults = values
@@ -279,41 +280,49 @@ function handlePublicResultsGet_() {
     .map(row => ({
       username: String(row[map.username] || ''),
       score: toNumber_(row[map.score]),
-      timestamp: row[map.timestamp],
+      total: toNumber_(row[map.total]),
       time_spent: toNumber_(row[map.time_spent]),
+      timestamp: row[map.timestamp],
     }))
-    .filter(r => r.username);
+    .filter(r => r.username && r.total > 0);
 
-  const userAttempts = allResults.reduce((acc, result) => {
+  const userStats = allResults.reduce((acc, result) => {
     if (!acc[result.username]) {
-      acc[result.username] = [];
+      acc[result.username] = {
+        total_score: 0,
+        total_questions_answered: 0,
+        total_time_spent: 0,
+        attempt_count: 0,
+        last_timestamp: null,
+      };
     }
-    acc[result.username].push(result);
+    acc[result.username].total_score += result.score;
+    acc[result.username].total_questions_answered += result.total;
+    acc[result.username].total_time_spent += result.time_spent;
+    acc[result.username].attempt_count += 1;
+    acc[result.username].last_timestamp = result.timestamp;
     return acc;
   }, {});
 
-  const rankingData = Object.keys(userAttempts).map(username => {
-    const attempts = userAttempts[username];
-    const attempt_count = attempts.length;
-    const bestAttempt = attempts.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      if (a.time_spent !== b.time_spent) return a.time_spent - b.time_spent;
-      return new Date(b.timestamp) - new Date(a.timestamp);
-    })[0];
+  const rankingData = Object.keys(userStats).map(username => {
+    const stats = userStats[username];
+    const percent = stats.total_questions_answered > 0 
+      ? Math.round((stats.total_score / stats.total_questions_answered) * 100) 
+      : 0;
+
     return {
       username,
-      score: bestAttempt.score,
-      time_spent: bestAttempt.time_spent,
-      attempt_count,
-      timestamp: bestAttempt.timestamp,
+      score: stats.total_score,
+      percent: percent,
+      total_questions: stats.total_questions_answered, // Mengganti nama field agar konsisten
+      time_spent: stats.total_time_spent,
+      attempt_count: stats.attempt_count,
+      timestamp: stats.last_timestamp,
     };
   });
 
-  rankingData.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (a.time_spent !== b.time_spent) return a.time_spent - b.time_spent;
-    return a.attempt_count - b.attempt_count;
-  });
+  // Mengurutkan berdasarkan skor akumulatif tertinggi
+  rankingData.sort((a, b) => b.score - a.score);
 
   return json_(rankingData);
 }

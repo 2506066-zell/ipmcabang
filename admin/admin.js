@@ -18,6 +18,8 @@
     };
 
     const els = {
+        loadingOverlay: document.getElementById('loading-overlay'),
+        loadingText: document.getElementById('loading-text'),
         usernameInput: document.getElementById('admin-username'),
         passwordInput: document.getElementById('admin-password'),
         connectBtn: document.getElementById('connect-btn'),
@@ -60,6 +62,19 @@
         els.status.classList.remove('ok', 'error');
         if (kind === 'ok') els.status.classList.add('ok');
         if (kind === 'error') els.status.classList.add('error');
+    }
+
+    function showLoader(text = 'Memuat...') {
+        if (els.loadingOverlay) {
+            els.loadingText.textContent = text;
+            els.loadingOverlay.classList.add('show');
+        }
+    }
+
+    function hideLoader() {
+        if (els.loadingOverlay) {
+            els.loadingOverlay.classList.remove('show');
+        }
     }
 
     async function fetchJson(url, init) {
@@ -136,12 +151,14 @@
                 <tr data-id="${escapeHtml(q.id)}">
                     <td data-label="ID">${escapeHtml(q.id)}</td>
                     <td data-label="Soal">
-                    <div class="question-text">${escapeHtml(q.question)}</div>
-                    <div class="question-options">
-                        <span class="option"><b>A:</b> ${escapeHtml(q.options?.a || '')}</span>
-                        <span class="option"><b>B:</b> ${escapeHtml(q.options?.b || '')}</span>
-                        <span class="option"><b>C:</b> ${escapeHtml(q.options?.c || '')}</span>
-                        <span class="option"><b>D:</b> ${escapeHtml(q.options?.d || '')}</span>
+                    <div class="question-cell-content">
+                        <div class="question-text">${escapeHtml(q.question)}</div>
+                        <div class="question-options">
+                            <span class="option"><b>A:</b> ${escapeHtml(q.options?.a || '')}</span>
+                            <span class="option"><b>B:</b> ${escapeHtml(q.options?.b || '')}</span>
+                            <span class="option"><b>C:</b> ${escapeHtml(q.options?.c || '')}</span>
+                            <span class="option"><b>D:</b> ${escapeHtml(q.options?.d || '')}</span>
+                        </div>
                     </div>
                 </td>
                     <td data-label="Aktif"><span class="status-badge ${activeClass}">${activeLabel}</span></td>
@@ -202,36 +219,46 @@
 
     async function loadQuestions() {
         setStatus('Memuat soal...', '');
-        const data = await apiPost({ action: 'adminQuestions', session: state.session });
-        if (!data) throw new Error('Respon server kosong.');
-        if (data.status && data.status !== 'success') {
-            throw new Error(data.message || 'Gagal memuat soal.');
+        showLoader('Memuat Soal...');
+        try {
+            const data = await apiPost({ action: 'adminQuestions', session: state.session });
+            if (!data) throw new Error('Respon server kosong.');
+            if (data.status && data.status !== 'success') {
+                throw new Error(data.message || 'Gagal memuat soal.');
+            }
+            const questions = Array.isArray(data.questions) ? data.questions : null;
+            if (!questions) {
+                const hint = JSON.stringify(data).slice(0, 220);
+                throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
+            }
+            state.questions = questions;
+            renderQuestions();
+            setStatus(`Soal dimuat: ${state.questions.length}`, 'ok');
+        } finally {
+            hideLoader();
         }
-        const questions = Array.isArray(data.questions) ? data.questions : null;
-        if (!questions) {
-            const hint = JSON.stringify(data).slice(0, 220);
-            throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
-        }
-        state.questions = questions;
-        renderQuestions();
-        setStatus(`Soal dimuat: ${state.questions.length}`, 'ok');
     }
 
     async function loadResults() {
         setStatus('Memuat hasil...', '');
-        const data = await apiPost({ action: 'adminResults', session: state.session });
-        if (!data) throw new Error('Respon server kosong.');
-        if (data.status && data.status !== 'success') {
-            throw new Error(data.message || 'Gagal memuat hasil.');
+        showLoader('Memuat Hasil...');
+        try {
+            const data = await apiPost({ action: 'adminResults', session: state.session });
+            if (!data) throw new Error('Respon server kosong.');
+            if (data.status && data.status !== 'success') {
+                throw new Error(data.message || 'Gagal memuat hasil.');
+            }
+            const results = Array.isArray(data.results) ? data.results : null;
+            if (!results) {
+                const hint = JSON.stringify(data).slice(0, 220);
+                throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
+            }
+            state.results = results;
+            renderResults();
+            setStatus(`Hasil dimuat: ${state.results.length}`, 'ok');
+        } finally {
+            hideLoader();
         }
-        const results = Array.isArray(data.results) ? data.results : null;
-        if (!results) {
-            const hint = JSON.stringify(data).slice(0, 220);
-            throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
-        }
-        state.results = results;
-        renderResults();
-        setStatus(`Hasil dimuat: ${state.results.length}`, 'ok');
     }
 
     async function login(username, password) {
@@ -248,6 +275,7 @@
     async function connect() {
         setStatus('', '');
         els.connectBtn.disabled = true;
+        showLoader('Menghubungkan...');
 
         try {
             state.apiUrl = DEFAULT_API_URL;
@@ -270,6 +298,7 @@
             els.passwordInput.value = '';
         } finally {
             els.connectBtn.disabled = false;
+            hideLoader();
         }
     }
 
@@ -366,7 +395,10 @@
                 if (!ok) return;
 
                 setStatus('Menghapus...', '');
-                deleteQuestion(id).catch(err => setStatus(err.message || 'Gagal menghapus.', 'error'));
+                showLoader('Menghapus Soal...');
+                deleteQuestion(id)
+                    .catch(err => setStatus(err.message || 'Gagal menghapus.', 'error'))
+                    .finally(() => hideLoader());
             }
         });
 
@@ -415,12 +447,14 @@
 
             els.saveBtn.disabled = true;
             setStatus('Menyimpan...', '');
+            showLoader('Menyimpan Soal...');
 
             upsertQuestion(payload)
                 .then(() => closeModal())
                 .catch(err => setStatus(err.message || 'Gagal menyimpan.', 'error'))
                 .finally(() => {
                     els.saveBtn.disabled = false;
+                    hideLoader();
                 });
         });
 

@@ -11,17 +11,37 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="page-quiz">
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Loading..." class="loading-logo">
+            </picture>
+            <p id="loading-text">Memuat...</p>
+        </div>
+    </div>
 
     <header class="mobile-header" id="mobile-header">
         <div class="logo-container">
-            <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            </picture>
             <span class="header-title">PC IPM Panawuan</span>
         </div>
-        <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
+        <div class="header-right-icons">
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
     </header>
 
     <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
@@ -30,7 +50,7 @@
             <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
             <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
             <li><a href="quiz.html" class="mobile-nav-link active"><i class="fas fa-question-circle"></i> Quiz</a></li>
-            <li><a href="admin/admin.html" class="mobile-nav-link"><i class="fas fa-user-shield"></i> Admin</a></li>
+
         </ul>
     </nav>
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>

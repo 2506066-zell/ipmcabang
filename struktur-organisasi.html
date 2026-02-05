@@ -11,17 +11,37 @@
     <!-- styles moved to styles/style.css -->
 </head>
 <body class="page-struktur">
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Loading..." class="loading-logo">
+            </picture>
+            <p id="loading-text">Memuat...</p>
+        </div>
+    </div>
     <!-- Header Navigation -->
     <header class="mobile-header" id="mobile-header">
         <div class="logo-container">
-            <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            </picture>
             <span class="header-title">PC IPM Panawuan</span>
         </div>
-        <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
+        <div class="header-right-icons">
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
     </header>
 
     <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
@@ -30,8 +50,7 @@
             <li><a href="struktur-organisasi.html" class="mobile-nav-link active"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
             <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
             <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
-            <li><a href="ranking.html" class="mobile-nav-link"><i class="fas fa-trophy"></i> Peringkat</a></li>
-            <li><a href="admin/admin.html" class="mobile-nav-link"><i class="fas fa-user-shield"></i> Admin</a></li>
+
         </ul>
     </nav>
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
@@ -82,8 +101,7 @@
             </button>
             <!-- Header dengan Foto -->
             <div class="anggota-detail-header" id="anggotaDetailHeader">
-                <img id="anggotaDetailPhoto" src="" alt="Foto Anggota" onerror="handlePhotoError()">
-                <div class="anggota-detail-avatar" id="anggotaDetailAvatar"></div>
+                <!-- Picture tag will be injected here by JS -->
             </div>
             
             <!-- Content -->
@@ -227,7 +245,7 @@
                 card.className = 'bidang-card';
                 card.innerHTML = `
                     <div class="bidang-card-header">
-                        <img src="${b.image}" alt="${b.name}" loading="lazy" onerror="this.style.display='none'">
+                        <img src="${b.image}" alt="${b.name}" loading="lazy">
                     </div>
                     <div class="bidang-card-content">
                         <div class="bidang-card-name">${b.name}</div>
@@ -354,32 +372,50 @@
 
             // Reset modal state
             const header = document.getElementById('anggotaDetailHeader');
-            const photoImg = document.getElementById('anggotaDetailPhoto');
-            
-            // Remove no-image class jika ada
+            header.innerHTML = ''; // Clear previous content
             header.classList.remove('no-image');
-            
-            // Reset foto
-            photoImg.src = '';
-            photoImg.style.display = 'block';
 
-            // Update detail modal content
-            photoImg.src = member.photo;
-            photoImg.alt = member.name;
+            // Create and append the image or avatar
+            if (member.photo) {
+                const img = document.createElement('img');
+                img.src = member.photo;
+                img.alt = `Foto ${member.name}`;
+                img.onerror = () => {
+                    header.innerHTML = ''; // Clear the broken image
+                    const avatar = document.createElement('div');
+                    avatar.className = 'anggota-detail-avatar';
+                    avatar.textContent = initials;
+                    header.appendChild(avatar);
+                    header.classList.add('no-image');
+                };
+                header.appendChild(img);
+            } else {
+                const avatar = document.createElement('div');
+                avatar.className = 'anggota-detail-avatar';
+                avatar.textContent = initials;
+                header.appendChild(avatar);
+                header.classList.add('no-image');
+            }
+
             document.getElementById('anggotaDetailName').textContent = member.name;
             document.getElementById('anggotaDetailRole').textContent = member.role;
             document.getElementById('anggotaDetailBidang').textContent = selectedBidang.name;
             document.getElementById('anggotaDetailPosisi').textContent = member.role;
-            document.getElementById('anggotaDetailQuote').textContent = `"${member.quote}"`;
-            document.getElementById('anggotaDetailAvatar').textContent = initials;
-
-            // Instagram button
-            const instagramBtn = document.getElementById('anggotaInstagramBtn');
-            if (member.instagram) {
-                instagramBtn.href = member.instagram;
-                instagramBtn.style.display = 'flex';
+            
+            const quoteEl = document.getElementById('anggotaDetailQuote');
+            if (member.quote) {
+                quoteEl.textContent = `"${member.quote}"`;
+                quoteEl.style.display = 'block';
             } else {
-                instagramBtn.style.display = 'none';
+                quoteEl.style.display = 'none';
+            }
+
+            const instagramEl = document.getElementById('anggotaDetailInstagram');
+            if (member.instagram) {
+                document.getElementById('anggotaInstagramBtn').href = member.instagram;
+                instagramEl.style.display = 'block';
+            } else {
+                instagramEl.style.display = 'none';
             }
 
             // Show modal with animation
