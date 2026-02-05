@@ -30,9 +30,16 @@ function setup_() {
 function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || DEFAULTS_.PUBLIC_ACTION).trim();
   try {
-    if (action === 'health') return json_({ status: 'success', service: 'ipm-quiz', time: new Date().toISOString() });
-    if (action === DEFAULTS_.PUBLIC_ACTION) return handlePublicQuestionsGet_();
-    return json_({ status: 'error', message: 'Unknown action.' });
+    switch (action) {
+      case 'health':
+        return json_({ status: 'success', service: 'ipm-quiz', time: new Date().toISOString() });
+      case 'getResults':
+        return handlePublicResultsGet_();
+      case DEFAULTS_.PUBLIC_ACTION:
+        return handlePublicQuestionsGet_();
+      default:
+        return json_({ status: 'error', message: 'Unknown action.' });
+    }
   } catch (err) {
     return json_({ status: 'error', message: String(err && err.message ? err.message : err) });
   }
@@ -98,7 +105,7 @@ function handleSubmitQuizPost_(body) {
   });
 
   const percent = Math.round((score / total) * 100);
-  appendResult_(resultsSheet, { username, score, total, percent });
+  appendResult_(resultsSheet, { username, score, total, percent, time_spent });
 
   return json_({ status: 'success', score, total, percent });
 }
@@ -250,6 +257,32 @@ function handleAdminDeleteQuestionPost_(body) {
   if (rowIndex <= 0) return json_({ status: 'error', message: 'Soal tidak ditemukan.' });
   questionsSheet.deleteRow(rowIndex);
   return json_({ status: 'success' });
+}
+
+function handlePublicResultsGet_() {
+  const { resultsSheet } = getSheets_();
+  const values = resultsSheet.getDataRange().getValues();
+  if (values.length <= 1) return json_([]);
+
+  const header = values[0].map(v => String(v || '').trim().toLowerCase());
+  const map = buildResultsMap_(header);
+
+  if (map.username === -1 || map.percent === -1 || map.timestamp === -1) {
+    return json_({ status: 'error', message: 'Header kolom tidak sesuai di sheet Results. Pastikan ada "username", "percent", dan "timestamp".' });
+  }
+
+  const rankingData = values
+    .slice(1)
+    .map(row => ({
+      username: String(row[map.username] || ''),
+      score: toNumber_(row[map.score]),
+      total: toNumber_(row[map.total]),
+      percent: toNumber_(row[map.percent]),
+      timestamp: row[map.timestamp]
+    }))
+    .filter(r => r.username);
+
+  return json_(rankingData);
 }
 
 function parseBody_(e) {
@@ -426,7 +459,7 @@ function rowToQuestion_(row, map) {
 }
 
 function appendResult_(resultsSheet, entry) {
-  const row = [new Date(), entry.username, entry.score, entry.total, entry.percent];
+  const row = [new Date(), entry.username, entry.score, entry.total, entry.percent, entry.time_spent];
   resultsSheet.appendRow(row);
 }
 

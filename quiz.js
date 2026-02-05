@@ -148,12 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
         nextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
         const username = usernameInput.value;
+        const time_spent = Math.round((new Date() - quizStartTime) / 1000);
 
         try {
             const postResponse = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'submitQuiz', username, answers: userAnswers }),
+                body: JSON.stringify({ action: 'submitQuiz', username, answers: userAnswers, time_spent }),
             });
             
             const result = await postResponse.json();

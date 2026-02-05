@@ -3068,3 +3068,41 @@ text-transform: uppercase;
                 font-size: 11px;
             }
         }
+
+/* ==================== Ranking Page Styles ==================== */
+.rank-card .stats {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+}
+
+.rank-card .stats span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.stats-rest {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #8899a6;
+    margin-left: auto;
+    margin-right: 1.5rem;
+}
+
+.stats-rest span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.list-item .score {
+    font-weight: 600;
+    font-size: 1.1rem;
+    min-width: 80px;
+    text-align: right;
+}

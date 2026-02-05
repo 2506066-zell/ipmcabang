@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peringkat Kuis - IPM Panawuan</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/ranking.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="page-ranking">
+
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+            <li><a href="ranking.html" class="mobile-nav-link active"><i class="fas fa-trophy"></i> Peringkat</a></li>
+            <li><a href="admin/admin.html" class="mobile-nav-link"><i class="fas fa-user-shield"></i> Admin</a></li>
+        </ul>
+    </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+    <main class="ranking-container">
+        <div class="ranking-header">
+            <h1>Papan Peringkat</h1>
+            <p>Uji kemampuanmu dan raih posisi puncak!</p>
+        </div>
+
+        <div id="loading-indicator" class="shimmer-wrapper">
+            <!-- Skeleton loading -->
+        </div>
+
+        <div id="error-container" style="display: none;">
+            <h2>Terjadi Kesalahan</h2>
+            <p id="error-message"></p>
+        </div>
+
+        <div id="main-content" style="display: none;">
+            <div id="top-3-showcase" class="top-3-container">
+                <!-- Top 3 Showcase akan dirender oleh JavaScript -->
+            </div>
+
+            <div class="ranking-list-container">
+                <div class="ranking-controls">
+                    <input type="text" id="search-input" placeholder="Cari nama peserta...">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">Semua</button>
+                        <button class="filter-btn" data-filter="weekly">Mingguan</button>
+                        <button class="filter-btn" data-filter="daily">Harian</button>
+                    </div>
+                </div>
+                <div id="ranking-list">
+                    <!-- Daftar peringkat akan dirender oleh JavaScript -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="ranking.js" defer></script>
+    <script src="scripts/main.js" defer></script>
+</body>
+</html>
