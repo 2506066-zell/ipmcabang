@@ -1,447 +1,504 @@
-/* ==========================================================================
-   Admin Panel Stylesheet
-   ========================================================================== */
+/* === SETUP & GLOBAL STYLES === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* ==========================================================================
-   1. Design System & Variables
-   ========================================================================== */
 :root {
-  /* Hijau - Primary Colors */
-  --green-primary: #10B981;       /* Hijau utama untuk aksi penting */
-  --green-dark: #059669;          /* Hijau gelap untuk hover */
-  --green-light: #D1FAE5;         /* Hijau sangat muda untuk highlight */
-  --green-bg: #ECFDF5;            /* Background hijau lembut */
-
-  /* Putih & Netral */
-  --white: #FFFFFF;
-  --gray-50: #F9FAFB;             /* Background utama */
-  --gray-100: #F3F4F6;            /* Background secondary */
-  --gray-200: #E5E7EB;            /* Borders dan garis pembatas */
-  --gray-300: #D1D5DB;            /* Placeholder dan disabled */
-
-  /* Teks */
-  --text-dark: #111827;           /* Teks utama */
-  --text-medium: #374151;         /* Teks secondary */
-  --text-light: #6B7280;          /* Teks tersier */
-
-  /* Status Colors */
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-
-  /* System */
-  --base-unit: 8px;
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-  --transition-fast: 0.2s ease;
+    --primary-bg: #0A1929;
+    --card-bg: #1E293B;
+    --text-primary: #FFFFFF;
+    --text-secondary: #94A3B8;
+    --accent-gold: #FFD700;
+    --accent-green: #00C896;
+    --border-color: #334155;
+    --error-color: #FF6B6B;
+    --success-color: var(--accent-green);
+    --font-family: 'Inter', sans-serif;
+    --transition-speed: 0.2s ease-in-out;
 }
 
-/* ==========================================================================
-   2. Global & Layout
-   ========================================================================== */
-body.page-admin {
-  background-color: var(--gray-50);
-  color: var(--text-medium);
-  font-family: 'Poppins', 'Segoe UI', 'Helvetica Neue', sans-serif;
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 16px;
 }
 
 .admin-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: calc(var(--base-unit) * 4); /* 32px */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-/* ==========================================================================
-   3. Header
-   ========================================================================== */
-.public-header {
-  background: var(--white);
-  border-bottom: 1px solid var(--green-light);
-  box-shadow: var(--shadow-sm);
-}
-
-/* ==========================================================================
-   4. Card Component
-   ========================================================================== */
-.card {
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: calc(var(--base-unit) * 4);
-  padding: calc(var(--base-unit) * 3); /* 24px */
-  transition: border-color var(--transition-fast);
-}
-
-.card:hover {
-  border-color: var(--green-primary);
-}
-
-.card-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: var(--base-unit);
-}
-
-.card-subtitle {
-  color: var(--text-light);
-  margin-bottom: calc(var(--base-unit) * 3);
+/* === UTILITY CLASSES === */
+.hidden {
+    display: none !important;
 }
 
 .code {
-  background: var(--gray-100);
-  padding: 2px 6px;
-  border-radius: var(--border-radius-sm);
-  font-family: monospace;
-  color: var(--text-medium);
+    font-family: monospace;
+    background-color: var(--border-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
 }
 
-/* ==========================================================================
-   5. Form Elements
-   ========================================================================== */
+/* === CARD STYLING === */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.card-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+/* === FORM & FIELD STYLING === */
 .field {
-  margin-bottom: calc(var(--base-unit) * 2);
+    margin-bottom: 20px;
 }
 
 .field label {
-  display: block;
-  font-weight: 500;
-  color: var(--text-dark);
-  margin-bottom: var(--base-unit);
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
 }
 
-input[type="text"],
-input[type="password"],
-input[type="search"],
-textarea,
-select {
-  width: 100%;
-  padding: calc(var(--base-unit) * 1.5) calc(var(--base-unit) * 2);
-  background: var(--white);
-  border: 1px solid var(--gray-300);
-  border-radius: var(--border-radius-md);
-  color: var(--text-dark);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+.field input[type="text"],
+.field input[type="password"],
+.field input[type="search"],
+.field textarea,
+.field select {
+    width: 100%;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    min-height: 48px; /* Touch-friendly */
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-input::placeholder,
-textarea::placeholder {
-  color: var(--gray-300);
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: var(--green-primary);
-  box-shadow: 0 0 0 3px var(--green-light);
+.field textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: calc(var(--base-unit) * 2);
-}
-
-/* ==========================================================================
-   6. Buttons
-   ========================================================================== */
+/* === BUTTON STYLING === */
 .btn {
-  padding: calc(var(--base-unit) * 1.25) calc(var(--base-unit) * 2.5);
-  border-radius: var(--border-radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--base-unit);
-  border: 1px solid transparent;
-  text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-family);
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    min-height: 48px; /* Touch-friendly */
+    text-decoration: none;
+    transition: background-color var(--transition-speed), transform var(--transition-speed);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
 }
 
 .btn-primary {
-  background-color: var(--green-primary);
-  color: var(--white);
-  border-color: var(--green-primary);
+    background-color: var(--accent-gold);
+    color: var(--primary-bg);
 }
 
 .btn-primary:hover {
-  background-color: var(--green-dark);
-  border-color: var(--green-dark);
+    background-color: #FFEC8B; /* Lighter gold */
 }
 
 .btn-secondary {
-  background-color: transparent;
-  color: var(--green-primary);
-  border-color: var(--green-primary);
+    background-color: var(--border-color);
+    color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-  background-color: var(--green-bg);
+    background-color: #475569; /* Lighter grey */
 }
 
 .btn-ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text-medium);
+    background-color: transparent;
+    color: var(--text-secondary);
 }
 
 .btn-ghost:hover {
-  background: var(--gray-100);
-  color: var(--text-dark);
-}
-
-.btn-danger {
-    color: var(--danger);
-    background: transparent;
-    border-color: transparent;
-}
-
-.btn-danger:hover {
-    background-color: #FEF2F2;
-    color: #B91C1C;
+    background-color: var(--card-bg);
+    color: var(--text-primary);
 }
 
 .actions {
-  display: flex;
-  gap: var(--base-unit);
-  align-items: center;
-  margin-top: calc(var(--base-unit) * 2);
-}
-
-/* ==========================================================================
-   7. Tables
-   ========================================================================== */
-.table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--border-radius-md);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-th, td {
-  padding: calc(var(--base-unit) * 1.5) calc(var(--base-unit) * 2);
-  vertical-align: middle;
-}
-
-thead {
-  background-color: var(--green-bg);
-}
-
-th {
-  font-weight: 600;
-  color: var(--text-dark);
-  font-size: 0.875rem;
-}
-
-tbody tr {
-  border-bottom: 1px solid var(--gray-200);
-}
-
-tbody tr:last-child {
-  border-bottom: none;
-}
-
-tbody tr:nth-child(even) {
-  background-color: var(--gray-50);
-}
-
-tbody tr:hover {
-  background-color: var(--green-light);
-}
-
-.status-badge {
-    display: inline-flex;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-weight: 500;
-    font-size: 0.8rem;
 }
 
-.status-badge.active {
-    background-color: var(--green-light);
-    color: var(--green-dark);
+/* === LOGIN SECTION === */
+#connect-btn, #logout-btn {
+    width: 100%;
 }
 
-.status-badge.inactive {
-    background-color: var(--gray-100);
-    color: var(--text-light);
+.status {
+    margin-left: auto;
+    font-style: italic;
+    color: var(--text-secondary);
 }
 
-/* ==========================================================================
-   8. Tabs
-   ========================================================================== */
+/* === TABS === */
 .tabs {
-  display: flex;
-  border-bottom: 1px solid var(--gray-200);
-  margin-bottom: calc(var(--base-unit) * 3);
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
 }
 
 .tab {
-  padding: calc(var(--base-unit) * 1.5) calc(var(--base-unit) * 2);
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-light);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px; /* Overlap border */
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    position: relative;
+    transition: color var(--transition-speed);
+}
+
+.tab:hover {
+    color: var(--text-primary);
 }
 
 .tab.active {
-  color: var(--green-primary);
-  border-bottom-color: var(--green-primary);
+    color: var(--accent-gold);
+    font-weight: 600;
 }
 
-.tab-panel.hidden {
-  display: none;
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--accent-gold);
 }
 
-/* ==========================================================================
-   9. Modal
-   ========================================================================== */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-fast);
+.tab-panel {
+    animation: fadeIn 0.5s;
 }
 
-.modal.hidden {
-    display: none;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-.modal:not(.hidden) {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.modal-content {
-  background: var(--white);
-  border-radius: var(--border-radius-md);
-  padding: calc(var(--base-unit) * 3);
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--gray-200);
-  padding-bottom: calc(var(--base-unit) * 2);
-  margin-bottom: calc(var(--base-unit) * 3);
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-light);
-}
-
-/* ==========================================================================
-   10. Utility & Helper Classes
-   ========================================================================== */
-.hidden {
-  display: none !important;
-}
-
+/* === TOOLBAR === */
 .toolbar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: calc(var(--base-unit) * 2);
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
 .toolbar-left, .toolbar-right {
     display: flex;
-    gap: var(--base-unit);
+    flex-wrap: wrap;
+    gap: 12px;
     align-items: center;
 }
 
-.search-input {
-    min-width: 250px;
+.toolbar-right {
+    justify-content: flex-start;
 }
 
-/* ==========================================================================
-   11. Responsive Design
-   ========================================================================== */
-@media (max-width: 768px) {
-  .admin-container {
-    padding: calc(var(--base-unit) * 2);
-  }
+#search-input {
+    flex-grow: 1;
+}
 
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
+/* === TABLE STYLING (MOBILE-FIRST: CARD-BASED) === */
+.table-wrap {
+    overflow-x: auto;
+}
 
-  .toolbar {
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Hide table headers on mobile, but not from screen readers */
+thead {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+tr {
+    display: block;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    padding: 16px;
+}
+
+td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color);
+}
+
+td:last-child {
+    border-bottom: none;
+}
+
+td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    text-align: left;
+    margin-right: 16px;
+    color: var(--text-secondary);
+}
+
+.question-text {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.question-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.option b {
+    color: var(--text-primary);
+}
+
+/* Specific table cell adjustments */
+#questions-tbody .actions {
+    margin-top: 16px;
     flex-direction: column;
     align-items: stretch;
-    gap: calc(var(--base-unit) * 2);
-  }
+}
 
-  .toolbar-right {
-    justify-content: flex-end;
-  }
-
-  .search-input {
-    min-width: 0;
+#questions-tbody .btn {
     width: 100%;
-  }
+}
 
-  .modal-content {
-    padding: var(--base-unit) * 2;
-  }
+/* === MODAL STYLING === */
+.modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(10, 25, 41, 0.8);
+    display: flex;
+    align-items: flex-end; /* Slide from bottom on mobile */
+    justify-content: center;
+    z-index: 1000;
+    padding: 0;
+    animation: fadeIn 0.3s;
+}
 
-  /* Responsive tables */
-  .table-wrap {
-    -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
-  }
+.modal-content {
+    background-color: var(--card-bg);
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
 
-  table {
-    font-size: 0.9rem;
-  }
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
 
-  th, td {
-    padding: var(--base-unit) calc(var(--base-unit) * 1.5); /* 8px 12px */
-    white-space: nowrap;
-  }
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background-color: var(--card-bg);
+    z-index: 1;
+}
 
-  /* Override inline fixed widths from HTML */
-  th[style] {
-    width: auto !important;
-  }
+#modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
 
-  /* Set more reasonable min-widths for columns */
-  #questions-table th:nth-child(5) { /* Aksi */
-    min-width: 120px;
-  }
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+}
+
+#question-form {
+    padding: 24px;
+}
+
+#question-form .actions {
+    flex-direction: column-reverse; /* Save button is more prominent */
+}
+
+#question-form .btn {
+    width: 100%;
+}
+
+/* === RESPONSIVE DESIGN (TABLET AND UP) === */
+@media (min-width: 768px) {
+    .admin-container {
+        padding: 40px;
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    
+    .field {
+        margin-bottom: 0; /* Reset margin for grid items */
+    }
+
+    #connect-btn, #logout-btn {
+        width: auto;
+    }
+
+    .toolbar {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .toolbar-right {
+        justify-content: flex-end;
+    }
+
+    /* Restore table layout */
+    thead {
+        all: revert; /* Un-hide headers */
+    }
+
+    tr {
+        display: table-row;
+        background: none;
+        border: none;
+        margin-bottom: 0;
+        padding: 0;
+    }
+    
+    tr:nth-child(even) {
+        background-color: rgba(30, 41, 59, 0.5);
+    }
+
+    td {
+        display: table-cell;
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    td::before {
+        display: none; /* Hide data-label pseudo-elements */
+    }
+    
+    #questions-tbody .actions {
+        flex-direction: row;
+        align-items: center;
+        margin-top: 0;
+    }
+
+    #questions-tbody .btn {
+        width: auto;
+    }
+
+    /* Modal adjustments for tablet/desktop */
+    .modal {
+        align-items: center;
+        padding: 40px;
+    }
+
+    .modal-content {
+        max-width: 700px;
+        width: 100%;
+        border-radius: 12px;
+        max-height: 80vh;
+        animation: fadeIn 0.3s; /* Override slideUp */
+    }
+
+    #question-form .actions {
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    #question-form .btn {
+        width: auto;
+    }
+}
+
+/* === DESKTOP-SPECIFIC REFINEMENTS === */
+@media (min-width: 1024px) {
+    .card {
+        padding: 32px;
+    }
+
+    .actions {
+        justify-content: flex-start;
+    }
 }

@@ -37,14 +37,23 @@
     </nav>
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
+    <div id="particles-js"></div>
+
     <main class="ranking-container">
         <div class="ranking-header">
-            <h1>Papan Peringkat</h1>
+            <h1><i class="fas fa-trophy"></i> Papan Peringkat</h1>
             <p>Uji kemampuanmu dan raih posisi puncak!</p>
         </div>
 
-        <div id="loading-indicator" class="shimmer-wrapper">
-            <!-- Skeleton loading -->
+        <div id="user-rank-card" class="user-rank-card" style="display: none;">
+            <!-- User's current rank will be rendered here -->
+        </div>
+
+        <div id="loading-indicator" class="loading-indicator">
+            <div class="loading-content">
+                <h2>Menganalisis Peringkat...</h2>
+                <div class="scanner"></div>
+            </div>
         </div>
 
         <div id="error-container" style="display: none;">
@@ -53,21 +62,36 @@
         </div>
 
         <div id="main-content" style="display: none;">
+            <div class="ranking-controls">
+                <input type="text" id="search-input" placeholder="Cari nama peserta...">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Semua</button>
+                    <button class="filter-btn" data-filter="weekly">Mingguan</button>
+                    <button class="filter-btn" data-filter="daily">Harian</button>
+                </div>
+            </div>
+
             <div id="top-3-showcase" class="top-3-container">
                 <!-- Top 3 Showcase akan dirender oleh JavaScript -->
             </div>
 
             <div class="ranking-list-container">
-                <div class="ranking-controls">
-                    <input type="text" id="search-input" placeholder="Cari nama peserta...">
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-filter="all">Semua</button>
-                        <button class="filter-btn" data-filter="weekly">Mingguan</button>
-                        <button class="filter-btn" data-filter="daily">Harian</button>
-                    </div>
-                </div>
                 <div id="ranking-list">
                     <!-- Daftar peringkat akan dirender oleh JavaScript -->
+                </div>
+            </div>
+
+            <div class="achievements-container">
+                <h2><i class="fas fa-award"></i> Lencana Prestasi</h2>
+                <div id="badges-grid" class="badges-grid">
+                    <!-- Achievement badges will be rendered here -->
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <h2><i class="fas fa-chart-bar"></i> Statistik Kuis</h2>
+                <div id="stats-visualization" class="stats-visualization">
+                    <!-- Statistics will be rendered here -->
                 </div>
             </div>
         </div>

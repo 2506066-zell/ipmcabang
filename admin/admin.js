@@ -130,19 +130,24 @@
             : state.questions;
 
         const rows = items.map(q => {
-            const active = q.active ? 'on' : 'off';
             const activeLabel = q.active ? 'Aktif' : 'Nonaktif';
+            const activeClass = q.active ? 'active' : 'inactive';
             return `
                 <tr data-id="${escapeHtml(q.id)}">
-                    <td>${escapeHtml(q.id)}</td>
-                    <td>
-                        <div>${escapeHtml(q.question)}</div>
-                        <div class="small">A: ${escapeHtml(q.options?.a || '')} • B: ${escapeHtml(q.options?.b || '')} • C: ${escapeHtml(q.options?.c || '')} • D: ${escapeHtml(q.options?.d || '')}</div>
-                    </td>
-                    <td><span class="badge ${active}">${activeLabel}</span></td>
-                    <td>${escapeHtml((q.correct_answer || '').toUpperCase())}</td>
-                    <td>
-                        <div class="row-actions">
+                    <td data-label="ID">${escapeHtml(q.id)}</td>
+                    <td data-label="Soal">
+                    <div class="question-text">${escapeHtml(q.question)}</div>
+                    <div class="question-options">
+                        <span class="option"><b>A:</b> ${escapeHtml(q.options?.a || '')}</span>
+                        <span class="option"><b>B:</b> ${escapeHtml(q.options?.b || '')}</span>
+                        <span class="option"><b>C:</b> ${escapeHtml(q.options?.c || '')}</span>
+                        <span class="option"><b>D:</b> ${escapeHtml(q.options?.d || '')}</span>
+                    </div>
+                </td>
+                    <td data-label="Aktif"><span class="status-badge ${activeClass}">${activeLabel}</span></td>
+                    <td data-label="Jawaban">${escapeHtml((q.correct_answer || '').toUpperCase())}</td>
+                    <td data-label="Aksi">
+                        <div class="actions">
                             <button class="btn btn-secondary" type="button" data-action="edit"><i class="fas fa-pen"></i> Edit</button>
                             <button class="btn btn-danger" type="button" data-action="delete"><i class="fas fa-trash"></i> Hapus</button>
                         </div>
@@ -159,10 +164,10 @@
     function renderResults() {
         const rows = state.results.map(r => `
             <tr>
-                <td>${escapeHtml(r.timestamp || '')}</td>
-                <td>${escapeHtml(r.username || '')}</td>
-                <td>${escapeHtml(r.score ?? '')}${r.total ? ` / ${escapeHtml(r.total)}` : ''}</td>
-                <td>${escapeHtml(r.percent ?? '')}</td>
+                <td data-label="Waktu">${escapeHtml(r.timestamp || '')}</td>
+                <td data-label="Nama">${escapeHtml(r.username || '')}</td>
+                <td data-label="Skor">${escapeHtml(r.score ?? '')}${r.total ? ` / ${escapeHtml(r.total)}` : ''}</td>
+                <td data-label="Persen">${escapeHtml(r.percent ?? '')}</td>
             </tr>
         `);
         els.resultsTbody.innerHTML = rows.join('') || `

@@ -1,19 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
 
+    const userRankCard = document.getElementById('user-rank-card');
     const top3Container = document.getElementById('top-3-showcase');
     const rankingList = document.getElementById('ranking-list');
     const loadingIndicator = document.getElementById('loading-indicator');
     const mainContent = document.getElementById('main-content');
     const errorContainer = document.getElementById('error-container');
     const errorMessage = document.getElementById('error-message');
+    const searchInput = document.getElementById('search-input');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    let allData = [];
+    let previousRanks = new Map();
+    const currentUser = "Anda"; // Ganti dengan nama pengguna yang login jika ada sistem otentikasi
 
     function showLoading(isLoading) {
         loadingIndicator.style.display = isLoading ? 'flex' : 'none';
         mainContent.style.display = isLoading ? 'none' : 'block';
-        if (isLoading) {
-            errorContainer.style.display = 'none';
-        }
+        if (isLoading) errorContainer.style.display = 'none';
     }
 
     function showError(message) {
@@ -27,16 +32,28 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading(true);
         try {
             const response = await fetch(`${API_URL}?action=getResults`);
-            if (!response.ok) {
-                throw new Error(`Gagal mengambil data dari server (Status: ${response.status}). Ini mungkin karena masalah izin pada Google Apps Script.`);
-            }
+            if (!response.ok) throw new Error(`Gagal mengambil data (Status: ${response.status})`);
             
             const data = await response.json();
-            if (data.status === 'error') {
-                throw new Error(data.message || 'Terjadi kesalahan pada server.');
+            if (data.status === 'error') throw new Error(data.message || 'Kesalahan server.');
+
+            allData = data.sort((a, b) => b.percent - a.percent || new Date(a.timestamp) - new Date(b.timestamp));
+            
+            renderPage(allData);
+            renderAchievements(allData);
+            renderStats(allData);
+
+            // Update ranks for next comparison
+            const newRanks = new Map();
+            allData.forEach((p, index) => {
+                newRanks.set(p.username, index + 1);
+            });
+
+            // If previousRanks is empty, initialize it without animation
+            if (previousRanks.size === 0) {
+                previousRanks = newRanks;
             }
 
-            renderRanking(data);
         } catch (error) {
             showError(error.message);
             console.error('Gagal mengambil data peringkat:', error);
@@ -45,24 +62,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderRanking(data) {
-        if (!data || data.length === 0) {
-            rankingList.innerHTML = `<p style="text-align: center;">Belum ada data peringkat.</p>`;
-            return;
+    function renderPage(data) {
+        renderUserRank(data);
+        renderTop3(data.slice(0, 3));
+        renderRest(data.slice(3));
+        applyEntryAnimations();
+    }
+
+    function renderUserRank(data) {
+        const userIndex = data.findIndex(p => p.username.toLowerCase() === currentUser.toLowerCase());
+        if (userIndex !== -1) {
+            const user = data[userIndex];
+            const rank = userIndex + 1;
+            userRankCard.innerHTML = `
+                <div class="position">⭐ Posisi Anda: #${rank}</div>
+                <div class="details">
+                    <span>Skor: ${user.score}/${user.total_questions * 10}</span>
+                    <span>Waktu: ${user.time_spent} dtk</span>
+                    <span>Percobaan: ${user.attempt_count}x</span>
+                </div>
+            `;
+            userRankCard.style.display = 'block';
+        } else {
+            userRankCard.style.display = 'none';
         }
-
-        const sortedData = data.sort((a, b) => {
-            if (b.percent !== a.percent) {
-                return b.percent - a.percent;
-            }
-            return new Date(a.timestamp) - new Date(b.timestamp);
-        });
-
-        const top3 = sortedData.slice(0, 3);
-        const rest = sortedData.slice(3);
-
-        renderTop3(top3);
-        renderRest(rest);
     }
 
     function renderTop3(top3Data) {
@@ -71,19 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const rank = index + 1;
             const card = document.createElement('div');
             card.className = `rank-card rank-${rank}`;
-            
-            let positionHTML = `<div class="rank-position">${rank}</div>`;
-            if (rank === 1) positionHTML = `<div class="rank-position"><i class="fas fa-crown"></i></div>`;
-
             card.innerHTML = `
-                ${positionHTML}
+                <div class="rank-position">${rank === 1 ? '<i class="fas fa-crown"></i>' : rank}</div>
                 <div class="avatar">${p.username.charAt(0).toUpperCase()}</div>
                 <div class="name">${p.username}</div>
                 <div class="score">${p.score} Poin</div>
-                <div class="stats">
-                    <span><i class="fas fa-stopwatch"></i> ${p.time_spent} dtk</span>
-                    <span><i class="fas fa-redo"></i> ${p.attempt_count}x</span>
-                </div>
             `;
             top3Container.appendChild(card);
         });
@@ -93,10 +108,31 @@ document.addEventListener('DOMContentLoaded', () => {
         rankingList.innerHTML = '';
         if (restData.length === 0) return;
 
+        const newRanks = new Map();
+        allData.forEach((p, index) => {
+            newRanks.set(p.username, index + 1);
+        });
+
         restData.forEach((p, index) => {
             const rank = index + 4;
             const listItem = document.createElement('div');
             listItem.className = 'list-item';
+            listItem.dataset.username = p.username;
+
+            const oldRank = previousRanks.get(p.username);
+            const newRank = newRanks.get(p.username);
+
+            if (oldRank && newRank) {
+                if (newRank < oldRank) {
+                    listItem.classList.add('rank-up');
+                } else if (newRank > oldRank) {
+                    listItem.classList.add('rank-down');
+                }
+            }
+
+            if (p.username.toLowerCase() === currentUser.toLowerCase()) {
+                listItem.classList.add('user-highlight');
+            }
             listItem.innerHTML = `
                 <div class="rank">${rank}</div>
                 <div class="name-avatar">
@@ -107,8 +143,173 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="time">${new Date(p.timestamp).toLocaleDateString('id-ID')}</div>
             `;
             rankingList.appendChild(listItem);
+
+            // Remove animation classes after animation ends
+            setTimeout(() => {
+                listItem.classList.remove('rank-up', 'rank-down');
+            }, 2000);
+        });
+
+        previousRanks = newRanks;
+    }
+
+    function renderAchievements(data) {
+        const badgesGrid = document.getElementById('badges-grid');
+        // Logika untuk menentukan badge (contoh sederhana)
+        const topScorer = data.length > 0 ? data[0] : null;
+        const badges = [
+            { icon: '🎯', title: 'Top Scorer', user: topScorer ? topScorer.username : '-' },
+            { icon: '⚡', title: 'Speed Runner', user: 'User C' }, // Placeholder
+            { icon: '💯', title: 'Perfect Score', user: 'User A' }, // Placeholder
+        ];
+        badgesGrid.innerHTML = badges.map(badge => `
+            <div class="badge">
+                <div class="badge-icon">${badge.icon}</div>
+                <div class="badge-title">${badge.title}</div>
+                <div class="badge-user">${badge.user}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderStats(data) {
+        const statsViz = document.getElementById('stats-visualization');
+        // Logika untuk visualisasi data (contoh sederhana)
+        const scoreDistribution = { 'A': 0, 'B': 0, 'C': 0 };
+        data.forEach(p => {
+            if (p.percent >= 80) scoreDistribution['A']++;
+            else if (p.percent >= 60) scoreDistribution['B']++;
+            else scoreDistribution['C']++;
+        });
+
+        // Prevent division by zero
+        const total = data.length || 1;
+        statsViz.innerHTML = `
+            <div class="stat-item">
+                <span>Skor > 80% (A)</span>
+                <div class="progress-bar"><div style="width: ${(scoreDistribution['A']/total)*100}%"></div></div>
+            </div>
+            <div class="stat-item">
+                <span>Skor 60-79% (B)</span>
+                <div class="progress-bar"><div style="width: ${(scoreDistribution['B']/total)*100}%"></div></div>
+            </div>
+            <div class="stat-item">
+                <span>Skor < 60% (C)</span>
+                <div class="progress-bar"><div style="width: ${(scoreDistribution['C']/total)*100}%"></div></div>
+            </div>
+        `;
+    }
+
+    function applyEntryAnimations() {
+        gsap.from(".rank-card, .list-item", {
+            opacity: 0,
+            y: 20,
+            duration: 0.5,
+            stagger: 0.05,
+            ease: "power3.out"
         });
     }
 
+    function handleFilterAndSearch() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+
+        let filteredData = allData.filter(p => p.username.toLowerCase().includes(searchTerm));
+
+        const now = new Date();
+        if (activeFilter === 'weekly') {
+            const lastWeek = new Date(now.setDate(now.getDate() - 7));
+            filteredData = filteredData.filter(p => new Date(p.timestamp) >= lastWeek);
+        } else if (activeFilter === 'daily') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            filteredData = filteredData.filter(p => new Date(p.timestamp) >= today);
+        }
+
+        renderPage(filteredData);
+    }
+
+    searchInput.addEventListener('input', handleFilterAndSearch);
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            handleFilterAndSearch();
+        });
+    });
+
     fetchRankingData();
+    initParticles();
+
+    // Optional: Set an interval to fetch data periodically to see rank changes
+    // setInterval(fetchRankingData, 15000); // Fetch every 15 seconds
 });
+
+function initParticles() {
+    particlesJS('particles-js', {
+        "particles": {
+            "number": {
+                "value": 50,
+                "density": {
+                    "enable": true,
+                    "value_area": 800
+                }
+            },
+            "color": {
+                "value": "#00ffa3"
+            },
+            "shape": {
+                "type": "circle",
+            },
+            "opacity": {
+                "value": 0.5,
+                "random": true,
+            },
+            "size": {
+                "value": 3,
+                "random": true,
+            },
+            "line_linked": {
+                "enable": true,
+                "distance": 150,
+                "color": "#2d3748",
+                "opacity": 0.4,
+                "width": 1
+            },
+            "move": {
+                "enable": true,
+                "speed": 2,
+                "direction": "none",
+                "random": false,
+                "straight": false,
+                "out_mode": "out",
+                "bounce": false,
+            }
+        },
+        "interactivity": {
+            "detect_on": "canvas",
+            "events": {
+                "onhover": {
+                    "enable": true,
+                    "mode": "grab"
+                },
+                "onclick": {
+                    "enable": true,
+                    "mode": "push"
+                },
+                "resize": true
+            },
+            "modes": {
+                "grab": {
+                    "distance": 140,
+                    "line_linked": {
+                        "opacity": 1
+                    }
+                },
+                "push": {
+                    "particles_nb": 4
+                }
+            }
+        },
+        "retina_detect": true
+    });
+}
