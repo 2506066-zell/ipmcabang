@@ -403,17 +403,45 @@ tbody tr:hover {
   }
 
   .toolbar {
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--base-unit) * 2;
+    flex-direction: column;
+    align-items: stretch;
+    gap: calc(var(--base-unit) * 2);
   }
 
-  .toolbar-left, .toolbar-right {
-      justify-content: space-between;
+  .toolbar-right {
+    justify-content: flex-end;
   }
 
   .search-input {
-      min-width: 0;
-      width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .modal-content {
+    padding: var(--base-unit) * 2;
+  }
+
+  /* Responsive tables */
+  .table-wrap {
+    -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    padding: var(--base-unit) calc(var(--base-unit) * 1.5); /* 8px 12px */
+    white-space: nowrap;
+  }
+
+  /* Override inline fixed widths from HTML */
+  th[style] {
+    width: auto !important;
+  }
+
+  /* Set more reasonable min-widths for columns */
+  #questions-table th:nth-child(5) { /* Aksi */
+    min-width: 120px;
   }
 }

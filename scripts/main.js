@@ -17,13 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Set active nav link based on current page
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    const links = navLinks.querySelectorAll('a');
-    
-    links.forEach(link => {
-        const href = link.getAttribute('href').split('/').pop();
-        if (href === currentPage) {
-            link.classList.add('active');
-        }
-    });
+    if (navLinks) {
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        const links = navLinks.querySelectorAll('a');
+        
+        links.forEach(link => {
+            const href = link.getAttribute('href').split('/').pop();
+            if (href === currentPage) {
+                link.classList.add('active');
+            }
+        });
+    }
 });
