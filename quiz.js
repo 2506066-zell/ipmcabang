@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
+    // Tambahkan di bagian atas file quiz.js
+    let quizStartTime;
     const userInfoScreen = document.getElementById('user-info-screen');
     const usernameInput = document.getElementById('username');
     const startQuizBtn = document.getElementById('start-quiz-btn');
@@ -61,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Quiz Flow ---
     function startQuiz() {
+        quizStartTime = Date.now(); // START the timer
         currentQuestionIndex = 0;
         userAnswers = {};
         resultContainer.style.display = 'none';
@@ -148,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
         const username = usernameInput.value;
-        const time_spent = Math.round((new Date() - quizStartTime) / 1000);
+        const time_spent = Date.now() - quizStartTime; // Calculate duration in milliseconds
 
         try {
             const postResponse = await fetch(API_URL, {

@@ -81,8 +81,11 @@ function handlePublicQuestionsGet_() {
 function handleSubmitQuizPost_(body) {
   const username = String(body.username || '').trim();
   const answers = body.answers && typeof body.answers === 'object' ? body.answers : null;
+  const time_spent = body.time_spent; // Ambil time_spent dari body
+
   if (!username) return json_({ status: 'error', message: 'Nama wajib diisi.' });
   if (!answers) return json_({ status: 'error', message: 'Jawaban tidak valid.' });
+  if (time_spent === undefined) return json_({ status: 'error', message: 'time_spent is not defined' });
 
   const { questionsSheet, resultsSheet } = getSheets_();
   const header = ensureQuestionsHeader_(questionsSheet);
@@ -267,20 +270,50 @@ function handlePublicResultsGet_() {
   const header = values[0].map(v => String(v || '').trim().toLowerCase());
   const map = buildResultsMap_(header);
 
-  if (map.username === -1 || map.percent === -1 || map.timestamp === -1) {
-    return json_({ status: 'error', message: 'Header kolom tidak sesuai di sheet Results. Pastikan ada "username", "percent", dan "timestamp".' });
+  if (map.username === -1 || map.score === -1 || map.timestamp === -1 || map.time_spent === -1) {
+    return json_({ status: 'error', message: 'Header kolom tidak sesuai di sheet Results.' });
   }
 
-  const rankingData = values
+  const allResults = values
     .slice(1)
     .map(row => ({
       username: String(row[map.username] || ''),
       score: toNumber_(row[map.score]),
-      total: toNumber_(row[map.total]),
-      percent: toNumber_(row[map.percent]),
-      timestamp: row[map.timestamp]
+      timestamp: row[map.timestamp],
+      time_spent: toNumber_(row[map.time_spent]),
     }))
     .filter(r => r.username);
+
+  const userAttempts = allResults.reduce((acc, result) => {
+    if (!acc[result.username]) {
+      acc[result.username] = [];
+    }
+    acc[result.username].push(result);
+    return acc;
+  }, {});
+
+  const rankingData = Object.keys(userAttempts).map(username => {
+    const attempts = userAttempts[username];
+    const attempt_count = attempts.length;
+    const bestAttempt = attempts.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.time_spent !== b.time_spent) return a.time_spent - b.time_spent;
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    })[0];
+    return {
+      username,
+      score: bestAttempt.score,
+      time_spent: bestAttempt.time_spent,
+      attempt_count,
+      timestamp: bestAttempt.timestamp,
+    };
+  });
+
+  rankingData.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.time_spent !== b.time_spent) return a.time_spent - b.time_spent;
+    return a.attempt_count - b.attempt_count;
+  });
 
   return json_(rankingData);
 }
@@ -364,7 +397,7 @@ function ensureQuestionsHeader_(sheet) {
 }
 
 function ensureResultsHeader_(sheet) {
-  const required = ['timestamp', 'username', 'score', 'total', 'percent'];
+  const required = ['timestamp', 'username', 'score', 'total', 'percent', 'time_spent'];
   const lastRow = sheet.getLastRow();
   const lastCol = Math.max(sheet.getLastColumn(), 1);
 
@@ -407,11 +440,12 @@ function buildQuestionsMap_(header) {
 function buildResultsMap_(header) {
   const idx = name => header.indexOf(name);
   return {
-    timestamp: Math.max(idx('timestamp'), 0),
-    username: Math.max(idx('username'), 1),
-    score: Math.max(idx('score'), 2),
-    total: Math.max(idx('total'), 3),
-    percent: Math.max(idx('percent'), 4),
+    timestamp: idx('timestamp'),
+    username: idx('username'),
+    score: idx('score'),
+    total: idx('total'),
+    percent: idx('percent'),
+    time_spent: idx('time_spent'),
   };
 }
 
