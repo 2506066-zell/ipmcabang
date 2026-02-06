@@ -1,5 +1,5 @@
 const { query } = require('../db');
-const { json } = require('../_util');
+const { json, parseJsonBody } = require('../_util');
 const crypto = require('crypto');
 
 function scryptHash(password, salt) {
@@ -14,7 +14,7 @@ function scryptHash(password, salt) {
 module.exports = async (req, res) => {
   try {
     if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
-    const body = JSON.parse(req.body || '{}');
+    const body = parseJsonBody(req);
     const username = String(body.username || '').trim().toLowerCase();
     const password = String(body.password || '');
     const nama_panjang = body.nama_panjang ? String(body.nama_panjang) : null;

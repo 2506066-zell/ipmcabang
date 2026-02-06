@@ -20,4 +20,12 @@ function getBearerToken(req) {
   return h.slice(7).trim();
 }
 
-module.exports = { json, cacheHeaders, getBearerToken };
+function parseJsonBody(req) {
+  const b = req && req.body !== undefined ? req.body : {};
+  if (typeof b === 'string') {
+    try { return JSON.parse(b || '{}'); } catch { return {}; }
+  }
+  return b || {};
+}
+
+module.exports = { json, cacheHeaders, getBearerToken, parseJsonBody };

@@ -12,7 +12,8 @@ async function list(req, res) {
 async function create(req, res) {
   const token = getBearerToken(req);
   if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) return json(res, 401, { status: 'error', message: 'Unauthorized' });
-  const b = JSON.parse(req.body || '{}');
+  const { parseJsonBody } = require('./_util');
+  const b = parseJsonBody(req);
   const username = String(b.username || '').trim();
   const nama = String(b.nama_panjang || '').trim();
   const pimpinan = String(b.pimpinan || '').trim();
@@ -24,7 +25,7 @@ async function create(req, res) {
 async function update(req, res) {
   const token = getBearerToken(req);
   if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) return json(res, 401, { status: 'error', message: 'Unauthorized' });
-  const b = JSON.parse(req.body || '{}');
+  const b = parseJsonBody(req);
   const id = Number(b.id || 0);
   if (!id) return json(res, 400, { status: 'error', message: 'Missing id' });
   const prev = (await query`SELECT * FROM users WHERE id=${id}`).rows[0];

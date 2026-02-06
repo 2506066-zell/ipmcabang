@@ -7,7 +7,8 @@ async function list(req, res) {
 }
 
 async function create(req, res) {
-  const b = JSON.parse(req.body || '{}');
+  const { parseJsonBody } = require('./_util');
+  const b = parseJsonBody(req);
   const username = String(b.username || '').trim();
   const score = Number(b.score || 0);
   const total = Number(b.total || 0);
