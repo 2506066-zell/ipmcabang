@@ -47,7 +47,12 @@ async function remove(req, res) {
 module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') return list(req, res);
-    if (req.method === 'POST') return create(req, res);
+    if (req.method === 'POST') {
+      const { parseJsonBody } = require('./_util');
+      const b = parseJsonBody(req);
+      if (b && b.id) return update(req, res);
+      return create(req, res);
+    }
     if (req.method === 'PUT') return update(req, res);
     if (req.method === 'DELETE') return remove(req, res);
     json(res, 405, { status: 'error', message: 'Method not allowed' });
