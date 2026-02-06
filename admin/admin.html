@@ -22,7 +22,7 @@
         <section class="card">
             <h1 class="card-title">Admin Kuis</h1>
             <p class="card-subtitle">
-                Kelola soal & lihat hasil kuis. Halaman ini pakai <span class="code">Login Admin</span> (username + password) yang diset di Apps Script.
+                Masuk dengan <span class="code">username + password</span> (via server) atau gunakan <span class="code">Admin Token</span> untuk operasi khusus.
             </p>
 
             <div class="grid-2">
@@ -39,19 +39,7 @@
                 </div>
             </div>
 
-            <div class="grid-2">
-                <div class="field">
-                    <label for="admin-username">Username (admin)</label>
-                    <input id="admin-username" type="text" placeholder="Masukkan username">
-                </div>
-                <div class="field">
-                    <label for="admin-password">Password</label>
-                    <div class="password-wrapper">
-                        <input id="admin-password" type="password" placeholder="Masukkan password">
-                        <button class="icon-btn" id="toggle-admin-password" type="button" aria-label="Tampilkan/Sembunyikan Password"><i class="fas fa-eye"></i></button>
-                    </div>
-                </div>
-            </div>
+            
             <div class="grid-2">
                 <div class="field">
                     <label for="api-base-url">API Base URL (opsional)</label>

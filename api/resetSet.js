@@ -1,11 +1,11 @@
 const { query } = require('./db');
-const { json, getBearerToken } = require('./_util');
+const { json } = require('./_util');
+const { requireAdminAuth } = require('./_auth');
 
 module.exports = async (req, res) => {
   try {
     if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
-    const token = getBearerToken(req);
-    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+    try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
     const body = JSON.parse(req.body || '{}');
     const quiz_set = Number(body.quiz_set || 0);
     if (!quiz_set) return json(res, 400, { status: 'error', message: 'Missing quiz_set' });
