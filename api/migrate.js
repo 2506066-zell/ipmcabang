@@ -76,15 +76,9 @@ module.exports = async (req, res) => {
       if (!exists) {
         const crypto = require('crypto');
         const salt = crypto.randomBytes(16).toString('hex');
-        await new Promise((resolve, reject) => {
-          crypto.scrypt(adminP, salt, 64, (err, dk) => {
-            if (err) return reject(err);
-            const hash = dk.toString('hex');
-            query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${salt}, ${hash}, ${'admin'})`
-              .then(() => resolve())
-              .catch(reject);
-          });
-        });
+        const dk = crypto.scryptSync(adminP, salt, 64);
+        const hash = dk.toString('hex');
+        await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${salt}, ${hash}, ${'admin'})`;
       }
     }
     json(res, 200, { status: 'success' });
