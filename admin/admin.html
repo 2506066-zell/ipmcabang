@@ -46,17 +46,23 @@
                 </div>
                 <div class="field">
                     <label for="backend-mode">Mode Backend</label>
-                    <select id="backend-mode">
-                        <option value="apps_script">Apps Script</option>
-                        <option value="vercel">Vercel</option>
+                    <select id="backend-mode" disabled>
+                        <option value="vercel" selected>Vercel</option>
                     </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="field">
+                    <label for="api-base-url">API Base URL (opsional)</label>
+                    <input id="api-base-url" type="text" placeholder="contoh: https://ipmcabang-xxxxx.vercel.app" />
+                </div>
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <small class="help">Kosongkan untuk gunakan domain halaman ini (same-origin)</small>
                 </div>
             </div>
 
             <div class="actions">
-                <button class="btn btn-primary" id="connect-btn" type="button">
-                    <i class="fas fa-right-to-bracket" aria-hidden="true"></i> Login
-                </button>
                 <button class="btn btn-secondary" id="connect-vercel-btn" type="button">
                     <i class="fas fa-plug" aria-hidden="true"></i> Connect Vercel
                 </button>

@@ -81,6 +81,7 @@
         formActions: document.querySelector('#question-form .actions'),
         backendMode: document.getElementById('backend-mode'),
         adminTokenInput: document.getElementById('admin-token-input'),
+        apiBaseUrlInput: document.getElementById('api-base-url'),
     };
 
     const paging = {
@@ -146,13 +147,20 @@
         });
     }
 
+    function resolveApiUrl(path) {
+        const base = String(els.apiBaseUrlInput?.value || '').trim() || (typeof window !== 'undefined' ? window.location.origin : '');
+        if (!path.startsWith('http')) {
+            return base.replace(/\/$/, '') + path;
+        }
+        return path;
+    }
     async function apiGetVercel(path) {
-        return await fetchJson(path, { method: 'GET' });
+        return await fetchJson(resolveApiUrl(path), { method: 'GET' });
     }
     async function apiAdminVercel(method, path, body) {
         const headers = { 'Content-Type': 'application/json' };
         if (state.adminToken) headers['Authorization'] = `Bearer ${state.adminToken}`;
-        return await fetchJson(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+        return await fetchJson(resolveApiUrl(path), { method, headers, body: body ? JSON.stringify(body) : undefined });
     }
 
     function escapeHtml(value) {
@@ -531,12 +539,14 @@
             });
         }
 
-        els.connectBtn.addEventListener('click', () => {
-            connect().catch(err => {
-                setConnected(false);
-                setStatus(err.message || 'Gagal terhubung.', 'error');
+        if (els.connectBtn) {
+            els.connectBtn.addEventListener('click', () => {
+                connect().catch(err => {
+                    setConnected(false);
+                    setStatus(err.message || 'Gagal terhubung.', 'error');
+                });
             });
-        });
+        }
 
         if (els.backendMode) {
             els.backendMode.addEventListener('change', () => {
