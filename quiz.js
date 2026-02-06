@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let quizStartTime;
     const userInfoScreen = document.getElementById('user-info-screen');
     const usernameInput = document.getElementById('username');
+    const userNameTextEl = document.getElementById('user-name-text');
     const startQuizBtn = document.getElementById('start-quiz-btn');
     
     const quizBody = document.getElementById('quiz-body');
@@ -22,6 +23,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // API and Data
     const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
+    const USER_SESSION_KEY = 'ipmquiz_user_session';
+    const USER_USERNAME_KEY = 'ipmquiz_user_username';
+
+    const existingSession = String(sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '').trim();
+    if (!existingSession) {
+        window.location.href = 'login.html';
+        return;
+    }
+    async function loadUserName() {
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'publicMe', session: existingSession })
+            });
+            const data = await res.json();
+            if (res.ok && data && data.status === 'success') {
+                const nama = String(data.user?.nama_panjang || '');
+                if (usernameInput) usernameInput.value = nama;
+                if (userNameTextEl) userNameTextEl.textContent = nama || 'Tidak ditemukan';
+            }
+        } catch {}
+    }
+    loadUserName();
     let questionsData = [];
     let userAnswers = {};
     let currentQuestionIndex = 0;
@@ -62,14 +87,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = await response.json();
             questionsData = normalizeQuestionsResponse(payload);
             
-            if (!questionsData.length) throw new Error('Soal kosong atau format data tidak sesuai.');
-            
+            if (!questionsData.length) {
+                quizBody.style.display = 'block';
+                quizBody.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🙂</div>
+                        <h3>Soal belum tersedia</h3>
+                        <p>Coba muat ulang beberapa saat lagi.</p>
+                        <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
+                    </div>
+                `;
+                const btn = document.getElementById('empty-reload-quiz');
+                if (btn) btn.addEventListener('click', () => fetchQuestions());
+                return;
+            }
             quizBody.innerHTML = '';
             startQuiz();
 
         } catch (error) {
             quizBody.style.display = 'block';
-            quizBody.innerHTML = `<div class="error-state">Gagal memuat kuis. Coba lagi nanti.<br><small>${error.message}</small></div>`;
+            quizBody.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <h3>Gagal memuat kuis</h3>
+                    <p>${error.message}</p>
+                    <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
+                </div>`;
+            const btn = document.getElementById('empty-reload-quiz');
+            if (btn) btn.addEventListener('click', () => fetchQuestions());
             console.error(error);
         } finally {
             hideLoader();
@@ -218,9 +263,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    startQuizBtn.addEventListener('click', () => {
+    async function validateName() {
+        const nama = usernameInput.value.trim();
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'publicValidateName', session: existingSession, nama_panjang: nama })
+            });
+            const data = await res.json();
+            return res.ok && data && data.status === 'success';
+        } catch {
+            return false;
+        }
+    }
+
+    startQuizBtn.addEventListener('click', async () => {
         if (usernameInput.value.trim() === '') {
-            alert('Harap masukkan nama Anda untuk memulai.');
+            alert('Harap masukkan nama sesuai database.');
+            return;
+        }
+        const ok = await validateName();
+        if (!ok) {
+            alert('Nama tidak sesuai dengan data di sheet user.');
             return;
         }
         fetchQuestions();

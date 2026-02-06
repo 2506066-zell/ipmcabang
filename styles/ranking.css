@@ -48,6 +48,12 @@
     color: var(--text-secondary);
 }
 
+.last-updated {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
 /* User Rank Card */
 .user-rank-card {
     background: var(--card-bg);
@@ -161,6 +167,33 @@
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--accent-green);
+}
+
+/* Top 3 lightweight animations */
+.rank-card { will-change: transform, opacity; backface-visibility: hidden; }
+.rank-card.animate { animation: top3-enter 480ms ease-out both; }
+.rank-card.rank-2.animate { animation-delay: 0.08s; }
+.rank-card.rank-3.animate { animation-delay: 0.16s; }
+.rank-card.rank-1.animate { animation: top3-enter 480ms ease-out both, floatPulse 6s ease-in-out 1.2s infinite; }
+
+@keyframes top3-enter { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes floatPulse { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-card.animate { animation: none !important; }
+}
+
+.empty-state {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem 1rem;
+    text-align: center;
+    margin-top: 1rem;
+}
+.empty-state .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
 }
 
 /* Ranking List */
@@ -358,6 +391,15 @@
         color: var(--text-secondary);
         opacity: 0.9;
     }
+}
+
+@media (max-width: 480px) {
+    .ranking-container { padding: 1rem 0.75rem; }
+    .top-3-container { grid-template-columns: 1fr; gap: 1rem; }
+    .rank-card { padding: 1rem; }
+    .rank-card.rank-1 .avatar { width: 80px; height: 80px; font-size: 2.4rem; }
+    #search-input { padding: 0.7rem 1rem; font-size: 0.95rem; }
+    .filter-btn { min-height: 40px; padding: 0.5rem 0.9rem; }
 }
 
 /* Achievements and Stats */

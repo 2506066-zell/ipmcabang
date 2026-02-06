@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
+    const CACHE_KEY = 'ipm_ranking_cache';
+    const CACHE_TTL = 60000; // 60s
 
     const userRankCard = document.getElementById('user-rank-card');
     const top3Container = document.getElementById('top-3-showcase');
@@ -29,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchRankingData() {
+        if (window.AppLoader) AppLoader.show('Memuat Peringkat...');
         showLoading(true);
         try {
             const response = await fetch(`${API_URL}?action=getResults`);
@@ -38,8 +41,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.status === 'error') throw new Error(data.message || 'Kesalahan server.');
 
             allData = data.sort((a, b) => b.score - a.score);
-            
-            renderPage(allData);
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: allData }));
+            } catch {}
+            const empty = !Array.isArray(allData) || allData.length === 0;
+            document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
+            document.getElementById('main-content').style.display = empty ? 'none' : 'block';
+            if (!empty) renderPage(allData);
+            const last = document.getElementById('last-updated');
+            if (last) {
+                const now = new Date();
+                last.textContent = `Terakhir diperbarui: ${now.toLocaleString('id-ID')}`;
+            }
             renderAchievements(allData);
             renderStats(allData);
 
@@ -59,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Gagal mengambil data peringkat:', error);
         } finally {
             showLoading(false);
+            if (window.AppLoader) AppLoader.hide();
         }
     }
 
@@ -100,6 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="name">${p.username}</div>
                 <div class="score">${p.score} Poin</div>
             `;
+            card.classList.add('animate');
+            card.style.animationDelay = `${index * 0.08}s`;
             top3Container.appendChild(card);
         });
     }
@@ -200,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyEntryAnimations() {
-        gsap.from(".rank-card, .list-item", {
+        gsap.from(".list-item", {
             opacity: 0,
             y: 20,
             duration: 0.5,
@@ -225,7 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
             filteredData = filteredData.filter(p => new Date(p.timestamp) >= today);
         }
 
-        renderPage(filteredData);
+        const empty = filteredData.length === 0;
+        document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
+        document.getElementById('main-content').style.display = empty ? 'none' : 'block';
+        if (!empty) renderPage(filteredData);
     }
 
     searchInput.addEventListener('input', handleFilterAndSearch);
@@ -237,7 +256,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Stale-while-revalidate: tampilkan cache jika ada, lalu ambil data terbaru
+    try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && Array.isArray(cached.data)) {
+            allData = cached.data;
+            const empty = !Array.isArray(allData) || allData.length === 0;
+            document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
+            document.getElementById('main-content').style.display = empty ? 'none' : 'block';
+            if (!empty) renderPage(allData);
+            const last = document.getElementById('last-updated');
+            if (last && cached.t) last.textContent = `Terakhir diperbarui: ${new Date(cached.t).toLocaleString('id-ID')}`;
+            showLoading(false);
+            if (window.AppLoader) AppLoader.hide();
+        }
+    } catch {}
+
     fetchRankingData();
+    const reloadBtn = document.getElementById('empty-reload');
+    if (reloadBtn) reloadBtn.addEventListener('click', () => fetchRankingData());
     initParticles();
 
     // Optional: Set an interval to fetch data periodically to see rank changes

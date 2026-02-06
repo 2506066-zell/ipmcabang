@@ -15,6 +15,8 @@ const ADMINS_ = [
 
 const ADMIN_SESSION_TTL_SECONDS_ = 60 * 60 * 6; // 6 jam
 const ADMIN_SESSION_PREFIX_ = 'admin_session:';
+const USER_SESSION_TTL_SECONDS_ = 60 * 60 * 6;
+const USER_SESSION_PREFIX_ = 'user_session:';
 
 /**
  * Jalankan sekali dari Apps Script editor (Run) untuk membuat sheet header otomatis.
@@ -56,6 +58,10 @@ function doPost(e) {
     if (action === 'adminResults') return handleAdminResultsPost_(body);
     if (action === 'adminUpsertQuestion') return handleAdminUpsertQuestionPost_(body);
     if (action === 'adminDeleteQuestion') return handleAdminDeleteQuestionPost_(body);
+    if (action === 'publicRegister') return handlePublicRegisterPost_(body);
+    if (action === 'publicLogin') return handlePublicLoginPost_(body);
+    if (action === 'publicMe') return handlePublicMePost_(body);
+    if (action === 'publicValidateName') return handlePublicValidateNamePost_(body);
 
     return json_({ status: 'error', message: 'Unknown action.' });
   } catch (err) {
@@ -342,16 +348,19 @@ function getSheets_() {
   const spreadsheetId = String(props.getProperty('SPREADSHEET_ID') || '').trim();
   const questionsSheetName = String(props.getProperty('QUESTIONS_SHEET') || DEFAULTS_.QUESTIONS_SHEET).trim();
   const resultsSheetName = String(props.getProperty('RESULTS_SHEET') || DEFAULTS_.RESULTS_SHEET).trim();
+  const usersSheetName = String(props.getProperty('USERS_SHEET') || 'user').trim();
 
   const ss = spreadsheetId ? SpreadsheetApp.openById(spreadsheetId) : SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) throw new Error('Spreadsheet tidak ditemukan. Set Script Property SPREADSHEET_ID atau gunakan bound script.');
 
   const questionsSheet = getOrCreateSheet_(ss, questionsSheetName);
   const resultsSheet = getOrCreateSheet_(ss, resultsSheetName);
+  const usersSheet = getOrCreateSheet_(ss, usersSheetName);
 
   ensureResultsHeader_(resultsSheet);
+  ensureUsersHeader_(usersSheet);
 
-  return { ss, questionsSheet, resultsSheet };
+  return { ss, questionsSheet, resultsSheet, usersSheet };
 }
 
 function getOrCreateSheet_(ss, name) {
@@ -458,6 +467,16 @@ function buildResultsMap_(header) {
   };
 }
 
+function buildUsersMap_(header) {
+  const idxs = names => findHeaderIndices_(header, names);
+  return {
+    nama_panjang: idxs(['nama panjang','nama lengkap','nama']),
+    pimpinan: idxs(['pimpinan','asal pimpinan','asal']),
+    username: idxs(['username','user']),
+    password: idxs(['password','pass']),
+  };
+}
+
 function getByIndices_(row, indices) {
   const list = Array.isArray(indices) ? indices : [];
   for (let i = 0; i < list.length; i++) {
@@ -504,6 +523,127 @@ function rowToQuestion_(row, map) {
 function appendResult_(resultsSheet, entry) {
   const row = [new Date(), entry.username, entry.score, entry.total, entry.percent, entry.time_spent];
   resultsSheet.appendRow(row);
+}
+
+function ensureUsersHeader_(sheet) {
+  const required = ['Nama Panjang','Pimpinan','username','password'];
+  const lastRow = sheet.getLastRow();
+  const lastCol = Math.max(sheet.getLastColumn(), 1);
+  if (lastRow === 0) {
+    sheet.getRange(1, 1, 1, required.length).setValues([required]);
+    return required.map(v => v.toLowerCase());
+  }
+  const headerRange = sheet.getRange(1, 1, 1, lastCol).getValues();
+  const current = (headerRange[0] || []).map(v => String(v || '').trim().toLowerCase());
+  const wanted = ['nama panjang','pimpinan','username','password'];
+  const missing = wanted.filter(h => !current.includes(h));
+  if (missing.length) sheet.getRange(1, current.length + 1, 1, missing.length).setValues([missing]);
+  return current;
+}
+
+function rowToUser_(row, map) {
+  const username = String(getByIndices_(row, map.username) || '').trim();
+  if (!username) return null;
+  return {
+    nama_panjang: String(getByIndices_(row, map.nama_panjang) || '').trim(),
+    pimpinan: String(getByIndices_(row, map.pimpinan) || '').trim(),
+    username,
+    password: String(getByIndices_(row, map.password) || '').trim(),
+  };
+}
+
+function findUserByUsername_(usersSheet, username) {
+  const header = usersSheet.getRange(1, 1, 1, usersSheet.getLastColumn()).getValues()[0].map(v => String(v || '').trim().toLowerCase());
+  const map = buildUsersMap_(header);
+  const values = usersSheet.getDataRange().getValues();
+  const rows = values.slice(1);
+  const needle = String(username || '').trim().toLowerCase();
+  for (let i = 0; i < rows.length; i++) {
+    const u = rowToUser_(rows[i], map);
+    if (u && String(u.username || '').trim().toLowerCase() === needle) return { user: u, index: i + 2, header, map };
+  }
+  return { user: null, index: -1, header, map };
+}
+
+function verifyUserPassword_(stored, provided) {
+  if (!stored) return false;
+  if (!provided) return false;
+  const hash = sha256Hex_(provided);
+  return String(stored) === hash || String(stored) === String(provided);
+}
+
+function createUserSession_(username) {
+  const session = Utilities.getUuid();
+  CacheService.getScriptCache().put(USER_SESSION_PREFIX_ + session, String(username || ''), USER_SESSION_TTL_SECONDS_);
+  return session;
+}
+
+function assertUserSession_(session) {
+  const token = String(session || '').trim();
+  if (!token) throw new Error('Belum login.');
+  const username = CacheService.getScriptCache().get(USER_SESSION_PREFIX_ + token);
+  if (!username) throw new Error('Session habis.');
+  return username;
+}
+
+function normalizeText_(s) {
+  return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function handlePublicMePost_(body) {
+  const session = String(body.session || '').trim();
+  const username = assertUserSession_(session);
+  const { usersSheet } = getSheets_();
+  const found = findUserByUsername_(usersSheet, username);
+  if (!found.user) return json_({ status: 'error', message: 'User tidak ditemukan.' });
+  return json_({ status: 'success', user: { username: found.user.username, nama_panjang: found.user.nama_panjang, pimpinan: found.user.pimpinan } });
+}
+
+function handlePublicValidateNamePost_(body) {
+  const session = String(body.session || '').trim();
+  const nama = String(body.nama_panjang || '').trim();
+  if (!nama) return json_({ status: 'error', message: 'Nama wajib diisi.' });
+  const username = assertUserSession_(session);
+  const { usersSheet } = getSheets_();
+  const found = findUserByUsername_(usersSheet, username);
+  if (!found.user) return json_({ status: 'error', message: 'User tidak ditemukan.' });
+  const ok = normalizeText_(found.user.nama_panjang) === normalizeText_(nama);
+  if (!ok) return json_({ status: 'error', message: 'Nama tidak sesuai dengan data.' });
+  return json_({ status: 'success' });
+}
+
+function handlePublicRegisterPost_(body) {
+  const nama_panjang = String(body.nama_panjang || '').trim();
+  const pimpinan = String(body.pimpinan || '').trim();
+  const username = String(body.username || '').trim();
+  const password = String(body.password || '');
+  if (!nama_panjang || !pimpinan || !username || !password) return json_({ status: 'error', message: 'Data wajib diisi.' });
+  const { usersSheet } = getSheets_();
+  const found = findUserByUsername_(usersSheet, username);
+  if (found.user) return json_({ status: 'error', message: 'Username sudah ada.' });
+  const header = found.header;
+  const map = found.map;
+  const rowLen = Math.max(usersSheet.getLastColumn(), header.length || 4);
+  const row = new Array(rowLen).fill('');
+  setByIndices_(row, map.nama_panjang, nama_panjang);
+  setByIndices_(row, map.pimpinan, pimpinan);
+  setByIndices_(row, map.username, username);
+  setByIndices_(row, map.password, sha256Hex_(password));
+  usersSheet.appendRow(row);
+  const session = createUserSession_(username);
+  return json_({ status: 'success', session, username });
+}
+
+function handlePublicLoginPost_(body) {
+  const username = String(body.username || '').trim();
+  const password = String(body.password || '');
+  if (!username || !password) return json_({ status: 'error', message: 'Username dan password wajib diisi.' });
+  const { usersSheet } = getSheets_();
+  const found = findUserByUsername_(usersSheet, username);
+  if (!found.user) return json_({ status: 'error', message: 'Username atau password salah.' });
+  if (!verifyUserPassword_(found.user.password, password)) return json_({ status: 'error', message: 'Username atau password salah.' });
+  const session = createUserSession_(found.user.username);
+  return json_({ status: 'success', session, username: found.user.username });
 }
 
 function toNumber_(value) {

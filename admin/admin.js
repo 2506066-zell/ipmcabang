@@ -22,6 +22,7 @@
         loadingText: document.getElementById('loading-text'),
         usernameInput: document.getElementById('admin-username'),
         passwordInput: document.getElementById('admin-password'),
+        togglePasswordBtn: document.getElementById('toggle-admin-password'),
         connectBtn: document.getElementById('connect-btn'),
         logoutBtn: document.getElementById('logout-btn'),
         status: document.getElementById('status'),
@@ -32,12 +33,19 @@
         tabResults: document.getElementById('tab-results'),
 
         searchInput: document.getElementById('search-input'),
+        statusFilter: document.getElementById('status-filter'),
         refreshQuestionsBtn: document.getElementById('refresh-questions-btn'),
         newQuestionBtn: document.getElementById('new-question-btn'),
         questionsTbody: document.getElementById('questions-tbody'),
+        qPrev: document.getElementById('q-prev'),
+        qNext: document.getElementById('q-next'),
+        qPageInfo: document.getElementById('q-page-info'),
 
         refreshResultsBtn: document.getElementById('refresh-results-btn'),
         resultsTbody: document.getElementById('results-tbody'),
+        rPrev: document.getElementById('r-prev'),
+        rNext: document.getElementById('r-next'),
+        rPageInfo: document.getElementById('r-page-info'),
 
         modal: document.getElementById('question-modal'),
         modalTitle: document.getElementById('modal-title'),
@@ -55,6 +63,13 @@
         qActive: document.getElementById('q-active'),
 
         saveBtn: document.getElementById('save-btn'),
+    };
+
+    const paging = {
+        qPage: 1,
+        qSize: 10,
+        rPage: 1,
+        rSize: 10,
     };
 
     function setStatus(message, kind = '') {
@@ -138,13 +153,21 @@
         els.tabResults.classList.toggle('hidden', tabName !== 'results');
     }
 
-    function renderQuestions() {
+    function getFilteredQuestions() {
         const query = (els.searchInput.value || '').trim().toLowerCase();
-        const items = query
-            ? state.questions.filter(q => String(q.question || '').toLowerCase().includes(query))
-            : state.questions;
+        const status = String(els.statusFilter.value || 'all');
+        let items = state.questions;
+        if (query) items = items.filter(q => String(q.question || '').toLowerCase().includes(query));
+        if (status === 'active') items = items.filter(q => q.active);
+        if (status === 'inactive') items = items.filter(q => q.active === false);
+        return items;
+    }
 
-        const rows = items.map(q => {
+    function renderQuestions() {
+        const all = getFilteredQuestions();
+        const start = (paging.qPage - 1) * paging.qSize;
+        const pageItems = all.slice(start, start + paging.qSize);
+        const rows = pageItems.map(q => {
             const activeLabel = q.active ? 'Aktif' : 'Nonaktif';
             const activeClass = q.active ? 'active' : 'inactive';
             return `
@@ -172,14 +195,17 @@
                 </tr>
             `;
         });
-
-        els.questionsTbody.innerHTML = rows.join('') || `
-            <tr><td colspan="5" class="small">Belum ada soal.</td></tr>
-        `;
+        els.questionsTbody.innerHTML = rows.join('') || `<tr><td colspan="5" class="small">Belum ada soal.</td></tr>`;
+        const totalPages = Math.max(1, Math.ceil(all.length / paging.qSize));
+        els.qPageInfo.textContent = `Halaman ${paging.qPage} dari ${totalPages}`;
+        els.qPrev.disabled = paging.qPage <= 1;
+        els.qNext.disabled = paging.qPage >= totalPages;
     }
 
     function renderResults() {
-        const rows = state.results.map(r => `
+        const start = (paging.rPage - 1) * paging.rSize;
+        const pageItems = state.results.slice(start, start + paging.rSize);
+        const rows = pageItems.map(r => `
             <tr>
                 <td data-label="Waktu">${escapeHtml(r.timestamp || '')}</td>
                 <td data-label="Nama">${escapeHtml(r.username || '')}</td>
@@ -187,9 +213,11 @@
                 <td data-label="Persen">${escapeHtml(r.percent ?? '')}</td>
             </tr>
         `);
-        els.resultsTbody.innerHTML = rows.join('') || `
-            <tr><td colspan="4" class="small">Belum ada hasil.</td></tr>
-        `;
+        els.resultsTbody.innerHTML = rows.join('') || `<tr><td colspan="4" class="small">Belum ada hasil.</td></tr>`;
+        const totalPages = Math.max(1, Math.ceil(state.results.length / paging.rSize));
+        els.rPageInfo.textContent = `Halaman ${paging.rPage} dari ${totalPages}`;
+        els.rPrev.disabled = paging.rPage <= 1;
+        els.rNext.disabled = paging.rPage >= totalPages;
     }
 
     function openModal(question) {
@@ -350,6 +378,14 @@
     function init() {
         els.usernameInput.value = localStorage.getItem(STORAGE_KEYS.username) || '';
 
+        if (els.togglePasswordBtn) {
+            els.togglePasswordBtn.addEventListener('click', () => {
+                const isPwd = els.passwordInput.type === 'password';
+                els.passwordInput.type = isPwd ? 'text' : 'password';
+                els.togglePasswordBtn.innerHTML = isPwd ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+            });
+        }
+
         els.connectBtn.addEventListener('click', () => {
             connect().catch(err => {
                 setConnected(false);
@@ -370,6 +406,11 @@
         });
 
         els.searchInput.addEventListener('input', () => renderQuestions());
+        if (els.statusFilter) els.statusFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
+        if (els.qPrev) els.qPrev.addEventListener('click', () => { if (paging.qPage > 1) { paging.qPage--; renderQuestions(); } });
+        if (els.qNext) els.qNext.addEventListener('click', () => { paging.qPage++; renderQuestions(); });
+        if (els.rPrev) els.rPrev.addEventListener('click', () => { if (paging.rPage > 1) { paging.rPage--; renderResults(); } });
+        if (els.rNext) els.rNext.addEventListener('click', () => { paging.rPage++; renderResults(); });
         els.refreshQuestionsBtn.addEventListener('click', () => loadQuestions().catch(err => setStatus(err.message || 'Gagal memuat soal.', 'error')));
         els.refreshResultsBtn.addEventListener('click', () => loadResults().catch(err => setStatus(err.message || 'Gagal memuat hasil.', 'error')));
 

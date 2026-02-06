@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Admin Kuis</title>
     <link rel="stylesheet" href="admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -32,7 +32,10 @@
                 </div>
                 <div class="field">
                     <label for="admin-password">Password</label>
-                    <input id="admin-password" type="password" autocomplete="current-password" placeholder="Masukkan password admin">
+                    <div class="password-wrapper">
+                        <input id="admin-password" type="password" autocomplete="current-password" placeholder="Masukkan password admin">
+                        <button type="button" id="toggle-admin-password" class="password-toggle" aria-label="Tampilkan/Sembunyikan password"><i class="fas fa-eye"></i></button>
+                    </div>
                 </div>
             </div>
 
@@ -59,6 +62,11 @@
                         <input id="search-input" class="search-input" type="search" placeholder="Cari soal...">
                     </div>
                     <div class="toolbar-right">
+                    <select id="status-filter" class="search-input" style="max-width:160px">
+                        <option value="all">Semua</option>
+                        <option value="active">Aktif</option>
+                        <option value="inactive">Nonaktif</option>
+                    </select>
                         <button class="btn btn-ghost" type="button" id="refresh-questions-btn">
                             <i class="fas fa-rotate" aria-hidden="true"></i> Refresh
                         </button>
@@ -81,6 +89,11 @@
                         </thead>
                         <tbody id="questions-tbody"></tbody>
                     </table>
+                    <div class="actions" id="questions-pagination">
+                        <button class="btn btn-secondary" id="q-prev">Sebelumnya</button>
+                        <span class="status" id="q-page-info"></span>
+                        <button class="btn btn-secondary" id="q-next">Berikutnya</button>
+                    </div>
                 </div>
             </div>
 
@@ -107,6 +120,11 @@
                         </thead>
                         <tbody id="results-tbody"></tbody>
                     </table>
+                    <div class="actions" id="results-pagination">
+                        <button class="btn btn-secondary" id="r-prev">Sebelumnya</button>
+                        <span class="status" id="r-page-info"></span>
+                        <button class="btn btn-secondary" id="r-next">Berikutnya</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -181,5 +199,6 @@
 
     <script src="../scripts/main.js"></script>
     <script src="./admin.js"></script>
+    <script>document.addEventListener('gesturestart', function(e){ e.preventDefault(); });</script>
 </body>
 </html>
