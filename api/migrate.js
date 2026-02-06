@@ -11,6 +11,7 @@ module.exports = async (req, res) => {
       pimpinan TEXT,
       password_salt TEXT,
       password_hash TEXT,
+      role TEXT DEFAULT 'user',
       created_at TIMESTAMP DEFAULT NOW()
     )`;
     await query`CREATE TABLE IF NOT EXISTS questions (
@@ -54,6 +55,7 @@ module.exports = async (req, res) => {
     // ensure columns exist if table already created
     await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
     await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`;
+    await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`;
     await query`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS role TEXT`;
     const qcRaw = (await query`SELECT COUNT(*)::int AS c FROM questions`).rows[0]?.c;
     const qc = typeof qcRaw === 'number' ? qcRaw : Number(qcRaw || 0);
@@ -64,6 +66,26 @@ module.exports = async (req, res) => {
       await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
         ${'Hari jadi IPM?'}, ${ { a: '5 Mei 1961', b: '5 Mei 1962', c: '5 Juni 1961', d: '5 Juni 1962' } }, ${'a'}, ${true}, ${'Sejarah'}, ${1}
       )`;
+    }
+
+    // seed admin user from env if configured
+    const adminU = String(process.env.ADMIN_USERNAME || '').trim().toLowerCase();
+    const adminP = String(process.env.ADMIN_PASSWORD || '');
+    if (adminU && adminP) {
+      const exists = (await query`SELECT id FROM users WHERE LOWER(username)=${adminU}`).rows[0];
+      if (!exists) {
+        const crypto = require('crypto');
+        const salt = crypto.randomBytes(16).toString('hex');
+        await new Promise((resolve, reject) => {
+          crypto.scrypt(adminP, salt, 64, (err, dk) => {
+            if (err) return reject(err);
+            const hash = dk.toString('hex');
+            query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${salt}, ${hash}, ${'admin'})`
+              .then(() => resolve())
+              .catch(reject);
+          });
+        });
+      }
     }
     json(res, 200, { status: 'success' });
   } catch (e) {

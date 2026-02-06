@@ -175,8 +175,9 @@
 
     async function loginVercel(uname, pwd) {
         const body = { username: String(uname||'').trim(), password: String(pwd||'') };
-        const data = await fetchJson(resolveApiUrl('/api/auth/adminLogin'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await fetchJson(resolveApiUrl('/api/auth/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (!data || data.status !== 'success' || !data.session) throw new Error(data?.message || 'Login gagal');
+        if (String(data.role||'') !== 'admin') throw new Error('Akun bukan admin');
         state.session = String(data.session);
         sessionStorage.setItem('ipmquiz_admin_session', state.session);
         return data;
