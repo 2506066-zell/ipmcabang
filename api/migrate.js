@@ -46,6 +46,15 @@ module.exports = async (req, res) => {
     // ensure columns exist if table already created
     await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
     await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`;
+    const qc = (await query`SELECT COUNT(*)::int AS c FROM questions`).rows[0]?.c || 0;
+    if (qc === 0) {
+      await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
+        ${'Apa kepanjangan IPM?'}, ${ { a: 'Ikatan Pelajar Muhammadiyah', b: 'Ikatan Pemuda Muslim', c: 'Ikatan Pemuda Merdeka', d: 'Ikatan Pelajar Merdeka' } }, ${'a'}, ${true}, ${'Organisasi'}, ${1}
+      )`;
+      await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
+        ${'Hari jadi IPM?'}, ${ { a: '5 Mei 1961', b: '5 Mei 1962', c: '5 Juni 1961', d: '5 Juni 1962' } }, ${'a'}, ${true}, ${'Sejarah'}, ${1}
+      )`;
+    }
     json(res, 200, { status: 'success' });
   } catch (e) {
     json(res, 500, { status: 'error', message: String(e.message || e) });
