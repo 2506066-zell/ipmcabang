@@ -3,16 +3,31 @@ const { ensureSchema } = require('./_bootstrap');
 
 let _pool = null;
 
+function getConnString() {
+  const candidates = [
+    process.env.POSTGRES_URL,
+    process.env.SUPABASE_DB_URL,
+    process.env.SUPABASE_POSTGRES_URL,
+    process.env.DATABASE_URL,
+    process.env.SUPABASE_PGBOUNCER_URL,
+  ];
+  return candidates.find(Boolean) || '';
+}
+
 function requireEnv() {
-  const url = process.env.POSTGRES_URL || '';
-  if (!url) throw new Error('POSTGRES_URL not configured');
+  const url = getConnString();
+  if (!url) throw new Error('Postgres connection string not configured');
   const u = String(url).toLowerCase();
   if (!u.startsWith('postgres://') && !u.startsWith('postgresql://')) throw new Error('Invalid POSTGRES_URL');
 }
 
 function getPool() {
   if (_pool) return _pool;
-  _pool = new Pool({ connectionString: process.env.POSTGRES_URL, ssl: { rejectUnauthorized: false } });
+  _pool = new Pool({ connectionString: getConnString(), ssl: { rejectUnauthorized: false } });
+  // Ensure SSL is enabled even if connection string doesn't specify it explicitly
+  if (!_pool.options.ssl) {
+    _pool.options.ssl = { rejectUnauthorized: false };
+  }
   return _pool;
 }
 
