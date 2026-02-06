@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
     if (hash !== user.password_hash) return json(res, 401, { status: 'error', message: 'Username atau password salah' });
     const token = crypto.randomBytes(24).toString('hex');
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 hari
-    await query`INSERT INTO sessions (user_id, token, expires_at) VALUES (${user.id}, ${token}, ${expires.toISOString()})`;
+    await query`INSERT INTO sessions (user_id, token, role, expires_at) VALUES (${user.id}, ${token}, ${'user'}, ${expires.toISOString()})`;
     json(res, 200, { status: 'success', session: token, username: user.username, nama_panjang: user.nama_panjang });
   } catch (e) {
     json(res, 500, { status: 'error', message: String(e.message || e) });

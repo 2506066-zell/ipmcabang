@@ -12,7 +12,7 @@ async function requireAdminAuth(req) {
   const token = getBearerToken(req);
   if (!token) throw new Error('Unauthorized');
   if (process.env.ADMIN_TOKEN && token === process.env.ADMIN_TOKEN) return { username: 'admin_token' };
-  const row = (await query`SELECT s.user_id AS id FROM sessions s WHERE s.token=${token} AND s.expires_at > NOW()`).rows[0];
+  const row = (await query`SELECT s.user_id AS id FROM sessions s WHERE s.token=${token} AND s.expires_at > NOW() AND s.role='admin'`).rows[0];
   if (!row) throw new Error('Unauthorized');
   return { id: row.id };
 }

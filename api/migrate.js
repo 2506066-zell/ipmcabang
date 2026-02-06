@@ -40,12 +40,21 @@ module.exports = async (req, res) => {
       id SERIAL PRIMARY KEY,
       user_id INT REFERENCES users(id),
       token TEXT UNIQUE NOT NULL,
+      role TEXT,
       created_at TIMESTAMP DEFAULT NOW(),
       expires_at TIMESTAMP
+    )`;
+    await query`CREATE TABLE IF NOT EXISTS login_attempts (
+      id SERIAL PRIMARY KEY,
+      username TEXT,
+      ip TEXT,
+      attempted_at TIMESTAMP DEFAULT NOW(),
+      success BOOLEAN DEFAULT FALSE
     )`;
     // ensure columns exist if table already created
     await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
     await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`;
+    await query`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS role TEXT`;
     const qcRaw = (await query`SELECT COUNT(*)::int AS c FROM questions`).rows[0]?.c;
     const qc = typeof qcRaw === 'number' ? qcRaw : Number(qcRaw || 0);
     if (qc === 0) {
