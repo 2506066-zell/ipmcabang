@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     loadUserName();
     let questionsData = [];
+    let allQuestionsData = [];
     let userAnswers = {};
     let currentQuestionIndex = 0;
     let selectedOption = null;
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             quizBody.innerHTML = '';
+            allQuestionsData = questionsData.slice();
             showSetPicker();
 
         } catch (error) {
@@ -135,15 +137,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (quizSetPicker) quizSetPicker.style.display = 'block';
         if (quizSetGrid) {
             const counts = { 1: 0, 2: 0, 3: 0 };
-            questionsData.forEach(q => { const s = Number(q.quiz_set || 1); if (counts[s] !== undefined) counts[s]++; });
+            const source = allQuestionsData.length ? allQuestionsData : questionsData;
+            source.forEach(q => { const s = Number(q.quiz_set || 1); if (counts[s] !== undefined) counts[s]++; });
             quizSetGrid.querySelectorAll('.set-card').forEach(btn => {
                 const set = Number(btn.dataset.set || 1);
                 const small = quizSetGrid.querySelector(`small[data-count="${set}"]`);
                 if (small) small.textContent = `${counts[set] || 0} soal`;
                 btn.disabled = (counts[set] || 0) === 0;
-                btn.onclick = () => {
+                btn.onclick = async () => {
                     currentQuizSet = set;
-                    const selected = questionsData.filter(q => Number(q.quiz_set || 1) === set);
+                    try {
+                        const can = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'publicCanAttempt', session: existingSession, quiz_set: currentQuizSet }) });
+                        const data = await can.json();
+                        if (!can.ok || data.status !== 'success') {
+                            alert(data.message || 'Anda sudah mencoba set ini.');
+                            return;
+                        }
+                    } catch {}
+                    const base = allQuestionsData.length ? allQuestionsData : questionsData;
+                    const selected = base.filter(q => Number(q.quiz_set || 1) === set);
                     quizSeed = `${Date.now()}_${Math.floor(Math.random()*1e6)}`;
                     const srng = seededRandom(quizSeed);
                     const shuffled = shuffleArray(selected, srng).map(q => ({ ...q, options: shuffleOptions(q.options, srng) }));
@@ -154,6 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    // Back to set picker during quiz (disabled, no back button)
 
     // --- Quiz Flow ---
     function startQuiz() {
@@ -208,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionCard = document.createElement('div');
         questionCard.className = 'question-card';
 
+
         const questionText = document.createElement('h2');
         questionText.className = 'question-text';
         questionText.textContent = questionData.question;
@@ -259,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function submitAndShowResults() {
         showLoader('Mengirim Jawaban...');
         const username = usernameInput.value;
+        const session = existingSession;
         const finished_at = Date.now();
         const time_spent = finished_at - quizStartTime; // ms
 
@@ -266,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const postResponse = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'submitQuiz', username, answers: userAnswers, time_spent, seed: quizSeed, started_at: quizStartTime, finished_at }),
+                body: JSON.stringify({ action: 'submitQuiz', session, username, answers: userAnswers, time_spent, seed: quizSeed, started_at: quizStartTime, finished_at, quiz_set: currentQuizSet }),
             });
             
             const result = await postResponse.json();

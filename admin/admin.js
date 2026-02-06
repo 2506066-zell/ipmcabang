@@ -35,7 +35,10 @@
         searchInput: document.getElementById('search-input'),
         statusFilter: document.getElementById('status-filter'),
         quizSetFilter: document.getElementById('quiz-set-filter'),
+        categoryFilter: document.getElementById('category-filter'),
+        setChips: document.querySelectorAll('[data-set-chip]'),
         refreshQuestionsBtn: document.getElementById('refresh-questions-btn'),
+        resetSetBtn: document.getElementById('reset-set-btn'),
         newQuestionBtn: document.getElementById('new-question-btn'),
         questionsTbody: document.getElementById('questions-tbody'),
         qPrev: document.getElementById('q-prev'),
@@ -166,6 +169,8 @@
         if (status === 'inactive') items = items.filter(q => q.active === false);
         const setFilter = String(els.quizSetFilter?.value || 'all');
         if (setFilter !== 'all') items = items.filter(q => String(q.quiz_set || '') === setFilter);
+        const catFilter = String(els.categoryFilter?.value || 'all');
+        if (catFilter !== 'all') items = items.filter(q => String(q.category || '').toLowerCase() === catFilter.toLowerCase());
         return items;
     }
 
@@ -176,10 +181,12 @@
         const rows = pageItems.map(q => {
             const activeLabel = q.active ? 'Aktif' : 'Nonaktif';
             const activeClass = q.active ? 'active' : 'inactive';
+            const setNum = Number(q.quiz_set || 1);
+            const setLabel = setNum === 1 ? 'Mingguan' : (setNum === 2 ? 'Bulanan' : 'Per Bidang');
             return `
-                <tr data-id="${escapeHtml(q.id)}">
+                <tr data-id="${escapeHtml(q.id)}" class="row-set-${setNum}">
                     <td data-label="ID">${escapeHtml(q.id)}</td>
-                    <td data-label="Kuis">${escapeHtml(q.quiz_set ?? '-')}</td>
+                    <td data-label="Kuis"><span class="badge ${'badge-set-' + setNum}">${escapeHtml(setLabel)}</span></td>
                     <td data-label="Soal">
                     <div class="question-cell-content">
                         <div class="question-text">${escapeHtml(q.question)}</div>
@@ -191,7 +198,7 @@
                         </div>
                     </div>
                 </td>
-                    <td data-label="Kategori">${escapeHtml(q.category || '-')}</td>
+                    <td data-label="Kategori"><span class="badge badge-category">${escapeHtml(q.category || '-')}</span></td>
                     <td data-label="Aktif"><span class="status-badge ${activeClass}">${activeLabel}</span></td>
                     <td data-label="Jawaban">${escapeHtml((q.correct_answer || '').toUpperCase())}</td>
                     <td data-label="Aksi">
@@ -270,10 +277,21 @@
                 throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
             }
             state.questions = questions;
+            populateCategoryFilter();
             renderQuestions();
             setStatus(`Soal dimuat: ${state.questions.length}`, 'ok');
         } finally {
             hideLoader();
+        }
+    }
+
+    function populateCategoryFilter() {
+        if (!els.categoryFilter) return;
+        const cats = Array.from(new Set(state.questions.map(q => String(q.category || '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+        const current = String(els.categoryFilter.value || 'all');
+        els.categoryFilter.innerHTML = '<option value="all">Semua Kategori</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        if (current && current !== 'all') {
+            els.categoryFilter.value = current;
         }
     }
 
@@ -415,14 +433,39 @@
             });
         });
 
-        els.searchInput.addEventListener('input', () => renderQuestions());
+        function debounce(fn, delay) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); }; }
+        els.searchInput.addEventListener('input', debounce(() => { paging.qPage = 1; renderQuestions(); }, 250));
         if (els.statusFilter) els.statusFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
         if (els.quizSetFilter) els.quizSetFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
+        if (els.categoryFilter) els.categoryFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
+        if (els.setChips && els.setChips.length) els.setChips.forEach(btn => {
+            btn.addEventListener('click', () => {
+                els.setChips.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const v = btn.getAttribute('data-set-chip') || 'all';
+                if (els.quizSetFilter) els.quizSetFilter.value = v;
+                paging.qPage = 1;
+                renderQuestions();
+            });
+        });
         if (els.qPrev) els.qPrev.addEventListener('click', () => { if (paging.qPage > 1) { paging.qPage--; renderQuestions(); } });
         if (els.qNext) els.qNext.addEventListener('click', () => { paging.qPage++; renderQuestions(); });
         if (els.rPrev) els.rPrev.addEventListener('click', () => { if (paging.rPage > 1) { paging.rPage--; renderResults(); } });
         if (els.rNext) els.rNext.addEventListener('click', () => { paging.rPage++; renderResults(); });
         els.refreshQuestionsBtn.addEventListener('click', () => loadQuestions().catch(err => setStatus(err.message || 'Gagal memuat soal.', 'error')));
+        if (els.resetSetBtn) els.resetSetBtn.addEventListener('click', async () => {
+            const setVal = String(els.quizSetFilter?.value || 'all');
+            if (setVal === 'all') { alert('Pilih set tertentu untuk di-reset.'); return; }
+            try {
+                setStatus('Mereset set...', '');
+                showLoader('Mereset Set...');
+                const data = await apiPost({ action: 'adminResetSet', session: state.session, quiz_set: Number(setVal) });
+                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal mereset set');
+                setStatus('Set direset. Pengguna dapat mencoba lagi.', 'ok');
+            } catch (err) {
+                setStatus(err.message || 'Gagal mereset set.', 'error');
+            } finally { hideLoader(); }
+        });
         els.refreshResultsBtn.addEventListener('click', () => loadResults().catch(err => setStatus(err.message || 'Gagal memuat hasil.', 'error')));
 
         els.newQuestionBtn.addEventListener('click', () => openModal(null));

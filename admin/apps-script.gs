@@ -53,11 +53,13 @@ function doPost(e) {
     const action = String((body && body.action) || '').trim();
 
     if (action === 'submitQuiz') return handleSubmitQuizPost_(body);
+    if (action === 'publicCanAttempt') return handlePublicCanAttemptPost_(body);
     if (action === 'adminLogin') return handleAdminLoginPost_(body);
     if (action === 'adminQuestions') return handleAdminQuestionsPost_(body);
     if (action === 'adminResults') return handleAdminResultsPost_(body);
     if (action === 'adminUpsertQuestion') return handleAdminUpsertQuestionPost_(body);
     if (action === 'adminDeleteQuestion') return handleAdminDeleteQuestionPost_(body);
+    if (action === 'adminResetSet') return handleAdminResetSetPost_(body);
     if (action === 'publicRegister') return handlePublicRegisterPost_(body);
     if (action === 'publicLogin') return handlePublicLoginPost_(body);
     if (action === 'publicMe') return handlePublicMePost_(body);
@@ -67,6 +69,38 @@ function doPost(e) {
   } catch (err) {
     return json_({ status: 'error', message: String(err && err.message ? err.message : err) });
   }
+}
+
+function handlePublicCanAttemptPost_(body) {
+  const session = String(body.session || '').trim();
+  const username = assertUserSession_(session);
+  const quiz_set = Number(body.quiz_set || 1);
+  const { resultsSheet, metaSheet } = getSheets_();
+  const values = resultsSheet.getDataRange().getValues();
+  if (values.length <= 1) return json_({ status: 'success' });
+  const header = values[0].map(v => String(v || '').trim().toLowerCase());
+  const map = buildResultsMap_(header);
+  const resetAt = getSetResetTime_(metaSheet, quiz_set);
+  const existed = values.slice(1).some(row => {
+    const user = String(row[map.username] || '').trim();
+    const set = toNumber_(row[map.quiz_set]);
+    const ts = row[map.timestamp];
+    if (user !== username) return false;
+    if (set !== quiz_set) return false;
+    if (!ts) return false;
+    try { const d = ts instanceof Date ? ts : new Date(ts); return !resetAt || d.getTime() >= resetAt.getTime(); } catch { return false; }
+  });
+  if (existed) return json_({ status: 'error', message: 'Sudah pernah mencoba set ini.' });
+  return json_({ status: 'success' });
+}
+
+function handleAdminResetSetPost_(body) {
+  const session = String(body.session || '').trim();
+  assertAdminSession_(session);
+  const quiz_set = Number(body.quiz_set || 1);
+  const { metaSheet } = getSheets_();
+  setSetResetTime_(metaSheet, quiz_set);
+  return json_({ status: 'success' });
 }
 
 function handlePublicQuestionsGet_() {
@@ -79,21 +113,23 @@ function handlePublicQuestionsGet_() {
     .slice(1)
     .map(row => rowToQuestion_(row, map))
     .filter(q => q && q.active)
-    .map(q => ({ id: q.id, question: q.question, options: q.options, quiz_set: q.quiz_set }));
+    .map(q => ({ id: q.id, question: q.question, options: q.options, quiz_set: q.quiz_set, category: q.category }));
 
   return json_({ status: 'success', questions });
 }
 
 function handleSubmitQuizPost_(body) {
-  const username = String(body.username || '').trim();
+  const session = String(body.session || '').trim();
+  const username = assertUserSession_(session);
   const answers = body.answers && typeof body.answers === 'object' ? body.answers : null;
   const time_spent = body.time_spent; // Ambil time_spent dari body
+  const quiz_set = Number(body.quiz_set || 1);
 
   if (!username) return json_({ status: 'error', message: 'Nama wajib diisi.' });
   if (!answers) return json_({ status: 'error', message: 'Jawaban tidak valid.' });
   if (time_spent === undefined) return json_({ status: 'error', message: 'time_spent is not defined' });
 
-  const { questionsSheet, resultsSheet } = getSheets_();
+  const { questionsSheet, resultsSheet, metaSheet } = getSheets_();
   const header = ensureQuestionsHeader_(questionsSheet);
   const map = buildQuestionsMap_(header);
 
@@ -114,7 +150,21 @@ function handleSubmitQuizPost_(body) {
   });
 
   const percent = Math.round((score / total) * 100);
-  appendResult_(resultsSheet, { username, score, total, percent, time_spent });
+  const resultsValues = resultsSheet.getDataRange().getValues();
+  const rHeader = resultsValues.length ? resultsValues[0].map(v => String(v || '').trim().toLowerCase()) : [];
+  const rmap = buildResultsMap_(rHeader);
+  const resetAt = getSetResetTime_(metaSheet, quiz_set);
+  const attempted = resultsValues.slice(1).some(row => {
+    const user = String(row[rmap.username] || '').trim();
+    const set = toNumber_(row[rmap.quiz_set]);
+    const ts = row[rmap.timestamp];
+    if (user !== username) return false;
+    if (set !== quiz_set) return false;
+    if (!ts) return false;
+    try { const d = ts instanceof Date ? ts : new Date(ts); return !resetAt || d.getTime() >= resetAt.getTime(); } catch { return false; }
+  });
+  if (attempted) return json_({ status: 'error', message: 'Anda sudah mencoba kuis ini.' });
+  appendResult_(resultsSheet, { username, score, total, percent, time_spent, quiz_set });
 
   return json_({ status: 'success', score, total, percent });
 }
@@ -293,6 +343,7 @@ function handlePublicResultsGet_() {
       total: toNumber_(row[map.total]),
       time_spent: toNumber_(row[map.time_spent]),
       timestamp: row[map.timestamp],
+      quiz_set: toNumber_(row[map.quiz_set]),
     }))
     .filter(r => r.username && r.total > 0);
 
@@ -353,6 +404,7 @@ function getSheets_() {
   const questionsSheetName = String(props.getProperty('QUESTIONS_SHEET') || DEFAULTS_.QUESTIONS_SHEET).trim();
   const resultsSheetName = String(props.getProperty('RESULTS_SHEET') || DEFAULTS_.RESULTS_SHEET).trim();
   const usersSheetName = String(props.getProperty('USERS_SHEET') || 'user').trim();
+  const metaSheetName = String(props.getProperty('META_SHEET') || DEFAULTS_.META_SHEET).trim();
 
   const ss = spreadsheetId ? SpreadsheetApp.openById(spreadsheetId) : SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) throw new Error('Spreadsheet tidak ditemukan. Set Script Property SPREADSHEET_ID atau gunakan bound script.');
@@ -360,11 +412,13 @@ function getSheets_() {
   const questionsSheet = getOrCreateSheet_(ss, questionsSheetName);
   const resultsSheet = getOrCreateSheet_(ss, resultsSheetName);
   const usersSheet = getOrCreateSheet_(ss, usersSheetName);
+  const metaSheet = getOrCreateSheet_(ss, metaSheetName);
 
   ensureResultsHeader_(resultsSheet);
   ensureUsersHeader_(usersSheet);
+  ensureMetaHeader_(metaSheet);
 
-  return { ss, questionsSheet, resultsSheet, usersSheet };
+  return { ss, questionsSheet, resultsSheet, usersSheet, metaSheet };
 }
 
 function getOrCreateSheet_(ss, name) {
@@ -421,7 +475,7 @@ function ensureQuestionsHeader_(sheet) {
 }
 
 function ensureResultsHeader_(sheet) {
-  const required = ['timestamp', 'username', 'score', 'total', 'percent', 'time_spent'];
+  const required = ['timestamp', 'username', 'score', 'total', 'percent', 'time_spent', 'quiz_set'];
   const lastRow = sheet.getLastRow();
   const lastCol = Math.max(sheet.getLastColumn(), 1);
 
@@ -472,6 +526,7 @@ function buildResultsMap_(header) {
     total: idx('total'),
     percent: idx('percent'),
     time_spent: idx('time_spent'),
+    quiz_set: idx('quiz_set'),
   };
 }
 
@@ -533,8 +588,56 @@ function rowToQuestion_(row, map) {
 }
 
 function appendResult_(resultsSheet, entry) {
-  const row = [new Date(), entry.username, entry.score, entry.total, entry.percent, entry.time_spent];
+  const row = [new Date(), entry.username, entry.score, entry.total, entry.percent, entry.time_spent, entry.quiz_set];
   resultsSheet.appendRow(row);
+}
+
+function ensureMetaHeader_(sheet) {
+  const required = ['key','value','updated_at'];
+  const lastRow = sheet.getLastRow();
+  const lastCol = Math.max(sheet.getLastColumn(), 1);
+  if (lastRow === 0) { sheet.getRange(1,1,1,required.length).setValues([required]); return; }
+  const headerRange = sheet.getRange(1, 1, 1, lastCol).getValues();
+  const current = (headerRange[0] || []).map(v => String(v || '').trim().toLowerCase());
+  const missing = required.filter(h => !current.includes(h));
+  if (missing.length) sheet.getRange(1, current.length + 1, 1, missing.length).setValues([missing]);
+}
+
+function getSetResetTime_(metaSheet, quiz_set) {
+  const key = `reset_set_${quiz_set}`;
+  const values = metaSheet.getDataRange().getValues();
+  if (values.length <= 1) return null;
+  const header = values[0].map(v => String(v || '').trim().toLowerCase());
+  const kIdx = header.indexOf('key');
+  const vIdx = header.indexOf('value');
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+    if (String(row[kIdx] || '') === key) {
+      const v = String(row[vIdx] || '').trim();
+      if (!v) return null;
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+  }
+  return null;
+}
+
+function setSetResetTime_(metaSheet, quiz_set) {
+  const key = `reset_set_${quiz_set}`;
+  const values = metaSheet.getDataRange().getValues();
+  const header = values.length ? values[0].map(v => String(v || '').trim().toLowerCase()) : ['key','value','updated_at'];
+  const now = new Date();
+  let rowIndex = -1;
+  const kIdx = header.indexOf('key');
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][kIdx] || '') === key) { rowIndex = i + 1; break; }
+  }
+  const payload = [key, now.toISOString(), now];
+  if (rowIndex > 0) {
+    metaSheet.getRange(rowIndex, 1, 1, 3).setValues([payload]);
+  } else {
+    metaSheet.appendRow(payload);
+  }
 }
 
 function ensureUsersHeader_(sheet) {

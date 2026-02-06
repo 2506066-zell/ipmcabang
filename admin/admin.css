@@ -167,6 +167,7 @@ body {
     margin-top: 24px;
     align-items: center;
 }
+.actions .status { margin-left: 0; }
 
 /* === LOGIN SECTION === */
 #connect-btn, #logout-btn {
@@ -256,6 +257,14 @@ body {
     gap: 16px;
     margin-bottom: 24px;
 }
+.search-input {
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 10px 14px;
+    color: var(--text-primary);
+    min-height: 40px;
+}
 
 .toolbar-left, .toolbar-right {
     display: flex;
@@ -263,6 +272,8 @@ body {
     gap: 12px;
     align-items: center;
 }
+
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
 
 .toolbar-right {
     justify-content: flex-start;
@@ -303,11 +314,15 @@ tr {
     display: block;
     background-color: var(--primary-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 16px;
-    padding: 16px;
+    padding: 18px 16px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.row-set-1 { border-left: 4px solid #dc2626; } /* merah lembut */
+.row-set-2 { border-left: 4px solid #2563eb; } /* biru lembut */
+.row-set-3 { border-left: 4px solid #f59e0b; } /* oranye hangat */
 
 td {
     display: block;
@@ -329,20 +344,24 @@ td::before {
     content: attr(data-label);
     display: block;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 .question-text {
-    font-weight: 600;
-    margin-bottom: 8px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+    text-align: left;
+    line-height: 1.6;
 }
 
 .question-options {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    font-size: 0.95em;
+    gap: 8px;
+    font-size: 1rem;
     color: var(--text-secondary);
 }
 
@@ -365,6 +384,8 @@ td::before {
 #questions-tbody .btn {
     width: 100%;
 }
+
+#questions-pagination, #results-pagination { justify-content: center; }
 
 /* === MODAL STYLING === */
 .modal {
@@ -498,6 +519,10 @@ td::before {
     /* Restore table layout */
     thead {
         all: revert; /* Un-hide headers */
+        position: sticky;
+        top: 0;
+        background-color: var(--card-bg);
+        z-index: 1;
     }
 
     tr {
@@ -511,6 +536,7 @@ td::before {
     tr:nth-child(even) {
         background-color: rgba(30, 41, 59, 0.5);
     }
+    tbody tr:hover { background-color: rgba(51, 65, 85, 0.5); }
 
     td {
         display: table-cell;
@@ -519,6 +545,9 @@ td::before {
         border-bottom: 1px solid var(--border-color);
         vertical-align: middle;
     }
+
+    .row-set-1, .row-set-2, .row-set-3 { border-left-width: 6px; }
+
 
     td::before {
         display: none; /* Hide data-label pseudo-elements */

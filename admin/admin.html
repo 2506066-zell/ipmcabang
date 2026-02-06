@@ -66,6 +66,14 @@
                             <option value="2">Kuis 2</option>
                             <option value="3">Kuis 3</option>
                         </select>
+                        <select id="category-filter" class="search-input" style="max-width:180px;margin-left:8px">
+                            <option value="all">Semua Kategori</option>
+                        </select>
+                        <div class="chips">
+                            <button type="button" class="chip-button" data-set-chip="1">Mingguan</button>
+                            <button type="button" class="chip-button" data-set-chip="2">Bulanan</button>
+                            <button type="button" class="chip-button" data-set-chip="3">Per Bidang</button>
+                        </div>
                     </div>
                     <div class="toolbar-right">
                     <select id="status-filter" class="search-input" style="max-width:160px">
@@ -73,6 +81,9 @@
                         <option value="active">Aktif</option>
                         <option value="inactive">Nonaktif</option>
                     </select>
+                        <button class="btn btn-secondary" type="button" id="reset-set-btn">
+                            <i class="fas fa-power-off" aria-hidden="true"></i> Reset Set
+                        </button>
                         <button class="btn btn-ghost" type="button" id="refresh-questions-btn">
                             <i class="fas fa-rotate" aria-hidden="true"></i> Refresh
                         </button>
@@ -87,7 +98,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 72px;">ID</th>
-                                <th style="width: 92px;">Kuis</th>
+                                <th style="width: 120px;">Kuis</th>
                                 <th>Soal</th>
                                 <th style="width: 140px;">Kategori</th>
                                 <th style="width: 92px;">Aktif</th>
