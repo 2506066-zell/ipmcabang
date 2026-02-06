@@ -69,8 +69,8 @@ module.exports = async (req, res) => {
     }
 
     // seed admin user from env if configured
-    const adminU = String(process.env.ADMIN_USERNAME || '').trim().toLowerCase();
-    const adminP = String(process.env.ADMIN_PASSWORD || '');
+    const adminU = String((process.env.ADMIN_USERNAME || 'adminipm')).trim().toLowerCase();
+    const adminP = String((process.env.ADMIN_PASSWORD || 'adminipm123'));
     if (adminU && adminP) {
       const exists = (await query`SELECT id FROM users WHERE LOWER(username)=${adminU}`).rows[0];
       if (!exists) {
