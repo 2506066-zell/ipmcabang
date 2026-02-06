@@ -1,5 +1,5 @@
 (() => {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
+    const DEFAULT_API_URL = '/api';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
@@ -113,14 +113,16 @@
 
     async function fetchJson(url, init) {
         const response = await fetch(url, init);
+        const ct = String(response.headers.get('Content-Type') || '');
         const text = await response.text();
-        let data;
-        try {
-            data = text ? JSON.parse(text) : null;
-        } catch {
-            throw new Error('Server tidak mengirim JSON yang valid.');
+        let data = null;
+        if (ct.includes('application/json')) {
+            try { data = text ? JSON.parse(text) : null; } catch { /* fallthrough */ }
         }
-
+        if (!ct.includes('application/json') || data === null) {
+            const snippet = (text || '').slice(0, 180).replace(/\s+/g,' ').trim();
+            throw new Error(`Respon bukan JSON (Content-Type: ${ct || 'unknown'}). ${snippet ? 'Cuplikan: '+snippet : ''}`);
+        }
         if (!response.ok) {
             const message = data && data.message ? data.message : `HTTP ${response.status}`;
             throw new Error(message);

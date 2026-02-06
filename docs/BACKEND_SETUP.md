@@ -30,6 +30,19 @@ Dokumen ini memandu Anda (benar-benar pemula) untuk menyiapkan backend di Vercel
 - Client contoh: [scripts/api-client.js](file:///c:/.vscode/ipmweb/scripts/api-client.js)
 - Konfigurasi: [vercel.json](file:///c:/.vscode/ipmweb/vercel.json), [.env.example](file:///c:/.vscode/ipmweb/.env.example)
 
+### Environment Variables Wajib
+- `POSTGRES_URL`: connection string Postgres (pooling port 6543, `sslmode=require`) di Production.
+- `ADMIN_TOKEN`: token acak kuat untuk operasi admin (CRUD/reset/import) di Production.
+
+### Respons JSON & Headers
+- Semua endpoint `/api/*` mengembalikan JSON valid dan header `Content-Type: application/json`.
+- Jika Anda melihat error “Respon bukan JSON”, periksa bahwa URL yang diakses benar (bukan 404 HTML) dan domain API sesuai.
+
+### Koneksi Otomatis
+- Server: util tunggal [api/db.js](file:///c:/.vscode/ipmweb/api/db.js) mereuse koneksi `@vercel/postgres` secara otomatis.
+- Klien: [scripts/api-client.js](file:///c:/.vscode/ipmweb/scripts/api-client.js) memakai `window.location.origin` sebagai base, tanpa setup manual.
+- Admin menyediakan “API Base URL” opsional bila domain admin berbeda dari domain API produksi.
+
 ---
 
 ## Langkah 1 — Buat Database Vercel Postgres

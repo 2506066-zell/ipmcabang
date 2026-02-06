@@ -29,8 +29,12 @@ async function purge(req, res) {
 }
 
 module.exports = async (req, res) => {
-  if (req.method === 'GET') return list(req, res);
-  if (req.method === 'POST') return create(req, res);
-  if (req.method === 'DELETE') return purge(req, res);
-  json(res, 405, { status: 'error', message: 'Method not allowed' });
+  try {
+    if (req.method === 'GET') return list(req, res);
+    if (req.method === 'POST') return create(req, res);
+    if (req.method === 'DELETE') return purge(req, res);
+    json(res, 405, { status: 'error', message: 'Method not allowed' });
+  } catch (e) {
+    json(res, 500, { status: 'error', message: String(e.message || e) });
+  }
 };

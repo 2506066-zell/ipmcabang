@@ -7,7 +7,12 @@ function requireEnv() {
 
 async function query(strings, ...values) {
   requireEnv();
-  return await sql(strings, ...values);
+  try {
+    return await sql(strings, ...values);
+  } catch (err) {
+    const msg = (err && err.message) ? err.message : String(err);
+    throw new Error(`Database error: ${msg}`);
+  }
 }
 
 module.exports = { sql, query };
