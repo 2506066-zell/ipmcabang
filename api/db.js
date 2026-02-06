@@ -63,4 +63,10 @@ async function query(strings, ...values) {
   }
 }
 
-module.exports = { query };
+function getConnHost() {
+  const url = getConnString();
+  const m = String(url).match(/@([^\/\?]+)(?:\/[\w-]+)?/);
+  return m ? m[1] : '';
+}
+
+module.exports = { query, getConnHost };
