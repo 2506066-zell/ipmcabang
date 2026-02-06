@@ -18,7 +18,7 @@
         results: [],
         connected: false,
         prefs: { tab: 'questions', search: '', status: 'all', set: 'all', category: 'all' },
-        backend: 'apps_script',
+        backend: 'vercel',
         adminToken: '',
     };
     let modalDirty = false;
@@ -520,6 +520,8 @@
         if (els.statusFilter) { els.statusFilter.value = state.prefs.status || 'all'; }
         if (els.quizSetFilter) { els.quizSetFilter.value = state.prefs.set || 'all'; }
         if (els.categoryFilter) { els.categoryFilter.value = state.prefs.category || 'all'; }
+
+        if (els.backendMode) { els.backendMode.value = 'vercel'; }
 
         if (els.togglePasswordBtn) {
             els.togglePasswordBtn.addEventListener('click', () => {
