@@ -1,5 +1,6 @@
 const { query } = require('./db');
-const { json, cacheHeaders, getBearerToken } = require('./_util');
+const { json, cacheHeaders } = require('./_util');
+const { requireAdminAuth } = require('./_auth');
 
 async function list(req, res) {
   const rows = (await query`SELECT created_at AS ts, username, score, total, percent FROM results ORDER BY id DESC LIMIT 200`).rows;
@@ -23,8 +24,7 @@ async function create(req, res) {
 }
 
 async function purge(req, res) {
-  const token = getBearerToken(req);
-  if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+  try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
   await query`DELETE FROM results`;
   json(res, 200, { status: 'success' });
 }

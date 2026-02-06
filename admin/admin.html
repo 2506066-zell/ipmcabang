@@ -41,14 +41,15 @@
 
             <div class="grid-2">
                 <div class="field">
-                    <label for="admin-token-input">Admin Token (Vercel)</label>
-                    <input id="admin-token-input" type="password" placeholder="Masukkan ADMIN_TOKEN">
+                    <label for="admin-username">Username (admin)</label>
+                    <input id="admin-username" type="text" placeholder="Masukkan username">
                 </div>
                 <div class="field">
-                    <label for="backend-mode">Mode Backend</label>
-                    <select id="backend-mode" disabled>
-                        <option value="vercel" selected>Vercel</option>
-                    </select>
+                    <label for="admin-password">Password</label>
+                    <div class="password-wrapper">
+                        <input id="admin-password" type="password" placeholder="Masukkan password">
+                        <button class="icon-btn" id="toggle-admin-password" type="button" aria-label="Tampilkan/Sembunyikan Password"><i class="fas fa-eye"></i></button>
+                    </div>
                 </div>
             </div>
             <div class="grid-2">

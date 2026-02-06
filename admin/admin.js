@@ -81,6 +81,9 @@
         formActions: document.querySelector('#question-form .actions'),
         backendMode: document.getElementById('backend-mode'),
         adminTokenInput: document.getElementById('admin-token-input'),
+        // repurpose username/password for Vercel login
+        usernameInput: document.getElementById('admin-username'),
+        passwordInput: document.getElementById('admin-password'),
         apiBaseUrlInput: document.getElementById('api-base-url'),
     };
 
@@ -161,7 +164,8 @@
     }
     async function apiAdminVercel(method, path, body) {
         const headers = { 'Content-Type': 'application/json' };
-        if (state.adminToken) headers['Authorization'] = `Bearer ${state.adminToken}`;
+        // use session token for admin operations
+        if (state.session) headers['Authorization'] = `Bearer ${state.session}`;
         return await fetchJson(resolveApiUrl(path), { method, headers, body: body ? JSON.stringify(body) : undefined });
     }
 
@@ -559,11 +563,17 @@
             els.connectVercelBtn.addEventListener('click', async () => {
                 try {
                     state.backend = 'vercel';
-                    state.adminToken = String(els.adminTokenInput?.value || '').trim();
+                    const uname = String(els.usernameInput?.value || '').trim();
+                    const pwd = String(els.passwordInput?.value || '');
                     setStatus('Menghubungkan Vercel...', '');
                     showLoader('Menghubungkan...');
                     const health = await apiGetVercel('/api/health');
                     if (!health || health.status !== 'success') throw new Error(health?.message || 'Health gagal');
+                    if (!uname || !pwd) throw new Error('Isi username dan password admin.');
+                    const login = await fetchJson(resolveApiUrl('/api/auth/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: uname, password: pwd }) });
+                    if (!login || login.status !== 'success' || !login.session) throw new Error(login?.message || 'Login gagal');
+                    state.session = String(login.session);
+                    sessionStorage.setItem('ipmquiz_admin_session', state.session);
                     await loadQuestions();
                     setConnected(true);
                 } catch (e) {
