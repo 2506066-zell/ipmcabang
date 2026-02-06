@@ -52,6 +52,7 @@
         modalCloseBtn: document.getElementById('modal-close-btn'),
         cancelBtn: document.getElementById('cancel-btn'),
         questionForm: document.getElementById('question-form'),
+        savingIndicator: document.getElementById('saving-indicator'),
 
         qId: document.getElementById('q-id'),
         qQuestion: document.getElementById('q-question'),
@@ -488,14 +489,16 @@
 
             els.saveBtn.disabled = true;
             setStatus('Menyimpan...', '');
-            showLoader('Menyimpan Soal...');
+            if (els.savingIndicator) els.savingIndicator.style.display = 'block';
+            els.saveBtn.classList.add('loading');
 
             upsertQuestion(payload)
                 .then(() => closeModal())
                 .catch(err => setStatus(err.message || 'Gagal menyimpan.', 'error'))
                 .finally(() => {
                     els.saveBtn.disabled = false;
-                    hideLoader();
+                    if (els.savingIndicator) els.savingIndicator.style.display = 'none';
+                    els.saveBtn.classList.remove('loading');
                 });
         });
 
