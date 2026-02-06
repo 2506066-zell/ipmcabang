@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const postResponse = await fetch(`${API_URL}/results`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, score: correctCount, total: questionsData.length, percent: Math.round((correctCount / questionsData.length) * 100), time_spent, quiz_set: currentQuizSet, started_at: quizStartTime, finished_at }),
+                body: JSON.stringify({ session, score: correctCount, total: questionsData.length, percent: Math.round((correctCount / questionsData.length) * 100), time_spent, quiz_set: currentQuizSet, started_at: quizStartTime, finished_at }),
             });
             const result = await postResponse.json();
             if (!postResponse.ok || result.status !== 'success') {

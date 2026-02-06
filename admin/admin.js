@@ -165,8 +165,11 @@
     }
     async function apiAdminVercel(method, path, body) {
         const headers = { 'Content-Type': 'application/json' };
-        // use session token for admin operations
-        if (state.session) headers['Authorization'] = `Bearer ${state.session}`;
+        if (state.adminToken) {
+            headers['Authorization'] = `Bearer ${state.adminToken}`;
+        } else if (state.session) {
+            headers['Authorization'] = `Bearer ${state.session}`;
+        }
         return await fetchJson(resolveApiUrl(path), { method, headers, body: body ? JSON.stringify(body) : undefined });
     }
 
@@ -626,6 +629,11 @@
         if (els.rPrev) els.rPrev.addEventListener('click', () => { if (paging.rPage > 1) { paging.rPage--; renderResults(); } });
         if (els.rNext) els.rNext.addEventListener('click', () => { paging.rPage++; renderResults(); });
         els.refreshQuestionsBtn.addEventListener('click', () => loadQuestions().catch(err => setStatus(err.message || 'Gagal memuat soal.', 'error')));
+        if (els.adminTokenInput) {
+            els.adminTokenInput.addEventListener('input', () => {
+                state.adminToken = String(els.adminTokenInput.value || '').trim();
+            });
+        }
         if (els.resetSetBtn) els.resetSetBtn.addEventListener('click', async () => {
             const setVal = String(els.quizSetFilter?.value || 'all');
             if (setVal === 'all') { alert('Pilih set tertentu untuk di-reset.'); return; }

@@ -132,7 +132,7 @@ const programs = [
     // Show Anggota View
     function showAnggota(bidangId) {
         const bidangData = bidang.find(b => b.id === bidangId);
-        const anggotaData = members[bidangId] || [];
+        const anggotaData = members.filter(m => m.bidangId === bidangId);
 
         anggotaHeaderTitle.textContent = bidangData.name;
         anggotaHeaderCount.textContent = `${anggotaData.length} Anggota`;
@@ -168,7 +168,7 @@ const programs = [
     // Show Program Kerja View
     function showProgram(bidangId) {
         const bidangData = bidang.find(b => b.id === bidangId);
-        const programData = programKerja[bidangId] || [];
+        const programData = programs.filter(p => p.bidangId === bidangId);
 
         programHeaderTitle.textContent = `Program Kerja`;
         programHeaderSubtitle.textContent = bidangData.name;

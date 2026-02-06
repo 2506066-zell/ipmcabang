@@ -4,8 +4,38 @@ const { requireAdminAuth } = require('./_auth');
 
 async function list(req, res) {
   const set = req.query.set ? Number(req.query.set) : null;
-  const rows = set ? (await query`SELECT * FROM questions WHERE quiz_set=${set} ORDER BY id DESC`).rows : (await query`SELECT * FROM questions ORDER BY id DESC`).rows;
-  json(res, 200, { status: 'success', questions: rows }, cacheHeaders(60));
+  const category = req.query.category ? String(req.query.category).trim() : '';
+  const page = req.query.page ? Number(req.query.page) : null;
+  const size = req.query.size ? Number(req.query.size) : null;
+  if (!page || !size) {
+    if (set && category) {
+      const rows = (await query`SELECT * FROM questions WHERE quiz_set=${set} AND LOWER(category)=${category.toLowerCase()} ORDER BY id DESC`).rows;
+      return json(res, 200, { status: 'success', questions: rows }, cacheHeaders(60));
+    }
+    if (set) {
+      const rows = (await query`SELECT * FROM questions WHERE quiz_set=${set} ORDER BY id DESC`).rows;
+      return json(res, 200, { status: 'success', questions: rows }, cacheHeaders(60));
+    }
+    if (category) {
+      const rows = (await query`SELECT * FROM questions WHERE LOWER(category)=${category.toLowerCase()} ORDER BY id DESC`).rows;
+      return json(res, 200, { status: 'success', questions: rows }, cacheHeaders(60));
+    }
+    const rows = (await query`SELECT * FROM questions ORDER BY id DESC`).rows;
+    return json(res, 200, { status: 'success', questions: rows }, cacheHeaders(60));
+  }
+  const limit = Math.max(1, Math.min(500, size));
+  const offset = Math.max(0, (Math.max(1, page) - 1) * limit);
+  let rows;
+  if (set && category) {
+    rows = (await query`SELECT * FROM questions WHERE quiz_set=${set} AND LOWER(category)=${category.toLowerCase()} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`).rows;
+  } else if (set) {
+    rows = (await query`SELECT * FROM questions WHERE quiz_set=${set} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`).rows;
+  } else if (category) {
+    rows = (await query`SELECT * FROM questions WHERE LOWER(category)=${category.toLowerCase()} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`).rows;
+  } else {
+    rows = (await query`SELECT * FROM questions ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`).rows;
+  }
+  json(res, 200, { status: 'success', questions: rows, page: Math.max(1, page), size: limit }, cacheHeaders(60));
 }
 
 async function create(req, res) {

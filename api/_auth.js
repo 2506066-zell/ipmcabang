@@ -9,13 +9,9 @@ async function getSessionUser(req) {
 }
 
 async function requireAdminAuth(req) {
-  // If ADMIN_TOKEN provided, allow
   const token = getBearerToken(req);
   if (process.env.ADMIN_TOKEN && token === process.env.ADMIN_TOKEN) return { username: 'admin_token' };
-  // Otherwise, any valid session is allowed as admin (simplified requirement)
-  const user = await getSessionUser(req);
-  if (!user) throw new Error('Unauthorized');
-  return user;
+  throw new Error('Unauthorized');
 }
 
 module.exports = { getSessionUser, requireAdminAuth };

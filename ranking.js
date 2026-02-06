@@ -107,12 +107,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const rank = index + 1;
             const card = document.createElement('div');
             card.className = `rank-card rank-${rank}`;
-            card.innerHTML = `
-                <div class="rank-position">${rank === 1 ? '<i class="fas fa-crown"></i>' : rank}</div>
-                <div class="avatar">${p.username.charAt(0).toUpperCase()}</div>
-                <div class="name">${p.username}</div>
-                <div class="score">${p.score} Poin</div>
-            `;
+            const pos = document.createElement('div');
+            pos.className = 'rank-position';
+            pos.innerHTML = rank === 1 ? '<i class="fas fa-crown"></i>' : String(rank);
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = (String(p.username||'').charAt(0) || '').toUpperCase();
+            const name = document.createElement('div');
+            name.className = 'name';
+            name.textContent = String(p.username||'');
+            const score = document.createElement('div');
+            score.className = 'score';
+            score.textContent = `${p.score} Poin`;
+            card.appendChild(pos);
+            card.appendChild(avatar);
+            card.appendChild(name);
+            card.appendChild(score);
             card.classList.add('animate');
             card.style.animationDelay = `${index * 0.08}s`;
             top3Container.appendChild(card);
@@ -148,15 +158,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (p.username.toLowerCase() === currentUser.toLowerCase()) {
                 listItem.classList.add('user-highlight');
             }
-            listItem.innerHTML = `
-                <div class="rank">${rank}</div>
-                <div class="name-avatar">
-                    <div class="avatar-sm">${p.username.charAt(0).toUpperCase()}</div>
-                    <span>${p.username}</span>
-                </div>
-                <div class="score">${p.score} (${p.percent}%)</div>
-                <div class="time">${new Date(p.ts || p.timestamp).toLocaleDateString('id-ID')}</div>
-            `;
+            const rankEl = document.createElement('div');
+            rankEl.className = 'rank';
+            rankEl.textContent = String(rank);
+            const nameAvatar = document.createElement('div');
+            nameAvatar.className = 'name-avatar';
+            const avatarSm = document.createElement('div');
+            avatarSm.className = 'avatar-sm';
+            avatarSm.textContent = (String(p.username||'').charAt(0) || '').toUpperCase();
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = String(p.username||'');
+            nameAvatar.appendChild(avatarSm);
+            nameAvatar.appendChild(nameSpan);
+            const scoreEl = document.createElement('div');
+            scoreEl.className = 'score';
+            scoreEl.textContent = `${p.score} (${p.percent}%)`;
+            const timeEl = document.createElement('div');
+            timeEl.className = 'time';
+            timeEl.textContent = new Date(p.ts || p.timestamp).toLocaleDateString('id-ID');
+            listItem.appendChild(rankEl);
+            listItem.appendChild(nameAvatar);
+            listItem.appendChild(scoreEl);
+            listItem.appendChild(timeEl);
             rankingList.appendChild(listItem);
 
             // Remove animation classes after animation ends
@@ -281,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initParticles() {
+    if (typeof window !== 'undefined' && typeof window.particlesJS !== 'function') return;
     particlesJS('particles-js', {
         "particles": {
             "number": {
