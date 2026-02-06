@@ -51,6 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let userAnswers = {};
     let currentQuestionIndex = 0;
     let selectedOption = null;
+    let quizSeed = null;
+    let currentQuizSet = 1;
+    const quizSetPicker = document.getElementById('quiz-set-picker');
+    const quizSetGrid = document.getElementById('quiz-set-grid');
+    const ATTEMPT_INFO_KEY = 'ipmquiz_attempt_info';
 
     // --- Data Normalization ---
     function normalizeQuestionsResponse(data) {
@@ -77,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Quiz Initialization ---
     async function fetchQuestions() {
         showLoader('Mempersiapkan Soal...');
+        await new Promise(r => requestAnimationFrame(r));
         nextBtn.style.display = 'none';
         quizHeader.style.display = 'none';
 
@@ -86,6 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const payload = await response.json();
             questionsData = normalizeQuestionsResponse(payload);
+            if (Array.isArray(questionsData)) {
+                questionsData = questionsData.filter(q => q.active !== false);
+            }
             
             if (!questionsData.length) {
                 quizBody.style.display = 'block';
@@ -102,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             quizBody.innerHTML = '';
-            startQuiz();
+            showSetPicker();
 
         } catch (error) {
             quizBody.style.display = 'block';
@@ -121,9 +130,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showSetPicker() {
+        userInfoScreen.style.display = 'none';
+        if (quizSetPicker) quizSetPicker.style.display = 'block';
+        if (quizSetGrid) {
+            const counts = { 1: 0, 2: 0, 3: 0 };
+            questionsData.forEach(q => { const s = Number(q.quiz_set || 1); if (counts[s] !== undefined) counts[s]++; });
+            quizSetGrid.querySelectorAll('.set-card').forEach(btn => {
+                const set = Number(btn.dataset.set || 1);
+                const small = quizSetGrid.querySelector(`small[data-count="${set}"]`);
+                if (small) small.textContent = `${counts[set] || 0} soal`;
+                btn.disabled = (counts[set] || 0) === 0;
+                btn.onclick = () => {
+                    currentQuizSet = set;
+                    const selected = questionsData.filter(q => Number(q.quiz_set || 1) === set);
+                    quizSeed = `${Date.now()}_${Math.floor(Math.random()*1e6)}`;
+                    const srng = seededRandom(quizSeed);
+                    const shuffled = shuffleArray(selected, srng).map(q => ({ ...q, options: shuffleOptions(q.options, srng) }));
+                    questionsData = shuffled;
+                    if (quizSetPicker) quizSetPicker.style.display = 'none';
+                    startQuiz();
+                };
+            });
+        }
+    }
+
     // --- Quiz Flow ---
     function startQuiz() {
-        quizStartTime = Date.now(); // START the timer
+        // Attempt guard: simple cooldown and daily cap
+        const uname = (usernameInput.value || '').trim();
+        const info = getAttemptInfo(uname);
+        const now = Date.now();
+        const COOLDOWN_MS = 30 * 1000; // 30s cooldown
+        const DAILY_LIMIT = 10; // max 10 attempts/day
+        if (info && info.last && (now - info.last) < COOLDOWN_MS) {
+            if (window.AppToast) AppToast.show('Tunggu sebentar sebelum mencoba lagi.');
+            return;
+        }
+        if (info && sameDay(info.day, now) && info.count >= DAILY_LIMIT) {
+            if (window.AppToast) AppToast.show('Batas percobaan harian tercapai.');
+            return;
+        }
+        setAttemptInfo(uname, now);
+
+        quizStartTime = now; // START the timer
         currentQuestionIndex = 0;
         userAnswers = {};
         resultContainer.style.display = 'none';
@@ -192,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         optionElement.classList.add('selected');
         selectedOption = optionElement;
         userAnswers[questionId] = optionElement.dataset.optionKey;
+        logEvent('select_option', { questionId, option: optionElement.dataset.optionKey });
 
         nextBtn.disabled = false;
         nextBtn.classList.add('enabled');
@@ -208,13 +259,14 @@ document.addEventListener('DOMContentLoaded', () => {
     async function submitAndShowResults() {
         showLoader('Mengirim Jawaban...');
         const username = usernameInput.value;
-        const time_spent = Date.now() - quizStartTime; // Calculate duration in milliseconds
+        const finished_at = Date.now();
+        const time_spent = finished_at - quizStartTime; // ms
 
         try {
             const postResponse = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'submitQuiz', username, answers: userAnswers, time_spent }),
+                body: JSON.stringify({ action: 'submitQuiz', username, answers: userAnswers, time_spent, seed: quizSeed, started_at: quizStartTime, finished_at }),
             });
             
             const result = await postResponse.json();
@@ -223,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             displayDynamicResults(result);
+            logEvent('submit_quiz', { percent: result.percent, score: result.score, total: result.total, time_spent });
 
         } catch (error) {
             alert(`Gagal mengirim hasil: ${error.message}`);
@@ -279,16 +332,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     startQuizBtn.addEventListener('click', async () => {
-        if (usernameInput.value.trim() === '') {
-            alert('Harap masukkan nama sesuai database.');
-            return;
+        showLoader('Memeriksa akun...');
+        startQuizBtn.disabled = true;
+        try {
+            const nameVal = usernameInput.value.trim();
+            if (!nameVal) {
+                alert('Harap masukkan nama sesuai database.');
+                return;
+            }
+            const ok = await validateName();
+            if (!ok) {
+                alert('Nama tidak sesuai dengan data di sheet user.');
+                return;
+            }
+            logEvent('start_quiz', {});
+            await fetchQuestions();
+        } finally {
+            startQuizBtn.disabled = false;
+            // fetchQuestions akan menutup loader di finally, tapi jika gagal awal kita tutup di sini
+            hideLoader();
         }
-        const ok = await validateName();
-        if (!ok) {
-            alert('Nama tidak sesuai dengan data di sheet user.');
-            return;
-        }
-        fetchQuestions();
     });
 
     nextBtn.addEventListener('click', () => {
@@ -312,4 +375,68 @@ document.addEventListener('DOMContentLoaded', () => {
         usernameInput.value = '';
         nextBtn.innerHTML = '<i class="fas fa-arrow-right"></i>';
     });
+
+    // ===== Helpers: seeded random, shuffle, attempts, analytics =====
+    function seededRandom(seed) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < seed.length; i++) {
+            h ^= seed.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+        }
+        return () => {
+            h += 0x6D2B79F5;
+            let t = Math.imul(h ^ (h >>> 15), 1 | h);
+            t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    function shuffleArray(arr, rnd) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(rnd() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function shuffleOptions(opts, rnd) {
+        if (!opts) return opts;
+        const entries = Object.entries(opts).filter(([, v]) => v);
+        const shuffled = shuffleArray(entries, rnd);
+        const newOpts = {};
+        shuffled.forEach(([k, v]) => { newOpts[k] = v; });
+        return newOpts;
+    }
+
+    function sameDay(a, b) {
+        const da = new Date(a), db = new Date(b);
+        return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();
+    }
+    function getAttemptInfo(username) {
+        try {
+            const obj = JSON.parse(localStorage.getItem(ATTEMPT_INFO_KEY) || '{}');
+            return obj[username] || null;
+        } catch { return null; }
+    }
+    function setAttemptInfo(username, ts) {
+        try {
+            const obj = JSON.parse(localStorage.getItem(ATTEMPT_INFO_KEY) || '{}');
+            const prev = obj[username] || { count: 0, day: ts, last: 0 };
+            obj[username] = {
+                count: sameDay(prev.day, ts) ? (prev.count + 1) : 1,
+                day: sameDay(prev.day, ts) ? prev.day : ts,
+                last: ts,
+            };
+            localStorage.setItem(ATTEMPT_INFO_KEY, JSON.stringify(obj));
+        } catch {}
+    }
+
+    async function logEvent(event, payload) {
+        try {
+            const username = usernameInput.value || '';
+            const body = { action: 'logEvent', event, username, ts: Date.now(), payload };
+            await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+        } catch {}
+    }
 });

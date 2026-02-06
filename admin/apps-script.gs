@@ -79,7 +79,7 @@ function handlePublicQuestionsGet_() {
     .slice(1)
     .map(row => rowToQuestion_(row, map))
     .filter(q => q && q.active)
-    .map(q => ({ id: q.id, question: q.question, options: q.options }));
+    .map(q => ({ id: q.id, question: q.question, options: q.options, quiz_set: q.quiz_set }));
 
   return json_({ status: 'success', questions });
 }
@@ -193,6 +193,8 @@ function handleAdminUpsertQuestionPost_(body) {
   const d = String(options.d || '').trim();
   const correct = String(input.correct_answer || '').trim().toLowerCase();
   const active = input.active === false ? false : true;
+  const quiz_set = input.quiz_set ? Number(input.quiz_set) : 1;
+  const category = String(input.category || '').trim();
 
   if (!question) return json_({ status: 'error', message: 'Pertanyaan wajib diisi.' });
   if (!a || !b || !d) return json_({ status: 'error', message: 'Opsi A, B, dan D wajib diisi.' });
@@ -229,6 +231,8 @@ function handleAdminUpsertQuestionPost_(body) {
   setByIndices_(row, map.d, d);
   setByIndices_(row, map.correct_answer, correct);
   setByIndices_(row, map.active, active);
+  setByIndices_(row, map.quiz_set, quiz_set);
+  setByIndices_(row, map.category, category);
   setByIndices_(row, map.updated_at, now);
 
   if (rowIndex > 0) {
@@ -386,11 +390,13 @@ const QUESTIONS_FIELD_ALIASES_ = {
   d: ['d', 'opsi d', 'option d', 'pilihan d'],
   correct_answer: ['correct_answer', 'jawaban benar', 'jawaban', 'answer'],
   active: ['active', 'aktif', 'status'],
+  quiz_set: ['quiz_set', 'kuis', 'set'],
+  category: ['category', 'kategori'],
   updated_at: ['updated_at', 'updated at', 'updated', 'last_update', 'last update'],
 };
 
 function ensureQuestionsHeader_(sheet) {
-  const required = ['id', 'question', 'a', 'b', 'c', 'd', 'correct_answer', 'active', 'updated_at'];
+  const required = ['id', 'question', 'a', 'b', 'c', 'd', 'correct_answer', 'active', 'quiz_set', 'category', 'updated_at'];
   const lastRow = sheet.getLastRow();
   const lastCol = Math.max(sheet.getLastColumn(), 1);
 
@@ -451,6 +457,8 @@ function buildQuestionsMap_(header) {
     d: get('d'),
     correct_answer: get('correct_answer'),
     active: get('active'),
+    quiz_set: get('quiz_set'),
+    category: get('category'),
     updated_at: get('updated_at'),
   };
 }
@@ -505,6 +513,8 @@ function rowToQuestion_(row, map) {
   const question = String(getByIndices_(row, map.question) || '').trim();
   const correct = String(getByIndices_(row, map.correct_answer) || '').trim().toLowerCase();
   const active = toBool_(getByIndices_(row, map.active), true);
+  const quiz_set = toNumber_(getByIndices_(row, map.quiz_set)) || 1;
+  const category = String(getByIndices_(row, map.category) || '').trim();
 
   return {
     id,
@@ -517,6 +527,8 @@ function rowToQuestion_(row, map) {
     },
     correct_answer: correct,
     active,
+    quiz_set,
+    category,
   };
 }
 

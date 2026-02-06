@@ -60,6 +60,12 @@
                 <div class="toolbar">
                     <div class="toolbar-left">
                         <input id="search-input" class="search-input" type="search" placeholder="Cari soal...">
+                        <select id="quiz-set-filter" class="search-input" style="max-width:140px;margin-left:8px">
+                            <option value="all">Semua Kuis</option>
+                            <option value="1">Kuis 1</option>
+                            <option value="2">Kuis 2</option>
+                            <option value="3">Kuis 3</option>
+                        </select>
                     </div>
                     <div class="toolbar-right">
                     <select id="status-filter" class="search-input" style="max-width:160px">
@@ -81,7 +87,9 @@
                         <thead>
                             <tr>
                                 <th style="width: 72px;">ID</th>
+                                <th style="width: 92px;">Kuis</th>
                                 <th>Soal</th>
+                                <th style="width: 140px;">Kategori</th>
                                 <th style="width: 92px;">Aktif</th>
                                 <th style="width: 92px;">Jawaban</th>
                                 <th style="width: 200px;">Aksi</th>
@@ -148,6 +156,11 @@
                     <textarea id="q-question" required></textarea>
                 </div>
 
+                <div class="field">
+                    <label for="q-category">Kategori</label>
+                    <input id="q-category" type="text" placeholder="Contoh: Sejarah, Organisasi">
+                </div>
+
                 <div class="grid-2">
                     <div class="field">
                         <label for="q-a">Opsi A</label>
@@ -182,6 +195,17 @@
                         <select id="q-active" required>
                             <option value="true">Aktif</option>
                             <option value="false">Nonaktif</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="q-quizset">Kuis</label>
+                        <select id="q-quizset" required>
+                            <option value="1">Kuis 1</option>
+                            <option value="2">Kuis 2</option>
+                            <option value="3">Kuis 3</option>
                         </select>
                     </div>
                 </div>

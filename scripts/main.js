@@ -1,11 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
     const hamburgerMenu = document.getElementById('hamburger-menu');
     const mobileNav = document.getElementById('mobile-nav');
+    const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
     const headerRight = document.querySelector('.header-right-icons');
 
     if (hamburgerMenu && mobileNav) {
         hamburgerMenu.addEventListener('click', () => {
-            mobileNav.classList.toggle('open');
+            const isOpen = mobileNav.classList.toggle('open');
+            if (mobileNavOverlay) mobileNavOverlay.classList.toggle('open', isOpen);
+            document.body.classList.toggle('body-no-scroll', isOpen);
+        });
+    }
+    if (mobileNavOverlay && mobileNav) {
+        mobileNavOverlay.addEventListener('click', () => {
+            mobileNav.classList.remove('open');
+            mobileNavOverlay.classList.remove('open');
+            document.body.classList.remove('body-no-scroll');
         });
     }
 

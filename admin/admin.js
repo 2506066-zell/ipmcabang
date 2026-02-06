@@ -34,6 +34,7 @@
 
         searchInput: document.getElementById('search-input'),
         statusFilter: document.getElementById('status-filter'),
+        quizSetFilter: document.getElementById('quiz-set-filter'),
         refreshQuestionsBtn: document.getElementById('refresh-questions-btn'),
         newQuestionBtn: document.getElementById('new-question-btn'),
         questionsTbody: document.getElementById('questions-tbody'),
@@ -62,6 +63,8 @@
         qD: document.getElementById('q-d'),
         qCorrect: document.getElementById('q-correct'),
         qActive: document.getElementById('q-active'),
+        qQuizSet: document.getElementById('q-quizset'),
+        qCategory: document.getElementById('q-category'),
 
         saveBtn: document.getElementById('save-btn'),
     };
@@ -161,6 +164,8 @@
         if (query) items = items.filter(q => String(q.question || '').toLowerCase().includes(query));
         if (status === 'active') items = items.filter(q => q.active);
         if (status === 'inactive') items = items.filter(q => q.active === false);
+        const setFilter = String(els.quizSetFilter?.value || 'all');
+        if (setFilter !== 'all') items = items.filter(q => String(q.quiz_set || '') === setFilter);
         return items;
     }
 
@@ -174,6 +179,7 @@
             return `
                 <tr data-id="${escapeHtml(q.id)}">
                     <td data-label="ID">${escapeHtml(q.id)}</td>
+                    <td data-label="Kuis">${escapeHtml(q.quiz_set ?? '-')}</td>
                     <td data-label="Soal">
                     <div class="question-cell-content">
                         <div class="question-text">${escapeHtml(q.question)}</div>
@@ -185,6 +191,7 @@
                         </div>
                     </div>
                 </td>
+                    <td data-label="Kategori">${escapeHtml(q.category || '-')}</td>
                     <td data-label="Aktif"><span class="status-badge ${activeClass}">${activeLabel}</span></td>
                     <td data-label="Jawaban">${escapeHtml((q.correct_answer || '').toUpperCase())}</td>
                     <td data-label="Aksi">
@@ -233,6 +240,8 @@
         els.qD.value = question?.options?.d || '';
         els.qCorrect.value = question?.correct_answer || 'a';
         els.qActive.value = question?.active === false ? 'false' : 'true';
+        if (els.qQuizSet) els.qQuizSet.value = String(question?.quiz_set || '1');
+        if (els.qCategory) els.qCategory.value = question?.category || '';
 
         els.modal.classList.remove('hidden');
         els.modal.setAttribute('aria-hidden', 'false');
@@ -408,6 +417,7 @@
 
         els.searchInput.addEventListener('input', () => renderQuestions());
         if (els.statusFilter) els.statusFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
+        if (els.quizSetFilter) els.quizSetFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
         if (els.qPrev) els.qPrev.addEventListener('click', () => { if (paging.qPage > 1) { paging.qPage--; renderQuestions(); } });
         if (els.qNext) els.qNext.addEventListener('click', () => { paging.qPage++; renderQuestions(); });
         if (els.rPrev) els.rPrev.addEventListener('click', () => { if (paging.rPage > 1) { paging.rPage--; renderResults(); } });
@@ -465,6 +475,8 @@
             const d = String(els.qD.value || '').trim();
             const correct = String(els.qCorrect.value || '').trim().toLowerCase();
             const active = String(els.qActive.value || 'true') === 'true';
+            const category = String(els.qCategory?.value || '').trim();
+            const quiz_set = Number(String(els.qQuizSet?.value || '1'));
 
             if (!question) {
                 setStatus('Pertanyaan wajib diisi.', 'error');
@@ -485,6 +497,8 @@
                 options: { a, b, c, d },
                 correct_answer: correct,
                 active,
+                ...(category ? { category } : {}),
+                quiz_set,
             };
 
             els.saveBtn.disabled = true;
