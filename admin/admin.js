@@ -31,6 +31,7 @@
         togglePasswordBtn: document.getElementById('toggle-admin-password'),
         connectBtn: document.getElementById('connect-btn'),
         connectVercelBtn: document.getElementById('connect-vercel-btn'),
+        adminLoginBtn: document.getElementById('admin-login-btn'),
         logoutBtn: document.getElementById('logout-btn'),
         status: document.getElementById('status'),
 
@@ -167,6 +168,15 @@
         // use session token for admin operations
         if (state.session) headers['Authorization'] = `Bearer ${state.session}`;
         return await fetchJson(resolveApiUrl(path), { method, headers, body: body ? JSON.stringify(body) : undefined });
+    }
+
+    async function loginVercel(uname, pwd) {
+        const body = { username: String(uname||'').trim(), password: String(pwd||'') };
+        const data = await fetchJson(resolveApiUrl('/api/auth/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!data || data.status !== 'success' || !data.session) throw new Error(data?.message || 'Login gagal');
+        state.session = String(data.session);
+        sessionStorage.setItem('ipmquiz_admin_session', state.session);
+        return data;
     }
 
     function escapeHtml(value) {
@@ -559,28 +569,23 @@
                 state.backend = String(els.backendMode.value || 'apps_script');
             });
         }
-        if (els.connectVercelBtn) {
-            els.connectVercelBtn.addEventListener('click', async () => {
+        if (els.adminLoginBtn) {
+            els.adminLoginBtn.addEventListener('click', async () => {
                 try {
-                    state.backend = 'vercel';
+                    setStatus('Memeriksa server...', '');
+                    showLoader('Masuk Admin...');
                     const uname = String(els.usernameInput?.value || '').trim();
                     const pwd = String(els.passwordInput?.value || '');
-                    setStatus('Menghubungkan Vercel...', '');
-                    showLoader('Menghubungkan...');
+                    if (!uname || !pwd) throw new Error('Isi username dan password admin.');
                     const health = await apiGetVercel('/api/health');
                     if (!health || health.status !== 'success') throw new Error(health?.message || 'Health gagal');
-                    if (!uname || !pwd) throw new Error('Isi username dan password admin.');
-                    const login = await fetchJson(resolveApiUrl('/api/auth/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: uname, password: pwd }) });
-                    if (!login || login.status !== 'success' || !login.session) throw new Error(login?.message || 'Login gagal');
-                    state.session = String(login.session);
-                    sessionStorage.setItem('ipmquiz_admin_session', state.session);
+                    await loginVercel(uname, pwd);
                     await loadQuestions();
                     setConnected(true);
+                    setStatus('Tersambung ke Vercel.', 'ok');
                 } catch (e) {
                     setStatus(String(e.message||e), 'error');
-                } finally {
-                    hideLoader();
-                }
+                } finally { hideLoader(); }
             });
         }
 
@@ -790,17 +795,22 @@
             });
         }
 
-        const existingSession = String(sessionStorage.getItem(SESSION_KEYS.session) || '').trim();
-        if (existingSession) {
-            state.session = existingSession;
-            state.apiUrl = DEFAULT_API_URL;
-            const initialTab = state.prefs.tab || 'questions';
-            activateTab(initialTab);
-            const initialLoad = initialTab === 'results' ? loadResults() : loadQuestions();
-            initialLoad
-                .then(() => setConnected(true))
-                .catch(() => logout());
-        }
+        // auto check health & auto connect if session exists
+        (async () => {
+            try {
+                const h = await apiGetVercel('/api/health');
+                if (!h || h.status !== 'success') throw new Error('Server tidak siap');
+                const existingSession = String(sessionStorage.getItem(SESSION_KEYS.session) || '').trim();
+                const initialTab = state.prefs.tab || 'questions';
+                activateTab(initialTab);
+                if (existingSession) {
+                    state.session = existingSession;
+                    await (initialTab === 'results' ? loadResults() : loadQuestions());
+                    setConnected(true);
+                    setStatus('Tersambung otomatis.', 'ok');
+                }
+            } catch {}
+        })();
         ['input','change'].forEach(evt => {
             els.questionForm.addEventListener(evt, () => { modalDirty = true; if (window.NavigationGuard) NavigationGuard.markDirty(); saveDraft(); });
         });
