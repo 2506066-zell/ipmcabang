@@ -48,7 +48,8 @@ async function create(req, res) {
   const active = Boolean(b.active !== false);
   const category = b.category ? String(b.category) : null;
   const quiz_set = Number(b.quiz_set || 1);
-  if (!q || !options.a || !options.b || !options.d || !['a','b','c','d'].includes(correct)) return json(res, 400, { status: 'error', message: 'Invalid payload' });
+  if (!q || !options.a || !options.b || !options.d) return json(res, 400, { status: 'error', message: 'Opsi A, B, D dan pertanyaan wajib diisi' });
+  if (!['a','b','c','d'].includes(correct)) return json(res, 400, { status: 'error', message: 'Jawaban benar harus A/B/C/D' });
   const ins = await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (${q}, ${options}, ${correct}, ${active}, ${category}, ${quiz_set}) RETURNING *`;
   json(res, 201, { status: 'success', question: ins.rows[0] });
 }
@@ -86,6 +87,7 @@ module.exports = async (req, res) => {
     if (req.method === 'DELETE') return remove(req, res);
     json(res, 405, { status: 'error', message: 'Method not allowed' });
   } catch (e) {
+    try { console.error('questions endpoint error:', e); } catch {}
     json(res, 500, { status: 'error', message: String(e.message || e) });
   }
 };

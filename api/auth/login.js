@@ -28,6 +28,7 @@ module.exports = async (req, res) => {
     await query`INSERT INTO sessions (user_id, token, role, expires_at) VALUES (${user.id}, ${token}, ${role}, ${expires.toISOString()})`;
     json(res, 200, { status: 'success', session: token, username: user.username, nama_panjang: user.nama_panjang, role });
   } catch (e) {
+    try { console.error('auth/login error:', e); } catch {}
     json(res, 500, { status: 'error', message: String(e.message || e) });
   }
 };

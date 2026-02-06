@@ -52,6 +52,7 @@ module.exports = async (req, res) => {
     if (req.method === 'DELETE') return remove(req, res);
     json(res, 405, { status: 'error', message: 'Method not allowed' });
   } catch (e) {
+    try { console.error('users endpoint error:', e); } catch {}
     json(res, 500, { status: 'error', message: String(e.message || e) });
   }
 };

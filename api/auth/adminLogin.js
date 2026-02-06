@@ -40,6 +40,7 @@ module.exports = async (req, res) => {
     await query`INSERT INTO sessions (user_id, token, role, expires_at) VALUES (${null}, ${token}, ${'admin'}, ${expires.toISOString()})`;
     json(res, 200, { status: 'success', session: token, role: 'admin' });
   } catch (e) {
+    try { console.error('auth/adminLogin error:', e); } catch {}
     json(res, 500, { status: 'error', message: String(e.message || e) });
   }
 };

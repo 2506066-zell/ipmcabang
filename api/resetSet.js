@@ -12,6 +12,7 @@ module.exports = async (req, res) => {
     await query`DELETE FROM results WHERE quiz_set=${quiz_set}`;
     json(res, 200, { status: 'success' });
   } catch (e) {
+    try { console.error('resetSet endpoint error:', e); } catch {}
     json(res, 500, { status: 'error', message: String(e.message || e) });
   }
 };
