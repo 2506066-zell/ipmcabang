@@ -3,9 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageEl = document.getElementById('message');
   const toggleBtn = document.getElementById('toggle-password');
 
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
+  const API_URL = '/api/auth/register';
   const USER_SESSION_KEY = 'ipmquiz_user_session';
   const USER_USERNAME_KEY = 'ipmquiz_user_username';
+  if (window.NavigationGuard) NavigationGuard.enable('Keluar dari halaman? Data form belum tersimpan.');
+  const inputs = Array.from((form && form.querySelectorAll('input')) || []);
+  inputs.forEach(el => el.addEventListener('input', () => {
+    const dirty = inputs.some(i => String(i.value || '').length > 0);
+    if (window.NavigationGuard) {
+      if (dirty) NavigationGuard.markDirty(); else NavigationGuard.clearDirty();
+    }
+  }));
 
   function setMessage(msg) {
     if (messageEl) messageEl.textContent = msg || '';
@@ -51,16 +59,20 @@ document.addEventListener('DOMContentLoaded', () => {
       form.querySelector('.login-button').disabled = true;
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'publicRegister', nama_panjang, pimpinan, username, password })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nama_panjang, pimpinan, username, password })
       });
       const data = await res.json();
       if (!res.ok || data.status !== 'success') {
         throw new Error(data.message || 'Pendaftaran gagal');
       }
-      sessionStorage.setItem(USER_SESSION_KEY, String(data.session || ''));
-      sessionStorage.setItem(USER_USERNAME_KEY, String(data.username || username));
+      const loginRes = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+      const loginData = await loginRes.json();
+      if (!loginRes.ok || loginData.status !== 'success') throw new Error(loginData.message || 'Login otomatis gagal');
+      sessionStorage.setItem(USER_SESSION_KEY, String(loginData.session || ''));
+      sessionStorage.setItem(USER_USERNAME_KEY, String(loginData.username || username));
       showToast('Pendaftaran berhasil');
+      if (window.NavigationGuard) NavigationGuard.disable();
       window.location.href = 'quiz.html';
     } catch (err) {
       setMessage(err.message || 'Gagal mendaftar');

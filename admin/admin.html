@@ -39,9 +39,26 @@
                 </div>
             </div>
 
+            <div class="grid-2">
+                <div class="field">
+                    <label for="admin-token-input">Admin Token (Vercel)</label>
+                    <input id="admin-token-input" type="password" placeholder="Masukkan ADMIN_TOKEN">
+                </div>
+                <div class="field">
+                    <label for="backend-mode">Mode Backend</label>
+                    <select id="backend-mode">
+                        <option value="apps_script">Apps Script</option>
+                        <option value="vercel">Vercel</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="actions">
                 <button class="btn btn-primary" id="connect-btn" type="button">
                     <i class="fas fa-right-to-bracket" aria-hidden="true"></i> Login
+                </button>
+                <button class="btn btn-secondary" id="connect-vercel-btn" type="button">
+                    <i class="fas fa-plug" aria-hidden="true"></i> Connect Vercel
                 </button>
                 <button class="btn btn-secondary hidden" id="logout-btn" type="button">
                     <i class="fas fa-right-from-bracket" aria-hidden="true"></i> Keluar
@@ -76,6 +93,7 @@
                         </div>
                     </div>
                     <div class="toolbar-right">
+                    <a class="btn btn-ghost" href="import.html"><i class="fas fa-file-import" aria-hidden="true"></i> Import CSV</a>
                     <select id="status-filter" class="search-input" style="max-width:160px">
                         <option value="all">Semua</option>
                         <option value="active">Aktif</option>
@@ -225,6 +243,9 @@
                     <button class="btn btn-secondary" type="button" id="cancel-btn">
                         <i class="fas fa-xmark" aria-hidden="true"></i> Batal
                     </button>
+                    <button class="btn btn-primary" type="button" id="save-add-btn">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Simpan & Tambah Lagi
+                    </button>
                     <button class="btn btn-primary" type="submit" id="save-btn">
                         <i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan
                     </button>
@@ -234,6 +255,7 @@
     </div>
 
     <script src="../scripts/main.js"></script>
+    <script src="../scripts/navguard.js"></script>
     <script src="./admin.js"></script>
     <script>document.addEventListener('gesturestart', function(e){ e.preventDefault(); });</script>
 </body>

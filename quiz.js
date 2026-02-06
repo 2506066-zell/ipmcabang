@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const scoreDetails = document.getElementById('score-details');
 
     // API and Data
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
+    const API_URL = '/api';
     const USER_SESSION_KEY = 'ipmquiz_user_session';
     const USER_USERNAME_KEY = 'ipmquiz_user_username';
 
@@ -33,17 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     async function loadUserName() {
         try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'publicMe', session: existingSession })
-            });
-            const data = await res.json();
-            if (res.ok && data && data.status === 'success') {
-                const nama = String(data.user?.nama_panjang || '');
-                if (usernameInput) usernameInput.value = nama;
-                if (userNameTextEl) userNameTextEl.textContent = nama || 'Tidak ditemukan';
-            }
+            const uname = String(sessionStorage.getItem('ipmquiz_user_username') || localStorage.getItem('ipmquiz_user_username') || '').trim();
+            if (usernameInput) usernameInput.value = uname;
+            if (userNameTextEl) userNameTextEl.textContent = uname || 'Tidak ditemukan';
         } catch {}
     }
     loadUserName();
@@ -88,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         quizHeader.style.display = 'none';
 
         try {
-            const response = await fetch(`${API_URL}?action=questions`);
+            const response = await fetch(`${API_URL}/questions`);
             if (!response.ok) throw new Error('Gagal mengambil data soal dari server.');
             
             const payload = await response.json();
@@ -187,7 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         setAttemptInfo(uname, now);
 
-        quizStartTime = now; // START the timer
+        if (window.NavigationGuard) NavigationGuard.enable('Keluar dari kuis? Progres akan hilang.');
+        if (window.NavigationGuard) NavigationGuard.markDirty();
+        quizStartTime = now;
         currentQuestionIndex = 0;
         userAnswers = {};
         resultContainer.style.display = 'none';
@@ -279,12 +273,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const time_spent = finished_at - quizStartTime; // ms
 
         try {
-            const postResponse = await fetch(API_URL, {
+            const correctCount = questionsData.reduce((acc, q) => acc + (String(userAnswers[q.id]||'') === String(q.correct_answer||'') ? 1 : 0), 0);
+            const postResponse = await fetch(`${API_URL}/results`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'submitQuiz', session, username, answers: userAnswers, time_spent, seed: quizSeed, started_at: quizStartTime, finished_at, quiz_set: currentQuizSet }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, score: correctCount, total: questionsData.length, percent: Math.round((correctCount / questionsData.length) * 100), time_spent, quiz_set: currentQuizSet, started_at: quizStartTime, finished_at }),
             });
-            
             const result = await postResponse.json();
             if (!postResponse.ok || result.status !== 'success') {
                 throw new Error(result.message || 'Gagal menyimpan hasil.');
@@ -292,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             displayDynamicResults(result);
             logEvent('submit_quiz', { percent: result.percent, score: result.score, total: result.total, time_spent });
+            if (window.NavigationGuard) NavigationGuard.disable();
 
         } catch (error) {
             alert(`Gagal mengirim hasil: ${error.message}`);
@@ -333,15 +328,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     async function validateName() {
-        const nama = usernameInput.value.trim();
+        const nama = usernameInput.value.trim().toLowerCase();
         try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'publicValidateName', session: existingSession, nama_panjang: nama })
-            });
+            const res = await fetch(`${API_URL}/users?username=${encodeURIComponent(nama)}`);
             const data = await res.json();
-            return res.ok && data && data.status === 'success';
+            return res.ok && data && data.status === 'success' && Array.isArray(data.users) && data.users.length > 0;
         } catch {
             return false;
         }

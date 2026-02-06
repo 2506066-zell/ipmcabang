@@ -3,6 +3,8 @@
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
+        prefs: 'ipmquiz_admin_prefs',
+        draft: 'ipmquiz_admin_question_draft',
     };
 
     const SESSION_KEYS = {
@@ -15,7 +17,11 @@
         questions: [],
         results: [],
         connected: false,
+        prefs: { tab: 'questions', search: '', status: 'all', set: 'all', category: 'all' },
+        backend: 'apps_script',
+        adminToken: '',
     };
+    let modalDirty = false;
 
     const els = {
         loadingOverlay: document.getElementById('loading-overlay'),
@@ -24,6 +30,7 @@
         passwordInput: document.getElementById('admin-password'),
         togglePasswordBtn: document.getElementById('toggle-admin-password'),
         connectBtn: document.getElementById('connect-btn'),
+        connectVercelBtn: document.getElementById('connect-vercel-btn'),
         logoutBtn: document.getElementById('logout-btn'),
         status: document.getElementById('status'),
 
@@ -70,6 +77,10 @@
         qCategory: document.getElementById('q-category'),
 
         saveBtn: document.getElementById('save-btn'),
+        saveAddBtn: document.getElementById('save-add-btn'),
+        formActions: document.querySelector('#question-form .actions'),
+        backendMode: document.getElementById('backend-mode'),
+        adminTokenInput: document.getElementById('admin-token-input'),
     };
 
     const paging = {
@@ -135,6 +146,15 @@
         });
     }
 
+    async function apiGetVercel(path) {
+        return await fetchJson(path, { method: 'GET' });
+    }
+    async function apiAdminVercel(method, path, body) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (state.adminToken) headers['Authorization'] = `Bearer ${state.adminToken}`;
+        return await fetchJson(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    }
+
     function escapeHtml(value) {
         return String(value ?? '')
             .replaceAll('&', '&amp;')
@@ -150,6 +170,18 @@
         els.logoutBtn.classList.toggle('hidden', !connected);
     }
 
+    function loadPrefs() {
+        try {
+            const obj = JSON.parse(localStorage.getItem(STORAGE_KEYS.prefs) || '{}');
+            if (obj && typeof obj === 'object') {
+                state.prefs = { ...state.prefs, ...obj };
+            }
+        } catch {}
+    }
+    function savePrefs() {
+        try { localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(state.prefs)); } catch {}
+    }
+
     function activateTab(tabName) {
         els.tabs.forEach(tab => {
             const isActive = tab.dataset.tab === tabName;
@@ -158,6 +190,8 @@
         });
         els.tabQuestions.classList.toggle('hidden', tabName !== 'questions');
         els.tabResults.classList.toggle('hidden', tabName !== 'results');
+        state.prefs.tab = tabName;
+        savePrefs();
     }
 
     function getFilteredQuestions() {
@@ -253,6 +287,9 @@
         els.modal.classList.remove('hidden');
         els.modal.setAttribute('aria-hidden', 'false');
         els.qQuestion.focus();
+        modalDirty = false;
+        if (window.NavigationGuard) NavigationGuard.clearDirty();
+        if (!isEdit) loadDraft();
     }
 
     function closeModal() {
@@ -260,21 +297,77 @@
         els.modal.setAttribute('aria-hidden', 'true');
         els.questionForm.reset();
         els.qId.value = '';
+        modalDirty = false;
+        if (window.NavigationGuard) NavigationGuard.clearDirty();
+    }
+
+    function loadPrefs() {
+        try {
+            const obj = JSON.parse(localStorage.getItem(STORAGE_KEYS.prefs) || '{}');
+            if (obj && typeof obj === 'object') {
+                state.prefs = { ...state.prefs, ...obj };
+            }
+        } catch {}
+    }
+    function savePrefs() {
+        try { localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(state.prefs)); } catch {}
+    }
+    function loadDraft() {
+        try {
+            const obj = JSON.parse(localStorage.getItem(STORAGE_KEYS.draft) || '{}');
+            if (obj && typeof obj === 'object') {
+                els.qQuestion.value = obj.q || els.qQuestion.value;
+                els.qA.value = obj.a || els.qA.value;
+                els.qB.value = obj.b || els.qB.value;
+                els.qC.value = obj.c || els.qC.value;
+                els.qD.value = obj.d || els.qD.value;
+                if (obj.correct) els.qCorrect.value = obj.correct;
+                if (obj.active !== undefined) els.qActive.value = obj.active ? 'true' : 'false';
+                if (obj.category) els.qCategory.value = obj.category;
+                if (obj.quiz_set) els.qQuizSet.value = String(obj.quiz_set);
+            }
+        } catch {}
+    }
+    function saveDraft() {
+        try {
+            const obj = {
+                q: String(els.qQuestion.value||''),
+                a: String(els.qA.value||''),
+                b: String(els.qB.value||''),
+                c: String(els.qC.value||''),
+                d: String(els.qD.value||''),
+                correct: String(els.qCorrect.value||''),
+                active: String(els.qActive.value||'true') === 'true',
+                category: String(els.qCategory?.value||''),
+                quiz_set: Number(String(els.qQuizSet?.value||'1')),
+            };
+            localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(obj));
+        } catch {}
+    }
+    function clearDraft() {
+        try { localStorage.removeItem(STORAGE_KEYS.draft); } catch {}
     }
 
     async function loadQuestions() {
         setStatus('Memuat soal...', '');
         showLoader('Memuat Soal...');
         try {
-            const data = await apiPost({ action: 'adminQuestions', session: state.session });
-            if (!data) throw new Error('Respon server kosong.');
-            if (data.status && data.status !== 'success') {
-                throw new Error(data.message || 'Gagal memuat soal.');
-            }
-            const questions = Array.isArray(data.questions) ? data.questions : null;
-            if (!questions) {
-                const hint = JSON.stringify(data).slice(0, 220);
-                throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
+            let questions;
+            if (state.backend === 'vercel') {
+                const data = await apiGetVercel('/api/questions');
+                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat soal.');
+                questions = Array.isArray(data.questions) ? data.questions : [];
+            } else {
+                const data = await apiPost({ action: 'adminQuestions', session: state.session });
+                if (!data) throw new Error('Respon server kosong.');
+                if (data.status && data.status !== 'success') {
+                    throw new Error(data.message || 'Gagal memuat soal.');
+                }
+                questions = Array.isArray(data.questions) ? data.questions : null;
+                if (!questions) {
+                    const hint = JSON.stringify(data).slice(0, 220);
+                    throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
+                }
             }
             state.questions = questions;
             populateCategoryFilter();
@@ -299,15 +392,24 @@
         setStatus('Memuat hasil...', '');
         showLoader('Memuat Hasil...');
         try {
-            const data = await apiPost({ action: 'adminResults', session: state.session });
-            if (!data) throw new Error('Respon server kosong.');
-            if (data.status && data.status !== 'success') {
-                throw new Error(data.message || 'Gagal memuat hasil.');
-            }
-            const results = Array.isArray(data.results) ? data.results : null;
-            if (!results) {
-                const hint = JSON.stringify(data).slice(0, 220);
-                throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
+            let results;
+            if (state.backend === 'vercel') {
+                const data = await apiGetVercel('/api/results');
+                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat hasil.');
+                results = Array.isArray(data.results) ? data.results : [];
+                // normalisasi field timestamp
+                results = results.map(r => ({ ...r, timestamp: r.ts || r.timestamp }));
+            } else {
+                const data = await apiPost({ action: 'adminResults', session: state.session });
+                if (!data) throw new Error('Respon server kosong.');
+                if (data.status && data.status !== 'success') {
+                    throw new Error(data.message || 'Gagal memuat hasil.');
+                }
+                results = Array.isArray(data.results) ? data.results : null;
+                if (!results) {
+                    const hint = JSON.stringify(data).slice(0, 220);
+                    throw new Error(`Format respon server tidak sesuai. Respon: ${hint}`);
+                }
             }
             state.results = results;
             renderResults();
@@ -371,33 +473,39 @@
     }
 
     async function upsertQuestion(formQuestion) {
-        const data = await apiPost({
-            action: 'adminUpsertQuestion',
-            session: state.session,
-            question: formQuestion,
-        });
-        if (!data || data.status !== 'success' || !data.question) {
-            throw new Error(data?.message || 'Gagal menyimpan soal.');
+        if (state.backend === 'vercel') {
+            let data;
+            if (formQuestion.id) {
+                data = await apiAdminVercel('PUT', '/api/questions', formQuestion);
+            } else {
+                data = await apiAdminVercel('POST', '/api/questions', formQuestion);
+            }
+            if (!data || data.status !== 'success' || !data.question) throw new Error(data?.message || 'Gagal menyimpan soal.');
+            const idx = state.questions.findIndex(q => String(q.id) === String(data.question.id));
+            if (idx >= 0) { state.questions[idx] = data.question; } else { state.questions.unshift(data.question); }
+            renderQuestions();
+            setStatus('Soal tersimpan.', 'ok');
+            return;
         }
+        const data = await apiPost({ action: 'adminUpsertQuestion', session: state.session, question: formQuestion });
+        if (!data || data.status !== 'success' || !data.question) throw new Error(data?.message || 'Gagal menyimpan soal.');
         const idx = state.questions.findIndex(q => String(q.id) === String(data.question.id));
-        if (idx >= 0) {
-            state.questions[idx] = data.question;
-        } else {
-            state.questions.unshift(data.question);
-        }
+        if (idx >= 0) { state.questions[idx] = data.question; } else { state.questions.unshift(data.question); }
         renderQuestions();
         setStatus('Soal tersimpan.', 'ok');
     }
 
     async function deleteQuestion(id) {
-        const data = await apiPost({
-            action: 'adminDeleteQuestion',
-            session: state.session,
-            id: id,
-        });
-        if (!data || data.status !== 'success') {
-            throw new Error(data?.message || 'Gagal menghapus soal.');
+        if (state.backend === 'vercel') {
+            const data = await apiAdminVercel('DELETE', `/api/questions?id=${encodeURIComponent(String(id))}`);
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menghapus soal.');
+            state.questions = state.questions.filter(q => String(q.id) !== String(id));
+            renderQuestions();
+            setStatus('Soal dihapus.', 'ok');
+            return;
         }
+        const data = await apiPost({ action: 'adminDeleteQuestion', session: state.session, id });
+        if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menghapus soal.');
         state.questions = state.questions.filter(q => String(q.id) !== String(id));
         renderQuestions();
         setStatus('Soal dihapus.', 'ok');
@@ -405,6 +513,13 @@
 
     function init() {
         els.usernameInput.value = localStorage.getItem(STORAGE_KEYS.username) || '';
+        if (window.NavigationGuard) NavigationGuard.enable('Keluar dari halaman admin? Perubahan belum disimpan.');
+
+        loadPrefs();
+        if (els.searchInput) { els.searchInput.value = state.prefs.search || ''; }
+        if (els.statusFilter) { els.statusFilter.value = state.prefs.status || 'all'; }
+        if (els.quizSetFilter) { els.quizSetFilter.value = state.prefs.set || 'all'; }
+        if (els.categoryFilter) { els.categoryFilter.value = state.prefs.category || 'all'; }
 
         if (els.togglePasswordBtn) {
             els.togglePasswordBtn.addEventListener('click', () => {
@@ -421,7 +536,36 @@
             });
         });
 
-        els.logoutBtn.addEventListener('click', () => logout());
+        if (els.backendMode) {
+            els.backendMode.addEventListener('change', () => {
+                state.backend = String(els.backendMode.value || 'apps_script');
+            });
+        }
+        if (els.connectVercelBtn) {
+            els.connectVercelBtn.addEventListener('click', async () => {
+                try {
+                    state.backend = 'vercel';
+                    state.adminToken = String(els.adminTokenInput?.value || '').trim();
+                    setStatus('Menghubungkan Vercel...', '');
+                    showLoader('Menghubungkan...');
+                    const health = await apiGetVercel('/api/health');
+                    if (!health || health.status !== 'success') throw new Error(health?.message || 'Health gagal');
+                    await loadQuestions();
+                    setConnected(true);
+                } catch (e) {
+                    setStatus(String(e.message||e), 'error');
+                } finally {
+                    hideLoader();
+                }
+            });
+        }
+
+        els.logoutBtn.addEventListener('click', () => {
+            const ok = window.confirm('Keluar dari halaman admin? Perubahan belum disimpan.');
+            if (!ok) return;
+            if (window.NavigationGuard) NavigationGuard.disable();
+            logout();
+        });
 
         els.tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -434,10 +578,10 @@
         });
 
         function debounce(fn, delay) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); }; }
-        els.searchInput.addEventListener('input', debounce(() => { paging.qPage = 1; renderQuestions(); }, 250));
-        if (els.statusFilter) els.statusFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
-        if (els.quizSetFilter) els.quizSetFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
-        if (els.categoryFilter) els.categoryFilter.addEventListener('change', () => { paging.qPage = 1; renderQuestions(); });
+        els.searchInput.addEventListener('input', debounce(() => { paging.qPage = 1; state.prefs.search = String(els.searchInput.value||''); savePrefs(); renderQuestions(); }, 250));
+        if (els.statusFilter) els.statusFilter.addEventListener('change', () => { paging.qPage = 1; state.prefs.status = String(els.statusFilter.value||'all'); savePrefs(); renderQuestions(); });
+        if (els.quizSetFilter) els.quizSetFilter.addEventListener('change', () => { paging.qPage = 1; state.prefs.set = String(els.quizSetFilter.value||'all'); savePrefs(); renderQuestions(); });
+        if (els.categoryFilter) els.categoryFilter.addEventListener('change', () => { paging.qPage = 1; state.prefs.category = String(els.categoryFilter.value||'all'); savePrefs(); renderQuestions(); });
         if (els.setChips && els.setChips.length) els.setChips.forEach(btn => {
             btn.addEventListener('click', () => {
                 els.setChips.forEach(b => b.classList.remove('active'));
@@ -456,10 +600,17 @@
         if (els.resetSetBtn) els.resetSetBtn.addEventListener('click', async () => {
             const setVal = String(els.quizSetFilter?.value || 'all');
             if (setVal === 'all') { alert('Pilih set tertentu untuk di-reset.'); return; }
+            const ok = window.confirm(`Reset set kuis ${setVal}? Semua pengguna diizinkan mencoba lagi.`);
+            if (!ok) return;
             try {
                 setStatus('Mereset set...', '');
                 showLoader('Mereset Set...');
-                const data = await apiPost({ action: 'adminResetSet', session: state.session, quiz_set: Number(setVal) });
+                let data;
+                if (state.backend === 'vercel') {
+                    data = await apiAdminVercel('POST', '/api/resetSet', { quiz_set: Number(setVal) });
+                } else {
+                    data = await apiPost({ action: 'adminResetSet', session: state.session, quiz_set: Number(setVal) });
+                }
                 if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal mereset set');
                 setStatus('Set direset. Pengguna dapat mencoba lagi.', 'ok');
             } catch (err) {
@@ -497,13 +648,41 @@
             }
         });
 
-        els.modalCloseBtn.addEventListener('click', () => closeModal());
-        els.cancelBtn.addEventListener('click', () => closeModal());
+        // Tap row to edit when not clicking action buttons
+        els.questionsTbody.addEventListener('click', (e) => {
+            if (e.target.closest('button[data-action]')) return;
+            const row = e.target.closest('tr[data-id]');
+            if (!row) return;
+            const id = row.getAttribute('data-id');
+            const question = getQuestionById(id);
+            openModal(question);
+        });
+
+        els.modalCloseBtn.addEventListener('click', () => {
+            if (modalDirty) {
+                const ok = window.confirm('Tutup tanpa menyimpan perubahan?');
+                if (!ok) return;
+            }
+            closeModal();
+        });
+        els.cancelBtn.addEventListener('click', () => {
+            if (modalDirty) {
+                const ok = window.confirm('Batalkan dan tutup tanpa menyimpan perubahan?');
+                if (!ok) return;
+            }
+            closeModal();
+        });
         els.modal.addEventListener('click', (e) => {
-            if (e.target === els.modal) closeModal();
+            if (e.target === els.modal) {
+                return;
+            }
         });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !els.modal.classList.contains('hidden')) closeModal();
+            if (e.ctrlKey && !els.modal.classList.contains('hidden')) return;
+            if (e.ctrlKey && e.key.toLowerCase() === 'f') { e.preventDefault(); els.searchInput?.focus(); }
+            if (e.ctrlKey && e.key.toLowerCase() === 'n') { e.preventDefault(); openModal(null); }
+            if (e.ctrlKey && e.key.toLowerCase() === 'r') { e.preventDefault(); if (state.prefs.tab === 'questions') { loadQuestions().catch(err => setStatus(err.message || 'Gagal memuat soal.', 'error')); } else { loadResults().catch(err => setStatus(err.message || 'Gagal memuat hasil.', 'error')); } }
         });
 
         els.questionForm.addEventListener('submit', (e) => {
@@ -550,7 +729,7 @@
             els.saveBtn.classList.add('loading');
 
             upsertQuestion(payload)
-                .then(() => closeModal())
+                .then(() => { clearDraft(); closeModal(); })
                 .catch(err => setStatus(err.message || 'Gagal menyimpan.', 'error'))
                 .finally(() => {
                     els.saveBtn.disabled = false;
@@ -559,14 +738,51 @@
                 });
         });
 
+        if (els.saveAddBtn) {
+            els.saveAddBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                els.saveAddBtn.disabled = true;
+                const idRaw = String(els.qId.value || '').trim();
+                const id = idRaw ? Number(idRaw) : null;
+                const question = String(els.qQuestion.value || '').trim();
+                const a = String(els.qA.value || '').trim();
+                const b = String(els.qB.value || '').trim();
+                const c = String(els.qC.value || '').trim();
+                const d = String(els.qD.value || '').trim();
+                const correct = String(els.qCorrect.value || '').trim().toLowerCase();
+                const active = String(els.qActive.value || 'true') === 'true';
+                const category = String(els.qCategory?.value || '').trim();
+                const quiz_set = Number(String(els.qQuizSet?.value || '1'));
+
+                if (!question || !a || !b || !d || !['a','b','c','d'].includes(correct)) { els.saveAddBtn.disabled = false; return; }
+
+                const payload = { ...(id ? { id } : {}), question, options: { a, b, c, d }, correct_answer: correct, active, ...(category ? { category } : {}), quiz_set };
+                setStatus('Menyimpan...', '');
+                if (els.savingIndicator) els.savingIndicator.style.display = 'block';
+                upsertQuestion(payload)
+                    .then(() => { clearDraft(); els.questionForm.reset(); els.qId.value=''; modalDirty=false; if (window.NavigationGuard) NavigationGuard.clearDirty(); els.qQuestion.focus(); })
+                    .catch(err => setStatus(err.message || 'Gagal menyimpan.', 'error'))
+                    .finally(() => { els.saveAddBtn.disabled = false; if (els.savingIndicator) els.savingIndicator.style.display = 'none'; });
+            });
+        }
+
         const existingSession = String(sessionStorage.getItem(SESSION_KEYS.session) || '').trim();
         if (existingSession) {
             state.session = existingSession;
             state.apiUrl = DEFAULT_API_URL;
-            loadQuestions()
+            const initialTab = state.prefs.tab || 'questions';
+            activateTab(initialTab);
+            const initialLoad = initialTab === 'results' ? loadResults() : loadQuestions();
+            initialLoad
                 .then(() => setConnected(true))
                 .catch(() => logout());
         }
+        ['input','change'].forEach(evt => {
+            els.questionForm.addEventListener(evt, () => { modalDirty = true; if (window.NavigationGuard) NavigationGuard.markDirty(); saveDraft(); });
+        });
+
+        els.questionForm.addEventListener('focusin', () => { if (els.formActions) els.formActions.classList.add('fixed-actions'); });
+        els.questionForm.addEventListener('focusout', () => { if (els.formActions) setTimeout(()=>els.formActions.classList.remove('fixed-actions'),150); });
     }
 
     init();

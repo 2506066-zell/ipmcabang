@@ -27,6 +27,7 @@ body {
     color: var(--text-primary);
     line-height: 1.7;
     font-size: 17px;
+    overscroll-behavior: contain;
 }
 
 .admin-container {
@@ -126,6 +127,7 @@ body {
     min-height: 48px; /* Touch-friendly */
     text-decoration: none;
     transition: background-color var(--transition-speed), transform var(--transition-speed);
+    touch-action: manipulation;
 }
 
 .btn:hover {
@@ -220,6 +222,7 @@ body {
     font-weight: 500;
     position: relative;
     transition: color var(--transition-speed);
+    touch-action: manipulation;
 }
 
 .tab:hover {
@@ -256,6 +259,12 @@ body {
     flex-direction: column;
     gap: 16px;
     margin-bottom: 24px;
+    position: sticky;
+    top: 0;
+    background-color: var(--card-bg);
+    z-index: 2;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 .search-input {
     background-color: var(--primary-bg);
@@ -274,6 +283,7 @@ body {
 }
 
 .chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip-button { touch-action: manipulation; }
 
 .toolbar-right {
     justify-content: flex-start;
@@ -398,12 +408,13 @@ td::before {
     z-index: 1000;
     padding: 0;
     animation: fadeIn 0.3s;
+    overscroll-behavior: contain;
 }
 
 .modal-content {
     background-color: var(--card-bg);
     width: 100%;
-    max-height: 85vh;
+    max-height: 85svh;
     overflow-y: auto;
     border-radius: 16px 16px 0 0;
     display: flex;
@@ -481,6 +492,18 @@ td::before {
 #question-form .actions {
     flex-direction: column-reverse; /* Save button is more prominent */
 }
+
+#question-form .actions.fixed-actions {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: env(safe-area-inset-bottom, 0);
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    padding: 12px 24px;
+    z-index: 1001;
+}
+
+#question-form { padding-bottom: 88px; }
 
 #question-form .btn {
     width: 100%;
@@ -573,7 +596,7 @@ td::before {
         max-width: 700px;
         width: 100%;
         border-radius: 12px;
-        max-height: 80vh;
+        max-height: 80svh;
         animation: fadeIn 0.3s; /* Override slideUp */
     }
 

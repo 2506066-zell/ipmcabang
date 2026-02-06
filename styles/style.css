@@ -389,8 +389,8 @@ body.body-no-scroll {
 .set-card[data-set="2"] { background: linear-gradient(135deg, #e7f1ff, #dbeafe); border-color: rgba(59,130,246,0.25); }
 .set-card[data-set="3"] { background: linear-gradient(135deg, #fff5db, #fde68a); border-color: rgba(245,158,11,0.25); }
 @media (max-width: 640px) {
-  .set-grid { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
-  .set-card { flex: 0 0 200px; }
+  .set-grid { display: grid; grid-template-columns: 1fr; gap: 12px; overflow: visible; padding-bottom: 0; }
+  .set-card { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .set-card { transition: none; } }
 

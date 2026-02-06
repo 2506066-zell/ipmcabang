@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Import Pertanyaan - Admin</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="page-admin">
+  <main class="admin-container">
+    <section class="card">
+      <h1 class="card-title">Import Pertanyaan (CSV)</h1>
+      <p class="card-subtitle">Pilih file CSV lalu kirim ke database. Token admin diperlukan.</p>
+      <div class="grid-2">
+        <div class="field">
+          <label>File CSV</label>
+          <input id="csv-file" type="file" accept=".csv">
+        </div>
+        <div class="field">
+          <label>Token Admin</label>
+          <input id="admin-token" type="password" placeholder="Masukkan ADMIN_TOKEN">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Set Kuis default</label>
+          <select id="default-set">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Kategori default (opsional)</label>
+          <input id="default-category" type="text" placeholder="Kategori">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="start-import">Mulai Import</button>
+        <span class="status" id="status"></span>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="card-title">Format CSV</h2>
+      <p class="small">Header: question,a,b,c,d,correct,category,quiz_set,active</p>
+    </section>
+  </main>
+  <script src="../scripts/api-client.js" defer></script>
+  <script src="import.js" defer></script>
+</body>
+</html>

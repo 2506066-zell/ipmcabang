@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzQfRpw3cbu_FOfiA4ftjv-9AcWklpSZieRJZeotvwVSc3lkXC6i3saKYtt4P0V9tVn/exec';
+    const API_URL = '/api';
     const CACHE_KEY = 'ipm_ranking_cache';
     const CACHE_TTL = 60000; // 60s
 
@@ -34,13 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.AppLoader) AppLoader.show('Memuat Peringkat...');
         showLoading(true);
         try {
-            const response = await fetch(`${API_URL}?action=getResults`);
+            const response = await fetch(`${API_URL}/results`);
             if (!response.ok) throw new Error(`Gagal mengambil data (Status: ${response.status})`);
             
             const data = await response.json();
-            if (data.status === 'error') throw new Error(data.message || 'Kesalahan server.');
-
-            allData = data.sort((a, b) => b.score - a.score);
+            if (!response.ok || data.status !== 'success') throw new Error(data.message || 'Kesalahan server.');
+            allData = Array.isArray(data.results) ? data.results.slice() : [];
+            allData.sort((a, b) => (b.score || 0) - (a.score || 0));
             try {
                 localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: allData }));
             } catch {}
@@ -84,16 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderUserRank(data) {
-        const userIndex = data.findIndex(p => p.username.toLowerCase() === currentUser.toLowerCase());
+        const userIndex = data.findIndex(p => String(p.username||'').toLowerCase() === currentUser.toLowerCase());
         if (userIndex !== -1) {
             const user = data[userIndex];
             const rank = userIndex + 1;
             userRankCard.innerHTML = `
                 <div class="position">⭐ Posisi Anda: #${rank}</div>
                 <div class="details">
-                    <span>Skor: ${user.score}/${user.total_questions}</span>
-                    <span>Waktu: ${user.time_spent} dtk</span>
-                    <span>Percobaan: ${user.attempt_count}x</span>
+                    <span>Skor: ${user.score}/${user.total || '-'}</span>
+                    <span>Waktu: ${user.time_spent || 0} dtk</span>
                 </div>
             `;
             userRankCard.style.display = 'block';
@@ -156,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${p.username}</span>
                 </div>
                 <div class="score">${p.score} (${p.percent}%)</div>
-                <div class="time">${new Date(p.timestamp).toLocaleDateString('id-ID')}</div>
+                <div class="time">${new Date(p.ts || p.timestamp).toLocaleDateString('id-ID')}</div>
             `;
             rankingList.appendChild(listItem);
 
@@ -234,11 +233,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         if (activeFilter === 'weekly') {
             const lastWeek = new Date(now.setDate(now.getDate() - 7));
-            filteredData = filteredData.filter(p => new Date(p.timestamp) >= lastWeek);
+            filteredData = filteredData.filter(p => new Date(p.ts || p.timestamp) >= lastWeek);
         } else if (activeFilter === 'daily') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            filteredData = filteredData.filter(p => new Date(p.timestamp) >= today);
+            filteredData = filteredData.filter(p => new Date(p.ts || p.timestamp) >= today);
         }
 
         const empty = filteredData.length === 0;
