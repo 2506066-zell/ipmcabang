@@ -23,7 +23,7 @@ function getConnString() {
 function requireEnv() {
   const url = getConnString();
   if (!url) throw new Error('Postgres connection string not configured');
-  const u = String(url).toLowerCase();
+  const u = String(url).trim().toLowerCase();
   if (!/^postgres(ql)?:\/\//.test(u)) throw new Error('Invalid POSTGRES_URL');
 }
 
