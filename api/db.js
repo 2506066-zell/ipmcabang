@@ -5,20 +5,26 @@ let _pool = null;
 
 function getConnString() {
   const candidates = [
+    process.env.DATABASE_URL,
     process.env.POSTGRES_URL,
     process.env.SUPABASE_DB_URL,
     process.env.SUPABASE_POSTGRES_URL,
-    process.env.DATABASE_URL,
     process.env.SUPABASE_PGBOUNCER_URL,
-  ];
-  return candidates.find(Boolean) || '';
+  ].filter(Boolean);
+  // Prefer ones with proper scheme
+  const withScheme = candidates.find(u => /^postgres(ql)?:\/\//i.test(String(u)));
+  if (withScheme) return withScheme;
+  // Fallback: if we have something like user:pass@host:port/db, prepend scheme
+  const any = candidates[0] || '';
+  if (any && /@/.test(any)) return `postgresql://${any}`;
+  return any;
 }
 
 function requireEnv() {
   const url = getConnString();
   if (!url) throw new Error('Postgres connection string not configured');
   const u = String(url).toLowerCase();
-  if (!u.startsWith('postgres://') && !u.startsWith('postgresql://')) throw new Error('Invalid POSTGRES_URL');
+  if (!/^postgres(ql)?:\/\//.test(u)) throw new Error('Invalid POSTGRES_URL');
 }
 
 function getPool() {
