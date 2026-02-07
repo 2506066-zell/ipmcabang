@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Peringkat Kuis - IPM Panawuan</title>
     <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/ranking.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="page-ranking">
@@ -30,7 +31,7 @@
             <span class="header-title">PC IPM Panawuan</span>
         </div>
         <div class="header-right-icons">
-            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+            <a href="ranking.html" class="header-icon active" aria-label="Peringkat">
                 <i class="fas fa-trophy"></i>
             </a>
             <a href="admin/admin.html" class="header-icon" aria-label="Admin">
@@ -51,22 +52,15 @@
             <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
             <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
             <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
-
         </ul>
     </nav>
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
-
-
     <main class="ranking-container">
         <div class="ranking-header">
-            <h1><i class="fas fa-trophy"></i> Papan Peringkat</h1>
+            <h1><i class="fas fa-trophy" style="color: var(--rank-gold);"></i> Papan Peringkat</h1>
             <p>Uji kemampuanmu dan raih posisi puncak!</p>
             <div id="last-updated" class="last-updated"></div>
-        </div>
-
-        <div id="user-rank-card" class="user-rank-card" style="display: none;">
-            <!-- User's current rank will be rendered here -->
         </div>
 
         <div id="loading-indicator" class="loading-indicator">
@@ -89,6 +83,12 @@
         </div>
 
         <div id="main-content" style="display: none;">
+            <!-- User Rank Card -->
+            <div id="user-rank-card" class="user-rank-card" style="display: none;">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Controls -->
             <div class="ranking-controls">
                 <input type="text" id="search-input" placeholder="Cari nama peserta...">
                 <div class="filter-buttons">
@@ -98,40 +98,26 @@
                 </div>
             </div>
 
+            <!-- Top 3 Podium -->
             <div id="top-3-showcase" class="top-3-container">
-                <!-- Top 3 Showcase akan dirender oleh JavaScript -->
+                <!-- Injected via JS -->
             </div>
 
-            <div class="ranking-list-container">
-                <div id="ranking-list">
-                    <!-- Daftar peringkat akan dirender oleh JavaScript -->
-                </div>
-            </div>
-
-            <div class="achievements-container">
-                <h2><i class="fas fa-award"></i> Lencana Prestasi</h2>
-                <div id="badges-grid" class="badges-grid">
-                    <!-- Achievement badges will be rendered here -->
-                </div>
-            </div>
-
-            <div class="stats-container">
-                <h2><i class="fas fa-chart-bar"></i> Statistik Kuis</h2>
-                <div id="stats-visualization" class="stats-visualization">
-                    <!-- Statistics will be rendered here -->
-                </div>
+            <!-- List Ranking -->
+            <div id="ranking-list" class="ranking-list">
+                <!-- Injected via JS -->
             </div>
         </div>
     </main>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js" defer></script>
-    <script src="scripts/loader.js" defer></script>
-    <script>
-      document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
-    </script>
-    <script src="ranking.js" defer></script>
-    <script src="scripts/toast.js" defer></script>
-    <script src="scripts/main.js" defer></script>
+    
+    <!-- Custom Ranking Toast -->
+    <div id="rank-toast" class="rank-toast">
+        <div class="rank-toast-icon"><i class="fas fa-arrow-up"></i></div>
+        <div class="rank-toast-content">
+            <div class="rank-toast-title">Peringkat Naik!</div>
+            <div class="rank-toast-msg">Kamu naik ke posisi #5</div>
+        </div>
+    </div>
 
     <nav class="bottom-nav">
       <div class="bottom-nav-inner">
@@ -141,5 +127,14 @@
         <a href="help.html"><i class="fas fa-circle-question"></i><span>Bantuan</span></a>
       </div>
     </nav>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js" defer></script>
+    <script src="scripts/loader.js" defer></script>
+    <script>
+      document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+    </script>
+    <script src="ranking.js" defer></script>
+    <script src="scripts/toast.js" defer></script>
+    <script src="scripts/main.js" defer></script>
 </body>
 </html>

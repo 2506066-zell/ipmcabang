@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
     const CACHE_KEY = 'ipm_ranking_cache';
-    const CACHE_TTL = 60000; // 60s
-
+    
+    // Elements
     const userRankCard = document.getElementById('user-rank-card');
     const top3Container = document.getElementById('top-3-showcase');
     const rankingList = document.getElementById('ranking-list');
@@ -12,87 +12,138 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMessage = document.getElementById('error-message');
     const searchInput = document.getElementById('search-input');
     const filterButtons = document.querySelectorAll('.filter-btn');
+    const rankToast = document.getElementById('rank-toast');
 
+    // State
     let allData = [];
     let previousRanks = new Map();
-    const currentUser = "Anda"; // Ganti dengan nama pengguna yang login jika ada sistem otentikasi
+    const currentUser = "Anda"; // Placeholder for auth user
 
     function showLoading(isLoading) {
         loadingIndicator.style.display = isLoading ? 'flex' : 'none';
-        mainContent.style.display = isLoading ? 'none' : 'block';
+        // Only hide main content on initial load, not subsequent refreshes
+        if (isLoading && allData.length === 0) {
+            mainContent.style.display = 'none';
+        } else if (!isLoading) {
+            mainContent.style.display = 'block';
+        }
         if (isLoading) errorContainer.style.display = 'none';
     }
 
     function showError(message) {
         errorMessage.textContent = message;
         loadingIndicator.style.display = 'none';
-        mainContent.style.display = 'none';
-        errorContainer.style.display = 'block';
+        if (allData.length === 0) {
+            mainContent.style.display = 'none';
+            errorContainer.style.display = 'block';
+        } else {
+            // Show toast error if we have data but update failed
+            console.error(message);
+        }
     }
 
     async function fetchRankingData() {
-        if (window.AppLoader) AppLoader.show('Memuat Peringkat...');
+        if (allData.length === 0 && window.AppLoader) AppLoader.show('Memuat Peringkat...');
         showLoading(true);
         try {
             const response = await fetch(`${API_URL}/results`);
             if (!response.ok) throw new Error(`Gagal mengambil data (Status: ${response.status})`);
             
             const data = await response.json();
-            if (!response.ok || data.status !== 'success') throw new Error(data.message || 'Kesalahan server.');
-            allData = Array.isArray(data.results) ? data.results.slice() : [];
-            allData.sort((a, b) => (b.score || 0) - (a.score || 0));
+            if (data.status !== 'success') throw new Error(data.message || 'Kesalahan server.');
+            
+            const newData = Array.isArray(data.results) ? data.results.slice() : [];
+            newData.sort((a, b) => (b.score || 0) - (a.score || 0)); // Sort DESC by score
+
+            // Cache data
             try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: allData }));
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: newData }));
             } catch {}
+
+            // Process Rank Changes
+            processRankChanges(newData);
+
+            allData = newData;
+
             const empty = !Array.isArray(allData) || allData.length === 0;
             document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
             document.getElementById('main-content').style.display = empty ? 'none' : 'block';
-            if (!empty) renderPage(allData);
+            
+            if (!empty) {
+                // Apply current filter
+                handleFilterAndSearch();
+            }
+
             const last = document.getElementById('last-updated');
             if (last) {
                 const now = new Date();
                 last.textContent = `Terakhir diperbarui: ${now.toLocaleString('id-ID')}`;
             }
-            renderAchievements(allData);
-            renderStats(allData);
-
-            // Update ranks for next comparison
-            const newRanks = new Map();
-            allData.forEach((p, index) => {
-                newRanks.set(p.username, index + 1);
-            });
-
-            // If previousRanks is empty, initialize it without animation
-            if (previousRanks.size === 0) {
-                previousRanks = newRanks;
-            }
 
         } catch (error) {
             showError(error.message);
-            console.error('Gagal mengambil data peringkat:', error);
         } finally {
             showLoading(false);
             if (window.AppLoader) AppLoader.hide();
         }
     }
 
+    function processRankChanges(newData) {
+        if (previousRanks.size === 0) {
+            // First load, just map ranks
+            newData.forEach((p, index) => {
+                previousRanks.set(p.username, index + 1);
+            });
+            return;
+        }
+
+        const newRankMap = new Map();
+        newData.forEach((p, index) => {
+            newRankMap.set(p.username, index + 1);
+        });
+
+        // Check for "Anda" (User) rank change
+        const userOldRank = previousRanks.get(currentUser);
+        const userNewRank = newRankMap.get(currentUser);
+
+        if (userOldRank && userNewRank) {
+            if (userNewRank < userOldRank) {
+                // Rank Improved
+                showRankToast('Peringkat Naik! 🚀', `Selamat! Anda naik dari #${userOldRank} ke #${userNewRank}`, 'gold');
+            }
+        }
+        
+        // Check if user entered Top 3
+        if ((!userOldRank || userOldRank > 3) && userNewRank <= 3) {
+             showRankToast('Masuk 3 Besar! 🏆', `Luar biasa! Anda sekarang berada di posisi #${userNewRank}`, 'gold');
+        }
+
+        previousRanks = newRankMap;
+    }
+
     function renderPage(data) {
         renderUserRank(data);
         renderTop3(data.slice(0, 3));
         renderRest(data.slice(3));
-        applyEntryAnimations();
     }
 
     function renderUserRank(data) {
         const userIndex = data.findIndex(p => String(p.username||'').toLowerCase() === currentUser.toLowerCase());
+        
         if (userIndex !== -1) {
             const user = data[userIndex];
             const rank = userIndex + 1;
+            
             userRankCard.innerHTML = `
-                <div class="position">⭐ Posisi Anda: #${rank}</div>
-                <div class="details">
-                    <span>Skor: ${user.score}/${user.total || '-'}</span>
-                    <span>Waktu: ${user.time_spent || 0} dtk</span>
+                <div class="user-rank-content">
+                    <div class="user-rank-info">
+                        <span class="user-rank-label">Peringkat Anda</span>
+                        <span class="user-rank-value">#${rank}</span>
+                    </div>
+                    <div class="user-stats">
+                        <span class="user-score">${user.score} Poin</span>
+                        <span class="user-time">${user.time_spent || 0} detik</span>
+                    </div>
                 </div>
             `;
             userRankCard.style.display = 'block';
@@ -103,147 +154,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTop3(top3Data) {
         top3Container.innerHTML = '';
-        top3Data.forEach((p, index) => {
-            const rank = index + 1;
-            const card = document.createElement('div');
-            card.className = `rank-card rank-${rank}`;
-            const pos = document.createElement('div');
-            pos.className = 'rank-position';
-            pos.innerHTML = rank === 1 ? '<i class="fas fa-crown"></i>' : String(rank);
-            const avatar = document.createElement('div');
-            avatar.className = 'avatar';
-            avatar.textContent = (String(p.username||'').charAt(0) || '').toUpperCase();
-            const name = document.createElement('div');
-            name.className = 'name';
-            name.textContent = String(p.username||'');
-            const score = document.createElement('div');
-            score.className = 'score';
-            score.textContent = `${p.score} Poin`;
-            card.appendChild(pos);
-            card.appendChild(avatar);
-            card.appendChild(name);
-            card.appendChild(score);
-            card.classList.add('animate');
-            card.style.animationDelay = `${index * 0.08}s`;
-            top3Container.appendChild(card);
+        
+        // Order for podium: 2, 1, 3
+        const reordered = [null, null, null];
+        if (top3Data[0]) reordered[1] = top3Data[0]; // Rank 1 -> Center
+        if (top3Data[1]) reordered[0] = top3Data[1]; // Rank 2 -> Left
+        if (top3Data[2]) reordered[2] = top3Data[2]; // Rank 3 -> Right
+
+        reordered.forEach((p, i) => {
+            if (!p) return;
+            
+            // Determine actual rank based on position in reordered array
+            let rank;
+            if (i === 1) rank = 1;
+            else if (i === 0) rank = 2;
+            else rank = 3;
+
+            const podiumItem = document.createElement('div');
+            podiumItem.className = `podium-item rank-${rank}`;
+            
+            podiumItem.innerHTML = `
+                <div class="avatar-container">
+                    ${rank === 1 ? '<i class="fas fa-crown crown-icon"></i>' : ''}
+                    ${(p.username||'').charAt(0).toUpperCase()}
+                </div>
+                <div class="podium-base">
+                    <div class="podium-name">${p.username}</div>
+                    <div class="podium-score">${p.score}</div>
+                </div>
+            `;
+            
+            top3Container.appendChild(podiumItem);
+            
+            // Animate entry
+            gsap.from(podiumItem, {
+                y: 50,
+                opacity: 0,
+                duration: 0.6,
+                delay: i * 0.1,
+                ease: "back.out(1.7)"
+            });
         });
     }
 
     function renderRest(restData) {
         rankingList.innerHTML = '';
-        if (restData.length === 0) return;
-
-        const newRanks = new Map();
-        allData.forEach((p, index) => {
-            newRanks.set(p.username, index + 1);
-        });
-
+        
         restData.forEach((p, index) => {
-            const rank = index + 4;
-            const listItem = document.createElement('div');
-            listItem.className = 'list-item';
-            listItem.dataset.username = p.username;
-
-            const oldRank = previousRanks.get(p.username);
-            const newRank = newRanks.get(p.username);
-
-            if (oldRank && newRank) {
-                if (newRank < oldRank) {
-                    listItem.classList.add('rank-up');
-                } else if (newRank > oldRank) {
-                    listItem.classList.add('rank-down');
-                }
-            }
-
+            const rank = index + 4; // Start from 4
+            
+            const item = document.createElement('div');
+            item.className = 'rank-item';
             if (p.username.toLowerCase() === currentUser.toLowerCase()) {
-                listItem.classList.add('user-highlight');
+                item.classList.add('is-me');
             }
-            const rankEl = document.createElement('div');
-            rankEl.className = 'rank';
-            rankEl.textContent = String(rank);
-            const nameAvatar = document.createElement('div');
-            nameAvatar.className = 'name-avatar';
-            const avatarSm = document.createElement('div');
-            avatarSm.className = 'avatar-sm';
-            avatarSm.textContent = (String(p.username||'').charAt(0) || '').toUpperCase();
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = String(p.username||'');
-            nameAvatar.appendChild(avatarSm);
-            nameAvatar.appendChild(nameSpan);
-            const scoreEl = document.createElement('div');
-            scoreEl.className = 'score';
-            scoreEl.textContent = `${p.score} (${p.percent}%)`;
-            const timeEl = document.createElement('div');
-            timeEl.className = 'time';
-            timeEl.textContent = new Date(p.ts || p.timestamp).toLocaleDateString('id-ID');
-            listItem.appendChild(rankEl);
-            listItem.appendChild(nameAvatar);
-            listItem.appendChild(scoreEl);
-            listItem.appendChild(timeEl);
-            rankingList.appendChild(listItem);
+            
+            // Animation delay based on index
+            item.style.animationDelay = `${index * 0.05}s`;
 
-            // Remove animation classes after animation ends
-            setTimeout(() => {
-                listItem.classList.remove('rank-up', 'rank-down');
-            }, 2000);
-        });
-
-        previousRanks = newRanks;
-    }
-
-    function renderAchievements(data) {
-        const badgesGrid = document.getElementById('badges-grid');
-        // Logika untuk menentukan badge (contoh sederhana)
-        const topScorer = data.length > 0 ? data[0] : null;
-        const badges = [
-            { icon: '🎯', title: 'Top Scorer', user: topScorer ? topScorer.username : '-' },
-            { icon: '⚡', title: 'Speed Runner', user: 'User C' }, // Placeholder
-            { icon: '💯', title: 'Perfect Score', user: 'User A' }, // Placeholder
-        ];
-        badgesGrid.innerHTML = badges.map(badge => `
-            <div class="badge">
-                <div class="badge-icon">${badge.icon}</div>
-                <div class="badge-title">${badge.title}</div>
-                <div class="badge-user">${badge.user}</div>
-            </div>
-        `).join('');
-    }
-
-    function renderStats(data) {
-        const statsViz = document.getElementById('stats-visualization');
-        // Logika untuk visualisasi data (contoh sederhana)
-        const scoreDistribution = { 'A': 0, 'B': 0, 'C': 0 };
-        data.forEach(p => {
-            if (p.percent >= 80) scoreDistribution['A']++;
-            else if (p.percent >= 60) scoreDistribution['B']++;
-            else scoreDistribution['C']++;
-        });
-
-        // Prevent division by zero
-        const total = data.length || 1;
-        statsViz.innerHTML = `
-            <div class="stat-item">
-                <span>Skor > 80% (A)</span>
-                <div class="progress-bar"><div style="width: ${(scoreDistribution['A']/total)*100}%"></div></div>
-            </div>
-            <div class="stat-item">
-                <span>Skor 60-79% (B)</span>
-                <div class="progress-bar"><div style="width: ${(scoreDistribution['B']/total)*100}%"></div></div>
-            </div>
-            <div class="stat-item">
-                <span>Skor < 60% (C)</span>
-                <div class="progress-bar"><div style="width: ${(scoreDistribution['C']/total)*100}%"></div></div>
-            </div>
-        `;
-    }
-
-    function applyEntryAnimations() {
-        gsap.from(".list-item", {
-            opacity: 0,
-            y: 20,
-            duration: 0.5,
-            stagger: 0.05,
-            ease: "power3.out"
+            item.innerHTML = `
+                <div class="rank-pos">#${rank}</div>
+                <div class="rank-info">
+                    <div class="rank-name">${p.username}</div>
+                    <div class="rank-meta">${new Date(p.ts || p.timestamp).toLocaleDateString('id-ID')}</div>
+                </div>
+                <div class="rank-score-box">
+                    <div class="rank-score">${p.score}</div>
+                    <span class="rank-time">${p.time_spent || 0}s</span>
+                </div>
+            `;
+            
+            rankingList.appendChild(item);
         });
     }
 
@@ -251,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchTerm = searchInput.value.toLowerCase();
         const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
 
-        let filteredData = allData.filter(p => p.username.toLowerCase().includes(searchTerm));
+        let filteredData = allData.filter(p => (p.username || '').toLowerCase().includes(searchTerm));
 
         const now = new Date();
         if (activeFilter === 'weekly') {
@@ -264,12 +245,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const empty = filteredData.length === 0;
-        document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
-        document.getElementById('main-content').style.display = empty ? 'none' : 'block';
-        if (!empty) renderPage(filteredData);
+        
+        if (empty) {
+            rankingList.innerHTML = `<div style="text-align:center; padding: 20px; color: #888;">Tidak ada data yang cocok.</div>`;
+            top3Container.innerHTML = '';
+        } else {
+            renderPage(filteredData);
+        }
     }
 
+    function showRankToast(title, msg, type = 'normal') {
+        const toast = rankToast;
+        const titleEl = toast.querySelector('.rank-toast-title');
+        const msgEl = toast.querySelector('.rank-toast-msg');
+        const iconEl = toast.querySelector('.rank-toast-icon');
+
+        titleEl.textContent = title;
+        msgEl.textContent = msg;
+        
+        if (type === 'gold') {
+            iconEl.innerHTML = '<i class="fas fa-trophy" style="color: #FFD700;"></i>';
+        } else {
+            iconEl.innerHTML = '<i class="fas fa-arrow-up"></i>';
+        }
+
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4000);
+    }
+
+    // Event Listeners
     searchInput.addEventListener('input', handleFilterAndSearch);
+    
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
             filterButtons.forEach(btn => btn.classList.remove('active'));
@@ -278,98 +287,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Stale-while-revalidate: tampilkan cache jika ada, lalu ambil data terbaru
+    const reloadBtn = document.getElementById('empty-reload');
+    if (reloadBtn) reloadBtn.addEventListener('click', () => fetchRankingData());
+
+    // Initial Load (Cache then Network)
     try {
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-        if (cached && Array.isArray(cached.data)) {
+        if (cached && Array.isArray(cached.data) && (Date.now() - cached.t < 60000 * 5)) { // 5 min validity for display
             allData = cached.data;
-            const empty = !Array.isArray(allData) || allData.length === 0;
-            document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
-            document.getElementById('main-content').style.display = empty ? 'none' : 'block';
-            if (!empty) renderPage(allData);
-            const last = document.getElementById('last-updated');
-            if (last && cached.t) last.textContent = `Terakhir diperbarui: ${new Date(cached.t).toLocaleString('id-ID')}`;
-            showLoading(false);
-            if (window.AppLoader) AppLoader.hide();
+            if (allData.length > 0) {
+                renderPage(allData);
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                showLoading(false);
+            }
         }
     } catch {}
 
+    // Fetch fresh data
     fetchRankingData();
-    const reloadBtn = document.getElementById('empty-reload');
-    if (reloadBtn) reloadBtn.addEventListener('click', () => fetchRankingData());
-    initParticles();
-
-    // Optional: Set an interval to fetch data periodically to see rank changes
-    // setInterval(fetchRankingData, 15000); // Fetch every 15 seconds
+    
+    // Poll for updates every 30s
+    setInterval(() => {
+        // Silent update
+        fetch(`${API_URL}/results`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && Array.isArray(data.results)) {
+                    const newData = data.results.slice();
+                    newData.sort((a, b) => (b.score || 0) - (a.score || 0));
+                    processRankChanges(newData);
+                    allData = newData;
+                    handleFilterAndSearch(); // Re-render with current filter
+                }
+            })
+            .catch(console.error);
+    }, 30000);
 });
-
-function initParticles() {
-    if (typeof window !== 'undefined' && typeof window.particlesJS !== 'function') return;
-    particlesJS('particles-js', {
-        "particles": {
-            "number": {
-                "value": 50,
-                "density": {
-                    "enable": true,
-                    "value_area": 800
-                }
-            },
-            "color": {
-                "value": "#00ffa3"
-            },
-            "shape": {
-                "type": "circle",
-            },
-            "opacity": {
-                "value": 0.5,
-                "random": true,
-            },
-            "size": {
-                "value": 3,
-                "random": true,
-            },
-            "line_linked": {
-                "enable": true,
-                "distance": 150,
-                "color": "#2d3748",
-                "opacity": 0.4,
-                "width": 1
-            },
-            "move": {
-                "enable": true,
-                "speed": 2,
-                "direction": "none",
-                "random": false,
-                "straight": false,
-                "out_mode": "out",
-                "bounce": false,
-            }
-        },
-        "interactivity": {
-            "detect_on": "canvas",
-            "events": {
-                "onhover": {
-                    "enable": true,
-                    "mode": "grab"
-                },
-                "onclick": {
-                    "enable": true,
-                    "mode": "push"
-                },
-                "resize": true
-            },
-            "modes": {
-                "grab": {
-                    "distance": 140,
-                    "line_linked": {
-                        "opacity": 1
-                    }
-                },
-                "push": {
-                    "particles_nb": 4
-                }
-            }
-        },
-        "retina_detect": true
-    });
-}
