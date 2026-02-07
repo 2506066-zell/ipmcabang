@@ -7,7 +7,6 @@
     <title>Admin Kuis IPM</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="admin.css">
-    <link rel="stylesheet" href="admin-future.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="page-admin">
@@ -57,31 +56,24 @@
         <!-- APP SECTION -->
         <section class="hidden" id="app-card">
             <!-- Header/Toolbar -->
-            <div class="glass-card" style="position:sticky; top:0; z-index:100; border-radius: 0 0 16px 16px; margin: -16px -16px 0 -16px; padding:16px">
-                <div class="toolbar-future">
-                    <input id="search-input" class="neon-input" type="search" placeholder="Cari soal...">
-                    <div class="mode-toggle" id="mode-toggle"></div>
-                    <button class="cyber-button" id="logout-btn" title="Keluar"><i class="fas fa-right-from-bracket"></i></button>
+            <div class="card" style="position:sticky; top:0; z-index:100; border-radius: 0 0 16px 16px; margin: -16px -16px 20px -16px;">
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px">
+                    <input id="search-input" type="search" placeholder="Cari soal..." style="flex:1">
+                    <button class="btn btn-ghost btn-icon" id="logout-btn" title="Keluar">
+                        <i class="fas fa-right-from-bracket"></i>
+                    </button>
                 </div>
-                <div style="display:flex; gap:8px; align-items:center; margin-top:10px; overflow-x:auto; padding-bottom:4px">
-                    <select id="quiz-set-filter" class="neon-input" style="flex:0 0 160px">
+                <div class="flex-center" style="justify-content:space-between; overflow-x:auto; gap:8px; padding-bottom:4px">
+                     <select id="quiz-set-filter" style="width:auto; min-width:100px; font-size:14px; padding:8px">
                         <option value="all">Semua Kuis</option>
                         <option value="1">Kuis 1</option>
                         <option value="2">Kuis 2</option>
                         <option value="3">Kuis 3</option>
                     </select>
-                    <select id="category-filter" class="neon-input" style="flex:0 0 200px">
+                    <select id="category-filter" style="width:auto; min-width:120px; font-size:14px; padding:8px">
                         <option value="all">Semua Kategori</option>
                     </select>
-                    <button class="cyber-button" id="open-cmd"><i class="fas fa-terminal"></i> Ctrl+K</button>
                 </div>
-            </div>
-
-            <div class="overview-grid">
-                <div class="overview-tile"><div class="num" id="ov-total">0</div><div class="label">Total Soal</div></div>
-                <div class="overview-tile"><div class="num" id="ov-active">0</div><div class="label">Soal Aktif</div></div>
-                <div class="overview-tile"><div class="num" id="ov-results">0</div><div class="label">Hasil Terkumpul</div></div>
-                <div class="overview-tile"><div class="num" id="ov-users">0</div><div class="label">Pengguna</div></div>
             </div>
 
             <!-- TABS CONTENT -->
@@ -89,7 +81,6 @@
                 <div id="questions-list" class="list-container">
                     <!-- JS will populate cards here -->
                 </div>
-                <div id="q-sentinel" style="height:40px"></div>
                 
                 <div class="flex-center" style="margin-top:20px; gap:12px">
                     <button class="btn btn-secondary" id="q-prev">Prev</button>
@@ -118,15 +109,8 @@
 
     <!-- FLOATING ACTION BUTTON -->
     <button class="fab hidden" id="fab-add-question" aria-label="Tambah Soal">
-        <span class="fab-ring"></span>
         <i class="fas fa-plus"></i>
     </button>
-
-    <div class="bulk-bar" id="bulk-bar">
-        <span id="bulk-count">0 dipilih</span>
-        <button class="cyber-button" id="bulk-delete"><i class="fas fa-trash"></i> Hapus</button>
-        <button class="cyber-button" id="bulk-export"><i class="fas fa-file-export"></i> Export</button>
-    </div>
 
     <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav hidden" id="bottom-nav">
@@ -190,18 +174,6 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Tipe Soal</label>
-                    <div class="select-wrapper">
-                        <select id="q-type" required>
-                            <option value="mcq">Pilihan Ganda</option>
-                            <option value="tf">True / False</option>
-                            <option value="essay">Essay</option>
-                            <option value="matching">Matching</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group">
                     <label>Kategori</label>
                     <input type="text" id="q-category" placeholder="Contoh: Sejarah, Fiqih, Umum" list="category-list">
                     <datalist id="category-list">
@@ -218,10 +190,6 @@
                         <button type="button" class="btn-tool" data-tag="u" title="Underline"><i class="fas fa-underline"></i></button>
                         <button type="button" class="btn-tool" data-tag="code" title="Code"><i class="fas fa-code"></i></button>
                         <button type="button" class="btn-tool" data-tag="br" title="Baris Baru"><i class="fas fa-level-down-alt"></i></button>
-                        <button type="button" class="btn-tool" data-tag="ol" title="List Angka"><i class="fas fa-list-ol"></i></button>
-                        <button type="button" class="btn-tool" data-tag="ul" title="List Bullet"><i class="fas fa-list-ul"></i></button>
-                        <button type="button" class="btn-tool" data-tag="link" title="Link"><i class="fas fa-link"></i></button>
-                        <button type="button" class="btn-tool" data-tag="img" title="Gambar"><i class="fas fa-image"></i></button>
                     </div>
                     <textarea id="q-question" class="input-expandable" required placeholder="Tulis soal di sini..."></textarea>
                 </div>
@@ -286,12 +254,6 @@
             });
         }
     </script>
-    <div class="cmd-overlay" id="command-palette">
-        <div class="cmd-box">
-            <input id="cmd-input" class="cmd-input" placeholder="Cari perintah...">
-            <div class="cmd-list" id="cmd-list"></div>
-        </div>
-    </div>
-    <script src="admin.js?v=3"></script>
+    <script src="admin.js?v=2"></script>
 </body>
 </html>

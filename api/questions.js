@@ -29,7 +29,6 @@ async function list(req, res) {
 
   const set = req.query.set ? Number(req.query.set) : null;
   const category = req.query.category ? String(req.query.category).trim() : '';
-  const typeFilter = req.query.type ? String(req.query.type).trim() : '';
   const search = req.query.search ? String(req.query.search).trim() : '';
   
   const page = req.query.page ? Number(req.query.page) : 1;
@@ -50,10 +49,6 @@ async function list(req, res) {
       whereClauses.push(`LOWER(category) = $${pIdx++}`);
       params.push(category.toLowerCase());
   }
-  if (typeFilter && typeFilter !== 'all') {
-      whereClauses.push(`LOWER(type) = $${pIdx++}`);
-      params.push(typeFilter.toLowerCase());
-  }
   if (search) {
       whereClauses.push(`(LOWER(question) LIKE $${pIdx} OR LOWER(options::text) LIKE $${pIdx})`);
       params.push(`%${search.toLowerCase()}%`);
@@ -67,7 +62,7 @@ async function list(req, res) {
   const total = countRes.rows[0]?.total || 0;
   
   // Data
-  const dataRes = await rawQuery(`SELECT * FROM questions ${whereSql} ORDER BY position DESC, id DESC LIMIT ${limit} OFFSET ${offset}`, params);
+  const dataRes = await rawQuery(`SELECT * FROM questions ${whereSql} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`, params);
   
   json(res, 200, { 
       status: 'success', 
@@ -87,22 +82,10 @@ async function create(req, res) {
   const correct = String(b.correct_answer || '').trim();
   const active = Boolean(b.active !== false);
   const category = b.category ? String(b.category) : null;
-  const type = b.type ? String(b.type) : 'mcq';
-  const position = b.position !== undefined ? Number(b.position) : 0;
   const quiz_set = Number(b.quiz_set || 1);
-  // Validation by type
-  if (!q) return json(res, 400, { status: 'error', message: 'Pertanyaan wajib diisi' });
-  if (type === 'mcq') {
-     if (!options.a || !options.b || !options.d) return json(res, 400, { status: 'error', message: 'Opsi A, B, D wajib diisi untuk pilihan ganda' });
-     if (!['a','b','c','d'].includes(correct)) return json(res, 400, { status: 'error', message: 'Kunci jawaban harus A/B/C/D' });
-  } else if (type === 'tf') {
-     if (!['true','false','a','b'].includes(correct)) return json(res, 400, { status: 'error', message: 'Kunci harus True/False' });
-  } else if (type === 'essay') {
-     // No options required
-  } else if (type === 'matching') {
-     if (!Array.isArray(options.pairs) || options.pairs.length < 1) return json(res, 400, { status: 'error', message: 'Minimal satu pasangan untuk matching' });
-  }
-  const ins = await query`INSERT INTO questions (question, options, correct_answer, active, category, type, position, quiz_set) VALUES (${q}, ${options}, ${correct}, ${active}, ${category}, ${type}, ${position}, ${quiz_set}) RETURNING *`;
+  if (!q || !options.a || !options.b || !options.d) return json(res, 400, { status: 'error', message: 'Opsi A, B, D dan pertanyaan wajib diisi' });
+  if (!['a','b','c','d'].includes(correct)) return json(res, 400, { status: 'error', message: 'Jawaban benar harus A/B/C/D' });
+  const ins = await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (${q}, ${options}, ${correct}, ${active}, ${category}, ${quiz_set}) RETURNING *`;
   json(res, 201, { status: 'success', question: ins.rows[0] });
 }
 
@@ -116,12 +99,10 @@ async function update(req, res) {
   const correct = b.correct_answer !== undefined ? String(b.correct_answer) : undefined;
   const active = b.active !== undefined ? Boolean(b.active) : undefined;
   const category = b.category !== undefined ? String(b.category) : undefined;
-  const type = b.type !== undefined ? String(b.type) : undefined;
-  const position = b.position !== undefined ? Number(b.position) : undefined;
   const quiz_set = b.quiz_set !== undefined ? Number(b.quiz_set) : undefined;
   const prev = (await query`SELECT * FROM questions WHERE id=${id}`).rows[0];
   if (!prev) return json(res, 404, { status: 'error', message: 'Not found' });
-  const upd = await query`UPDATE questions SET question=${q ?? prev.question}, options=${options ?? prev.options}, correct_answer=${correct ?? prev.correct_answer}, active=${active ?? prev.active}, category=${category ?? prev.category}, type=${type ?? prev.type}, position=${position ?? prev.position}, quiz_set=${quiz_set ?? prev.quiz_set} WHERE id=${id} RETURNING *`;
+  const upd = await query`UPDATE questions SET question=${q ?? prev.question}, options=${options ?? prev.options}, correct_answer=${correct ?? prev.correct_answer}, active=${active ?? prev.active}, category=${category ?? prev.category}, quiz_set=${quiz_set ?? prev.quiz_set} WHERE id=${id} RETURNING *`;
   json(res, 200, { status: 'success', question: upd.rows[0] });
 }
 
