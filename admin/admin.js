@@ -541,12 +541,16 @@
 
         showLoader('Menyimpan...');
         try {
-            const endpoint = isEdit ? '/api/edit-question' : '/api/add-question';
+            // Unified endpoint: /api/questions
+            // If isEdit (has id), backend handles update. If no id, backend handles create.
+            // Both use POST in the current implementation of questions.js logic:
+            // if (req.method === 'POST') { if (b.id) update... else create... }
+            const endpoint = '/api/questions';
             const data = await apiAdminVercel('POST', endpoint, payload);
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
             
             // Refresh local data
-            await loadQuestions();
+            await loadQuestions(paging.qPage); // Reload current page
             
             localStorage.removeItem(STORAGE_KEYS.draft); // Clear draft on success
 
@@ -576,9 +580,10 @@
         if (!confirm('Yakin hapus soal ini?')) return;
         showLoader('Menghapus...');
         try {
-            const data = await apiAdminVercel('POST', '/api/delete-question', { id });
+            // Use DELETE method on /api/questions with id param
+            const data = await apiAdminVercel('DELETE', `/api/questions?id=${id}`);
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menghapus.');
-            await loadQuestions();
+            await loadQuestions(paging.qPage);
             setStatus('Soal dihapus.', 'ok');
         } catch (e) {
             alert('Error: ' + e.message);
