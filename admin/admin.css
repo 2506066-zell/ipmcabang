@@ -560,7 +560,6 @@ textarea {
 @media (min-width: 768px) {
     /* Tablet & Desktop Overrides */
     
-    .hidden-mobile { display: flex; }
     .mobile-only { display: none !important; }
 
     .admin-main {
