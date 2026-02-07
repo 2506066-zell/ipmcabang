@@ -217,12 +217,18 @@ function renderQuestion() {
     const q = questionsData[currentQuestionIndex];
     const total = questionsData.length;
     
-    // Update progress
-    document.getElementById('progress-text').textContent = `${currentQuestionIndex + 1}/${total}`;
-    const pct = ((currentQuestionIndex) / total) * 100;
+    // --- Theme Transition ---
+    const themes = ['theme-blue', 'theme-green', 'theme-yellow', 'theme-red', 'theme-purple'];
+    const themeIndex = Math.floor(currentQuestionIndex / 5) % themes.length;
+    document.body.className = 'page-quiz ' + themes[themeIndex];
+
+    // --- Progress Bar ---
+    document.getElementById('progress-text').textContent = `Soal ${currentQuestionIndex + 1} dari ${total}`;
+    // Use (currentQuestionIndex + 1) to show current progress including the one being viewed
+    const pct = ((currentQuestionIndex + 1) / total) * 100;
     document.getElementById('progress-bar').style.width = `${pct}%`;
     
-    // Render question HTML
+    // Render question HTML with optimized animation class
     quizBody.innerHTML = `
         <div class="question-card slide-in">
             <h3 class="question-text">${q.question}</h3>
@@ -243,6 +249,16 @@ function renderQuestion() {
     nextBtn.disabled = true;
     nextBtn.onclick = nextQuestion;
 }
+
+// Animation Control
+window.toggleAnimation = function(paused) {
+    document.body.style.setProperty('--anim-play-state', paused ? 'paused' : 'running');
+    const cards = document.querySelectorAll('.question-card, .option-card, .loading-logo');
+    cards.forEach(el => {
+        el.style.animationPlayState = paused ? 'paused' : 'running';
+        el.style.transition = paused ? 'none' : '';
+    });
+};
 
 window.handleAnswer = function(key) {
     const q = questionsData[currentQuestionIndex];
@@ -276,7 +292,10 @@ async function finishQuiz() {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     
     // Submit result
-    showLoader('Menyimpan Hasil...');
+    if (window.isSubmitting) return; // Guard
+    window.isSubmitting = true;
+    showLoader('Mengirim jawaban...');
+    
     try {
         const response = await fetch(API_URL + '/results', {
             method: 'POST',
@@ -298,30 +317,38 @@ async function finishQuiz() {
         }
 
         const data = await response.json();
-        if (!response.ok || data.status !== 'success') {
+        
+        // Handle success or idempotent success (200/201)
+        if (response.ok && data.status === 'success') {
+            try { localStorage.removeItem('ipm_ranking_cache'); } catch {}
+            
+            // Show result UI
+            quizHeader.style.display = 'none';
+            quizBody.style.display = 'none';
+            nextBtn.style.display = 'none';
+            
+            const resDiv = document.getElementById('result-container');
+            resDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${percent}%`;
+            document.getElementById('score-details').textContent = `Benar ${score} dari ${total} soal`;
+            
+            const restartBtn = document.getElementById('restart-btn');
+            if (restartBtn) restartBtn.onclick = () => window.location.reload();
+        } else {
             throw new Error(data.message || 'Gagal menyimpan hasil.');
         }
-        try { localStorage.removeItem('ipm_ranking_cache'); } catch {}
 
     } catch (e) {
         console.error(e);
         alert('Gagal menyimpan hasil: ' + e.message);
+        // Re-enable submit only on error so user can retry manually if it was network error
+        // But for logic errors (like daily limit), they are stuck anyway, which is fine.
+        window.isSubmitting = false; 
     } finally {
         hideLoader();
+        // Do NOT set isSubmitting = false here if success, to prevent double submission
+        // We only clear it on error (inside catch) or if we reload the page.
     }
-    
-    // Show result
-    quizHeader.style.display = 'none';
-    quizBody.style.display = 'none';
-    nextBtn.style.display = 'none';
-    
-    const resDiv = document.getElementById('result-container');
-    resDiv.style.display = 'block';
-    document.getElementById('score-text').textContent = `${percent}%`;
-    document.getElementById('score-details').textContent = `Benar ${score} dari ${total} soal`;
-    
-    const restartBtn = document.getElementById('restart-btn');
-    if (restartBtn) restartBtn.onclick = () => window.location.reload();
 }
 
 function normalizeQuestionsResponse(payload) {

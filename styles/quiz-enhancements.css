@@ -1,0 +1,75 @@
+/* --- Quiz Enhancements --- */
+
+/* Smooth Progress Bar */
+.progress-bar-fill {
+    height: 100%;
+    background: var(--accent-primary, #4a7c5d);
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 99px;
+}
+
+/* Question Card Animation */
+.question-card.slide-in {
+    animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Color Themes for Grid/Container */
+:root {
+    --theme-blue-bg: #e3f2fd;
+    --theme-blue-accent: #2196f3;
+    
+    --theme-green-bg: #e8f5e9;
+    --theme-green-accent: #4caf50;
+    
+    --theme-yellow-bg: #fffde7;
+    --theme-yellow-accent: #fbc02d;
+    
+    --theme-red-bg: #ffebee;
+    --theme-red-accent: #ef5350;
+    
+    --theme-purple-bg: #f3e5f5;
+    --theme-purple-accent: #ab47bc;
+}
+
+/* Theme Classes applied to quiz-container or body */
+body.theme-blue { --accent-primary: var(--theme-blue-accent); background-color: var(--theme-blue-bg); }
+body.theme-green { --accent-primary: var(--theme-green-accent); background-color: var(--theme-green-bg); }
+body.theme-yellow { --accent-primary: var(--theme-yellow-accent); background-color: var(--theme-yellow-bg); }
+body.theme-red { --accent-primary: var(--theme-red-accent); background-color: var(--theme-red-bg); }
+body.theme-purple { --accent-primary: var(--theme-purple-accent); background-color: var(--theme-purple-bg); }
+
+body.page-quiz {
+    transition: background-color 0.8s ease;
+}
+
+.question-card {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.option-card {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.option-card:active {
+    transform: scale(0.98);
+}
+
+.option-card.selected {
+    background-color: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}

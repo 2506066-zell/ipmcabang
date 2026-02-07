@@ -59,6 +59,22 @@ async function create(req, res) {
   const userRow = (await query`SELECT u.id, u.username FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token=${session} AND s.expires_at > NOW()`).rows[0];
   if (!userRow) return json(res, 401, { status: 'error', message: 'Unauthorized' });
   const COOLDOWN_MS = 30 * 1000;
+  
+  // Idempotency Check: Check if this user already submitted this quiz set recently (e.g., within last 5 seconds) with same score
+  // This handles the "double click" race condition on the backend side
+  const recentDup = (await query`
+    SELECT id FROM results 
+    WHERE user_id=${userRow.id} 
+    AND quiz_set=${quiz_set} 
+    AND score=${score} 
+    AND created_at > NOW() - INTERVAL '10 seconds'
+  `).rows[0];
+
+  if (recentDup) {
+    // Silently return success for duplicate submission
+    return json(res, 200, { status: 'success', id: recentDup.id, score, total, percent, idempotent: true });
+  }
+
   const last = (await query`SELECT finished_at FROM results WHERE user_id=${userRow.id} ORDER BY id DESC LIMIT 1`).rows[0];
   if (last && Number(last.finished_at || 0) > 0) {
     const delta = finished_at - Number(last.finished_at);
