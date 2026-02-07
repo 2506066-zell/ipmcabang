@@ -1,177 +1,40 @@
-    window.showLoader = function(text) {
-        try {
-            if (window.AppLoader && typeof AppLoader.show === 'function') {
-                AppLoader.show(text || 'Memuat...');
-                return;
-            }
-            let overlay = document.getElementById('loading-overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'loading-overlay';
-                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;z-index:9999';
-                const p = document.createElement('p');
-                p.id = 'loading-text';
-                p.textContent = text || 'Memuat...';
-                p.style.cssText = 'font-family:system-ui, sans-serif; color:#222;';
-                overlay.appendChild(p);
-                document.body.appendChild(overlay);
-            } else {
-                const t = document.getElementById('loading-text');
-                if (t) t.textContent = text || 'Memuat...';
-                overlay.style.display = 'flex';
-            }
-        } catch {}
-    };
-    window.hideLoader = function() {
-        try {
-            if (window.AppLoader && typeof AppLoader.hide === 'function') {
-                AppLoader.hide();
-                return;
-            }
-            const overlay = document.getElementById('loading-overlay');
-            if (overlay) overlay.style.display = 'none';
-        } catch {}
-    };
-
-    // --- Quiz Initialization ---
-    async function fetchQuestions() {
-        showLoader('Mempersiapkan Soal...');
-        await new Promise(r => requestAnimationFrame(r));
-        nextBtn.style.display = 'none';
-        quizHeader.style.display = 'none';
-
-        try {
-            // Fetch summary first
-            // FIX: Ensure correct endpoint path construction. API_URL is '/api'.
-            // So URL becomes '/api/questions?mode=summary'.
-            const response = await fetch(`${API_URL}/questions?mode=summary`);
-            
-            // Handle non-JSON response (e.g., 404 HTML)
-            const ct = response.headers.get('content-type');
-            if (!ct || !ct.includes('application/json')) {
-                const text = await response.text();
-                throw new Error(`Server Error: ${response.status} ${response.statusText} (Response is not JSON)`);
-            }
-
-            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-            
-            const payload = await response.json();
-            const sets = payload.sets || [];
-            
-            if (!sets.length) {
-                quizBody.style.display = 'block';
-                quizBody.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🙂</div>
-                        <h3>Soal belum tersedia</h3>
-                        <p>Coba muat ulang beberapa saat lagi.</p>
-                        <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
-                    </div>
-                `;
-                const btn = document.getElementById('empty-reload-quiz');
-                if (btn) btn.addEventListener('click', () => fetchQuestions());
-                return;
-            }
-            quizBody.innerHTML = '';
-            showSetPicker(sets);
-
-        } catch (error) {
-            quizBody.style.display = 'block';
-            quizBody.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">⚠️</div>
-                    <h3>Gagal memuat kuis</h3>
-                    <p>${error.message}</p>
-                    <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
-                </div>`;
-            const btn = document.getElementById('empty-reload-quiz');
-            if (btn) btn.addEventListener('click', () => fetchQuestions());
-            console.error(error);
-        } finally {
-            hideLoader();
+// --- Global Helper for Loader ---
+window.showLoader = function(text) {
+    try {
+        if (window.AppLoader && typeof AppLoader.show === 'function') {
+            AppLoader.show(text || 'Memuat...');
+            return;
         }
-    }
-
-    function showSetPicker(summarySets) {
-        userInfoScreen.style.display = 'none';
-        if (quizSetPicker) quizSetPicker.style.display = 'block';
-        if (quizSetGrid) {
-            const counts = {};
-            // summarySets is array of { quiz_set: 1, count: 10 }
-            summarySets.forEach(s => {
-                counts[s.quiz_set] = s.count;
-            });
-
-            quizSetGrid.querySelectorAll('.set-card').forEach(btn => {
-                const set = Number(btn.dataset.set || 1);
-                const count = counts[set] || 0;
-                
-                const small = quizSetGrid.querySelector(`small[data-count="${set}"]`);
-                if (small) small.textContent = `${count} soal`;
-                
-                btn.disabled = count === 0;
-                btn.onclick = async () => {
-                    currentQuizSet = set;
-                    try {
-                        // Check eligibility
-                        // Use unified POST to /api with action inside body is a bit weird if we don't have a main entry point.
-                        // But wait, the previous code called `API_URL` which is `/api`.
-                        // Let's check if there is an index.js in api/ to handle this.
-                        // If not, we should use specific endpoint or ensure /api/index.js exists.
-                        // Assuming /api/index.js exists and handles 'publicCanAttempt'.
-                        // If not, we might need to skip this check or implement it in a specific endpoint.
-                        
-                        // FIX: Use specific endpoint or try-catch properly. 
-                        // Since we don't have a guaranteed main handler, let's skip the check for now OR use a known working endpoint.
-                        // Actually, let's assume questions?mode=summary works, so maybe we can check eligibility via questions?mode=check&set=...
-                        // But for now, to fix the "Start" button, let's assume eligibility is checked on submission or just allowed.
-                        /*
-                        const can = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'publicCanAttempt', session: existingSession, quiz_set: currentQuizSet }) });
-                        const data = await can.json();
-                        if (!can.ok || data.status !== 'success') {
-                            alert(data.message || 'Anda sudah mencoba set ini.');
-                            return;
-                        }
-                        */
-
-                        // Fetch actual questions for this set
-                        showLoader('Mengunduh Soal...');
-                        const qRes = await fetch(`${API_URL}/questions?set=${set}`);
-                        if (!qRes.ok) throw new Error('Gagal mengunduh soal.');
-                        const qPayload = await qRes.json();
-                        let qData = normalizeQuestionsResponse(qPayload);
-                        qData = qData.filter(q => q.active !== false);
-
-                        if (!qData.length) {
-                            alert('Set ini kosong.');
-                            hideLoader();
-                            return;
-                        }
-
-                        // Prepare quiz
-                        quizSeed = `${Date.now()}_${Math.floor(Math.random()*1e6)}`;
-                        const srng = seededRandom(quizSeed);
-                        // Shuffle questions and options
-                        const shuffled = shuffleArray(qData, srng).map(q => ({ ...q, options: shuffleOptions(q.options, srng) }));
-                        questionsData = shuffled;
-                        
-                        if (quizSetPicker) quizSetPicker.style.display = 'none';
-                        hideLoader();
-                        startQuiz();
-
-                    } catch (e) {
-                        console.error(e);
-                        alert('Terjadi kesalahan saat memulai kuis: ' + e.message);
-                        hideLoader();
-                    }
-                };
-            });
+        let overlay = document.getElementById('loading-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'loading-overlay';
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;z-index:9999';
+            const p = document.createElement('p');
+            p.id = 'loading-text';
+            p.textContent = text || 'Memuat...';
+            p.style.cssText = 'font-family:system-ui, sans-serif; color:#222;';
+            overlay.appendChild(p);
+            document.body.appendChild(overlay);
+        } else {
+            const t = document.getElementById('loading-text');
+            if (t) t.textContent = text || 'Memuat...';
+            overlay.style.display = 'flex';
         }
-    }
+    } catch {}
+};
+window.hideLoader = function() {
+    try {
+        if (window.AppLoader && typeof AppLoader.hide === 'function') {
+            AppLoader.hide();
+            return;
+        }
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) overlay.style.display = 'none';
+    } catch {}
+};
 
-// --- MISSING LOGIC IMPLEMENTATION ---
-
-// Globals
+// --- Globals ---
 let currentQuestionIndex = 0;
 let userScore = 0;
 let userAnswers = [];
@@ -181,13 +44,128 @@ let questionsData = [];
 let currentQuizSet = 1;
 let quizSeed = '';
 
-// DOM Elements
+// --- DOM Elements ---
 const userInfoScreen = document.getElementById('user-info-screen');
 const quizSetPicker = document.getElementById('quiz-set-picker');
 const quizSetGrid = document.getElementById('quiz-set-grid');
 const quizHeader = document.getElementById('quiz-header');
 const quizBody = document.getElementById('quiz-body');
 const nextBtn = document.getElementById('next-btn');
+
+// --- Quiz Logic ---
+
+async function fetchQuestions() {
+    showLoader('Mempersiapkan Soal...');
+    await new Promise(r => requestAnimationFrame(r));
+    nextBtn.style.display = 'none';
+    quizHeader.style.display = 'none';
+
+    try {
+        const response = await fetch(`${API_URL}/questions?mode=summary`);
+        
+        const ct = response.headers.get('content-type');
+        if (!ct || !ct.includes('application/json')) {
+            throw new Error(`Server Error: ${response.status}`);
+        }
+
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        
+        const payload = await response.json();
+        const sets = payload.sets || [];
+        
+        if (!sets.length) {
+            quizBody.style.display = 'block';
+            quizBody.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🙂</div>
+                    <h3>Soal belum tersedia</h3>
+                    <p>Coba muat ulang beberapa saat lagi.</p>
+                    <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
+                </div>
+            `;
+            const btn = document.getElementById('empty-reload-quiz');
+            if (btn) btn.addEventListener('click', () => fetchQuestions());
+            return;
+        }
+        quizBody.innerHTML = '';
+        showSetPicker(sets);
+
+    } catch (error) {
+        quizBody.style.display = 'block';
+        quizBody.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <h3>Gagal memuat kuis</h3>
+                <p>${error.message}</p>
+                <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
+            </div>`;
+        const btn = document.getElementById('empty-reload-quiz');
+        if (btn) btn.addEventListener('click', () => fetchQuestions());
+        console.error(error);
+    } finally {
+        hideLoader();
+    }
+}
+
+function showSetPicker(summarySets) {
+    userInfoScreen.style.display = 'none';
+    if (quizSetPicker) quizSetPicker.style.display = 'block';
+    
+    // Notification
+    if (window.Toast) Toast.show('Silakan pilih topik kuis untuk memulai.', 'info');
+
+    if (quizSetGrid) {
+        const counts = {};
+        summarySets.forEach(s => {
+            counts[s.quiz_set] = s.count;
+        });
+
+        quizSetGrid.querySelectorAll('.set-card').forEach(btn => {
+            const set = Number(btn.dataset.set || 1);
+            const count = counts[set] || 0;
+            
+            const small = quizSetGrid.querySelector(`small[data-count="${set}"]`);
+            if (small) small.textContent = `${count} soal`;
+            
+            btn.disabled = count === 0;
+            btn.onclick = async () => {
+                currentQuizSet = set;
+                try {
+                    showLoader('Mengunduh Soal...');
+                    const qRes = await fetch(`${API_URL}/questions?set=${set}`);
+                    if (!qRes.ok) throw new Error('Gagal mengunduh soal.');
+                    const qPayload = await qRes.json();
+                    let qData = normalizeQuestionsResponse(qPayload);
+                    qData = qData.filter(q => q.active !== false);
+
+                    if (!qData.length) {
+                        if (window.Toast) Toast.show('Set kuis ini kosong.', 'error');
+                        else alert('Set ini kosong.');
+                        hideLoader();
+                        return;
+                    }
+
+                    // Prepare quiz
+                    quizSeed = `${Date.now()}_${Math.floor(Math.random()*1e6)}`;
+                    const srng = seededRandom(quizSeed);
+                    // Shuffle questions and options
+                    const shuffled = shuffleArray(qData, srng).map(q => ({ ...q, options: shuffleOptions(q.options, srng) }));
+                    questionsData = shuffled;
+                    
+                    if (quizSetPicker) quizSetPicker.style.display = 'none';
+                    hideLoader();
+                    startQuiz();
+
+                } catch (e) {
+                    console.error(e);
+                    if (window.Toast) Toast.show('Gagal: ' + e.message, 'error');
+                    else alert('Terjadi kesalahan: ' + e.message);
+                    hideLoader();
+                }
+            };
+        });
+    }
+}
 
 function startQuiz() {
     if (!questionsData || !questionsData.length) {
@@ -210,6 +188,8 @@ function startQuiz() {
     quizBody.style.display = 'block';
     nextBtn.style.display = 'flex';
     
+    if (window.Toast) Toast.show(`Mulai! ${questionsData.length} soal siap.`, 'success');
+
     renderQuestion();
 }
 
@@ -224,13 +204,13 @@ function renderQuestion() {
 
     // --- Progress Bar ---
     document.getElementById('progress-text').textContent = `Soal ${currentQuestionIndex + 1} dari ${total}`;
-    // Use (currentQuestionIndex + 1) to show current progress including the one being viewed
     const pct = ((currentQuestionIndex + 1) / total) * 100;
     document.getElementById('progress-bar').style.width = `${pct}%`;
     
     // Render question HTML with optimized animation class
+    // We use 'question-enter' for the entry animation
     quizBody.innerHTML = `
-        <div class="question-card slide-in">
+        <div class="question-card question-enter">
             <h3 class="question-text">${q.question}</h3>
             <div class="options-container">
                 ${['a','b','c','d'].map(key => {
@@ -250,16 +230,6 @@ function renderQuestion() {
     nextBtn.onclick = nextQuestion;
 }
 
-// Animation Control
-window.toggleAnimation = function(paused) {
-    document.body.style.setProperty('--anim-play-state', paused ? 'paused' : 'running');
-    const cards = document.querySelectorAll('.question-card, .option-card, .loading-logo');
-    cards.forEach(el => {
-        el.style.animationPlayState = paused ? 'paused' : 'running';
-        el.style.transition = paused ? 'none' : '';
-    });
-};
-
 window.handleAnswer = function(key) {
     const q = questionsData[currentQuestionIndex];
     const btns = document.querySelectorAll('.option-card');
@@ -269,10 +239,25 @@ window.handleAnswer = function(key) {
     });
     userAnswers[currentQuestionIndex] = key;
     nextBtn.disabled = false;
+    
+    // Optional: Subtle feedback that answer is selected
+    // if (window.Toast) Toast.show('Jawaban dipilih', 'info');
 };
 
-function nextQuestion() {
+async function nextQuestion() {
     if (currentQuestionIndex < questionsData.length - 1) {
+        // Smooth Transition Logic
+        const currentCard = document.querySelector('.question-card');
+        if (currentCard) {
+            // Remove enter class to avoid conflict
+            currentCard.classList.remove('question-enter');
+            // Add exit class (triggers slideOutLeft)
+            currentCard.classList.add('question-exit');
+            
+            // Wait for animation duration (matches CSS 400ms)
+            await new Promise(r => setTimeout(r, 400));
+        }
+
         currentQuestionIndex++;
         renderQuestion();
     } else {
@@ -309,19 +294,18 @@ async function finishQuiz() {
             })
         });
 
-        // Check for non-JSON response (e.g. 500 error page)
         const ct = response.headers.get('content-type');
         if (!ct || !ct.includes('application/json')) {
-            const text = await response.text();
-            throw new Error(`Server Error: ${response.status} (Not JSON)`);
+            throw new Error(`Server Error: ${response.status}`);
         }
 
         const data = await response.json();
         
-        // Handle success or idempotent success (200/201)
         if (response.ok && data.status === 'success') {
             try { localStorage.removeItem('ipm_ranking_cache'); } catch {}
             
+            if (window.Toast) Toast.show(`Kuis Selesai! Skor: ${percent}%`, 'success');
+
             // Show result UI
             quizHeader.style.display = 'none';
             quizBody.style.display = 'none';
@@ -340,17 +324,15 @@ async function finishQuiz() {
 
     } catch (e) {
         console.error(e);
-        alert('Gagal menyimpan hasil: ' + e.message);
-        // Re-enable submit only on error so user can retry manually if it was network error
-        // But for logic errors (like daily limit), they are stuck anyway, which is fine.
+        if (window.Toast) Toast.show('Gagal menyimpan: ' + e.message, 'error');
+        else alert('Gagal menyimpan hasil: ' + e.message);
         window.isSubmitting = false; 
     } finally {
         hideLoader();
-        // Do NOT set isSubmitting = false here if success, to prevent double submission
-        // We only clear it on error (inside catch) or if we reload the page.
     }
 }
 
+// --- Helpers ---
 function normalizeQuestionsResponse(payload) {
     if (Array.isArray(payload)) return payload;
     if (payload && Array.isArray(payload.questions)) return payload.questions;
@@ -380,7 +362,7 @@ function shuffleOptions(options, rng) {
     return options; 
 }
 
-// --- DOMContentLoaded Logic ---
+// --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
     // Define Globals
     window.API_URL = '/api';
@@ -395,7 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const username = sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || 'Pengguna';
     
-    // Update UI
     const nameText = document.getElementById('user-name-text');
     if (nameText) nameText.textContent = username;
     
