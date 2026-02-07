@@ -1,0 +1,9 @@
+{
+  "name": "ipmweb",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@vercel/postgres": "^0.5.0",
+    "pg": "^8.11.3"
+  }
+}

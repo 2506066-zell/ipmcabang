@@ -1,0 +1,522 @@
+:root {
+    --primary-bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --accent-green: #1d8d27;
+    --accent-green-light: #28a745;
+    --border-color: #dee2e6;
+    --gold-color: #ffc107;
+    --silver-color: #adb5bd;
+    --bronze-color: #cd7f32;
+    --gold-gradient: linear-gradient(135deg, #ffc107, #ffca2c);
+    --silver-gradient: linear-gradient(135deg, #ced4da, #e9ecef);
+    --bronze-gradient: linear-gradient(135deg, #d9a671, #e6b98a);
+}
+
+.page-ranking {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-family: 'Poppins', sans-serif;
+}
+
+.ranking-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.ranking-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ranking-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent-green);
+}
+
+.ranking-header p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+.last-updated {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* User Rank Card */
+.user-rank-card {
+    background: var(--card-bg);
+    border: 2px solid var(--accent-green);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(29, 141, 39, 0.1);
+    text-align: center;
+}
+
+.user-rank-card .position {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-green);
+}
+.user-rank-card .details {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+}
+.user-rank-card .details span {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Top 3 Showcase */
+.top-3-container {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 1.5rem;
+    align-items: flex-end;
+    margin-bottom: 3rem;
+}
+
+.rank-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rank-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.rank-card.rank-1 {
+    order: 2;
+    transform: scale(1.05);
+    border: 2px solid var(--gold-color);
+    box-shadow: 0 0 25px rgba(255, 193, 7, 0.3);
+}
+
+.rank-card.rank-2 { order: 1; border: 2px solid var(--silver-color); }
+.rank-card.rank-3 { order: 3; border: 2px solid var(--bronze-color); }
+
+.rank-card .rank-position {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.rank-card.rank-1 .rank-position {
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.rank-card.rank-2 .rank-position {
+    background: var(--silver-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.rank-card.rank-3 .rank-position {
+    background: var(--bronze-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.rank-card .avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, var(--accent-green), var(--accent-green-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.rank-card.rank-1 .avatar {
+    width: 90px;
+    height: 90px;
+    font-size: 3rem;
+}
+
+.rank-card .name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.rank-card .score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-green);
+}
+
+/* Top 3 lightweight animations */
+.rank-card { will-change: transform, opacity; backface-visibility: hidden; }
+.rank-card.animate { animation: top3-enter 480ms ease-out both; }
+.rank-card.rank-2.animate { animation-delay: 0.08s; }
+.rank-card.rank-3.animate { animation-delay: 0.16s; }
+.rank-card.rank-1.animate { animation: top3-enter 480ms ease-out both, floatPulse 6s ease-in-out 1.2s infinite; }
+
+@keyframes top3-enter { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes floatPulse { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-card.animate { animation: none !important; }
+}
+
+.empty-state {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem 1rem;
+    text-align: center;
+    margin-top: 1rem;
+}
+.empty-state .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Ranking List */
+.ranking-list-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.ranking-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+#search-input {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    flex-grow: 1;
+    max-width: 400px;
+}
+#search-input:focus {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 3px rgba(29, 141, 39, 0.1);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: var(--accent-green);
+    color: #fff;
+    border-color: var(--accent-green);
+}
+
+#ranking-list .list-item {
+    display: grid;
+    grid-template-columns: 40px 1fr 100px 120px;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s;
+    border-radius: 8px;
+}
+
+#ranking-list .list-item:last-child {
+    border-bottom: none;
+}
+
+#ranking-list .list-item:hover {
+    background-color: #f1f3f5;
+}
+
+/* Rank Change Animations */
+@keyframes rankChange {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(29, 141, 39, 0.1); }
+}
+
+.list-item.rank-up {
+    animation: rankChange 1.5s ease-out;
+}
+
+.list-item.rank-down {
+    animation: rankChange 1.5s ease-out;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.name-avatar::after {
+    font-weight: 700;
+    margin-left: 10px;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.rank-up .name-avatar::after {
+    content: '↑';
+    color: var(--accent-green);
+    opacity: 1;
+}
+
+.rank-down .name-avatar::after {
+    content: '↓';
+    color: #dc3545;
+    opacity: 1;
+}
+
+#ranking-list .list-item.user-highlight {
+    background: rgba(29, 141, 39, 0.08);
+    border-left: 4px solid var(--accent-green);
+}
+
+#ranking-list .list-item .rank {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+#ranking-list .list-item .name-avatar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+#ranking-list .list-item .avatar-sm {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: var(--primary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--accent-green);
+}
+
+#ranking-list .list-item .score,
+#ranking-list .list-item .time {
+    font-weight: 600;
+    text-align: right;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+#ranking-list .list-item .score {
+    color: var(--accent-green);
+    font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ranking-header h1 { font-size: 2rem; }
+    
+    /* .top-3-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .rank-card { 
+        transform: scale(1) !important; 
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .rank-card.rank-1, .rank-card.rank-2, .rank-card.rank-3 {
+        order: 0; /* Reset order for mobile */
+    } */
+    
+    .ranking-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #search-input {
+        max-width: 100%;
+    }
+
+    #ranking-list .list-item {
+        grid-template-columns: 30px 1fr 80px;
+        grid-template-areas: 
+            "rank name-avatar score"
+            ". time time";
+        gap: 0.25rem 1rem;
+        padding: 0.75rem;
+    }
+    #ranking-list .list-item .rank { grid-area: rank; }
+    #ranking-list .list-item .name-avatar { grid-area: name-avatar; }
+    #ranking-list .list-item .score { grid-area: score; }
+    #ranking-list .list-item .time { 
+        grid-area: time; 
+        text-align: right; 
+        font-size: 0.8rem; 
+        color: var(--text-secondary);
+        opacity: 0.9;
+    }
+}
+
+@media (max-width: 480px) {
+    .ranking-container { padding: 1rem 0.75rem; }
+    .top-3-container { grid-template-columns: 1fr; gap: 1rem; }
+    .rank-card { padding: 1rem; }
+    .rank-card.rank-1 .avatar { width: 80px; height: 80px; font-size: 2.4rem; }
+    #search-input { padding: 0.7rem 1rem; font-size: 0.95rem; }
+    .filter-btn { min-height: 40px; padding: 0.5rem 0.9rem; }
+}
+
+/* Achievements and Stats */
+.achievements-container, .stats-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.achievements-container h2, .stats-container h2 {
+    font-size: 1.5rem;
+    color: var(--accent-green);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.badge {
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.3s;
+}
+.badge:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.badge-icon {
+    font-size: 2rem;
+    color: var(--accent-green);
+}
+.badge-title {
+    font-weight: 600;
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+.badge-user {
+    font-size: 0.8rem;
+    color: var(--accent-green-light);
+}
+
+.stats-visualization {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.stat-item span {
+    width: 120px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.progress-bar {
+    flex-grow: 1;
+    height: 15px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-bar div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-green-light), var(--accent-green));
+    border-radius: 10px;
+}
+
+/* Loading Indicator */
+.loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.loading-content {
+    text-align: center;
+    position: relative;
+    width: 300px;
+    padding: 2rem;
+}
+
+.loading-content h2 {
+    color: var(--accent-green);
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.scanner {
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
+    animation: scan 2s infinite cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes scan {
+    0% { top: 0; }
+    50% { top: 100%; }
+    100% { top: 0; }
+}

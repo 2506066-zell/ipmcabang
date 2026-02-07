@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Peringkat Kuis - IPM Panawuan</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/ranking.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="page-ranking">
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Loading..." class="loading-logo">
+            </picture>
+            <p id="loading-text">Memuat...</p>
+        </div>
+    </div>
+
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            </picture>
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <div class="header-right-icons">
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+            <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
+
+        </ul>
+    </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+
+
+    <main class="ranking-container">
+        <div class="ranking-header">
+            <h1><i class="fas fa-trophy"></i> Papan Peringkat</h1>
+            <p>Uji kemampuanmu dan raih posisi puncak!</p>
+            <div id="last-updated" class="last-updated"></div>
+        </div>
+
+        <div id="user-rank-card" class="user-rank-card" style="display: none;">
+            <!-- User's current rank will be rendered here -->
+        </div>
+
+        <div id="loading-indicator" class="loading-indicator">
+            <div class="loading-content">
+                <h2>Menganalisis Peringkat...</h2>
+                <div class="scanner"></div>
+            </div>
+        </div>
+
+        <div id="error-container" style="display: none;">
+            <h2>Terjadi Kesalahan</h2>
+            <p id="error-message"></p>
+        </div>
+
+        <div id="empty-state" class="empty-state" style="display:none;">
+            <div class="empty-icon">🙂</div>
+            <h3>Belum ada data peringkat</h3>
+            <p>Mulai kuis terlebih dahulu atau muat ulang jika data baru tersedia.</p>
+            <button id="empty-reload" class="filter-btn">Muat Ulang</button>
+        </div>
+
+        <div id="main-content" style="display: none;">
+            <div class="ranking-controls">
+                <input type="text" id="search-input" placeholder="Cari nama peserta...">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Semua</button>
+                    <button class="filter-btn" data-filter="weekly">Mingguan</button>
+                    <button class="filter-btn" data-filter="daily">Harian</button>
+                </div>
+            </div>
+
+            <div id="top-3-showcase" class="top-3-container">
+                <!-- Top 3 Showcase akan dirender oleh JavaScript -->
+            </div>
+
+            <div class="ranking-list-container">
+                <div id="ranking-list">
+                    <!-- Daftar peringkat akan dirender oleh JavaScript -->
+                </div>
+            </div>
+
+            <div class="achievements-container">
+                <h2><i class="fas fa-award"></i> Lencana Prestasi</h2>
+                <div id="badges-grid" class="badges-grid">
+                    <!-- Achievement badges will be rendered here -->
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <h2><i class="fas fa-chart-bar"></i> Statistik Kuis</h2>
+                <div id="stats-visualization" class="stats-visualization">
+                    <!-- Statistics will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js" defer></script>
+    <script src="scripts/loader.js" defer></script>
+    <script>
+      document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+    </script>
+    <script src="ranking.js" defer></script>
+    <script src="scripts/toast.js" defer></script>
+    <script src="scripts/main.js" defer></script>
+
+    <nav class="bottom-nav">
+      <div class="bottom-nav-inner">
+        <a href="index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
+        <a href="quiz.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+        <a href="ranking.html" class="active"><i class="fas fa-trophy"></i><span>Peringkat</span></a>
+        <a href="help.html"><i class="fas fa-circle-question"></i><span>Bantuan</span></a>
+      </div>
+    </nav>
+</body>
+</html>

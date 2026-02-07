@@ -1,0 +1,105 @@
+<!-- 
+    REFERENSI STRUKTUR BIDANG CARD
+    
+    Struktur HTML untuk setiap bidang di grid:
+-->
+
+<div class="bidang-card">
+    <!-- Image Container dengan aspect-ratio 9:16 -->
+    <div class="bidang-card-header">
+        <!-- Gambar bidang (9:16) -->
+        <img src="images/bidang/pengkajianIlmu.jpeg" alt="Ketua Umum" loading="lazy">
+        <!-- 
+            CSS Overlay dan shine effect sudah applied via ::before dan ::after
+            - ::before: Gradient gelap (overlay) untuk readability nama
+            - ::after: Radial gradient untuk shine effect subtle
+        -->
+    </div>
+    
+    
+    <!-- Content Section -->
+    <div class="bidang-card-content">
+        <!-- Nama Bidang -->
+        <div class="bidang-card-name">Ketua Umum</div>
+        
+        <!-- Action Buttons -->
+        <div class="bidang-card-actions">
+            <!-- Button Anggota -->
+            <button class="btn-card btn-card-anggota" onclick="showAnggota('ketuaUmum', event)">
+                <i class="fas fa-users"></i> Anggota
+            </button>
+            
+            <!-- Button Program -->
+            <button class="btn-card btn-card-program" onclick="showProgram('ketuaUmum', event)">
+                <i class="fas fa-tasks"></i> Program
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 
+    ==================== CSS PROPERTIES ====================
+    
+    .bidang-card-header:
+    - aspect-ratio: 9 / 16         → Konsisten rasio portrait
+    - object-fit: cover            → Gambar fill container, tidak terdistorsi
+    - overflow: hidden             → Clip gambar ke border-radius
+    
+    .bidang-card-header::before:
+    - linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)
+    - Overlay gelap di bawah untuk readability nama bidang
+    - z-index: 2
+    
+    .bidang-card-header::after:
+    - radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08))
+    - Shine effect subtle untuk depth
+    - z-index: 3
+    
+    ==================== GAMBAR REQUIREMENTS ====================
+    
+    Rasio:           9:16 (Portrait)
+    Ukuran Min:      450px × 800px
+    Ukuran Rekomen:  540px × 960px
+    Format:          JPG atau PNG
+    Ukuran File:     50-200 KB (untuk mobile)
+    
+    ==================== FILE PATHS ====================
+    
+    images/bidang/ketuaUmum.jpg
+    images/bidang/sekretaris.jpg
+    images/bidang/bendahara.jpg
+    images/bidang/perkaderan.jpg
+    images/bidang/pengkajianIlmu.jpg
+    images/bidang/kajianDakwah.jpg
+    images/bidang/apresiasiBudaya.jpg
+    images/bidang/advokasi.jpg
+    images/bidang/ipmawati.jpg
+    
+    ==================== RESPONSIVE BEHAVIOR ====================
+    
+    Desktop (768px+):
+    - Grid 2 kolom
+    - min-height: 360px
+    
+    Mobile (480px):
+    - Grid 1 kolom (auto-adjust via media query)
+    - min-height: 340px
+    - Button sizing optimized untuk thumb
+    
+    ==================== LOADING OPTIMIZATION ====================
+    
+    - loading="lazy" pada <img>
+    - Browser akan lazy-load gambar saat mendekati viewport
+    - Performa mobile lebih baik
+    
+    ==================== INTERAKSI ====================
+    
+    Hover:
+    - transform: translateY(-6px)
+    - box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12)
+    
+    Active:
+    - transform: translateY(-3px) scale(0.98)
+    
+    Transisi: 250ms cubic-bezier(0.34, 1.56, 0.64, 1)
+-->

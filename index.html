@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#006400">
+    <meta name="description" content="Website PC IPM Panawuan - Platform Perpustakaan Digital dan Artikel Organisasi">
+    <title>PC IPM Panawuan - Ikatan Pelajar Muhammadiyah</title>
+    <link rel="stylesheet" href="styles/style.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      .user-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:#e9f5ec;border:1px solid rgba(5, 255, 101, 0.18);border-radius:999px;color:#1a1a1a;font-size:12px}
+      .user-chip span{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .user-dropdown{position:absolute;right:12px;top:56px;background:#fff;border:1px solid #efefef;box-shadow:0 8px 24px rgba(0,0,0,0.08);border-radius:10px;padding:8px;display:none;z-index:1200}
+      .user-dropdown.open{display:block}
+      .user-dropdown button{background:transparent;border:none;padding:8px 12px;width:100%;text-align:left;cursor:pointer}
+    </style>
+</head>
+<body class="page-home">
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Loading..." class="loading-logo" loading="lazy" decoding="async" fetchpriority="low">
+            </picture>
+            <p id="loading-text">Memuat...</p>
+        </div>
+    </div>
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Logo IPM" class="header-logo" loading="lazy" decoding="async" fetchpriority="low">
+            </picture>
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <div class="header-right-icons">
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html" class="mobile-nav-link active"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+            <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
+        </ul>
+    </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+    <main class="main-content">
+        <!-- Under Construction Modal -->
+        <div class="under-construction-overlay" id="underConstructionOverlay" onclick="closeUnderConstruction(event)">
+            <div class="under-construction-modal" onclick="event.stopPropagation()">
+                <i class="fas fa-tools"></i>
+                <h2>Sedang Dikembangkan</h2>
+                <p>Halaman artikel sedang dalam tahap pengembangan. Silakan kembali lagi nanti untuk konten terbaru!</p>
+                <button onclick="closeUnderConstruction()">Tutup</button>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="hero-section" id="hero">
+            <div class="hero-content">
+                <picture>
+                    <source srcset="ipm (2).webp" type="image/webp">
+                    <img src="ipm (2).png" alt="Logo IPM Panawuan" class="hero-logo" loading="lazy" decoding="async" fetchpriority="low">
+                </picture>
+                <h2 class="hero-title">Ikatan Pelajar Muhammadiyah</h2>
+                <p class="hero-tagline">PC Panawuan</p>
+                <p class="hero-subtitle">"Dari Pemahaman, Menata Arah Gerak"</p>
+                
+                <div class="hero-buttons">
+                    <a href="struktur-organisasi.html" class="btn-hero btn-hero-primary">
+                        <i class="fas fa-building"></i> Tentang Kami
+                    </a>
+                    <a href="article.html" class="btn-hero btn-hero-secondary"">
+                        <i class="fas fa-newspaper"></i> Tulisan Kader
+                    </a>
+                    <a href="quiz.html" class="btn-hero btn-hero-primary">
+                        <i class="fas fa-pencil-alt"></i> Asah Wawasan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    
+
+    <!-- Footer -->
+    <footer class="public-footer">
+        <p class="footer-text">© 2026 Ikatan Pelajar Muhammadiyah - PC Panawuan</p>
+        <div class="footer-socials">
+            <a href="https://www.instagram.com/ipmgarut_" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.youtube.com/@ipmchannelgarut" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+        </div>
+        <div class="footer-info">
+            <span><i class="fas fa-map-marker-alt"></i>Panawuan</span>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize CSS variables
+        document.documentElement.style.setProperty('--ipm-green', '#2D7A4A');
+        document.documentElement.style.setProperty('--ipm-light-green', '#E8F5E9');
+        document.documentElement.style.setProperty('--ipm-light-yellow', '#F4D03F');
+        document.documentElement.style.setProperty('--primary-white', '#ffffff');
+
+        function setActiveNav(element) {
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            // Add active class to clicked link
+            element.classList.add('active');
+        }
+
+        // Set active nav on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                const href = link.getAttribute('href').split('/').pop();
+                if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+
+        // Under Construction Modal Functions
+        function showUnderConstruction(event) {
+            event.preventDefault();
+            const overlay = document.getElementById('underConstructionOverlay');
+            overlay.classList.add('active');
+        }
+
+        function closeUnderConstruction(event) {
+            if (event && event.target.id !== 'underConstructionOverlay') return;
+            
+            const overlay = document.getElementById('underConstructionOverlay');
+            overlay.classList.remove('active');
+        }
+
+        
+    </script>
+    <script>document.addEventListener('gesturestart', function(e){ e.preventDefault(); });</script>
+    <script src="scripts/toast.js" defer></script>
+    <script src="scripts/main.js" defer></script>
+</body>
+</html>
