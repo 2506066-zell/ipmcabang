@@ -69,6 +69,7 @@ async function ensureSchema() {
   await query`CREATE TABLE IF NOT EXISTS quiz_schedules (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
+    description TEXT,
     start_time TIMESTAMP,
     end_time TIMESTAMP,
     active BOOLEAN DEFAULT TRUE,
@@ -83,6 +84,9 @@ async function ensureSchema() {
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE`;
   await query`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS role TEXT`;
+  
+  // Ensure description column exists for quiz_schedules
+  await query`ALTER TABLE quiz_schedules ADD COLUMN IF NOT EXISTS description TEXT`;
 
   // Create Indexes for Performance
   await query`CREATE INDEX IF NOT EXISTS idx_questions_quiz_set ON questions(quiz_set)`;

@@ -282,6 +282,7 @@ async function handleUpdateSchedule(req, res) {
     const b = parseJsonBody(req);
     const id = Number(b.id);
     const title = String(b.title || '');
+    const description = String(b.description || '');
     const start_time = b.start_time ? String(b.start_time) : null;
     const end_time = b.end_time ? String(b.end_time) : null;
     
@@ -290,12 +291,15 @@ async function handleUpdateSchedule(req, res) {
     }
     
     if (id) {
-        await query`UPDATE quiz_schedules SET title=${title}, start_time=${start_time}, end_time=${end_time}, updated_at=NOW() WHERE id=${id}`;
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_SCHEDULE', ${ { id, title, start_time, end_time } })`;
+        await query`UPDATE quiz_schedules SET title=${title}, description=${description}, start_time=${start_time}, end_time=${end_time}, updated_at=NOW() WHERE id=${id}`;
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_SCHEDULE', ${ { id, title, description, start_time, end_time } })`;
     } else {
-        await query`INSERT INTO quiz_schedules (title, start_time, end_time) VALUES (${title}, ${start_time}, ${end_time})`;
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_SCHEDULE', ${ { title, start_time, end_time } })`;
+        await query`INSERT INTO quiz_schedules (title, description, start_time, end_time) VALUES (${title}, ${description}, ${start_time}, ${end_time})`;
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_SCHEDULE', ${ { title, description, start_time, end_time } })`;
     }
+    
+    // Trigger SSE update (optional, if we had a shared event bus)
+    // For now, clients will pick it up on next poll/connect
     
     return json(res, 200, { status: 'success' });
 }
@@ -316,6 +320,60 @@ async function handleDeleteSchedule(req, res) {
     await query`DELETE FROM quiz_schedules WHERE id=${id}`;
     await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'DELETE_SCHEDULE', ${ { id } })`;
     
+    return json(res, 200, { status: 'success' });
+}
+
+const { ensureSchema } = require('./_bootstrap');
+
+async function handleResetSet(req, res) {
+    let adminId = null;
+    try { 
+        const admin = await requireAdminAuth(req); 
+        adminId = admin.id;
+    } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
+    
+    const body = parseJsonBody(req);
+    const quiz_set = Number(body.quiz_set || 0);
+    if (!quiz_set) return json(res, 400, { status: 'error', message: 'Missing quiz_set' });
+    
+    await query`DELETE FROM results WHERE quiz_set=${quiz_set}`;
+    
+    // Log Activity
+    try {
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'RESET_SET', ${ { quiz_set } })`;
+    } catch (e) { console.error('Failed to log activity:', e); }
+  
+    return json(res, 200, { status: 'success' });
+}
+
+async function handleMigrate(req, res) {
+    try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
+    
+    await ensureSchema();
+  
+    const qcRaw = (await query`SELECT COUNT(*)::int AS c FROM questions`).rows[0]?.c;
+    const qc = typeof qcRaw === 'number' ? qcRaw : Number(qcRaw || 0);
+    if (qc === 0) {
+      await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
+        ${'Apa kepanjangan IPM?'}, ${ { a: 'Ikatan Pelajar Muhammadiyah', b: 'Ikatan Pemuda Muslim', c: 'Ikatan Pemuda Merdeka', d: 'Ikatan Pelajar Merdeka' } }, ${'a'}, ${true}, ${'Organisasi'}, ${1}
+      )`;
+      await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
+        ${'Hari jadi IPM?'}, ${ { a: '5 Mei 1961', b: '5 Mei 1962', c: '5 Juni 1961', d: '5 Juni 1962' } }, ${'a'}, ${true}, ${'Sejarah'}, ${1}
+      )`;
+    }
+  
+    const adminU = String((process.env.ADMIN_USERNAME || '')).trim().toLowerCase();
+    const adminP = String((process.env.ADMIN_PASSWORD || ''));
+    if (adminU && adminP) {
+      const exists = (await query`SELECT id FROM users WHERE LOWER(username)=${adminU}`).rows[0];
+      if (!exists) {
+        const crypto = require('crypto');
+        const salt = crypto.randomBytes(16).toString('hex');
+        const dk = crypto.scryptSync(adminP, salt, 64);
+        const hash = dk.toString('hex');
+        await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${salt}, ${hash}, ${'admin'})`;
+      }
+    }
     return json(res, 200, { status: 'success' });
 }
 
@@ -357,6 +415,10 @@ module.exports = async (req, res) => {
         return await handleDeleteUser(req, res);
       case 'resetAttempt':
         return await handleResetAttempt(req, res);
+      case 'resetSet':
+        return await handleResetSet(req, res);
+      case 'migrate':
+        return await handleMigrate(req, res);
       case 'updateSchedule':
         return await handleUpdateSchedule(req, res);
       case 'deleteSchedule':

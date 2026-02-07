@@ -217,12 +217,15 @@ function showSetPicker(summarySets) {
 
 function initNextQuiz(info) {
     const section = document.getElementById('next-quiz-section');
-    if (!section || !info) return;
+    if (!section || !info) {
+        if (section) section.style.display = 'none';
+        return;
+    }
     
     section.style.display = 'block';
     
     if (info.title) document.getElementById('nq-title').textContent = info.title;
-    if (info.topic) document.getElementById('nq-topic').textContent = `Topik: ${info.topic}`;
+    if (info.topic) document.getElementById('nq-topic').textContent = info.topic; // Changed: Just the topic text
     
     if (info.countdown_target) {
         startCountdown(new Date(info.countdown_target).getTime());
@@ -241,6 +244,11 @@ function startCountdown(targetTime) {
             document.getElementById('timer-h').textContent = '00';
             document.getElementById('timer-m').textContent = '00';
             document.getElementById('timer-s').textContent = '00';
+            
+            // Optional: Auto refresh or show "Started"
+            document.getElementById('nq-topic').textContent = "Kuis telah dimulai! Silakan refresh.";
+            document.getElementById('nq-topic').style.color = 'var(--accent-primary)';
+            document.getElementById('nq-topic').style.fontWeight = 'bold';
             return;
         }
         
@@ -255,6 +263,45 @@ function startCountdown(targetTime) {
     
     update();
     countdownInterval = setInterval(update, 1000);
+}
+
+function initSSE() {
+    if (!window.EventSource) return;
+    
+    let evtSource;
+    const connect = () => {
+        console.log('SSE: Connecting...');
+        evtSource = new EventSource('/api/events');
+        
+        evtSource.onopen = () => {
+            console.log('SSE: Connected');
+        };
+        
+        evtSource.onmessage = (e) => {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg.type === 'schedule_update') {
+                    console.log('SSE: Schedule Update', msg.data);
+                    if (msg.data) {
+                        initNextQuiz(msg.data);
+                        if (window.Toast) Toast.show('Info kuis diperbarui', 'info');
+                    } else {
+                        const section = document.getElementById('next-quiz-section');
+                        if (section) section.style.display = 'none';
+                    }
+                }
+            } catch (err) { console.error('SSE Parse Error', err); }
+        };
+        
+        evtSource.onerror = (err) => {
+            console.error('SSE Error', err);
+            evtSource.close();
+            // Retry after 10s
+            setTimeout(connect, 10000);
+        };
+    };
+    
+    connect();
 }
 
 window.toggleRemind = function() {
@@ -513,7 +560,7 @@ function shuffleOptions(options, rng) {
 // --- Notifications ---
 async function checkNotifications() {
     try {
-        const res = await fetch(`${API_URL}/notifications`);
+        const res = await fetch(`${API_URL}/users?action=notifications`);
         if (!res.ok) return;
         const data = await res.json();
         if (data.notifications && data.notifications.length > 0) {
@@ -524,7 +571,7 @@ async function checkNotifications() {
                      if (window.Toast) Toast.show(n.message, 'info');
                 });
                 // Mark all as read
-                await fetch(`${API_URL}/notifications?action=markRead`, { method: 'POST' });
+                await fetch(`${API_URL}/users?action=markNotificationsRead`, { method: 'POST' });
             }
         }
     } catch {}
@@ -559,4 +606,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     checkNotifications();
+    initSSE();
 });

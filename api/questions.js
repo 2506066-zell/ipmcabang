@@ -40,7 +40,7 @@ async function list(req, res) {
     // Also fetch Dynamic Next Quiz Info from quiz_schedules
     // We look for the next upcoming active schedule
     const nextSchedule = (await query`
-      SELECT title, start_time 
+      SELECT title, description, start_time 
       FROM quiz_schedules 
       WHERE active = true AND start_time > NOW() 
       ORDER BY start_time ASC 
@@ -51,7 +51,7 @@ async function list(req, res) {
     if (nextSchedule) {
         nextQuiz = {
             title: nextSchedule.title,
-            topic: "Event Mendatang", // Or add topic column to schedules
+            topic: nextSchedule.description || "Event Mendatang", 
             countdown_target: nextSchedule.start_time
         };
     } else {

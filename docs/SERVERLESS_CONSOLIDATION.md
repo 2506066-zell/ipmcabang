@@ -4,50 +4,49 @@
 To address the Vercel Hobby plan limit of 12 serverless functions per deployment, we have performed a comprehensive consolidation of the API endpoints.
 
 **Previous Status:** 13 Functions (Over Limit)
-**New Status:** 6 Functions (Well within Limit)
+**New Status:** 7 Functions (Well within Limit)
 
 ## Changes Implemented
 
-### 1. Auth Consolidation (`api/auth_handler.js`)
-We have combined all authentication-related functions into a single handler.
-*   **Handler File:** `api/auth_handler.js`
+### 1. Admin & System Consolidation (`api/admin_handler.js`)
+We have combined system maintenance functions into the admin handler, as they are privileged operations.
+*   **Handler File:** `api/admin_handler.js`
 *   **Consolidated Endpoints:**
-    *   `/api/auth/login` -> `?action=login`
-    *   `/api/auth/register` -> `?action=register`
-    *   `/api/auth/promoteAdmin` -> `?action=promoteAdmin`
-    *   `/api/auth/seedAdmins` -> `?action=seedAdmins`
-    *   `/api/auth/adminLogin` -> `?action=adminLogin`
-
-### 2. System Consolidation (`api/system_handler.js`)
-We have combined system maintenance and health check functions.
-*   **Handler File:** `api/system_handler.js`
-*   **Consolidated Endpoints:**
-    *   `/api/dbHealth` -> `?action=dbHealth`
-    *   `/api/health` -> `?action=health`
     *   `/api/migrate` -> `?action=migrate`
     *   `/api/resetSet` -> `?action=resetSet`
+    *   Plus all existing Admin CRUD operations.
 
-### 3. Vercel Configuration (`vercel.json`)
-We utilized Vercel Rewrites to maintain the existing API URL structure. This ensures that the frontend code does **not** need to be changed.
+### 2. User & Notification Consolidation (`api/users.js`)
+We have merged notification handling into the user handler to keep user-related logic together.
+*   **Handler File:** `api/users.js`
+*   **Consolidated Endpoints:**
+    *   `/api/notifications` -> `?action=notifications` (GET)
+    *   `/api/notifications` (mark read) -> `?action=markNotificationsRead` (POST)
+    *   Plus existing User CRUD operations.
+
+### 3. Root & Health Consolidation (`api/index.js`)
+We have moved public health checks to the root index handler.
+*   **Handler File:** `api/index.js`
+*   **Consolidated Endpoints:**
+    *   `/api/health` -> `?action=health`
+    *   `/api/dbHealth` -> `?action=dbHealth`
+
+### 4. Vercel Configuration (`vercel.json`)
+We utilized Vercel Rewrites to maintain the existing API URL structure. This ensures that the frontend code works seamlessly, although we also updated the frontend code for robustness.
 
 ```json
 {
-  "src": "/api/auth/login",
-  "dest": "/api/auth_handler?action=login"
+  "src": "/api/resetSet",
+  "dest": "/api/admin_handler?action=resetSet"
 }
 ```
 
-### 4. Remaining Standalone Functions
-The following functions remain independent due to their high usage frequency or distinct logic:
+### 5. Remaining Functions
+The following functions remain independent:
+*   `api/auth_handler.js` (Authentication)
 *   `api/questions.js` (Core Quiz Logic)
-*   `api/results.js` (Core Leaderboard Logic)
-*   `api/users.js` (User Management)
-*   `api/index.js` (Root/Entry)
+*   `api/results.js` (Leaderboard)
+*   `api/events.js` (SSE Real-time Updates)
 
 ## Verification
-You can use `admin/monitor.html` to verify that all consolidated endpoints are responding correctly through the rewrite layer.
-
-## Future Recommendations
-If the limit is approached again:
-1.  Combine `questions.js`, `results.js`, and `users.js` into a `api/data_handler.js`.
-2.  Consider moving static logic to Edge Middleware.
+All endpoints have been mapped via `vercel.json` rewrites and frontend code has been updated to use the new action-based parameters where appropriate.

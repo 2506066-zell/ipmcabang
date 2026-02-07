@@ -142,8 +142,12 @@
             scheduleDateFilter: document.getElementById('schedule-date-filter'),
             schId: document.getElementById('sch-id'),
             schTitle: document.getElementById('sch-title'),
+            schDesc: document.getElementById('sch-desc'),
             schStart: document.getElementById('sch-start'),
             schEnd: document.getElementById('sch-end'),
+            previewSchBtn: document.getElementById('preview-sch-btn'),
+            previewPanel: document.getElementById('preview-panel'),
+            previewBox: document.getElementById('preview-box'),
             
             // Global Reset
             resetSetSelect: document.getElementById('reset-set-select'),
@@ -748,6 +752,9 @@
                 <div class="schedule-status ${statusClass}">${statusText}</div>
                 <div class="schedule-content">
                     <div class="schedule-title">${escapeHtml(s.title)}</div>
+                    <div class="schedule-desc" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        ${escapeHtml(s.description || '-')}
+                    </div>
                     <div class="schedule-time-grid">
                         <div class="time-row">
                             <i class="fas fa-play-circle"></i>
@@ -776,6 +783,7 @@
         if (!s) return;
         els.schId.value = s.id;
         els.schTitle.value = s.title;
+        els.schDesc.value = s.description || '';
         const toLocalISO = (d) => {
             if (!d) return '';
             const dt = new Date(d);
@@ -812,6 +820,7 @@
         els.addScheduleBtn.addEventListener('click', () => {
             els.schId.value = '';
             els.schTitle.value = '';
+            els.schDesc.value = '';
             els.schStart.value = '';
             els.schEnd.value = '';
             
@@ -826,6 +835,35 @@
         });
     }
 
+    // Preview Logic
+    if (els.previewSchBtn) {
+        els.previewSchBtn.addEventListener('click', () => {
+            const title = els.schTitle.value || 'Judul Contoh';
+            const desc = els.schDesc.value || 'Deskripsi singkat tentang kuis yang akan datang...';
+            const start = els.schStart.value ? new Date(els.schStart.value).getTime() : Date.now() + 3600000;
+            
+            // Mock render next quiz card
+            const html = `
+            <div class="next-quiz-card" style="background:var(--card-bg); border-radius:12px; padding:20px; border:1px solid var(--border-color); color:var(--text-primary);">
+                <div class="nq-header" style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-weight:bold; color:var(--accent-primary);">
+                    <i class="fas fa-hourglass-half"></i> Kuis Berikutnya
+                </div>
+                <h3 style="font-size:1.2rem; margin-bottom:8px;">${escapeHtml(title)}</h3>
+                <p style="opacity:0.8; margin-bottom:16px; font-size:0.9rem;">${escapeHtml(desc)}</p>
+                <div class="nq-timer" style="display:flex; gap:8px; justify-content:center; margin-bottom:16px;">
+                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">01</span><small>Jam</small></div>
+                    <div style="font-size:1.5rem; font-weight:bold; padding-top:4px;">:</div>
+                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">30</span><small>Mnt</small></div>
+                    <div style="font-size:1.5rem; font-weight:bold; padding-top:4px;">:</div>
+                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">00</span><small>Dtk</small></div>
+                </div>
+            </div>`;
+            
+            if (els.previewBox) els.previewBox.innerHTML = html;
+            if (els.previewPanel) els.previewPanel.classList.remove('hidden');
+        });
+    }
+
     window.closeScheduleModal = () => {
         const modal = document.getElementById('question-modal');
         if (modal) modal.classList.add('hidden');
@@ -837,6 +875,7 @@
             e.preventDefault();
             const id = els.schId.value;
             const title = els.schTitle.value;
+            const description = els.schDesc.value;
             const start = els.schStart.value;
             const end = els.schEnd.value;
             
@@ -845,6 +884,7 @@
                 const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', {
                     id: id ? Number(id) : undefined,
                     title,
+                    description,
                     start_time: start ? new Date(start).toISOString() : null,
                     end_time: end ? new Date(end).toISOString() : null
                 });
@@ -870,7 +910,7 @@
         if (verification !== 'RESET') return alert('Batal.');
         showLoader('Mereset Global...');
         try {
-            const data = await apiAdminVercel('POST', '/api/system?action=resetSet', { quiz_set: set });
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=resetSet', { quiz_set: set });
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
             setStatus(`Kuis Set ${set} berhasil direset total.`, 'ok');
         } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }

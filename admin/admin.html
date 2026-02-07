@@ -355,6 +355,10 @@
                             <label>Judul Event</label>
                             <input type="text" id="sch-title" required placeholder="Contoh: Kuis Ramadhan">
                         </div>
+                        <div class="form-group">
+                            <label>Deskripsi / Topik</label>
+                            <textarea id="sch-desc" rows="3" placeholder="Contoh: Materi tentang sejarah IPM dan Kemuhammadiyahan" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary);"></textarea>
+                        </div>
                         <div class="form-row">
                             <div class="form-group" style="flex:1">
                                 <label>Waktu Mulai</label>
@@ -366,11 +370,25 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-actions">
-                        <button type="submit" class="btn btn-primary">Simpan Jadwal</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeScheduleModal()">Batal</button>
+                    <div class="modal-actions" style="justify-content:space-between;">
+                        <button type="button" class="btn btn-secondary" id="preview-sch-btn" style="border:1px dashed var(--accent-primary); color:var(--accent-primary);">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" class="btn btn-secondary" onclick="closeScheduleModal()">Batal</button>
+                            <button type="submit" class="btn btn-primary">Simpan Jadwal</button>
+                        </div>
                     </div>
                 </form>
+                
+                <!-- Preview Panel Overlay -->
+                <div id="preview-panel" class="hidden" style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:20; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <h3 style="margin-bottom:20px; color:#fff;">Preview Notifikasi</h3>
+                    <div id="preview-box" style="width:100%; max-width:400px;">
+                        <!-- Content injected by JS -->
+                    </div>
+                    <button class="btn btn-secondary" onclick="document.getElementById('preview-panel').classList.add('hidden')" style="margin-top:20px;">Tutup Preview</button>
+                </div>
             </div>
 
             <!-- User Modal -->

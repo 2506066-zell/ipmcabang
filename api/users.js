@@ -1,13 +1,28 @@
 const { query } = require('./_db');
 const { json, cacheHeaders } = require('./_util');
-const { requireAdminAuth } = require('./_auth');
+const { requireAdminAuth, getSessionUser } = require('./_auth');
 
 async function list(req, res) {
+  // If action is notifications, handle it here
+  if (req.query.action === 'notifications') {
+      const user = await getSessionUser(req);
+      if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+      const notifs = (await query`SELECT id, message, is_read, created_at FROM notifications WHERE user_id=${user.id} ORDER BY created_at DESC LIMIT 20`).rows;
+      return json(res, 200, { status: 'success', notifications: notifs }, cacheHeaders(0));
+  }
+
   const uname = req.query.username ? String(req.query.username).trim().toLowerCase() : '';
   const rows = uname
     ? (await query`SELECT id, username, nama_panjang, pimpinan, created_at FROM users WHERE LOWER(username)=${uname} ORDER BY id DESC`).rows
     : (await query`SELECT id, username, nama_panjang, pimpinan, created_at FROM users ORDER BY id DESC`).rows;
   json(res, 200, { status: 'success', users: rows }, cacheHeaders(60));
+}
+
+async function handleMarkNotificationsRead(req, res) {
+    const user = await getSessionUser(req);
+    if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+    await query`UPDATE notifications SET is_read=TRUE WHERE user_id=${user.id}`;
+    return json(res, 200, { status: 'success' });
 }
 
 async function create(req, res) {
@@ -48,6 +63,11 @@ module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') return list(req, res);
     if (req.method === 'POST') {
+      // Check for action param first
+      if (req.query.action === 'markNotificationsRead') {
+          return await handleMarkNotificationsRead(req, res);
+      }
+      
       const { parseJsonBody } = require('./_util');
       const b = parseJsonBody(req);
       if (b && b.id) return update(req, res);
