@@ -1,4 +1,4 @@
-const { query } = require('./db');
+const { query } = require('./_db');
 
 async function ensureSchema() {
   await query`CREATE TABLE IF NOT EXISTS users (

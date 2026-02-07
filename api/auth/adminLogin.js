@@ -1,4 +1,4 @@
-const { query } = require('../db');
+const { query } = require('../_db');
 const { json, parseJsonBody } = require('../_util');
 const crypto = require('crypto');
 

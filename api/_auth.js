@@ -1,4 +1,4 @@
-const { query } = require('./db');
+const { query } = require('./_db');
 const { getBearerToken } = require('./_util');
 
 async function getSessionUser(req) {

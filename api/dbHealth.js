@@ -1,4 +1,4 @@
-const { query, getConnHost } = require('./db');
+const { query, getConnHost } = require('./_db');
 const { json } = require('./_util');
 
 module.exports = async (req, res) => {

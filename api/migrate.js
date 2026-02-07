@@ -1,4 +1,4 @@
-const { query } = require('./db');
+const { query } = require('./_db');
 const { json } = require('./_util');
 const { ensureSchema } = require('./_bootstrap');
 

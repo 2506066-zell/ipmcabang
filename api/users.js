@@ -1,4 +1,4 @@
-const { query } = require('./db');
+const { query } = require('./_db');
 const { json, cacheHeaders } = require('./_util');
 const { requireAdminAuth } = require('./_auth');
 
