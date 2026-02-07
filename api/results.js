@@ -7,8 +7,41 @@ async function list(req, res) {
   const size = req.query.size ? Number(req.query.size) : 200;
   const limit = Math.max(1, Math.min(500, size));
   const offset = Math.max(0, (Math.max(1, page) - 1) * limit);
-  const rows = (await query`SELECT created_at AS ts, username, score, total, percent FROM results ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`).rows;
-  json(res, 200, { status: 'success', results: rows, page: Math.max(1, page), size: limit }, cacheHeaders(30));
+
+  // Optimized query: Deduplicate users, prefer highest score, then latest timestamp
+  const { rawQuery } = require('./_db');
+  
+  // Note: We use rawQuery for complex CTE that template literal might not handle easily with dynamic values if not careful.
+  // Actually, we can use the `query` tag if we are careful, but let's use rawQuery for clarity with the CTE.
+  const queryText = `
+    WITH ranked_results AS (
+        SELECT 
+            id,
+            created_at AS ts,
+            username,
+            score,
+            total,
+            percent,
+            ROW_NUMBER() OVER (
+                PARTITION BY user_id 
+                ORDER BY score DESC, created_at DESC
+            ) as rn
+        FROM results
+        WHERE username IS NOT NULL AND username != ''
+    )
+    SELECT ts, username, score, total, percent
+    FROM ranked_results
+    WHERE rn = 1
+    ORDER BY score DESC, ts ASC
+    LIMIT $1 OFFSET $2
+  `;
+  
+  try {
+      const result = await rawQuery(queryText, [limit, offset]);
+      json(res, 200, { status: 'success', results: result.rows, page: Math.max(1, page), size: limit }, cacheHeaders(30));
+  } catch (e) {
+      json(res, 500, { status: 'error', message: e.message });
+  }
 }
 
 async function create(req, res) {

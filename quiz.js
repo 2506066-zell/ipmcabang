@@ -110,3 +110,209 @@
             });
         }
     }
+
+// --- MISSING LOGIC IMPLEMENTATION ---
+
+// Globals
+let currentQuestionIndex = 0;
+let userScore = 0;
+let userAnswers = [];
+let quizTimer;
+let startTime;
+let questionsData = [];
+let currentQuizSet = 1;
+let quizSeed = '';
+
+// DOM Elements
+const userInfoScreen = document.getElementById('user-info-screen');
+const quizSetPicker = document.getElementById('quiz-set-picker');
+const quizSetGrid = document.getElementById('quiz-set-grid');
+const quizHeader = document.getElementById('quiz-header');
+const quizBody = document.getElementById('quiz-body');
+const nextBtn = document.getElementById('next-btn');
+
+function startQuiz() {
+    if (!questionsData || !questionsData.length) {
+        alert('Data soal tidak ditemukan.');
+        return;
+    }
+    
+    currentQuestionIndex = 0;
+    userScore = 0;
+    userAnswers = [];
+    startTime = Date.now();
+    
+    // Hide other screens
+    userInfoScreen.style.display = 'none';
+    if (quizSetPicker) quizSetPicker.style.display = 'none';
+    document.getElementById('result-container').style.display = 'none';
+    
+    // Show quiz UI
+    quizHeader.style.display = 'flex';
+    quizBody.style.display = 'block';
+    nextBtn.style.display = 'flex';
+    
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const q = questionsData[currentQuestionIndex];
+    const total = questionsData.length;
+    
+    // Update progress
+    document.getElementById('progress-text').textContent = `${currentQuestionIndex + 1}/${total}`;
+    const pct = ((currentQuestionIndex) / total) * 100;
+    document.getElementById('progress-bar').style.width = `${pct}%`;
+    
+    // Render question HTML
+    quizBody.innerHTML = `
+        <div class="question-card">
+            <h3 class="question-text">${q.question}</h3>
+            <div class="options-grid">
+                ${['a','b','c','d'].map(key => {
+                    const val = q.options[key];
+                    if (!val) return '';
+                    return `
+                    <button class="option-btn" data-key="${key}" onclick="handleAnswer('${key}')">
+                        <span class="opt-label">${key.toUpperCase()}</span>
+                        <span class="opt-text">${val}</span>
+                    </button>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+    
+    nextBtn.disabled = true;
+    nextBtn.onclick = nextQuestion;
+}
+
+window.handleAnswer = function(key) {
+    const q = questionsData[currentQuestionIndex];
+    
+    // Highlight selected
+    const btns = document.querySelectorAll('.option-btn');
+    btns.forEach(b => {
+        b.classList.remove('selected');
+        if (b.dataset.key === key) b.classList.add('selected');
+    });
+    
+    // Save answer
+    userAnswers[currentQuestionIndex] = key;
+    
+    // Enable next
+    nextBtn.disabled = false;
+};
+
+function nextQuestion() {
+    if (currentQuestionIndex < questionsData.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+    } else {
+        finishQuiz();
+    }
+}
+
+async function finishQuiz() {
+    // Calculate score
+    let score = 0;
+    questionsData.forEach((q, i) => {
+        if (userAnswers[i] === q.correct_answer) score++;
+    });
+    
+    const total = questionsData.length;
+    const percent = Math.round((score / total) * 100);
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+    
+    // Submit result
+    showLoader('Menyimpan Hasil...');
+    try {
+        await fetch(API_URL + '/results', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session: existingSession,
+                score,
+                total,
+                time_spent: timeSpent,
+                quiz_set: currentQuizSet
+            })
+        });
+    } catch (e) {
+        console.error(e);
+    } finally {
+        hideLoader();
+    }
+    
+    // Show result
+    quizHeader.style.display = 'none';
+    quizBody.style.display = 'none';
+    nextBtn.style.display = 'none';
+    
+    const resDiv = document.getElementById('result-container');
+    resDiv.style.display = 'block';
+    document.getElementById('score-text').textContent = `${percent}%`;
+    document.getElementById('score-details').textContent = `Benar ${score} dari ${total} soal`;
+    
+    const restartBtn = document.getElementById('restart-btn');
+    if (restartBtn) restartBtn.onclick = () => window.location.reload();
+}
+
+function normalizeQuestionsResponse(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.questions)) return payload.questions;
+    return [];
+}
+
+function seededRandom(seed) {
+    let value = 0;
+    for(let i=0; i<seed.length; i++) value += seed.charCodeAt(i);
+    return function() {
+        value = (value * 9301 + 49297) % 233280;
+        return value / 233280;
+    };
+}
+
+function shuffleArray(array, rng) {
+    let currentIndex = array.length,  randomIndex;
+    while (currentIndex != 0) {
+        randomIndex = Math.floor(rng() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+}
+
+function shuffleOptions(options, rng) {
+    return options; 
+}
+
+// --- DOMContentLoaded Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Define Globals
+    window.API_URL = '/api';
+    const USER_SESSION_KEY = 'ipmquiz_user_session';
+    const USER_USERNAME_KEY = 'ipmquiz_user_username';
+    window.existingSession = sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
+    
+    if (!window.existingSession) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    const username = sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || 'Pengguna';
+    
+    // Update UI
+    const nameText = document.getElementById('user-name-text');
+    if (nameText) nameText.textContent = username;
+    
+    const nameInput = document.getElementById('username');
+    if (nameInput) nameInput.value = username;
+    
+    const startBtn = document.getElementById('start-quiz-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            fetchQuestions();
+        });
+    }
+});
