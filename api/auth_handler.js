@@ -19,6 +19,12 @@ async function tooManyFailures(username, ip) {
   return c >= 5;
 }
 
+function setSessionCookie(res, token, expires) {
+  const maxAge = Math.floor((expires.getTime() - Date.now()) / 1000);
+  const cookieValue = `session_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Secure`;
+  res.setHeader('Set-Cookie', cookieValue);
+}
+
 // --- Handlers ---
 
 async function handleLogin(req, res) {
@@ -50,6 +56,10 @@ async function handleLogin(req, res) {
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 hari
   const role = user.role || 'user';
   await query`INSERT INTO sessions (user_id, token, role, expires_at) VALUES (${user.id}, ${token}, ${role}, ${expires.toISOString()})`;
+  
+  // Set Cookie
+  setSessionCookie(res, token, expires);
+
   return json(res, 200, { status: 'success', session: token, username: user.username, nama_panjang: user.nama_panjang, role });
 }
 
@@ -86,6 +96,10 @@ async function handlePromoteAdmin(req, res) {
   const token = crypto.randomBytes(24).toString('hex');
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   await query`INSERT INTO sessions (user_id, token, role, expires_at) VALUES (${user.id}, ${token}, ${'admin'}, ${expires.toISOString()})`;
+  
+  // Set Cookie
+  setSessionCookie(res, token, expires);
+
   return json(res, 200, { status: 'success', session: token, username: user.username, role: 'admin' });
 }
 

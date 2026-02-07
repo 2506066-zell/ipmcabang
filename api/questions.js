@@ -1,6 +1,5 @@
 const { query, rawQuery } = require('./_db');
 const { json, cacheHeaders } = require('./_util');
-const { requireAdminAuth } = require('./_auth');
 
 async function list(req, res) {
   const mode = req.query.mode ? String(req.query.mode).trim() : '';
@@ -55,6 +54,28 @@ async function list(req, res) {
       pIdx++;
   }
 
+  // Ensure only active questions are shown to public unless 'all_status' is requested by admin (handled in admin_handler)
+  // For public API, we might want to default to active=true
+  // But wait, admin might use this list endpoint too?
+  // The user asked to separate endpoints. Admin CRUD is in admin_handler.
+  // This is public read-only. So we should force active=true for safety, 
+  // OR allow admin to see all if they pass a token?
+  // The user said: "Pastikan tidak ada logic admin di endpoint public" (Ensure no admin logic in public endpoint).
+  // So this should probably be restricted to active=true ONLY.
+  // However, if the frontend admin panel uses this to list questions to edit, it needs to see inactive ones.
+  // We should add a separate 'adminList' action in admin_handler or allow this one to filter if authorized.
+  // Given the instruction, I will keep this simple and safe:
+  // If no auth token, force active=true. If auth token present and valid, allow all.
+  
+  // Actually, to strictly follow "no admin logic in public endpoint", I should probably create a separate list endpoint for admin.
+  // But that duplicates code.
+  // I'll make this endpoint safe by default (active=true), but allow override if a special param + auth is present?
+  // Or just create `listQuestions` in `admin_handler`?
+  // Let's create `list` in `admin_handler` to be safe and clean.
+  // And here in `questions.js`, we enforce `active = true`.
+
+  whereClauses.push(`active = true`);
+
   const whereSql = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : '';
   
   // Count
@@ -62,7 +83,9 @@ async function list(req, res) {
   const total = countRes.rows[0]?.total || 0;
   
   // Data
-  const dataRes = await rawQuery(`SELECT * FROM questions ${whereSql} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`, params);
+  const dataRes = await rawQuery(`SELECT id, question, options, category, quiz_set FROM questions ${whereSql} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`, params);
+  // Note: I removed 'correct_answer' and 'active' from SELECT to prevent cheating/leaking, 
+  // though 'active' is true anyway. 'correct_answer' MUST NOT be sent to public.
   
   json(res, 200, { 
       status: 'success', 
@@ -73,61 +96,14 @@ async function list(req, res) {
   }, cacheHeaders(0));
 }
 
-async function create(req, res) {
-  try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
-  const { parseJsonBody } = require('./_util');
-  const b = parseJsonBody(req);
-  const q = String(b.question || '').trim();
-  const options = b.options || {};
-  const correct = String(b.correct_answer || '').trim();
-  const active = Boolean(b.active !== false);
-  const category = b.category ? String(b.category) : null;
-  const quiz_set = Number(b.quiz_set || 1);
-  if (!q || !options.a || !options.b || !options.d) return json(res, 400, { status: 'error', message: 'Opsi A, B, D dan pertanyaan wajib diisi' });
-  if (!['a','b','c','d'].includes(correct)) return json(res, 400, { status: 'error', message: 'Jawaban benar harus A/B/C/D' });
-  const ins = await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (${q}, ${options}, ${correct}, ${active}, ${category}, ${quiz_set}) RETURNING *`;
-  json(res, 201, { status: 'success', question: ins.rows[0] });
-}
-
-async function update(req, res) {
-  try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
-  const b = parseJsonBody(req);
-  const id = Number(b.id || 0);
-  if (!id) return json(res, 400, { status: 'error', message: 'Missing id' });
-  const q = b.question !== undefined ? String(b.question) : undefined;
-  const options = b.options !== undefined ? b.options : undefined;
-  const correct = b.correct_answer !== undefined ? String(b.correct_answer) : undefined;
-  const active = b.active !== undefined ? Boolean(b.active) : undefined;
-  const category = b.category !== undefined ? String(b.category) : undefined;
-  const quiz_set = b.quiz_set !== undefined ? Number(b.quiz_set) : undefined;
-  const prev = (await query`SELECT * FROM questions WHERE id=${id}`).rows[0];
-  if (!prev) return json(res, 404, { status: 'error', message: 'Not found' });
-  const upd = await query`UPDATE questions SET question=${q ?? prev.question}, options=${options ?? prev.options}, correct_answer=${correct ?? prev.correct_answer}, active=${active ?? prev.active}, category=${category ?? prev.category}, quiz_set=${quiz_set ?? prev.quiz_set} WHERE id=${id} RETURNING *`;
-  json(res, 200, { status: 'success', question: upd.rows[0] });
-}
-
-async function remove(req, res) {
-  try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
-  const id = Number(req.query.id || 0);
-  if (!id) return json(res, 400, { status: 'error', message: 'Missing id' });
-  await query`DELETE FROM questions WHERE id=${id}`;
-  json(res, 200, { status: 'success' });
-}
-
 module.exports = async (req, res) => {
   try {
-    if (req.method === 'GET') return list(req, res);
-    if (req.method === 'POST') {
-      const { parseJsonBody } = require('./_util');
-      const b = parseJsonBody(req);
-      if (b && b.id) return update(req, res);
-      return create(req, res);
+    if (req.method === 'GET') {
+      return await list(req, res);
     }
-    if (req.method === 'PUT') return update(req, res);
-    if (req.method === 'DELETE') return remove(req, res);
-    json(res, 405, { status: 'error', message: 'Method not allowed' });
+    return json(res, 405, { status: 'error', message: 'Method not allowed. Use POST /api/admin/questions for CRUD.' });
   } catch (e) {
-    try { console.error('questions endpoint error:', e); } catch {}
-    json(res, 500, { status: 'error', message: String(e.message || e) });
+    console.error('questions API error:', e);
+    return json(res, 500, { status: 'error', message: 'Internal Server Error' });
   }
 };

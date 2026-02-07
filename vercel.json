@@ -10,6 +10,7 @@
     { "src": "/api/health", "dest": "/api/system_handler?action=health" },
     { "src": "/api/migrate", "dest": "/api/system_handler?action=migrate" },
     { "src": "/api/resetSet", "dest": "/api/system_handler?action=resetSet" },
+    { "src": "/api/admin/questions", "dest": "/api/admin_handler" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
