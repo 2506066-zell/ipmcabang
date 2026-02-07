@@ -514,14 +514,17 @@
             state.users = data.users || [];
             renderUsers();
         } catch (e) {
-            console.error(e);
-            els.usersList.innerHTML = `<div class="card" style="text-align:center; color:var(--accent-danger)"><p>Gagal memuat data user: ${e.message}</p></div>`;
+            console.error('Error loading users:', e);
+            if (els.usersList) {
+                els.usersList.innerHTML = `<div class="card" style="text-align:center; color:var(--accent-danger)"><p>Gagal memuat data user: ${e.message}</p></div>`;
+            }
         } finally {
             hideLoader();
         }
     }
 
     function renderUsers() {
+        if (!els.usersList) return;
         let users = [...state.users];
         
         // Filter Search
@@ -697,7 +700,7 @@
         }).join('');
     }
 
-    // --- SCHEDULES ---
+    // --- SCHEDULES LOGIC ---
     async function loadSchedules() {
         showLoader('Memuat Jadwal...');
         try {
@@ -705,9 +708,7 @@
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat jadwal.');
             state.schedules = data.schedules || [];
             renderSchedules();
-        } catch (e) {
-            els.schedulesList.innerHTML = `<p style="color:var(--accent-danger)">Gagal memuat jadwal: ${e.message}</p>`;
-        } finally { hideLoader(); }
+        } catch (e) { console.error(e); } finally { hideLoader(); }
     }
 
     function renderSchedules() {
@@ -724,22 +725,40 @@
         }
 
         if (schedules.length === 0) {
-            els.schedulesList.innerHTML = `<p style="text-align:center; padding:20px; color:#888;">Belum ada jadwal kuis.</p>`;
+            els.schedulesList.innerHTML = `<div class="card" style="grid-column: 1 / -1; text-align:center; padding:40px;"><p>Belum ada jadwal kuis.</p></div>`;
             return;
         }
         
         els.schedulesList.innerHTML = schedules.map(s => {
             const start = s.start_time ? new Date(s.start_time).toLocaleString() : '-';
             const end = s.end_time ? new Date(s.end_time).toLocaleString() : '-';
+            const isActive = s.active; // Assuming active is boolean
+            const statusClass = isActive ? 'status-active' : 'status-inactive';
+            const statusText = isActive ? 'AKTIF' : 'NONAKTIF';
+
             return `
-            <div class="list-item" style="cursor:default;">
-                <div class="list-item-header">
-                    <span class="item-title" style="font-size:1rem">${escapeHtml(s.title)}</span>
-                    <button class="btn btn-secondary" style="height:28px; font-size:0.8rem;" onclick="editSchedule(${s.id})">Edit</button>
-                </div>
-                <div class="item-meta" style="margin-top:8px;">
-                    <span><i class="fas fa-play-circle"></i> Mulai: ${start}</span>
-                    <span><i class="fas fa-stop-circle"></i> Selesai: ${end}</span>
+            <div class="schedule-card">
+                <div class="schedule-status ${statusClass}">${statusText}</div>
+                <div class="schedule-content">
+                    <div class="schedule-title">${escapeHtml(s.title)}</div>
+                    <div class="schedule-time-grid">
+                        <div class="time-row">
+                            <i class="fas fa-play-circle"></i>
+                            <span class="time-value">${start}</span>
+                        </div>
+                        <div class="time-row">
+                            <i class="fas fa-stop-circle"></i>
+                            <span class="time-value">${end}</span>
+                        </div>
+                    </div>
+                    <div class="schedule-actions">
+                        <button class="btn-schedule btn-edit" onclick="editSchedule(${s.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn-schedule btn-delete" onclick="deleteSchedule(${s.id})">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
                 </div>
             </div>`;
         }).join('');
@@ -758,39 +777,92 @@
         };
         els.schStart.value = toLocalISO(s.start_time);
         els.schEnd.value = toLocalISO(s.end_time);
-        openScheduleModal();
+        
+        // Show Modal
+        if (els.scheduleModalPanel) {
+            els.scheduleModalPanel.classList.remove('hidden');
+            // Re-use question modal container if needed or create specific one
+            // Here we assume scheduleModalPanel is inside a modal structure or we show it
+            const modal = document.getElementById('question-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Hide other panels
+                document.querySelectorAll('.modal-content > form, .modal-content > div').forEach(el => el.classList.add('hidden'));
+                document.querySelector('.modal-tabs').classList.add('hidden'); // Hide tabs for schedule
+                els.scheduleModalPanel.classList.remove('hidden');
+                if (els.modalTitle) els.modalTitle.textContent = 'Edit Jadwal';
+            }
+        }
     };
 
-    window.openScheduleModal = () => els.scheduleModalPanel.classList.remove('hidden');
-    window.closeScheduleModal = () => {
-        els.scheduleModalPanel.classList.add('hidden');
-        els.scheduleForm.reset();
-        els.schId.value = '';
-    };
-
-    els.scheduleForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const payload = {
-            id: els.schId.value || undefined,
-            title: els.schTitle.value,
-            start_time: els.schStart.value || null,
-            end_time: els.schEnd.value || null
-        };
-        showLoader('Menyimpan...');
+    window.deleteSchedule = async (id) => {
+        if (!confirm('Yakin ingin menghapus jadwal ini?')) return;
+        showLoader('Menghapus...');
         try {
-            const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', payload);
-            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
-            await loadSchedules();
-            closeScheduleModal();
-            setStatus('Jadwal tersimpan.', 'ok');
-        } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
-    });
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=deleteSchedule', { id });
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menghapus.');
+            setStatus('Jadwal dihapus', 'success');
+            loadSchedules();
+        } catch (e) {
+            setStatus(e.message, 'error');
+        } finally {
+            hideLoader();
+        }
+    };
 
-    els.addScheduleBtn?.addEventListener('click', () => {
-        els.scheduleForm.reset();
-        els.schId.value = '';
-        openScheduleModal();
-    });
+    // Add Schedule Button Logic
+    if (els.addScheduleBtn) {
+        els.addScheduleBtn.addEventListener('click', () => {
+            els.schId.value = '';
+            els.schTitle.value = '';
+            els.schStart.value = '';
+            els.schEnd.value = '';
+            
+            const modal = document.getElementById('question-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.querySelectorAll('.modal-content > form, .modal-content > div').forEach(el => el.classList.add('hidden'));
+                document.querySelector('.modal-tabs').classList.add('hidden');
+                if (els.scheduleModalPanel) els.scheduleModalPanel.classList.remove('hidden');
+                if (els.modalTitle) els.modalTitle.textContent = 'Tambah Jadwal';
+            }
+        });
+    }
+
+    window.closeScheduleModal = () => {
+        const modal = document.getElementById('question-modal');
+        if (modal) modal.classList.add('hidden');
+        document.querySelector('.modal-tabs').classList.remove('hidden'); // Restore tabs
+    };
+
+    if (els.scheduleForm) {
+        els.scheduleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = els.schId.value;
+            const title = els.schTitle.value;
+            const start = els.schStart.value;
+            const end = els.schEnd.value;
+            
+            showLoader('Menyimpan...');
+            try {
+                const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', {
+                    id: id ? Number(id) : undefined,
+                    title,
+                    start_time: start ? new Date(start).toISOString() : null,
+                    end_time: end ? new Date(end).toISOString() : null
+                });
+                
+                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
+                setStatus('Jadwal tersimpan', 'success');
+                window.closeScheduleModal();
+                loadSchedules();
+            } catch (e) {
+                setStatus(e.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        });
+    }
     
     els.scheduleDateFilter?.addEventListener('change', renderSchedules);
 

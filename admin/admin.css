@@ -288,6 +288,181 @@ body {
     margin-right: 8px;
 }
 
+/* === SCHEDULE GRID FUTURISTIC === */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.schedule-card {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+}
+
+.schedule-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.4s;
+    z-index: 0;
+}
+
+.schedule-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.15), 0 10px 10px -5px rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.6);
+}
+
+.schedule-card:hover::before {
+    opacity: 1;
+}
+
+.schedule-content {
+    position: relative;
+    z-index: 1;
+}
+
+.schedule-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    letter-spacing: 0.02em;
+    padding-right: 80px; /* Space for status badge */
+    line-height: 1.4;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.schedule-time-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.time-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.time-row i {
+    color: var(--accent-secondary);
+    font-size: 1rem;
+    filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
+}
+
+.time-value {
+    font-family: 'Monaco', 'Consolas', monospace;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+
+.schedule-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+}
+
+.status-active {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-success);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    animation: pulse-green 2s infinite;
+}
+
+.status-inactive {
+    background: rgba(100, 116, 139, 0.2);
+    color: var(--text-muted);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-schedule {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-edit {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent-secondary);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.btn-edit:hover {
+    background: var(--accent-secondary);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+.btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--accent-danger);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-delete:hover {
+    background: var(--accent-danger);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
 /* === UTILITIES === */
 .hidden { display: none !important; }
 .sr-only {

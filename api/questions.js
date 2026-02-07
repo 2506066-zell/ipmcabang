@@ -24,7 +24,7 @@ async function list(req, res) {
       attempts = (await query`SELECT quiz_set FROM results WHERE user_id=${user.id}`).rows.map(r => r.quiz_set);
     }
     
-    // Fetch Top 5 Global High Scores (One best score per user)
+    // Fetch Top 1 Global High Score (Single Champion)
     // We select the distinct best attempt for each user first, then order by best scores.
     // Using Postgres DISTINCT ON to get one row per user_id.
     const topScoresGlobal = (await query`
@@ -34,7 +34,7 @@ async function list(req, res) {
         ORDER BY user_id, percent DESC, score DESC, time_spent ASC, created_at ASC
       ) as best_attempts
       ORDER BY percent DESC, score DESC, time_spent ASC
-      LIMIT 5
+      LIMIT 1
     `).rows;
 
     // Also fetch Dynamic Next Quiz Info from quiz_schedules

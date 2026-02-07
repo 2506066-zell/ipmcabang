@@ -300,6 +300,25 @@ async function handleUpdateSchedule(req, res) {
     return json(res, 200, { status: 'success' });
 }
 
+async function handleDeleteSchedule(req, res) {
+    let adminId = null;
+    try { 
+        const admin = await requireAdminAuth(req); 
+        adminId = admin.id;
+    } catch (e) { 
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
+    }
+    
+    const b = parseJsonBody(req);
+    const id = Number(b.id);
+    if (!id) return json(res, 400, { status: 'error', message: 'ID required' });
+    
+    await query`DELETE FROM quiz_schedules WHERE id=${id}`;
+    await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'DELETE_SCHEDULE', ${ { id } })`;
+    
+    return json(res, 200, { status: 'success' });
+}
+
 module.exports = async (req, res) => {
   try {
     const action = req.query.action;
@@ -340,6 +359,8 @@ module.exports = async (req, res) => {
         return await handleResetAttempt(req, res);
       case 'updateSchedule':
         return await handleUpdateSchedule(req, res);
+      case 'deleteSchedule':
+        return await handleDeleteSchedule(req, res);
       default:
         return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
     }
