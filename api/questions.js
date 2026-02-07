@@ -24,35 +24,48 @@ async function list(req, res) {
       attempts = (await query`SELECT quiz_set FROM results WHERE user_id=${user.id}`).rows.map(r => r.quiz_set);
     }
     
-    // Fetch Top Scores for each set
-    // We want the highest score for each set, and who got it
-    // This query gets the top result for each quiz_set
-    const topScoresRes = (await query`
-      SELECT DISTINCT ON (quiz_set) quiz_set, username, score, total, time_spent
-      FROM results
-      ORDER BY quiz_set, score DESC, time_spent ASC
-    `).rows;
+    // Fetch Top 5 Scores (Global, or per set if needed)
+    // The requirement says "Notifikasi Top Score Terpisah" and "Tampilkan minimal 5 top scorer".
+    // We will fetch top 5 overall highest scorers regardless of set, OR top 5 per set?
+    // "Pindahkan tampilan top score dari grid set quiz ke komponen terpisah" suggests a global leaderboard or a specific section.
+    // Let's return Top 5 Global High Scores (across all sets, or sum? Usually highest single attempt score).
+    // Let's assume highest single attempt score for now.
     
-    const topScores = {};
-    topScoresRes.forEach(r => {
-      topScores[r.quiz_set] = { username: r.username, score: r.score, total: r.total };
-    });
+    const topScoresGlobal = (await query`
+      SELECT username, score, total, percent, quiz_set, created_at
+      FROM results
+      ORDER BY percent DESC, score DESC, time_spent ASC, created_at ASC
+      LIMIT 5
+    `).rows;
+
+    // Also fetch Dynamic Next Quiz Info from quiz_schedules
+    // We look for the next upcoming active schedule
+    const nextSchedule = (await query`
+      SELECT title, start_time 
+      FROM quiz_schedules 
+      WHERE active = true AND start_time > NOW() 
+      ORDER BY start_time ASC 
+      LIMIT 1
+    `).rows[0];
+
+    let nextQuiz = null;
+    if (nextSchedule) {
+        nextQuiz = {
+            title: nextSchedule.title,
+            topic: "Event Mendatang", // Or add topic column to schedules
+            countdown_target: nextSchedule.start_time
+        };
+    } else {
+        // Fallback or empty
+        nextQuiz = null;
+    }
 
     const enhancedSets = rows.map(r => ({
       ...r,
-      attempted: attempts.includes(r.quiz_set),
-      top_score: topScores[r.quiz_set] || null
+      attempted: attempts.includes(r.quiz_set)
     }));
 
-    // Add Next Quiz Info (Mock/Hardcoded for now)
-    // In a real app, this would come from a schedule table
-    const nextQuiz = {
-      title: "Kuis Spesial Ramadhan",
-      topic: "Sejarah Islam & Puasa",
-      countdown_target: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
-    };
-
-    return json(res, 200, { status: 'success', sets: enhancedSets, next_quiz: nextQuiz }, cacheHeaders(0)); // No cache for dynamic status
+    return json(res, 200, { status: 'success', sets: enhancedSets, top_scores: topScoresGlobal, next_quiz: nextQuiz }, cacheHeaders(0));
   }
 
   if (mode === 'categories') {

@@ -136,6 +136,98 @@ async function handleGetActivityLogs(req, res) {
     return json(res, 200, { status: 'success', logs });
 }
 
+async function handleGetUsersExtended(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+    
+    // Get users with stats
+    // Note: We group by user to count attempts and avg score
+    const users = (await query`
+        SELECT 
+            u.id, 
+            u.username, 
+            u.email,
+            u.nama_panjang, 
+            u.role, 
+            u.created_at,
+            COUNT(r.id) as total_quizzes,
+            COALESCE(AVG(r.score), 0) as avg_score
+        FROM users u
+        LEFT JOIN results r ON u.id = r.user_id
+        GROUP BY u.id
+        ORDER BY u.created_at DESC
+    `).rows;
+    
+    return json(res, 200, { status: 'success', users });
+}
+
+async function handleDeleteUser(req, res) {
+    let adminId = null;
+    try { 
+        const admin = await requireAdminAuth(req); 
+        adminId = admin.id;
+    } catch (e) { 
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
+    }
+    
+    const b = parseJsonBody(req);
+    const userId = Number(b.user_id);
+    
+    if (!userId) return json(res, 400, { status: 'error', message: 'User ID required' });
+    if (userId === adminId) return json(res, 400, { status: 'error', message: 'Tidak dapat menghapus akun sendiri' });
+    
+    // Check constraints (results, sessions, notifications)
+    // We will CASCADE manually or rely on DB if configured, but let's be safe and clear related data
+    try {
+        await query`DELETE FROM results WHERE user_id=${userId}`;
+        await query`DELETE FROM sessions WHERE user_id=${userId}`;
+        await query`DELETE FROM notifications WHERE user_id=${userId}`;
+        await query`DELETE FROM users WHERE id=${userId}`;
+        
+        // Log
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'DELETE_USER', ${ { target_user_id: userId } })`;
+        
+        return json(res, 200, { status: 'success' });
+    } catch (e) {
+        return json(res, 500, { status: 'error', message: 'Gagal menghapus user: ' + e.message });
+    }
+}
+
+async function handleGetSchedules(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+    const schedules = (await query`SELECT * FROM quiz_schedules ORDER BY id ASC`).rows;
+    return json(res, 200, { status: 'success', schedules });
+}
+
+async function handleUpdateSchedule(req, res) {
+    let adminId = null;
+    try { 
+        const admin = await requireAdminAuth(req); 
+        adminId = admin.id;
+    } catch (e) { 
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
+    }
+    
+    const b = parseJsonBody(req);
+    const id = Number(b.id);
+    const title = String(b.title || '');
+    const start_time = b.start_time ? String(b.start_time) : null;
+    const end_time = b.end_time ? String(b.end_time) : null;
+    
+    if (start_time && end_time && new Date(start_time) >= new Date(end_time)) {
+        return json(res, 400, { status: 'error', message: 'Waktu selesai harus setelah waktu mulai' });
+    }
+    
+    if (id) {
+        await query`UPDATE quiz_schedules SET title=${title}, start_time=${start_time}, end_time=${end_time}, updated_at=NOW() WHERE id=${id}`;
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_SCHEDULE', ${ { id, title, start_time, end_time } })`;
+    } else {
+        await query`INSERT INTO quiz_schedules (title, start_time, end_time) VALUES (${title}, ${start_time}, ${end_time})`;
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_SCHEDULE', ${ { title, start_time, end_time } })`;
+    }
+    
+    return json(res, 200, { status: 'success' });
+}
+
 module.exports = async (req, res) => {
   try {
     const action = req.query.action;
@@ -145,8 +237,14 @@ module.exports = async (req, res) => {
         if (req.method === 'GET' && action === 'usersStatus') {
             return await handleGetUsersStatus(req, res);
         }
+        if (req.method === 'GET' && action === 'usersExtended') {
+            return await handleGetUsersExtended(req, res);
+        }
         if (req.method === 'GET' && action === 'activityLogs') {
             return await handleGetActivityLogs(req, res);
+        }
+        if (req.method === 'GET' && action === 'schedules') {
+            return await handleGetSchedules(req, res);
         }
         return json(res, 405, { status: 'error', message: 'Method not allowed' });
     }
@@ -160,8 +258,12 @@ module.exports = async (req, res) => {
         return await handleDelete(req, res);
       case 'usersStatus': // Can be POST too if we want
         return await handleGetUsersStatus(req, res);
+      case 'deleteUser':
+        return await handleDeleteUser(req, res);
       case 'resetAttempt':
         return await handleResetAttempt(req, res);
+      case 'updateSchedule':
+        return await handleUpdateSchedule(req, res);
       default:
         return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
     }

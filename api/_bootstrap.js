@@ -65,8 +65,19 @@ async function ensureSchema() {
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
   )`;
+
+  await query`CREATE TABLE IF NOT EXISTS quiz_schedules (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
   
   // Alter tables to ensure new columns exist (idempotent)
+  await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`;

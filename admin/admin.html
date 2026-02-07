@@ -105,7 +105,16 @@
                 </div>
             </div>
         <div id="tab-users" class="hidden">
-        <div class="toolbar-right" style="margin-bottom:16px">
+        <div class="toolbar-right" style="margin-bottom:16px; display:flex; gap:8px; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+            <div style="display:flex; gap:8px; flex:1;">
+                <input type="text" id="user-search-input" placeholder="Cari nama..." style="padding:8px; border-radius:8px; border:1px solid #ddd; flex:1; max-width:300px;">
+                <select id="user-sort-select" style="padding:8px; border-radius:8px; border:1px solid #ddd;">
+                    <option value="newest">Terbaru</option>
+                    <option value="score_desc">Skor Tertinggi</option>
+                    <option value="score_asc">Skor Terendah</option>
+                    <option value="quiz_desc">Kuis Terbanyak</option>
+                </select>
+            </div>
            <button class="btn btn-secondary" id="refresh-users-btn">
                <i class="fas fa-rotate"></i> Refresh Data
            </button>
@@ -124,6 +133,32 @@
        <div id="logs-list" class="list-container">
            <!-- JS will populate logs here -->
        </div>
+   </div>
+
+   <div id="tab-schedules" class="hidden">
+        <div class="card" style="margin-bottom:16px">
+            <h3 style="margin-bottom:12px">Atur Jadwal Kuis</h3>
+            <div id="schedules-list"></div>
+            <button class="btn btn-secondary" id="add-schedule-btn" style="margin-top:12px; width:100%">
+                <i class="fas fa-plus"></i> Tambah Jadwal Baru
+            </button>
+        </div>
+        <div class="card">
+            <h3 style="margin-bottom:12px">Manajemen Kuis</h3>
+            <div class="form-group">
+                <label>Reset Total Set Kuis (Hapus semua data user untuk set ini)</label>
+                <div style="display:flex; gap:8px;">
+                    <select id="reset-set-select" style="flex:1; padding:8px;">
+                        <option value="1">Kuis 1</option>
+                        <option value="2">Kuis 2</option>
+                        <option value="3">Kuis 3</option>
+                    </select>
+                    <button class="btn btn-secondary" style="color:var(--accent-danger); border-color:var(--accent-danger);" id="global-reset-btn">
+                        Reset Set
+                    </button>
+                </div>
+            </div>
+        </div>
    </div>
 </section>
 </main>
@@ -150,6 +185,10 @@
 <button class="nav-item" data-tab="logs">
    <i class="fas fa-history"></i>
    <span>Logs</span>
+</button>
+<button class="nav-item" data-tab="schedules">
+   <i class="fas fa-calendar-alt"></i>
+   <span>Setting</span>
 </button>
 <button class="nav-item" id="nav-refresh">
    <i class="fas fa-rotate"></i>
@@ -188,6 +227,31 @@
                 </div>
             </div>
 
+            <!-- Schedule Modal -->
+            <div id="schedule-modal-panel" class="hidden">
+                 <form id="schedule-form">
+                    <input type="hidden" id="sch-id">
+                    <div class="form-group">
+                        <label>Judul Event</label>
+                        <input type="text" id="sch-title" required placeholder="Contoh: Kuis Ramadhan">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1">
+                            <label>Waktu Mulai</label>
+                            <input type="datetime-local" id="sch-start">
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Waktu Selesai</label>
+                            <input type="datetime-local" id="sch-end">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Simpan Jadwal</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeScheduleModal()">Batal</button>
+                    </div>
+                </form>
+            </div>
+
             <form id="question-form">
                 <input type="hidden" id="q-id">
                 
@@ -195,9 +259,9 @@
                     <label>Set Kuis</label>
                     <div class="select-wrapper">
                         <select id="q-quizset" required>
-                            <option value="1">Kuis 1 (Wawasan)</option>
-                            <option value="2">Kuis 2 (IPM)</option>
-                            <option value="3">Kuis 3 (Agama)</option>
+                            <option value="1">Kuis 1 (UMUM)</option>
+                            <option value="2">Kuis 2 (AGAMA)</option>
+                            <option value="3">Kuis 3 (BIDANG)</option>
                         </select>
                     </div>
                 </div>

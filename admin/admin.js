@@ -20,6 +20,7 @@
         results: [],
         users: [], // New state for users
         logs: [], // New state for logs
+        schedules: [],
         connected: false,
         prefs: { tab: 'questions', search: '', status: 'all', set: 'all', category: 'all' },
         backend: 'vercel',
@@ -98,11 +99,28 @@
             // Users List (New)
             usersList: document.getElementById('users-list'),
             refreshUsersBtn: document.getElementById('refresh-users-btn'),
+            userSearchInput: document.getElementById('user-search-input'),
+            userSortSelect: document.getElementById('user-sort-select'),
 
             // Logs List
             tabLogs: document.getElementById('tab-logs'),
             logsList: document.getElementById('logs-list'),
             refreshLogsBtn: document.getElementById('refresh-logs-btn'),
+
+            // Schedules
+            tabSchedules: document.getElementById('tab-schedules'),
+            schedulesList: document.getElementById('schedules-list'),
+            addScheduleBtn: document.getElementById('add-schedule-btn'),
+            scheduleModalPanel: document.getElementById('schedule-modal-panel'),
+            scheduleForm: document.getElementById('schedule-form'),
+            schId: document.getElementById('sch-id'),
+            schTitle: document.getElementById('sch-title'),
+            schStart: document.getElementById('sch-start'),
+            schEnd: document.getElementById('sch-end'),
+            
+            // Global Reset
+            resetSetSelect: document.getElementById('reset-set-select'),
+            globalResetBtn: document.getElementById('global-reset-btn'),
 
             // Modal
             modal: document.getElementById('question-modal'),
@@ -275,6 +293,7 @@
         if (els.tabResults) els.tabResults.classList.toggle('hidden', tabName !== 'results');
         if (els.tabUsers) els.tabUsers.classList.toggle('hidden', tabName !== 'users');
         if (els.tabLogs) els.tabLogs.classList.toggle('hidden', tabName !== 'logs');
+        if (els.tabSchedules) els.tabSchedules.classList.toggle('hidden', tabName !== 'schedules');
         
         // Toggle FAB: only show on questions tab
         if (els.fabAdd) els.fabAdd.classList.toggle('hidden', tabName !== 'questions');
@@ -286,6 +305,7 @@
         if (tabName === 'results' && state.results.length === 0) loadResults();
         if (tabName === 'users' && state.users.length === 0) loadUsers();
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
+        if (tabName === 'schedules' && state.schedules.length === 0) loadSchedules();
     }
 
     // --- QUESTIONS LOGIC ---
@@ -451,7 +471,8 @@
     async function loadUsers() {
         showLoader('Memuat User...');
         try {
-            const data = await apiAdminVercel('GET', '/api/admin/questions?action=usersStatus');
+            // Use Extended endpoint
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=usersExtended');
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat user.');
             state.users = data.users || [];
             renderUsers();
@@ -464,36 +485,35 @@
     }
 
     function renderUsers() {
-        if (state.users.length === 0) {
-            els.usersList.innerHTML = `<div class="card" style="text-align:center"><p>Belum ada user.</p></div>`;
+        let users = [...state.users];
+        
+        // Filter
+        const q = (els.userSearchInput?.value || '').toLowerCase();
+        if (q) {
+            users = users.filter(u => 
+                (u.username && u.username.toLowerCase().includes(q)) ||
+                (u.nama_panjang && u.nama_panjang.toLowerCase().includes(q)) ||
+                (u.email && u.email.toLowerCase().includes(q))
+            );
+        }
+        
+        // Sort
+        const sort = els.userSortSelect?.value || 'newest';
+        users.sort((a, b) => {
+            if (sort === 'score_desc') return (b.avg_score || 0) - (a.avg_score || 0);
+            if (sort === 'score_asc') return (a.avg_score || 0) - (b.avg_score || 0);
+            if (sort === 'quiz_desc') return (b.total_quizzes || 0) - (a.total_quizzes || 0);
+            // newest default
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+
+        if (users.length === 0) {
+            els.usersList.innerHTML = `<div class="card" style="text-align:center"><p>User tidak ditemukan.</p></div>`;
             return;
         }
 
-        els.usersList.innerHTML = state.users.map(u => {
-            // Render quiz status
-            const quizSets = [1, 2, 3]; // Hardcoded for now, or get from config
-            const statusHtml = quizSets.map(setId => {
-                const attempt = u.attempts && u.attempts[setId];
-                if (attempt) {
-                    return `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.05); padding:8px; border-radius:8px; margin-top:4px;">
-                        <div>
-                            <span style="font-weight:bold; font-size:0.9rem;">Kuis ${setId}</span>
-                            <span style="font-size:0.8rem; color:green; margin-left:8px;">✅ Selesai (${attempt.score}/${attempt.total})</span>
-                        </div>
-                        <button class="btn btn-secondary" style="font-size:0.8rem; padding:4px 8px; color:var(--accent-danger); border-color:rgba(239,68,68,0.3);" onclick="handleResetAttempt(${u.id}, ${setId})">
-                            Reset
-                        </button>
-                    </div>`;
-                } else {
-                    return `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.02); padding:8px; border-radius:8px; margin-top:4px;">
-                        <span style="font-weight:bold; font-size:0.9rem; color:#888;">Kuis ${setId}</span>
-                        <span style="font-size:0.8rem; color:#888;">Belum Mengisi</span>
-                    </div>`;
-                }
-            }).join('');
-
+        els.usersList.innerHTML = users.map(u => {
+            // Render basic stats
             return `
             <div class="list-item">
                 <div class="list-item-header">
@@ -501,14 +521,41 @@
                     <span class="item-badge" style="background:${u.role === 'admin' ? 'purple' : '#ccc'}; color:#fff;">${escapeHtml(u.role)}</span>
                 </div>
                 <div style="font-size:0.9rem; color:#666; margin-bottom:8px;">${escapeHtml(u.nama_panjang || '-')}</div>
-                <div style="margin-top:12px;">
-                    <div style="font-size:0.85rem; font-weight:600; margin-bottom:4px; text-transform:uppercase; color:#888;">Status Kuis</div>
-                    ${statusHtml}
+                <div style="font-size:0.85rem; color:#888; margin-bottom:12px;">
+                    <div><i class="fas fa-envelope"></i> ${escapeHtml(u.email || '-')}</div>
+                    <div><i class="fas fa-calendar"></i> Bergabung: ${new Date(u.created_at).toLocaleDateString()}</div>
+                    <div><i class="fas fa-check-circle"></i> Kuis Selesai: ${u.total_quizzes}</div>
+                    <div><i class="fas fa-star"></i> Rata-rata Skor: ${Math.round(u.avg_score)}%</div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 1)">Reset Kuis 1</button>
+                    <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 2)">Reset Kuis 2</button>
+                    <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 3)">Reset Kuis 3</button>
+                </div>
+                <div style="margin-top:8px;">
+                    <button class="btn btn-secondary" style="font-size:0.8rem; width:100%; color:var(--accent-danger); border-color:rgba(239,68,68,0.3);" onclick="handleDeleteUser(${u.id})">
+                        <i class="fas fa-trash"></i> Hapus User
+                    </button>
                 </div>
             </div>
             `;
         }).join('');
     }
+
+    window.handleDeleteUser = async (id) => {
+        if (!confirm('Yakin hapus user ini? Semua data kuis mereka akan hilang.')) return;
+        showLoader('Menghapus...');
+        try {
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=deleteUser', { user_id: id });
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal hapus.');
+            await loadUsers();
+            setStatus('User dihapus.', 'ok');
+        } catch (e) {
+            alert('Error: ' + e.message);
+        } finally {
+            hideLoader();
+        }
+    };
 
     window.handleResetAttempt = async (userId, quizSet) => {
         if (!confirm(`Reset attempt user ini untuk Kuis ${quizSet}? User bisa mengisi ulang.`)) return;
@@ -571,6 +618,124 @@
             `;
         }).join('');
     }
+
+    // --- SCHEDULES LOGIC ---
+    async function loadSchedules() {
+        showLoader('Memuat Jadwal...');
+        try {
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=schedules');
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat jadwal.');
+            state.schedules = data.schedules || [];
+            renderSchedules();
+        } catch (e) {
+            console.error(e);
+            els.schedulesList.innerHTML = `<p style="color:var(--accent-danger)">Gagal memuat jadwal: ${e.message}</p>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function renderSchedules() {
+        if (state.schedules.length === 0) {
+            els.schedulesList.innerHTML = `<p style="text-align:center; padding:20px; color:#888;">Belum ada jadwal kuis.</p>`;
+            return;
+        }
+        
+        els.schedulesList.innerHTML = state.schedules.map(s => {
+            const active = s.active ? '<span style="color:green; font-weight:bold;">Aktif</span>' : '<span style="color:#888;">Tidak Aktif</span>';
+            const start = s.start_time ? new Date(s.start_time).toLocaleString() : '-';
+            const end = s.end_time ? new Date(s.end_time).toLocaleString() : '-';
+            
+            return `
+            <div class="list-item" style="cursor:default;">
+                <div class="list-item-header">
+                    <span class="item-title" style="font-size:1rem">${escapeHtml(s.title)}</span>
+                    <button class="btn btn-secondary" style="height:28px; font-size:0.8rem;" onclick="editSchedule(${s.id})">Edit</button>
+                </div>
+                <div class="item-meta" style="margin-top:8px;">
+                    <span><i class="fas fa-play-circle"></i> Mulai: ${start}</span>
+                    <span><i class="fas fa-stop-circle"></i> Selesai: ${end}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    window.editSchedule = (id) => {
+        const s = state.schedules.find(x => x.id === id);
+        if (!s) return;
+        
+        els.schId.value = s.id;
+        els.schTitle.value = s.title;
+        // Format for datetime-local: YYYY-MM-DDTHH:mm
+        const toLocalISO = (d) => {
+            if (!d) return '';
+            const dt = new Date(d);
+            dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+            return dt.toISOString().slice(0, 16);
+        };
+        els.schStart.value = toLocalISO(s.start_time);
+        els.schEnd.value = toLocalISO(s.end_time);
+        
+        openScheduleModal();
+    };
+
+    window.openScheduleModal = () => {
+        els.scheduleModalPanel.classList.remove('hidden');
+    };
+    
+    window.closeScheduleModal = () => {
+        els.scheduleModalPanel.classList.add('hidden');
+        els.scheduleForm.reset();
+        els.schId.value = '';
+    };
+
+    els.scheduleForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            id: els.schId.value || undefined,
+            title: els.schTitle.value,
+            start_time: els.schStart.value || null,
+            end_time: els.schEnd.value || null
+        };
+        
+        showLoader('Menyimpan...');
+        try {
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', payload);
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
+            await loadSchedules();
+            closeScheduleModal();
+            setStatus('Jadwal tersimpan.', 'ok');
+        } catch (e) {
+            alert('Error: ' + e.message);
+        } finally {
+            hideLoader();
+        }
+    });
+
+    els.addScheduleBtn?.addEventListener('click', () => {
+        els.scheduleForm.reset();
+        els.schId.value = '';
+        openScheduleModal();
+    });
+
+    els.globalResetBtn?.addEventListener('click', async () => {
+        const set = els.resetSetSelect.value;
+        if (!confirm(`PERINGATAN KERAS:\nAnda akan menghapus SEMUA data jawaban user untuk Kuis Set ${set}.\nData yang dihapus TIDAK BISA DIKEMBALIKAN.\n\nKetik "RESET" untuk konfirmasi.`)) return;
+        
+        const verification = prompt('Ketik "RESET" untuk melanjutkan:');
+        if (verification !== 'RESET') return alert('Batal.');
+        
+        showLoader('Mereset Global...');
+        try {
+            const data = await apiAdminVercel('POST', '/api/system?action=resetSet', { quiz_set: set });
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
+            setStatus(`Kuis Set ${set} berhasil direset total.`, 'ok');
+        } catch (e) {
+            alert('Error: ' + e.message);
+        } finally {
+            hideLoader();
+        }
+    });
 
     // --- MODAL LOGIC ---
     function openModal(q = null) {

@@ -79,6 +79,11 @@ async function fetchQuestions() {
         if (payload.next_quiz) {
             initNextQuiz(payload.next_quiz);
         }
+
+        // Handle Top Scores
+        if (payload.top_scores && Array.isArray(payload.top_scores)) {
+            renderTopScores(payload.top_scores);
+        }
         
         if (!sets.length) {
             quizBody.style.display = 'block';
@@ -267,6 +272,31 @@ window.toggleRemind = function() {
         if (window.Toast) Toast.show('Anda akan diingatkan saat kuis dimulai!', 'success');
     }
 };
+
+function renderTopScores(scores) {
+    const section = document.getElementById('top-scores-section');
+    const grid = document.getElementById('top-scores-grid');
+    if (!section || !grid) return;
+
+    if (!scores || scores.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    grid.innerHTML = scores.slice(0, 5).map((s, i) => {
+        const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : ''));
+        return `
+        <div style="background:var(--card-bg); padding:10px; border-radius:8px; border:1px solid var(--border-color); text-align:center; font-size:0.9rem;">
+            <div style="font-weight:bold; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                ${medal} ${s.username}
+            </div>
+            <div style="color:var(--accent-primary); font-weight:bold;">${Math.round(s.score)}%</div>
+            <div style="font-size:0.75rem; color:#888;">${s.quiz_title || 'Kuis'}</div>
+        </div>
+        `;
+    }).join('');
+}
 
 window.openAttemptModal = function() {
     const modal = document.getElementById('attempt-modal');

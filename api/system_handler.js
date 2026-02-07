@@ -49,11 +49,23 @@ async function handleMigrate(req, res) {
 
 async function handleResetSet(req, res) {
   if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
-  try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
+  let adminId = null;
+  try { 
+      const admin = await requireAdminAuth(req); 
+      adminId = admin.id;
+  } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
+  
   const body = JSON.parse(req.body || '{}');
   const quiz_set = Number(body.quiz_set || 0);
   if (!quiz_set) return json(res, 400, { status: 'error', message: 'Missing quiz_set' });
+  
   await query`DELETE FROM results WHERE quiz_set=${quiz_set}`;
+  
+  // Log Activity
+  try {
+      await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'RESET_SET', ${ { quiz_set } })`;
+  } catch (e) { console.error('Failed to log activity:', e); }
+
   return json(res, 200, { status: 'success' });
 }
 
