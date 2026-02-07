@@ -250,7 +250,7 @@ async function finishQuiz() {
     // Submit result
     showLoader('Menyimpan Hasil...');
     try {
-        await fetch(API_URL + '/results', {
+        const response = await fetch(API_URL + '/results', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -261,8 +261,22 @@ async function finishQuiz() {
                 quiz_set: currentQuizSet
             })
         });
+
+        // Check for non-JSON response (e.g. 500 error page)
+        const ct = response.headers.get('content-type');
+        if (!ct || !ct.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Server Error: ${response.status} (Not JSON)`);
+        }
+
+        const data = await response.json();
+        if (!response.ok || data.status !== 'success') {
+            throw new Error(data.message || 'Gagal menyimpan hasil.');
+        }
+
     } catch (e) {
         console.error(e);
+        alert('Gagal menyimpan hasil: ' + e.message);
     } finally {
         hideLoader();
     }
