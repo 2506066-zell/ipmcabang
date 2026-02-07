@@ -4,6 +4,7 @@ let _pool = null;
 
 function getConnString() {
   const candidates = [
+    process.env.IPM_DB_URL, // Custom override
     process.env.DATABASE_URL,
     process.env.POSTGRES_URL,
     process.env.SUPABASE_DB_URL,
