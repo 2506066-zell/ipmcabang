@@ -2,267 +2,258 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Admin Kuis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <title>Admin Kuis IPM</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="page-admin">
-    <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-overlay hidden" id="loading-overlay">
         <div class="loading-content">
-            <picture>
-          
-            </picture>
-            <p id="loading-text">Memuat...</p>
+            <div class="skeleton" style="width: 60px; height: 60px; border-radius: 50%;"></div>
+            <p id="loading-text" style="margin-top:16px">Memuat...</p>
        </div>
     </div>
 
-
+    <!-- MAIN CONTAINER -->
     <main class="admin-container">
-        <section class="card">
+        <!-- LOGIN SECTION -->
+        <section class="card" id="login-card">
             <h1 class="card-title">Admin Kuis</h1>
             <p class="card-subtitle">
-                Masuk dengan <span class="code">username + password</span> (via server) atau gunakan <span class="code">Admin Token</span> untuk operasi khusus.
+                Kelola data kuis dan hasil ujian.
             </p>
 
-            <div class="grid-2">
-                <div class="field">
-                    <label for="admin-username">Username</label>
-                    <input id="admin-username" type="text" autocomplete="username" placeholder="Masukkan username admin">
-                </div>
-                <div class="field">
-                    <label for="admin-password">Password</label>
-                    <div class="password-wrapper">
-                        <input id="admin-password" type="password" autocomplete="current-password" placeholder="Masukkan password admin">
-                        <button type="button" id="toggle-admin-password" class="password-toggle" aria-label="Tampilkan/Sembunyikan password"><i class="fas fa-eye"></i></button>
-                    </div>
+            <div class="field">
+                <label for="admin-username">Username</label>
+                <input id="admin-username" type="text" autocomplete="username" placeholder="Username admin">
+            </div>
+            <div class="field">
+                <label for="admin-password">Password</label>
+                <div style="position:relative">
+                    <input id="admin-password" type="password" autocomplete="current-password" placeholder="Password admin">
+                    <button type="button" id="toggle-admin-password" class="btn-ghost" style="position:absolute;right:0;top:0;height:100%;width:48px;" aria-label="Toggle password">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </div>
             </div>
 
-            
-            <div class="grid-2">
-                <div class="field">
-                    <label for="api-base-url">API Base URL (opsional)</label>
-                    <input id="api-base-url" type="text" placeholder="contoh: https://ipmcabang-xxxxx.vercel.app" />
-                </div>
-                <div class="field">
-                    <label>&nbsp;</label>
-                    <small class="help">Kosongkan untuk gunakan domain halaman ini (same-origin)</small>
-                </div>
+            <div class="field hidden">
+                <label for="admin-token-input">Admin Token (Opsional)</label>
+                <input id="admin-token-input" type="password" placeholder="Token khusus operasi database">
             </div>
-
-        <div class="grid-2">
-            <div class="field">
-                <label for="admin-token-input">Admin Token</label>
-                <input id="admin-token-input" type="password" placeholder="Masukkan ADMIN_TOKEN" />
-            </div>
-            <div class="field">
-                <label>&nbsp;</label>
-                <small class="help">Digunakan untuk operasi tambah/ubah/hapus</small>
-            </div>
-        </div>
 
             <div class="actions">
                 <button class="btn btn-primary" id="admin-login-btn" type="button">
-                    <i class="fas fa-right-to-bracket" aria-hidden="true"></i> Masuk
-                </button>
-                <button class="btn btn-secondary hidden" id="logout-btn" type="button">
-                    <i class="fas fa-right-from-bracket" aria-hidden="true"></i> Keluar
+                    <i class="fas fa-right-to-bracket"></i> Masuk
                 </button>
                 <span class="status" id="status"></span>
             </div>
         </section>
 
-        <section class="card hidden" id="app-card">
-            <div class="tabs" role="tablist" aria-label="Admin tabs">
-                <button class="tab active" type="button" data-tab="questions" role="tab" aria-selected="true">Soal</button>
-                <button class="tab" type="button" data-tab="results" role="tab" aria-selected="false">Hasil</button>
-            </div>
-
-            <div id="tab-questions" class="tab-panel">
-                <div class="toolbar">
-                    <div class="toolbar-left">
-                        <input id="search-input" class="search-input" type="search" placeholder="Cari soal...">
-                        <select id="quiz-set-filter" class="search-input" style="max-width:140px;margin-left:8px">
-                            <option value="all">Semua Kuis</option>
-                            <option value="1">Kuis 1</option>
-                            <option value="2">Kuis 2</option>
-                            <option value="3">Kuis 3</option>
-                        </select>
-                        <select id="category-filter" class="search-input" style="max-width:180px;margin-left:8px">
-                            <option value="all">Semua Kategori</option>
-                        </select>
-                        <div class="chips">
-                            <button type="button" class="chip-button" data-set-chip="1">Mingguan</button>
-                            <button type="button" class="chip-button" data-set-chip="2">Bulanan</button>
-                            <button type="button" class="chip-button" data-set-chip="3">Per Bidang</button>
-                        </div>
-                    </div>
-                    <div class="toolbar-right">
-                    <a class="btn btn-ghost" href="import.html"><i class="fas fa-file-import" aria-hidden="true"></i> Import CSV</a>
-                    <select id="status-filter" class="search-input" style="max-width:160px">
-                        <option value="all">Semua</option>
-                        <option value="active">Aktif</option>
-                        <option value="inactive">Nonaktif</option>
+        <!-- APP SECTION -->
+        <section class="hidden" id="app-card">
+            <!-- Header/Toolbar -->
+            <div class="card" style="position:sticky; top:0; z-index:100; border-radius: 0 0 16px 16px; margin: -16px -16px 20px -16px;">
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px">
+                    <input id="search-input" type="search" placeholder="Cari soal..." style="flex:1">
+                    <button class="btn btn-ghost btn-icon" id="logout-btn" title="Keluar">
+                        <i class="fas fa-right-from-bracket"></i>
+                    </button>
+                </div>
+                <div class="flex-center" style="justify-content:space-between; overflow-x:auto; gap:8px; padding-bottom:4px">
+                     <select id="quiz-set-filter" style="width:auto; min-width:100px; font-size:14px; padding:8px">
+                        <option value="all">Semua Kuis</option>
+                        <option value="1">Kuis 1</option>
+                        <option value="2">Kuis 2</option>
+                        <option value="3">Kuis 3</option>
                     </select>
-                        <button class="btn btn-secondary" type="button" id="reset-set-btn">
-                            <i class="fas fa-power-off" aria-hidden="true"></i> Reset Set
-                        </button>
-                        <button class="btn btn-ghost" type="button" id="refresh-questions-btn">
-                            <i class="fas fa-rotate" aria-hidden="true"></i> Refresh
-                        </button>
-                        <button class="btn btn-primary" type="button" id="new-question-btn">
-                            <i class="fas fa-plus" aria-hidden="true"></i> Tambah Soal
-                        </button>
-                    </div>
-                </div>
-
-                <div class="table-wrap">
-                    <table id="questions-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 72px;">ID</th>
-                                <th style="width: 120px;">Kuis</th>
-                                <th>Soal</th>
-                                <th style="width: 140px;">Kategori</th>
-                                <th style="width: 92px;">Aktif</th>
-                                <th style="width: 92px;">Jawaban</th>
-                                <th style="width: 200px;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="questions-tbody"></tbody>
-                    </table>
-                    <div class="actions" id="questions-pagination">
-                        <button class="btn btn-secondary" id="q-prev">Sebelumnya</button>
-                        <span class="status" id="q-page-info"></span>
-                        <button class="btn btn-secondary" id="q-next">Berikutnya</button>
-                    </div>
+                    <select id="category-filter" style="width:auto; min-width:120px; font-size:14px; padding:8px">
+                        <option value="all">Semua Kategori</option>
+                    </select>
                 </div>
             </div>
 
-            <div id="tab-results" class="tab-panel hidden">
-                <div class="toolbar">
-                    <div class="toolbar-left">
-                        <span class="small">Menampilkan hasil terbaru.</span>
-                    </div>
-                    <div class="toolbar-right">
-                        <button class="btn btn-ghost" type="button" id="refresh-results-btn">
-                            <i class="fas fa-rotate" aria-hidden="true"></i> Refresh
-                        </button>
-                    </div>
+            <!-- TABS CONTENT -->
+            <div id="tab-questions">
+                <div id="questions-list" class="list-container">
+                    <!-- JS will populate cards here -->
                 </div>
-                <div class="table-wrap">
-                    <table id="results-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 170px;">Waktu</th>
-                                <th>Nama</th>
-                                <th style="width: 120px;">Skor</th>
-                                <th style="width: 120px;">Persen</th>
-                            </tr>
-                        </thead>
-                        <tbody id="results-tbody"></tbody>
-                    </table>
-                    <div class="actions" id="results-pagination">
-                        <button class="btn btn-secondary" id="r-prev">Sebelumnya</button>
-                        <span class="status" id="r-page-info"></span>
-                        <button class="btn btn-secondary" id="r-next">Berikutnya</button>
-                    </div>
+                
+                <div class="flex-center" style="margin-top:20px; gap:12px">
+                    <button class="btn btn-secondary" id="q-prev">Prev</button>
+                    <span id="q-page-info" class="small">Page 1</span>
+                    <button class="btn btn-secondary" id="q-next">Next</button>
+                </div>
+            </div>
+
+            <div id="tab-results" class="hidden">
+                 <div class="toolbar-right" style="margin-bottom:16px">
+                    <button class="btn btn-secondary" id="refresh-results-btn">
+                        <i class="fas fa-rotate"></i> Refresh Data
+                    </button>
+                </div>
+                <div id="results-list" class="list-container">
+                    <!-- JS will populate results here -->
+                </div>
+                <div class="flex-center" style="margin-top:20px; gap:12px">
+                    <button class="btn btn-secondary" id="r-prev">Prev</button>
+                    <span id="r-page-info" class="small">Page 1</span>
+                    <button class="btn btn-secondary" id="r-next">Next</button>
                 </div>
             </div>
         </section>
     </main>
 
-    <div class="modal hidden" id="question-modal" aria-hidden="true">
-        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <!-- FLOATING ACTION BUTTON -->
+    <button class="fab hidden" id="fab-add-question" aria-label="Tambah Soal">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav hidden" id="bottom-nav">
+        <button class="nav-item active" data-tab="questions">
+            <i class="fas fa-list-ul"></i>
+            <span>Soal</span>
+        </button>
+        <button class="nav-item" data-tab="results">
+            <i class="fas fa-chart-bar"></i>
+            <span>Hasil</span>
+        </button>
+        <button class="nav-item" id="nav-refresh">
+            <i class="fas fa-rotate"></i>
+            <span>Refresh</span>
+        </button>
+    </nav>
+
+    <!-- MODAL (Overlay) -->
+    <div class="modal" id="question-modal" aria-hidden="true">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-title">Tambah Soal</h2>
-                <button class="modal-close" type="button" id="modal-close-btn" aria-label="Tutup">
-                    <i class="fas fa-xmark"></i>
+                <h3 id="modal-title">Tambah Soal</h3>
+                <button class="btn-ghost btn-icon" id="modal-close-btn" aria-label="Tutup">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="saving-indicator" id="saving-indicator" aria-hidden="true"><div class="bar"></div></div>
+            
+            <!-- Modal Tabs -->
+            <div class="modal-tabs">
+                <button type="button" class="modal-tab active" data-view="edit">Edit</button>
+                <button type="button" class="modal-tab" data-view="preview">Preview</button>
+            </div>
+            
+            <!-- Preview Panel -->
+            <div id="preview-panel" class="hidden">
+                <div class="preview-card">
+                    <div class="preview-header">
+                        <span class="preview-badge" id="prev-set">Kuis 1</span>
+                        <span class="preview-badge" id="prev-cat">Sejarah</span>
+                    </div>
+                    <div class="preview-question" id="prev-question"></div>
+                    <div class="preview-options" id="prev-options"></div>
+                    <div class="preview-correct hidden">
+                        <i class="fas fa-check-circle"></i> Kunci: <span id="prev-key">A</span>
+                    </div>
+                </div>
+            </div>
 
             <form id="question-form">
                 <input type="hidden" id="q-id">
-
-                <div class="field">
-                    <label for="q-question">Pertanyaan</label>
-                    <textarea id="q-question" required></textarea>
-                </div>
-
-                <div class="field">
-                    <label for="q-category">Kategori</label>
-                    <input id="q-category" type="text" placeholder="Contoh: Sejarah, Organisasi">
-                </div>
-
-                <div class="grid-2">
-                    <div class="field">
-                        <label for="q-a">Opsi A</label>
-                        <input id="q-a" type="text" required>
-                    </div>
-                    <div class="field">
-                        <label for="q-b">Opsi B</label>
-                        <input id="q-b" type="text" required>
-                    </div>
-                    <div class="field">
-                        <label for="q-c">Opsi C</label>
-                        <input id="q-c" type="text">
-                    </div>
-                    <div class="field">
-                        <label for="q-d">Opsi D</label>
-                        <input id="q-d" type="text" required>
-                    </div>
-                </div>
-
-                <div class="grid-2">
-                    <div class="field">
-                        <label for="q-correct">Jawaban Benar</label>
-                        <select id="q-correct" required>
-                            <option value="a">A</option>
-                            <option value="b">B</option>
-                            <option value="c">C</option>
-                            <option value="d">D</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="q-active">Status</label>
-                        <select id="q-active" required>
-                            <option value="true">Aktif</option>
-                            <option value="false">Nonaktif</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid-2">
-                    <div class="field">
-                        <label for="q-quizset">Kuis</label>
+                
+                <div class="form-group">
+                    <label>Set Kuis</label>
+                    <div class="select-wrapper">
                         <select id="q-quizset" required>
-                            <option value="1">Kuis 1</option>
-                            <option value="2">Kuis 2</option>
-                            <option value="3">Kuis 3</option>
+                            <option value="1">Kuis 1 (Wawasan)</option>
+                            <option value="2">Kuis 2 (IPM)</option>
+                            <option value="3">Kuis 3 (Agama)</option>
                         </select>
                     </div>
                 </div>
+                
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <input type="text" id="q-category" placeholder="Contoh: Sejarah, Fiqih, Umum" list="category-list">
+                    <datalist id="category-list">
+                        <!-- Populated by JS -->
+                    </datalist>
+                </div>
 
-                <div class="actions">
-                    <button class="btn btn-secondary" type="button" id="cancel-btn">
-                        <i class="fas fa-xmark" aria-hidden="true"></i> Batal
-                    </button>
-                    <button class="btn btn-primary" type="button" id="save-add-btn">
-                        <i class="fas fa-plus" aria-hidden="true"></i> Simpan & Tambah Lagi
-                    </button>
-                    <button class="btn btn-primary" type="submit" id="save-btn">
-                        <i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan
-                    </button>
+                <div class="form-group">
+                    <label>Pertanyaan</label>
+                    <!-- Rich Text Toolbar -->
+                    <div class="rich-text-toolbar">
+                        <button type="button" class="btn-tool" data-tag="b" title="Bold"><i class="fas fa-bold"></i></button>
+                        <button type="button" class="btn-tool" data-tag="i" title="Italic"><i class="fas fa-italic"></i></button>
+                        <button type="button" class="btn-tool" data-tag="u" title="Underline"><i class="fas fa-underline"></i></button>
+                        <button type="button" class="btn-tool" data-tag="code" title="Code"><i class="fas fa-code"></i></button>
+                        <button type="button" class="btn-tool" data-tag="br" title="Baris Baru"><i class="fas fa-level-down-alt"></i></button>
+                    </div>
+                    <textarea id="q-question" class="input-expandable" required placeholder="Tulis soal di sini..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Pilihan Jawaban</label>
+                    <div class="option-grid">
+                        <div class="input-group">
+                            <span class="input-prefix">A</span>
+                            <textarea id="q-a" class="input-expandable" required placeholder="Opsi A"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-prefix">B</span>
+                            <textarea id="q-b" class="input-expandable" required placeholder="Opsi B"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-prefix">C</span>
+                            <textarea id="q-c" class="input-expandable" required placeholder="Opsi C"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-prefix">D</span>
+                            <textarea id="q-d" class="input-expandable" required placeholder="Opsi D"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" style="flex:1">
+                        <label>Kunci Jawaban</label>
+                        <div class="select-wrapper">
+                            <select id="q-correct" required>
+                                <option value="a">A</option>
+                                <option value="b">B</option>
+                                <option value="c">C</option>
+                                <option value="d">D</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Status</label>
+                        <div class="select-wrapper">
+                            <select id="q-active">
+                                <option value="true">Aktif</option>
+                                <option value="false">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary" id="save-btn">Simpan</button>
+                    <button type="button" class="btn btn-secondary" id="save-add-btn">Simpan & Tambah</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <script src="../scripts/main.js"></script>
-    <script src="../scripts/navguard.js"></script>
-    <script src="./admin.js"></script>
-    <script>document.addEventListener('gesturestart', function(e){ e.preventDefault(); });</script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.error('SW Error:', err));
+            });
+        }
+    </script>
+    <script src="admin.js"></script>
 </body>
 </html>

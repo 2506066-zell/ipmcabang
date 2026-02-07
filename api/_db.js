@@ -118,4 +118,15 @@ function getConnHost() {
   return m ? m[1] : '';
 }
 
-module.exports = { query, getConnHost };
+async function rawQuery(text, params = []) {
+  requireEnv();
+  const pool = getPool();
+  try {
+    const result = await pool.query(text, params);
+    return { rows: result.rows };
+  } catch (err) {
+    throw err;
+  }
+}
+
+module.exports = { query, getConnHost, rawQuery };
