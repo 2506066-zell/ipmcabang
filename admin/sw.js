@@ -1,7 +1,8 @@
-const CACHE_NAME = 'ipm-admin-v2';
+const CACHE_NAME = 'ipm-admin-v3';
 const ASSETS = [
     './admin.html',
     './admin.css',
+    './admin-future.css',
     './admin.js',
     './manifest.json',
     '../ipm (2).png',

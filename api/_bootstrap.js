@@ -18,6 +18,8 @@ async function ensureSchema() {
     correct_answer TEXT NOT NULL,
     active BOOLEAN DEFAULT TRUE,
     category TEXT,
+    type TEXT DEFAULT 'mcq',
+    position INT DEFAULT 0,
     quiz_set INT DEFAULT 1,
     created_at TIMESTAMP DEFAULT NOW()
   )`;
@@ -59,6 +61,8 @@ async function ensureSchema() {
   // Create Indexes for Performance
   await query`CREATE INDEX IF NOT EXISTS idx_questions_quiz_set ON questions(quiz_set)`;
   await query`CREATE INDEX IF NOT EXISTS idx_questions_category ON questions(category)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_questions_type ON questions(type)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_questions_position ON questions(position)`;
   await query`CREATE INDEX IF NOT EXISTS idx_results_user_id ON results(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_results_quiz_set ON results(quiz_set)`;
   await query`CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)`;

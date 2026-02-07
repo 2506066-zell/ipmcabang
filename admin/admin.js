@@ -22,6 +22,8 @@
         prefs: { tab: 'questions', search: '', status: 'all', set: 'all', category: 'all' },
         backend: 'vercel',
         adminToken: '',
+        selected: new Set(),
+        darkMode: false
     };
     let modalDirty = false;
 
@@ -86,6 +88,7 @@
         
         // Form Inputs
         qId: document.getElementById('q-id'),
+        qType: document.getElementById('q-type'),
         qQuestion: document.getElementById('q-question'),
         qA: document.getElementById('q-a'),
         qB: document.getElementById('q-b'),
@@ -276,12 +279,13 @@
                 const activeLabel = q.active ? 'AKTIF' : 'NONAKTIF';
                 
                 return `
-                <div class="list-item" data-id="${q.id}">
+                <div class="list-item glass-card" data-id="${q.id}" draggable="true">
                     <div class="list-item-header">
                         <span class="item-badge" style="background:#3b82f6; color:#fff;">${escapeHtml(setLabel)}</span>
                         <span class="item-badge ${badgeClass}">${activeLabel}</span>
+                        <input type="checkbox" class="list-select" ${state.selected.has(String(q.id)) ? 'checked' : ''}>
                     </div>
-                    <div class="item-title">${escapeHtml(q.question)}</div>
+                    <div class="item-title" data-edit="title">${escapeHtml(q.question)}</div>
                     <div class="item-meta">
                         <span><i class="fas fa-tag"></i> ${escapeHtml(q.category || 'Umum')}</span>
                         <span><i class="fas fa-check"></i> Jawaban: ${escapeHtml((q.correct_answer||'').toUpperCase())}</span>
@@ -304,6 +308,7 @@
         els.qPageInfo.textContent = `Hal ${paging.qPage} / ${totalPages} (Total ${state.totalQuestions})`;
         els.qPrev.disabled = paging.qPage <= 1;
         els.qNext.disabled = paging.qPage >= totalPages;
+        updateBulkBar();
     }
 
     function renderSkeleton() {
@@ -324,9 +329,9 @@
         els.questionsList.innerHTML = skeletonHTML;
     }
 
-    async function loadQuestions(page = paging.qPage) {
+    async function loadQuestions(page = paging.qPage, append = false) {
         // Use skeleton if list is empty, otherwise overlay (or nothing if silent refresh)
-        if (state.questions.length === 0 && page === 1) renderSkeleton();
+        if (!append && state.questions.length === 0 && page === 1) renderSkeleton();
         else showLoader('Memuat Soal...');
         
         const q = (els.searchInput.value || '').trim();
@@ -342,7 +347,9 @@
             const data = await apiGetVercel(url);
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat soal.');
             
-            state.questions = Array.isArray(data.questions) ? data.questions : [];
+            const incoming = Array.isArray(data.questions) ? data.questions : [];
+            if (append) state.questions = [...state.questions, ...incoming];
+            else state.questions = incoming;
             state.totalQuestions = data.total || 0;
             paging.qPage = data.page || 1;
             
@@ -350,6 +357,7 @@
             if (state.categories.length === 0) loadCategories();
 
             renderQuestions();
+            updateOverview();
         } catch (e) {
             alert('Error: ' + e.message);
             if (state.questions.length === 0) {
@@ -395,6 +403,7 @@
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat hasil.');
             state.results = (Array.isArray(data.results) ? data.results : []).map(r => ({ ...r, timestamp: r.ts || r.timestamp }));
             renderResults();
+            updateOverview();
         } catch (e) {
             alert('Error: ' + e.message);
         } finally {
@@ -468,6 +477,7 @@
         
         els.qId.value = isEdit ? String(question.id) : '';
         els.qQuestion.value = question?.question || '';
+        if (els.qType) els.qType.value = question?.type || 'mcq';
         els.qA.value = question?.options?.a || '';
         els.qB.value = question?.options?.b || '';
         els.qC.value = question?.options?.c || '';
@@ -514,6 +524,7 @@
             els.qQuestion.style.height = 'auto';
             els.qQuestion.style.height = els.qQuestion.scrollHeight + 'px';
         }, 100);
+        updateTypeUI();
     }
 
     function closeModal() {
@@ -536,6 +547,7 @@
         const payload = {
             id: isEdit ? id : undefined,
             question: els.qQuestion.value,
+            type: els.qType?.value || 'mcq',
             options: {
                 a: els.qA.value,
                 b: els.qB.value,
@@ -652,6 +664,39 @@
 
         // FAB
         els.fabAdd?.addEventListener('click', () => openModal(null));
+        document.getElementById('bulk-delete')?.addEventListener('click', async () => {
+            if (state.selected.size === 0) return;
+            if (!confirm('Hapus yang dipilih?')) return;
+            showLoader('Menghapus...');
+            try {
+                const ids = Array.from(state.selected);
+                for (const id of ids) {
+                    await apiAdminVercel('DELETE', `/api/questions?id=${id}`);
+                }
+                state.selected.clear();
+                await loadQuestions(paging.qPage);
+                updateBulkBar();
+            } catch (e) { alert('Error: '+e.message); }
+            finally { hideLoader(); }
+        });
+        document.getElementById('bulk-export')?.addEventListener('click', () => {
+            const data = JSON.stringify(state.questions, null, 2);
+            const blob = new Blob([data], { type:'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'questions-export.json';
+            a.click();
+        });
+        document.getElementById('open-cmd')?.addEventListener('click', openCommandPalette);
+        document.getElementById('cmd-input')?.addEventListener('input', renderCommandList);
+        document.getElementById('mode-toggle')?.addEventListener('click', () => {
+            state.darkMode = !state.darkMode;
+            document.body.classList.toggle('dark', state.darkMode);
+            document.getElementById('mode-toggle').classList.toggle('active', state.darkMode);
+        });
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='k') { e.preventDefault(); openCommandPalette(); }
+        });
 
         // Question List Actions (Delegation)
         els.questionsList?.addEventListener('click', (e) => {
@@ -667,6 +712,80 @@
             } else if (btn.dataset.action === 'delete') {
                 handleDelete(id);
             }
+        });
+        // Drag & Drop reorder
+        let dragSrc = null;
+        els.questionsList?.addEventListener('dragstart', (e) => {
+            const li = e.target.closest('.list-item');
+            if (!li) return;
+            dragSrc = li;
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        els.questionsList?.addEventListener('dragover', (e) => {
+            const li = e.target.closest('.list-item');
+            if (!li) return;
+            e.preventDefault();
+        });
+        els.questionsList?.addEventListener('drop', async (e) => {
+            const li = e.target.closest('.list-item');
+            if (!li || !dragSrc || li === dragSrc) return;
+            e.preventDefault();
+            const srcId = Number(dragSrc.dataset.id);
+            const dstId = Number(li.dataset.id);
+            const srcIndex = state.questions.findIndex(q => Number(q.id) === srcId);
+            const dstIndex = state.questions.findIndex(q => Number(q.id) === dstId);
+            if (srcIndex < 0 || dstIndex < 0) return;
+            const [moved] = state.questions.splice(srcIndex, 1);
+            state.questions.splice(dstIndex, 0, moved);
+            // Update positions descending
+            showLoader('Mengurutkan...');
+            try {
+                for (let i = 0; i < state.questions.length; i++) {
+                    const q = state.questions[i];
+                    await apiAdminVercel('POST','/api/questions',{ id: q.id, position: (state.totalQuestions - i) });
+                }
+                renderQuestions();
+                setStatus('Urutan diperbarui.', 'ok');
+            } catch (err) { setStatus('Gagal mengurutkan: ' + err.message, 'error'); }
+            finally { hideLoader(); dragSrc = null; }
+        });
+        els.questionsList?.addEventListener('change', (e) => {
+            const sel = e.target.closest('.list-select');
+            if (!sel) return;
+            const item = sel.closest('.list-item');
+            if (!item) return;
+            const id = String(item.dataset.id);
+            if (sel.checked) state.selected.add(id);
+            else state.selected.delete(id);
+            updateBulkBar();
+        });
+        els.questionsList?.addEventListener('dblclick', (e) => {
+            const t = e.target.closest('.item-title');
+            if (!t) return;
+            const item = t.closest('.list-item');
+            if (!item) return;
+            const id = Number(item.dataset.id);
+            const prev = state.questions.find(x => Number(x.id)===id);
+            if (!prev) return;
+            t.setAttribute('contenteditable','true');
+            t.focus();
+            const endEdit = async () => {
+                t.removeAttribute('contenteditable');
+                const text = t.textContent.trim();
+                if (!text || text === prev.question) { t.textContent = prev.question; return; }
+                showLoader('Menyimpan...');
+                try {
+                    const body = { id, question: text };
+                    const data = await apiAdminVercel('POST','/api/questions',body);
+                    if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
+                    await loadQuestions(paging.qPage);
+                    setStatus('Perubahan disimpan.', 'ok');
+                } catch (err) { alert('Error: '+err.message); t.textContent = prev.question; }
+                finally { hideLoader(); }
+            };
+            const onKey = (ev) => { if (ev.key==='Enter') { ev.preventDefault(); t.blur(); } };
+            t.addEventListener('blur', endEdit, { once:true });
+            t.addEventListener('keydown', onKey);
         });
 
         // Modal Tabs
@@ -702,6 +821,21 @@
             const totalPages = Math.max(1, Math.ceil(state.totalQuestions / paging.qSize));
             if (paging.qPage < totalPages) loadQuestions(paging.qPage + 1);
         });
+        // Infinite scroll sentinel
+        const sentinel = document.getElementById('q-sentinel');
+        if (sentinel) {
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const totalPages = Math.max(1, Math.ceil(state.totalQuestions / paging.qSize));
+                        if (paging.qPage < totalPages) {
+                            loadQuestions(paging.qPage + 1, true);
+                        }
+                    }
+                });
+            }, { rootMargin: '200px' });
+            io.observe(sentinel);
+        }
         els.rPrev?.addEventListener('click', () => { if(paging.rPage > 1) { paging.rPage--; renderResults(); }});
         els.rNext?.addEventListener('click', () => { paging.rPage++; renderResults(); });
 
@@ -731,6 +865,22 @@
                     newText = text.substring(0, start) + '<br>' + text.substring(end);
                     textarea.value = newText;
                     textarea.selectionStart = textarea.selectionEnd = start + 4;
+                } else if (tag === 'ol' || tag === 'ul') {
+                    const selected = text.substring(start, end) || 'Item';
+                    newText = text.substring(0, start) + `<${tag}><li>${selected}</li></${tag}>` + text.substring(end);
+                    textarea.value = newText;
+                    textarea.selectionStart = textarea.selectionEnd = start + tag.length * 2 + 9 + selected.length;
+                } else if (tag === 'link') {
+                    const href = prompt('Masukkan URL:', 'https://');
+                    const selected = text.substring(start, end) || 'tautan';
+                    newText = text.substring(0, start) + `<a href="${href}" target="_blank" rel="noopener">${selected}</a>` + text.substring(end);
+                    textarea.value = newText;
+                    textarea.selectionStart = textarea.selectionEnd = start + selected.length + href.length + 29;
+                } else if (tag === 'img') {
+                    const src = prompt('Masukkan URL gambar:', 'https://');
+                    newText = text.substring(0, start) + `<img src="${src}" alt="">` + text.substring(end);
+                    textarea.value = newText;
+                    textarea.selectionStart = textarea.selectionEnd = start + src.length + 19;
                 } else {
                     const selected = text.substring(start, end);
                     // Toggle check could be complex, for now just wrap
@@ -752,6 +902,7 @@
             if (els.qId.value) return; // Don't save drafts for edits
             const draft = {
                 question: els.qQuestion.value,
+                type: els.qType?.value || 'mcq',
                 options: {
                     a: els.qA.value,
                     b: els.qB.value,
@@ -765,9 +916,40 @@
             localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(draft));
         };
         
-        [els.qQuestion, els.qA, els.qB, els.qC, els.qD, els.qCorrect, els.qCategory, els.qQuizSet].forEach(el => {
+        [els.qQuestion, els.qA, els.qB, els.qC, els.qD, els.qCorrect, els.qCategory, els.qQuizSet, els.qType].forEach(el => {
             el?.addEventListener('input', saveDraft);
             el?.addEventListener('change', saveDraft);
+        });
+        els.qType?.addEventListener('change', updateTypeUI);
+        
+        // Backend autosave (edit mode) with debounce 3s
+        let autosaveTimer;
+        const scheduleBackendAutosave = () => {
+            if (!els.qId.value) return;
+            clearTimeout(autosaveTimer);
+            autosaveTimer = setTimeout(async () => {
+                showLoader('Auto-save...');
+                try {
+                    const payload = {
+                        id: Number(els.qId.value),
+                        question: els.qQuestion.value,
+                        type: els.qType?.value || 'mcq',
+                        options: { a: els.qA.value, b: els.qB.value, c: els.qC.value, d: els.qD.value },
+                        correct_answer: els.qCorrect.value,
+                        active: els.qActive.value === 'true',
+                        category: els.qCategory.value,
+                        quiz_set: Number(els.qQuizSet.value)
+                    };
+                    const data = await apiAdminVercel('POST','/api/questions',payload);
+                    if (!data || data.status !== 'success') throw new Error(data?.message || 'Auto-save gagal');
+                    setStatus('Perubahan disimpan otomatis.', 'ok');
+                } catch (e) { setStatus(e.message, 'error'); }
+                finally { hideLoader(); }
+            }, 3000);
+        };
+        [els.qQuestion, els.qA, els.qB, els.qC, els.qD, els.qCorrect, els.qCategory, els.qQuizSet, els.qType].forEach(el => {
+            el?.addEventListener('input', scheduleBackendAutosave);
+            el?.addEventListener('change', scheduleBackendAutosave);
         });
 
         // Swipe Gestures
@@ -811,6 +993,8 @@
         loadPrefs();
         initEvents();
         prewarm();
+        window.addEventListener('offline', ()=>setStatus('Anda offline. Beberapa fitur mungkin tidak tersedia.', 'error'));
+        window.addEventListener('online', ()=>setStatus('Kembali online.', 'ok'));
 
         // Check Session
         const sess = sessionStorage.getItem(SESSION_KEYS.session);
@@ -825,4 +1009,81 @@
     }
 
     init();
+
+    function updateTypeUI() {
+        const t = els.qType?.value || 'mcq';
+        const optsGrid = document.querySelector('.option-grid');
+        const correctWrap = document.getElementById('q-correct')?.parentElement?.parentElement;
+        if (!optsGrid || !correctWrap) return;
+        if (t === 'essay') {
+            optsGrid.style.display = 'none';
+            correctWrap.style.display = 'none';
+        } else if (t === 'tf') {
+            optsGrid.style.display = 'grid';
+            els.qA.value = els.qA.value || 'True';
+            els.qB.value = els.qB.value || 'False';
+            els.qC.value = '';
+            els.qD.value = '';
+            correctWrap.style.display = 'block';
+        } else if (t === 'matching') {
+            optsGrid.style.display = 'none';
+            correctWrap.style.display = 'none';
+        } else {
+            optsGrid.style.display = 'grid';
+            correctWrap.style.display = 'block';
+        }
+    }
+
+    function updateBulkBar() {
+        const bar = document.getElementById('bulk-bar');
+        const count = document.getElementById('bulk-count');
+        if (!bar || !count) return;
+        const c = state.selected.size;
+        count.textContent = `${c} dipilih`;
+        bar.classList.toggle('show', c>0);
+    }
+    function updateOverview() {
+        const t = document.getElementById('ov-total');
+        const a = document.getElementById('ov-active');
+        const r = document.getElementById('ov-results');
+        const u = document.getElementById('ov-users');
+        if (t) t.textContent = String(state.totalQuestions||0);
+        if (a) a.textContent = String((state.questions||[]).filter(q=>q.active).length||0);
+        if (r) r.textContent = String(state.results.length||0);
+        if (u) u.textContent = '0';
+    }
+    function openCommandPalette() {
+        const ov = document.getElementById('command-palette');
+        const input = document.getElementById('cmd-input');
+        if (!ov || !input) return;
+        ov.style.display = 'flex';
+        renderCommandList();
+        input.value = '';
+        input.focus();
+        const close = (e) => { if (e.key==='Escape') { ov.style.display = 'none'; document.removeEventListener('keydown', close); } };
+        document.addEventListener('keydown', close);
+        ov.addEventListener('click', (e)=>{ if(e.target===ov){ ov.style.display='none'; } });
+    }
+    function renderCommandList() {
+        const list = document.getElementById('cmd-list');
+        const input = document.getElementById('cmd-input');
+        if (!list || !input) return;
+        const q = input.value.toLowerCase();
+        const items = [
+            { k:'tambah', run:()=>openModal(null), label:'Tambah Soal' },
+            { k:'refresh', run:()=>loadQuestions(1), label:'Refresh Soal' },
+            { k:'hasil', run:()=>{ activateTab('results'); loadResults(); }, label:'Buka Hasil' },
+            { k:'export', run:()=>document.getElementById('bulk-export').click(), label:'Export Soal' },
+            { k:'settings', run:()=>document.getElementById('mode-toggle').click(), label:'Toggle Mode' },
+        ].filter(x=>x.label.toLowerCase().includes(q)||x.k.includes(q));
+        list.innerHTML = items.map((x,i)=>`<button class="cmd-item" data-i="${i}">${x.label}</button>`).join('');
+        list.querySelectorAll('.cmd-item').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                const i = Number(btn.dataset.i);
+                const chosen = items[i];
+                if (chosen) chosen.run();
+                document.getElementById('command-palette').style.display='none';
+            });
+        });
+    }
 })();
