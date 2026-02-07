@@ -38,7 +38,7 @@ async function list(req, res) {
   
   try {
       const result = await rawQuery(queryText, [limit, offset]);
-      json(res, 200, { status: 'success', results: result.rows, page: Math.max(1, page), size: limit }, cacheHeaders(30));
+      json(res, 200, { status: 'success', results: result.rows, page: Math.max(1, page), size: limit }, cacheHeaders(0));
   } catch (e) {
       json(res, 500, { status: 'error', message: e.message });
   }

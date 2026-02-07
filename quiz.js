@@ -224,16 +224,15 @@ function renderQuestion() {
     
     // Render question HTML
     quizBody.innerHTML = `
-        <div class="question-card">
+        <div class="question-card slide-in">
             <h3 class="question-text">${q.question}</h3>
-            <div class="options-grid">
+            <div class="options-container">
                 ${['a','b','c','d'].map(key => {
                     const val = q.options[key];
                     if (!val) return '';
                     return `
-                    <button class="option-btn" data-key="${key}" onclick="handleAnswer('${key}')">
-                        <span class="opt-label">${key.toUpperCase()}</span>
-                        <span class="opt-text">${val}</span>
+                    <button class="option-card" data-key="${key}" onclick="handleAnswer('${key}')">
+                        <span>${key.toUpperCase()}</span>&nbsp;<span>${val}</span>
                     </button>
                     `;
                 }).join('')}
@@ -247,18 +246,12 @@ function renderQuestion() {
 
 window.handleAnswer = function(key) {
     const q = questionsData[currentQuestionIndex];
-    
-    // Highlight selected
-    const btns = document.querySelectorAll('.option-btn');
+    const btns = document.querySelectorAll('.option-card');
     btns.forEach(b => {
         b.classList.remove('selected');
         if (b.dataset.key === key) b.classList.add('selected');
     });
-    
-    // Save answer
     userAnswers[currentQuestionIndex] = key;
-    
-    // Enable next
     nextBtn.disabled = false;
 };
 
@@ -308,6 +301,7 @@ async function finishQuiz() {
         if (!response.ok || data.status !== 'success') {
             throw new Error(data.message || 'Gagal menyimpan hasil.');
         }
+        try { localStorage.removeItem('ipm_ranking_cache'); } catch {}
 
     } catch (e) {
         console.error(e);

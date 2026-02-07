@@ -121,12 +121,37 @@ function getConnHost() {
 async function rawQuery(text, params = []) {
   requireEnv();
   const pool = getPool();
-  try {
-    const result = await pool.query(text, params);
-    return { rows: result.rows };
-  } catch (err) {
-    throw err;
+  const MAX_RETRIES = 3;
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await pool.query(text, params);
+      return { rows: result.rows };
+    } catch (err) {
+      lastError = err;
+      const msg = (err && err.message) ? err.message : String(err);
+      const isRecoverable =
+        msg.includes('connection') ||
+        msg.includes('timeout') ||
+        msg.includes('ECONNRESET');
+      if (attempt < MAX_RETRIES && isRecoverable) {
+        await new Promise(res => setTimeout(res, 500 * attempt));
+        continue;
+      }
+      if (/relation\s+".*"\s+does\s+not\s+exist/i.test(msg)) {
+        try {
+          const { ensureSchema } = require('./_bootstrap');
+          await ensureSchema();
+          const result2 = await pool.query(text, params);
+          return { rows: result2.rows };
+        } catch (e2) {
+          throw new Error(`Database schema error: ${e2.message || e2}`);
+        }
+      }
+      throw new Error(`Database error: ${msg}`);
+    }
   }
+  throw lastError;
 }
 
 module.exports = { query, getConnHost, rawQuery };
