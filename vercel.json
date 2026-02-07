@@ -1,6 +1,15 @@
 {
   "version": 2,
   "routes": [
+    { "src": "/api/auth/login", "dest": "/api/auth_handler?action=login" },
+    { "src": "/api/auth/register", "dest": "/api/auth_handler?action=register" },
+    { "src": "/api/auth/adminLogin", "dest": "/api/auth_handler?action=adminLogin" },
+    { "src": "/api/auth/promoteAdmin", "dest": "/api/auth_handler?action=promoteAdmin" },
+    { "src": "/api/auth/seedAdmins", "dest": "/api/auth_handler?action=seedAdmins" },
+    { "src": "/api/dbHealth", "dest": "/api/system_handler?action=dbHealth" },
+    { "src": "/api/health", "dest": "/api/system_handler?action=health" },
+    { "src": "/api/migrate", "dest": "/api/system_handler?action=migrate" },
+    { "src": "/api/resetSet", "dest": "/api/system_handler?action=resetSet" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
