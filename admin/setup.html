@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Admin - IPM Quiz</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-screen">
+    <div class="login-card">
+        <div class="login-header">
+            <i class="fas fa-shield-alt" style="font-size: 48px; color: var(--primary-color); margin-bottom: 16px;"></i>
+            <h1>Setup Admin Pertama</h1>
+            <p>Gunakan halaman ini untuk mempromosikan akun menjadi Admin (hanya jika belum ada admin).</p>
+        </div>
+
+        <form id="setup-form">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" required placeholder="Username akun yang sudah ada">
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div style="position:relative">
+                    <input type="password" id="password" required placeholder="Password akun tersebut">
+                    <button type="button" id="toggle-password" class="btn-ghost" style="position:absolute;right:0;top:0;height:100%;width:40px;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-login">Jadikan Admin</button>
+            <p id="message" class="message" style="margin-top:16px; text-align:center;"></p>
+        </form>
+
+        <div class="register-link">
+            <p><a href="admin.html">Kembali ke Login Admin</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('toggle-password').addEventListener('click', () => {
+            const input = document.getElementById('password');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+
+        document.getElementById('setup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('message');
+
+            msg.textContent = 'Memproses...';
+            msg.style.color = '#666';
+
+            try {
+                const res = await fetch('/api/auth/promoteAdmin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    msg.textContent = 'Berhasil! Akun Anda sekarang adalah Admin.';
+                    msg.style.color = 'green';
+                    setTimeout(() => window.location.href = 'admin.html', 2000);
+                } else {
+                    msg.textContent = data.message || 'Gagal.';
+                    msg.style.color = 'red';
+                }
+            } catch (err) {
+                msg.textContent = 'Terjadi kesalahan koneksi.';
+                msg.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

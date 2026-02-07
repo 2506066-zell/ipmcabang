@@ -1134,6 +1134,59 @@ main {
     display: none;
 }
 
+/* --- Login Extras --- */
+.login-card .logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 16px;
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    padding-right: 40px !important;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 40px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.password-toggle:hover {
+    color: #4a7c5d;
+}
+
+.register-link {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+
+.register-link a {
+    color: #4a7c5d;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
 /* --- Dashboard Layout --- */
 .dashboard-screen {
     display: flex;
