@@ -247,30 +247,56 @@ function initNextQuiz(info) {
 function startCountdown(targetTime) {
     if (countdownInterval) clearInterval(countdownInterval);
     
+    // Cached DOM elements
+    const els = {
+        d: document.getElementById('timer-d'),
+        h: document.getElementById('timer-h'),
+        m: document.getElementById('timer-m'),
+        s: document.getElementById('timer-s'),
+        topic: document.getElementById('nq-topic')
+    };
+
+    let prevSec = -1;
+
     function update() {
         const now = Date.now();
         const diff = targetTime - now;
         
         if (diff <= 0) {
             clearInterval(countdownInterval);
-            document.getElementById('timer-h').textContent = '00';
-            document.getElementById('timer-m').textContent = '00';
-            document.getElementById('timer-s').textContent = '00';
+            ['d','h','m','s'].forEach(k => els[k].textContent = '00');
             
-            // Optional: Auto refresh or show "Started"
-            document.getElementById('nq-topic').textContent = "Kuis telah dimulai! Silakan refresh.";
-            document.getElementById('nq-topic').style.color = 'var(--accent-primary)';
-            document.getElementById('nq-topic').style.fontWeight = 'bold';
+            // Subtle pulse for ended state
+            if (els.topic) {
+                els.topic.textContent = "Kuis telah dimulai! Silakan refresh.";
+                els.topic.style.color = 'var(--accent-success)';
+                els.topic.style.fontWeight = 'bold';
+                els.topic.style.animation = 'pulseText 2s infinite';
+            }
             return;
         }
         
-        const h = Math.floor(diff / (1000 * 60 * 60));
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((diff % (1000 * 60)) / 1000);
         
-        document.getElementById('timer-h').textContent = String(h).padStart(2, '0');
-        document.getElementById('timer-m').textContent = String(m).padStart(2, '0');
-        document.getElementById('timer-s').textContent = String(s).padStart(2, '0');
+        // Update DOM with leading zeros
+        if (els.d) els.d.textContent = String(d).padStart(2, '0');
+        if (els.h) els.h.textContent = String(h).padStart(2, '0');
+        if (els.m) els.m.textContent = String(m).padStart(2, '0');
+        
+        if (els.s) {
+            const sStr = String(s).padStart(2, '0');
+            if (els.s.textContent !== sStr) {
+                els.s.textContent = sStr;
+                // Subtle Animation per second
+                els.s.parentElement.animate([
+                    { transform: 'scale(0.96)', opacity: 0.8 },
+                    { transform: 'scale(1)', opacity: 1 }
+                ], { duration: 200, easing: 'ease-out' });
+            }
+        }
     }
     
     update();
