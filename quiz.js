@@ -1,3 +1,38 @@
+    window.showLoader = function(text) {
+        try {
+            if (window.AppLoader && typeof AppLoader.show === 'function') {
+                AppLoader.show(text || 'Memuat...');
+                return;
+            }
+            let overlay = document.getElementById('loading-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'loading-overlay';
+                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;z-index:9999';
+                const p = document.createElement('p');
+                p.id = 'loading-text';
+                p.textContent = text || 'Memuat...';
+                p.style.cssText = 'font-family:system-ui, sans-serif; color:#222;';
+                overlay.appendChild(p);
+                document.body.appendChild(overlay);
+            } else {
+                const t = document.getElementById('loading-text');
+                if (t) t.textContent = text || 'Memuat...';
+                overlay.style.display = 'flex';
+            }
+        } catch {}
+    };
+    window.hideLoader = function() {
+        try {
+            if (window.AppLoader && typeof AppLoader.hide === 'function') {
+                AppLoader.hide();
+                return;
+            }
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.style.display = 'none';
+        } catch {}
+    };
+
     // --- Quiz Initialization ---
     async function fetchQuestions() {
         showLoader('Mempersiapkan Soal...');

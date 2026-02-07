@@ -155,6 +155,14 @@
         }
         return data;
     }
+    async function fetchJsonWithRetry(url, init, retries = 2, delay = 600) {
+        try { return await fetchJson(url, init); }
+        catch (e) {
+            if (retries <= 0) throw e;
+            await new Promise(r => setTimeout(r, delay));
+            return await fetchJsonWithRetry(url, init, retries - 1, delay * 1.5);
+        }
+    }
 
     function resolveApiUrl(path) {
         // Since we are same-origin on Vercel, just return path
@@ -162,7 +170,7 @@
     }
 
     async function apiGetVercel(path) {
-        return await fetchJson(resolveApiUrl(path), { method: 'GET' });
+        return await fetchJsonWithRetry(resolveApiUrl(path), { method: 'GET' });
     }
 
     async function apiAdminVercel(method, path, body) {
@@ -172,7 +180,7 @@
         } else if (state.session) {
             headers['Authorization'] = `Bearer ${state.session}`;
         }
-        return await fetchJson(resolveApiUrl(path), { method, headers, body: body ? JSON.stringify(body) : undefined });
+        return await fetchJsonWithRetry(resolveApiUrl(path), { method, headers, body: body ? JSON.stringify(body) : undefined });
     }
 
     // --- AUTH ---
@@ -511,6 +519,7 @@
     function closeModal() {
         els.modal.classList.remove('active');
         els.modal.setAttribute('aria-hidden', 'true');
+        try { els.modalCloseBtn && els.modalCloseBtn.blur(); } catch {}
         els.questionForm.reset();
         els.qId.value = '';
     }
@@ -795,9 +804,13 @@
     }
 
     // --- INIT ---
+    async function prewarm() {
+        try { await apiGetVercel('/api/dbHealth'); } catch {}
+    }
     function init() {
         loadPrefs();
         initEvents();
+        prewarm();
 
         // Check Session
         const sess = sessionStorage.getItem(SESSION_KEYS.session);
