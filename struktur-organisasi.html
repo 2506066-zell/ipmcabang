@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#006400">
+    <meta name="description" content="Struktur Organisasi & Program Kerja - Ikatan Pelajar Muhammadiyah PC Panawuan">
+    <title>Struktur Organisasi - IPM Panawuan</title>
+    <link rel="stylesheet" href="./styles/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- styles moved to styles/style.css -->
+</head>
+<body class="page-struktur">
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Loading..." class="loading-logo">
+            </picture>
+            <p id="loading-text">Memuat...</p>
+        </div>
+    </div>
+    <!-- Header Navigation -->
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            </picture>
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <div class="header-right-icons">
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link active"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+
+        </ul>
+    </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- VIEW 1: BIDANG GRID -->
+        <div id="viewBidangGrid">
+            <h1 class="page-title">Struktur Organisasi</h1>
+            <p class="page-subtitle">Jelajahi bidang dan program kerja</p>
+            <div class="bidang-grid" id="bidangGrid"></div>
+        </div>
+
+        <!-- VIEW 2: ANGGOTA -->
+        <div id="viewAnggota">
+            <div class="anggota-header">
+                <button class="back-btn" onclick="backToBidang()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="header-info">
+                    <div class="header-title" id="anggotaTitle"></div>
+                    <div class="header-count" id="anggotaCount"></div>
+                </div>
+            </div>
+            <div class="anggota-grid" id="anggotaGrid"></div>
+        </div>
+
+        <!-- VIEW 3: PROGRAM KERJA -->
+        <div id="viewProgram">
+            <div class="program-header">
+                <button class="back-btn" onclick="backToBidang()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="program-header-info">
+                    <div class="program-title" id="programBidangTitle"></div>
+                    <div class="program-subtitle">Program Kerja Bidang</div>
+                </div>
+            </div>
+            <div class="program-list" id="programList"></div>
+        </div>
+    </main>
+
+    <!-- Detail Anggota Modal -->
+    <div class="anggota-detail-overlay" id="anggotaDetailOverlay" onclick="closeAnggotaDetail(event)">
+        <div class="anggota-detail-card" onclick="event.stopPropagation()">
+            <button class="close-btn-modal" onclick="closeAnggotaDetail(event, true)">
+                <i class="fas fa-times"></i>
+            </button>
+            <!-- Header dengan Foto -->
+            <div class="anggota-detail-header" id="anggotaDetailHeader">
+                <!-- Picture tag will be injected here by JS -->
+            </div>
+            
+            <!-- Content -->
+            <div class="anggota-detail-content" id="anggotaDetailContent">
+                <div class="anggota-detail-name" id="anggotaDetailName"></div>
+                <div class="anggota-detail-role" id="anggotaDetailRole"></div>
+                
+                <div class="anggota-detail-divider"></div>
+                
+                <div class="anggota-detail-info">
+                    <div class="anggota-detail-info-row">
+                        <div class="anggota-detail-info-label">Bidang</div>
+                        <div class="anggota-detail-info-value" id="anggotaDetailBidang"></div>
+                    </div>
+                    <div class="anggota-detail-info-row">
+                        <div class="anggota-detail-info-label">Posisi</div>
+                        <div class="anggota-detail-info-value" id="anggotaDetailPosisi"></div>
+                    </div>
+                </div>
+                
+                <div class="anggota-detail-quote" id="anggotaDetailQuote"></div>
+                
+                <div class="anggota-detail-instagram" id="anggotaDetailInstagram">
+                    <a class="btn-instagram" href="#" id="anggotaInstagramBtn" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-instagram"></i> Lihat Instagram
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="public-footer">
+        <p class="footer-text">© 2026 Ikatan Pelajar Muhammadiyah - PC Panawuan</p>
+        <div class="footer-socials">
+            <a href="https://www.instagram.com/ipmgarut_" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.youtube.com/@ipmchannelgarut" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+        </div>
+        <div class="footer-info">
+            <span><i class="fas fa-map-marker-alt"></i> Panawuan</span>
+        </div>
+    </footer>
+
+    <nav class="bottom-nav">
+      <div class="bottom-nav-inner">
+        <a href="index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
+        <a href="quiz.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+        <a href="ranking.html"><i class="fas fa-trophy"></i><span>Peringkat</span></a>
+        <a href="help.html"><i class="fas fa-circle-question"></i><span>Bantuan</span></a>
+      </div>
+    </nav>
+
+    <script>
+        // ==================== DATA MANUAL ====================
+        const bidang = [
+            { id: 'ketuaUmum', name: 'Ketua Umum', image: 'images/bidang/umum.jpeg', color: '#2C5F4F' },
+            { id: 'sekretaris', name: 'Sekretaris', image: 'images/bidang/sekretaris.jpg', color: '#4A7C5D' },
+            { id: 'bendahara', name: 'Bendahara', image: 'images/bidang/bendahara.jpg', color: '#F39C12' },
+            { id: 'perkaderan', name: 'Perkaderan', image: 'images/bidang/pkd.png', color: '#E74C3C' },
+            { id: 'pengkajianIlmu', name: 'Pengkajian Ilmu Pengetahuan', image: 'images/bidang/pengkajianIlmu.jpeg', color: '#3498DB' },
+            { id: 'kajianDakwah', name: 'Kajian Dakwah Islam', image: 'images/bidang/kajianDakwah.jpg', color: '#9B59B6' },
+            { id: 'apresiasiBudaya', name: 'Apresiasi Budaya & Olahraga', image: 'images/bidang/apresiasiBudaya.jpg', color: '#1ABC9C' },
+            { id: 'advokasi', name: 'Advokasi', image: 'images/bidang/advokasi.jpeg', color: '#E67E22' },
+            { id: 'ipmawati', name: 'Ipmawati', image: 'images/bidang/ipmawati.jpeg', color: '#D946A6' }
+        ];
+
+        const members = [
+            // ketua umum//
+            { name: 'Anwar Miftah', role: 'Ketua Umum', quote: 'Kepemimpinan adalah tanggung jawab.', photo: 'images/members/', bidangId: 'ketuaUmum' },
+            // sekretaris//
+            { name: 'Nauval', role: 'Sekretaris', quote: 'Administrasi adalah fondasi organisasi yang kuat.', photo: 'images/members/hendra-gunawan.jpg', bidangId: 'sekretaris' },
+            // bendahara//
+            { name: 'Yasifa Permata', role: 'Bendahara Umum', quote: 'Transparansi keuangan adalah kunci kepercayaan.', photo: '', bidangId: 'bendahara', instagram: 'https://www.instagram.com/username' },
+            { name: 'Syifa Nursafitri', role: 'Bendahara I', quote: 'Transparansi keuangan adalah kunci kepercayaan.', photo: '', bidangId: 'bendahara' },
+            // perkaderan//
+            { name: 'Arief Bijaksana', role: 'Ketua', quote: '', photo: '', bidangId: 'perkaderan' },
+            { name: 'Hafiy Muhammad Fhaza', role: 'Sekretaris', quote: '', photo: '', bidangId: 'perkaderan' },
+            { name: 'Moch Ridwan Nulhakim', role: 'Anggota', quote: '', photo: '', bidangId: 'perkaderan' },
+            { name: 'Ajril Ahmad Fazar', role: 'Anggota', quote: '', photo: '', bidangId: 'perkaderan' },
+            // pengkajian ilmu pengetahuan//
+            { name: 'Gilang Muhammad Riziq', role: 'Ketua Bidang', quote: '', photo: 'images/members/gilang1.jpeg', bidangId: 'pengkajianIlmu' },
+            { name: 'Zaldy Muhammad Fazri', role: 'Sekretaris Bidang', quote: '', photo: 'images/members/zaldy.jpeg', bidangId: 'pengkajianIlmu' },
+            { name: 'Sudarisman', role: 'Anggota', quote: '', photo: '', bidangId: 'pengkajianIlmu' },
+            { name: 'Fathir Nasrulhaq', role: 'Anggota', quote: '', photo: '', bidangId: 'pengkajianIlmu' },
+            { name: 'Muhammad Fadilah', role: 'Anggota', quote: '', photo: '', bidangId: 'pengkajianIlmu' },
+            { name: 'Ayudia Cempaka Gratia', role: 'Anggota', quote: '', photo: 'images/members/ayudia.jpeg', bidangId: 'pengkajianIlmu' },
+            { name: 'Halida Muna Nurmufidah', role: 'Anggota', quote: '', photo: '', bidangId: 'pengkajianIlmu' },
+            { name: 'Haura Azkya', role: 'Anggota', quote: '', photo: '', bidangId: 'pengkajianIlmu' },
+            { name: 'Debi Rahmawati', role: 'Anggota', quote: '', photo: '', bidangId: 'pengkajianIlmu' },
+
+            // kajian dakwah islam//
+    
+            { name: 'Ahsan Hadian Assidiqi', role: 'Ketua Bidang', quote: '', photo: '', bidangId: 'kajianDakwah' },
+            { name: 'Syifa Khoerunnisa', role: 'Sekretaris Bidang', quote: '', photo: '', bidangId: 'kajianDakwah' },
+            { name: 'Siti Rahmawati', role: 'Anggota', quote: '', photo: '', bidangId: 'kajianDakwah' },
+            { name: 'Muhammad Iqbal', role: 'Anggota', quote: '', photo: '', bidangId: 'kajianDakwah' },
+            // apresiasi budaya & olahraga//
+            { name: 'Hasna Aurora Ginan Nurillah', role: 'Ketua Bidang', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
+             { name: 'Najril Muhammad Solfa', role: 'Sekretaris Bidang', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
+             { name: 'Ganjar', role: 'Anggota', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
+             { name: 'asep', role: 'Anggota', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
+             { name: 'wiri', role: 'Anggota', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
+             { name: 'Tegar', role: 'Anggota', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
+             { name: 'anwar', role: 'Anggota', quote: '', photo: '', bidangId: 'apresiasiBudaya' },
+            // advokasi//
+            { name: 'Muhammad Yopi', role: 'Ketua Bidang', quote: '', photo: 'images/members/yopi.jpeg', bidangId: 'advokasi' },
+             { name: 'Rehan Nurfahmi', role: 'Sekretaris Bidang', quote: '', photo: 'images/members/rehan.jpeg', bidangId: 'advokasi' },
+             { name: 'Raisa Hidayatul Marwah', role: 'Anggota', quote: '', photo: '', bidangId: 'advokasi' },
+            // ipmawati//
+            { name: 'Raida Rahma Annastasya', role: 'Ketua Bidang', quote: '', photo: '', bidangId: 'ipmawati' },
+             { name: 'Sira Tiara Wangi', role: 'Sekretaris Bidang', quote: '', photo: '', bidangId: 'ipmawati' },
+             { name: 'Shabrina Diwamah Rifki 33', role: 'Anggota', quote: '', photo: '', bidangId: 'ipmawati' },
+             { name: 'Ramira Ramandita', role: 'Anggota', quote: '', photo: '', bidangId: 'ipmawati' },
+             { name: 'Ismi Nurazizah', role: 'Anggota', quote: '', photo: '', bidangId: 'ipmawati' },
+             { name: 'Iklia Wahdiah Nurfitriah', role: 'Anggota', quote: '', photo: '', bidangId: 'ipmawati' },
+             { name: 'Kheisya Zahra Oktavia', role: 'Anggota', quote: '', photo: '', bidangId: 'ipmawati' },
+             { name: 'Anida Uswah Mujahidah', role: 'Anggota', quote: '', photo: '', bidangId: 'ipmawati' },
+           
+        ];
+
+        const programs = [
+            { bidangId: 'ketuaUmum', name: '', desc: '', status: '' },
+            { bidangId: 'ketuaUmum', name: '', desc: '', status: '' },
+            { bidangId: 'sekretaris', name: '', desc: '', status: '' },
+            { bidangId: 'bendahara', name: '', desc: '', status: '' },
+            { bidangId: 'perkaderan', name: '', desc: '', status: '' },
+            { bidangId: 'perkaderan', name: '', desc: '', status: '' },
+            { bidangId: 'pengkajianIlmu', name: '', desc: '', status: '' },
+            { bidangId: 'pengkajianIlmu', name: '', desc: '', status: '' },
+            { bidangId: 'kajianDakwah', name: '', desc: '', status: '' },
+            { bidangId: 'apresiasiBudaya', name: '', desc: '', status: '' },
+            { bidangId: 'advokasi', name: '', desc: '', status: '' },
+            { bidangId: 'ipmawati', name: '', desc: '', status: '' },
+            { bidangId: 'ipmawati', name: '', desc: '', status: '' }
+        ];
+
+        let currentBidangId = null;
+
+        // ==================== RENDER GRID BIDANG ====================
+        function renderBidangGrid() {
+            const grid = document.getElementById('bidangGrid');
+            grid.innerHTML = '';
+
+            bidang.forEach(b => {
+                const card = document.createElement('div');
+                card.className = 'bidang-card';
+                card.innerHTML = `
+                    <div class="bidang-card-header">
+                        <img src="${b.image}" alt="${b.name}" loading="lazy">
+                    </div>
+                    <div class="bidang-card-content">
+                        <div class="bidang-card-name">${b.name}</div>
+                        <div class="bidang-card-actions">
+                            <button class="btn-card btn-card-anggota" onclick="showAnggota('${b.id}', event)">
+                                <i class="fas fa-users"></i> Anggota
+                            </button>
+                            <button class="btn-card btn-card-program" onclick="showProgram('${b.id}', event)">
+                                <i class="fas fa-tasks"></i> Program
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ==================== SHOW ANGGOTA ====================
+        function showAnggota(bidangId, event) {
+            event.stopPropagation();
+            currentBidangId = bidangId;
+            const selectedBidang = bidang.find(b => b.id === bidangId);
+            const anggotaBidang = members.filter(m => m.bidangId === bidangId);
+
+            document.getElementById('viewBidangGrid').classList.add('hidden');
+            document.getElementById('viewAnggota').classList.add('active');
+
+            document.getElementById('anggotaTitle').textContent = selectedBidang.name;
+            document.getElementById('anggotaCount').textContent = `${anggotaBidang.length} Anggota`;
+
+            const grid = document.getElementById('anggotaGrid');
+            grid.innerHTML = '';
+
+            anggotaBidang.forEach(member => {
+                const card = document.createElement('div');
+                card.className = 'anggota-card';
+                const initials = member.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                card.innerHTML = `
+                    <div class="anggota-card-photo">
+                        <img data-src="${member.photo}" alt="${member.name}" class="lazy-load" onerror="this.parentElement.classList.add('no-image');">
+                        <div class="anggota-card-avatar">${initials}</div>
+                    </div>
+                    <div class="anggota-card-info">
+                        <div class="anggota-card-name">${member.name}</div>
+                        <div class="anggota-card-role">${member.role}</div>
+                        <div class="anggota-card-quote">${member.quote}</div>
+                        <div class="anggota-card-indicator">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openAnggotaDetail(member));
+                grid.appendChild(card);
+            });
+
+            setupAnggotaLazyLoading();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setupAnggotaLazyLoading() {
+            const lazyImages = document.querySelectorAll('.lazy-load');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const image = entry.target;
+                        image.src = image.dataset.src;
+                        image.classList.remove('lazy-load');
+                        imageObserver.unobserve(image);
+                    }
+                });
+            });
+
+            lazyImages.forEach(image => {
+                imageObserver.observe(image);
+            });
+        }
+
+        // ==================== SHOW PROGRAM ====================
+        function showProgram(bidangId, event) {
+            event.stopPropagation();
+            currentBidangId = bidangId;
+            const selectedBidang = bidang.find(b => b.id === bidangId);
+            const programBidang = programs.filter(p => p.bidangId === bidangId);
+
+            document.getElementById('viewBidangGrid').classList.add('hidden');
+            document.getElementById('viewProgram').classList.add('active');
+
+            document.getElementById('programBidangTitle').textContent = selectedBidang.name;
+
+            const list = document.getElementById('programList');
+            list.innerHTML = '';
+
+            programBidang.forEach(program => {
+                const card = document.createElement('div');
+                card.className = 'program-card';
+                card.style.setProperty('--color-bidang', selectedBidang.color);
+                
+                const statusClass = program.status === 'terlaksana' ? 'status-terlaksana' : 'status-rencana';
+                const statusText = program.status === 'terlaksana' ? 'Terlaksana' : 'Rencana';
+
+                card.innerHTML = `
+                    <div class="program-card-name">${program.name}</div>
+                    <div class="program-card-desc">${program.desc}</div>
+                    <div class="program-card-status ${statusClass}">${statusText}</div>
+                `;
+                list.appendChild(card);
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==================== BACK TO BIDANG ====================
+        function backToBidang() {
+            document.getElementById('viewAnggota').classList.remove('active');
+            document.getElementById('viewProgram').classList.remove('active');
+            document.getElementById('viewBidangGrid').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==================== DETAIL ANGGOTA MODAL ==================== 
+        function openAnggotaDetail(member) {
+            const selectedBidang = bidang.find(b => b.id === member.bidangId);
+            const initials = member.name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+            // Reset modal state
+            const header = document.getElementById('anggotaDetailHeader');
+            header.innerHTML = ''; // Clear previous content
+            header.classList.remove('no-image');
+
+            // Create and append the image or avatar
+            if (member.photo) {
+                const img = document.createElement('img');
+                img.src = member.photo;
+                img.alt = `Foto ${member.name}`;
+                img.onerror = () => {
+                    header.innerHTML = ''; // Clear the broken image
+                    const avatar = document.createElement('div');
+                    avatar.className = 'anggota-detail-avatar';
+                    avatar.textContent = initials;
+                    header.appendChild(avatar);
+                    header.classList.add('no-image');
+                };
+                header.appendChild(img);
+            } else {
+                const avatar = document.createElement('div');
+                avatar.className = 'anggota-detail-avatar';
+                avatar.textContent = initials;
+                header.appendChild(avatar);
+                header.classList.add('no-image');
+            }
+
+            document.getElementById('anggotaDetailName').textContent = member.name;
+            document.getElementById('anggotaDetailRole').textContent = member.role;
+            document.getElementById('anggotaDetailBidang').textContent = selectedBidang.name;
+            document.getElementById('anggotaDetailPosisi').textContent = member.role;
+            
+            const quoteEl = document.getElementById('anggotaDetailQuote');
+            if (member.quote) {
+                quoteEl.textContent = `"${member.quote}"`;
+                quoteEl.style.display = 'block';
+            } else {
+                quoteEl.style.display = 'none';
+            }
+
+            const instagramEl = document.getElementById('anggotaDetailInstagram');
+            if (member.instagram) {
+                document.getElementById('anggotaInstagramBtn').href = member.instagram;
+                instagramEl.style.display = 'block';
+            } else {
+                instagramEl.style.display = 'none';
+            }
+
+            // Show modal with animation
+            const overlay = document.getElementById('anggotaDetailOverlay');
+            overlay.classList.add('active');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAnggotaDetail(event, forceClose = false) {
+            // Tutup jika tombol close di-klik (forceClose) atau jika overlay di-klik
+            if (!forceClose && event.target.id !== 'anggotaDetailOverlay') return;
+
+            const overlay = document.getElementById('anggotaDetailOverlay');
+            overlay.classList.remove('active');
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+        function handlePhotoError() {
+            // Jika foto tidak bisa diload, avatar akan tampil sebagai fallback
+            const header = document.getElementById('anggotaDetailHeader');
+            header.classList.add('no-image');
+        }
+
+        // NAV ACTIVE ====================
+        function setActiveNav(element) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            renderBidangGrid();
+            
+            // Add keyboard support (ESC to close modal)
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const overlay = document.getElementById('anggotaDetailOverlay');
+                    if (overlay.classList.contains('active')) {
+                        overlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                }
+            });
+        });
+    </script>
+    <script src="scripts/main.js"></script>
+    <script>document.addEventListener('gesturestart', function(e){ e.preventDefault(); });</script>
+</body>
+</html>

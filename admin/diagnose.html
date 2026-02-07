@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPM System Diagnosis</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #0f172a; color: #fff; }
+        .card { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #334155; }
+        .status { font-weight: bold; }
+        .ok { color: #4ade80; }
+        .err { color: #f87171; }
+        button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        pre { background: #000; padding: 10px; overflow-x: auto; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>System Diagnosis</h1>
+    <button onclick="runDiagnostics()">Run Diagnostics</button>
+    <div id="results"></div>
+
+    <script>
+        async function checkEndpoint(name, url, method = 'GET', body = null) {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `<h3>Checking ${name}...</h3><div class="loader">Loading...</div>`;
+            document.getElementById('results').appendChild(div);
+
+            const start = Date.now();
+            try {
+                const opts = { method };
+                if (body) {
+                    opts.body = JSON.stringify(body);
+                    opts.headers = { 'Content-Type': 'application/json' };
+                }
+                
+                const res = await fetch(url, opts);
+                const text = await res.text();
+                let json = null;
+                try { json = JSON.parse(text); } catch {}
+                
+                const duration = Date.now() - start;
+                const statusClass = res.ok ? 'ok' : 'err';
+                
+                div.innerHTML = `
+                    <h3>${name} <span class="status ${statusClass}">[${res.status} ${res.statusText}]</span></h3>
+                    <p>Duration: ${duration}ms</p>
+                    <p>Content-Type: ${res.headers.get('content-type')}</p>
+                    <details>
+                        <summary>Response Body</summary>
+                        <pre>${text.slice(0, 1000)}</pre>
+                    </details>
+                `;
+            } catch (e) {
+                div.innerHTML = `
+                    <h3>${name} <span class="status err">[FAILED]</span></h3>
+                    <p>Error: ${e.message}</p>
+                `;
+            }
+        }
+
+        async function runDiagnostics() {
+            document.getElementById('results').innerHTML = '';
+            
+            // 1. Check DB Health
+            await checkEndpoint('Database Health', '/api/dbHealth');
+            
+            // 2. Check Questions List
+            await checkEndpoint('Questions Summary', '/api/questions?mode=summary');
+            
+            // 3. Check Root API (Can Attempt)
+            // Note: We need a session token for this to be fully valid, but 401 is better than 500/404
+            await checkEndpoint('Root API (PublicCanAttempt)', '/api', 'POST', { 
+                action: 'publicCanAttempt', 
+                session: 'test-session', 
+                quiz_set: 1 
+            });
+            
+            // 4. Check Results List
+            await checkEndpoint('Results List', '/api/results?page=1&size=5');
+        }
+    </script>
+</body>
+</html>
