@@ -423,27 +423,66 @@
             els.questionsList.innerHTML = all.map(q => {
                 const setNum = Number(q.quiz_set || 1);
                 const setLabel = setNum === 1 ? 'Kuis 1' : (setNum === 2 ? 'Kuis 2' : 'Kuis 3');
-                const badgeClass = q.active ? 'badge-active' : 'badge-inactive';
-                const activeLabel = q.active ? 'AKTIF' : 'NONAKTIF';
+                const isActive = q.active;
+                const statusColor = isActive ? 'var(--accent-success)' : 'var(--text-muted)';
+                const statusText = isActive ? 'AKTIF' : 'NONAKTIF';
                 
+                // Parse options if string (legacy)
+                let opts = q.options;
+                if (typeof opts === 'string') {
+                    try { opts = JSON.parse(opts); } catch { opts = { a:'-', b:'-', c:'-', d:'-' }; }
+                }
+
                 return `
-                <div class="list-item" data-id="${q.id}">
-                    <div class="list-item-header">
-                        <span class="item-badge" style="background:rgba(59, 130, 246, 0.15); color:var(--accent-secondary); border:1px solid rgba(59, 130, 246, 0.2);">${escapeHtml(setLabel)}</span>
-                        <span class="item-badge ${badgeClass}">${activeLabel}</span>
+                <div class="q-card" data-id="${q.id}">
+                    <div class="q-card-header">
+                        <span class="q-set-badge">${escapeHtml(setLabel)}</span>
+                        <span style="color:${statusColor}; font-weight:bold; font-size:0.7rem;">${statusText}</span>
                     </div>
-                    <div class="item-title">${escapeHtml(q.question)}</div>
-                    <div class="item-meta">
-                        <span><i class="fas fa-tag"></i> ${escapeHtml(q.category || 'Umum')}</span>
-                        <span><i class="fas fa-check-circle"></i> Kunci: ${escapeHtml((q.correct_answer||'').toUpperCase())}</span>
+                    
+                    <p class="q-text">${escapeHtml(q.question)}</p>
+                    
+                    <div class="q-options-grid">
+                        ${['a','b','c','d'].map(k => {
+                            const isKey = (q.correct_answer || '').toLowerCase() === k;
+                            const cls = isKey ? 'q-opt correct' : 'q-opt';
+                            return `
+                            <div class="${cls}">
+                                <div class="q-opt-key">${k.toUpperCase()}</div>
+                                <div class="q-opt-val">${escapeHtml(opts[k] || '')}</div>
+                            </div>
+                            `;
+                        }).join('')}
                     </div>
-                    <div class="actions" style="margin-top:16px; display:flex; gap:12px;">
-                        <button class="btn btn-secondary" style="flex:1; height:40px; font-size:0.9rem;" data-action="edit"><i class="fas fa-pen"></i> Edit</button>
-                        <button class="btn btn-secondary" style="flex:1; height:40px; font-size:0.9rem; color:var(--accent-danger); border-color:rgba(239,68,68,0.3);" data-action="delete"><i class="fas fa-trash"></i> Hapus</button>
+
+                    <div class="q-actions">
+                        <button class="q-btn q-btn-edit" data-action="edit">
+                            <i class="fas fa-pen"></i> Edit
+                        </button>
+                        <button class="q-btn q-btn-del" data-action="delete">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
                     </div>
                 </div>
                 `;
             }).join('');
+            
+            // Re-attach event listeners to new buttons
+            els.questionsList.querySelectorAll('.q-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const card = e.target.closest('.q-card');
+                    const id = Number(card.dataset.id);
+                    const action = e.target.closest('button').dataset.action;
+                    
+                    if (action === 'edit') {
+                        const qData = state.questions.find(x => x.id === id);
+                        if (qData) openQuestionModal(qData);
+                    }
+                    if (action === 'delete') {
+                        deleteQuestion(id);
+                    }
+                });
+            });
         }
         // Pagination
         const totalPages = Math.max(1, Math.ceil(state.totalQuestions / paging.qSize));
@@ -943,11 +982,13 @@
     }
 
     // --- MODAL QUESTION LOGIC ---
-    function openModal(q = null) {
+    window.openQuestionModal = (q = null) => {
         hideAllModalPanels();
         if (els.questionForm) els.questionForm.classList.remove('hidden');
+        
+        // Hide tabs for cleaner ergonomic form
         const tabs = document.querySelector('.modal-tabs');
-        if (tabs) tabs.classList.remove('hidden'); // Show tabs for questions
+        if (tabs) tabs.classList.add('hidden'); 
 
         if (q) {
             els.modalTitle.textContent = 'Edit Soal';
@@ -957,7 +998,11 @@
             els.qB.value = q.options.b;
             els.qC.value = q.options.c;
             els.qD.value = q.options.d;
-            els.qCorrect.value = q.correct_answer || 'a';
+            
+            // Set radio for correct answer
+            const radios = document.querySelectorAll('input[name="correct_answer"]');
+            radios.forEach(r => { r.checked = (r.value === q.correct_answer); });
+            
             els.qActive.value = q.active ? 'true' : 'false';
             els.qCategory.value = q.category || 'Umum';
             els.qQuizSet.value = q.quiz_set || 1;
@@ -966,6 +1011,9 @@
             els.questionForm.reset();
             els.qId.value = '';
             els.qActive.value = 'true';
+            document.getElementById('radio-a').checked = true; // Default A
+            
+            // Restore draft logic...
             try {
                 const draft = localStorage.getItem(STORAGE_KEYS.draft);
                 if (draft) {
@@ -981,8 +1029,7 @@
             } catch {}
         }
         showModalContainer();
-        setTimeout(() => { if (els.qQuestion) els.qQuestion.style.height = els.qQuestion.scrollHeight + 'px'; }, 100);
-    }
+    };
 
     function closeModal() {
         els.modal.classList.remove('active');
@@ -994,11 +1041,16 @@
     async function handleSave(addMore = false) {
         if (!els.questionForm.checkValidity()) { els.questionForm.reportValidity(); return; }
         const id = els.qId.value;
+        
+        // Get correct answer from radio
+        const selectedRadio = document.querySelector('input[name="correct_answer"]:checked');
+        const correctVal = selectedRadio ? selectedRadio.value : 'a';
+
         const payload = {
             id: id || undefined,
             question: els.qQuestion.value,
             options: { a: els.qA.value, b: els.qB.value, c: els.qC.value, d: els.qD.value },
-            correct_answer: els.qCorrect.value,
+            correct_answer: correctVal,
             active: els.qActive.value === 'true',
             category: els.qCategory.value,
             quiz_set: Number(els.qQuizSet.value)
@@ -1022,6 +1074,7 @@
                 els.qQuizSet.value = set;
                 els.qActive.value = 'true';
                 els.qId.value = '';
+                document.getElementById('radio-a').checked = true;
                 els.modalTitle.textContent = 'Tambah Soal';
                 setStatus('Soal tersimpan. Silakan tambah lagi.', 'ok');
             } else {

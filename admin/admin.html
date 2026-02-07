@@ -157,7 +157,7 @@
                         </div>
                     </div>
                     
-                    <div id="questions-list" class="list-container">
+                    <div id="questions-list" class="question-card-grid">
                         <!-- JS will populate cards here -->
                     </div>
                     
@@ -241,17 +241,19 @@
                         </button>
                     </div>
                     <div class="card">
-                        <h3 style="margin-bottom:12px">Manajemen Kuis</h3>
+                        <h3 style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-exclamation-triangle" style="color:var(--accent-danger)"></i> Manajemen Kuis
+                        </h3>
                         <div class="form-group">
-                            <label>Reset Total Set Kuis (Hapus semua data user untuk set ini)</label>
+                            <label style="color:var(--accent-danger)">Reset Total Set Kuis (Hapus semua data user untuk set ini)</label>
                             <div style="display:flex; gap:8px;">
-                                <select id="reset-set-select" style="flex:1; padding:8px;">
-                                    <option value="1">Kuis 1</option>
-                                    <option value="2">Kuis 2</option>
-                                    <option value="3">Kuis 3</option>
+                                <select id="reset-set-select" style="flex:1; padding:8px; border:1px solid var(--border-color); border-radius:8px;">
+                                    <option value="1">Kuis 1 (Mingguan)</option>
+                                    <option value="2">Kuis 2 (Event)</option>
+                                    <option value="3">Kuis 3 (Bidang)</option>
                                 </select>
-                                <button class="btn btn-secondary" style="color:var(--accent-danger); border-color:var(--accent-danger);" id="global-reset-btn">
-                                    Reset Set
+                                <button class="btn btn-secondary" style="background:var(--accent-danger); color:#fff; border:none;" id="global-reset-btn">
+                                    <i class="fas fa-trash-alt"></i> Reset Set
                                 </button>
                             </div>
                         </div>
@@ -432,91 +434,103 @@
                 </form>
             </div>
 
-            <form id="question-form" style="display:flex; flex-direction:column; height:100%">
-                <div class="modal-body">
+            <form id="question-form" class="modal-form-layout">
+                <div class="modal-body-scroll">
                     <input type="hidden" id="q-id">
                     
-                    <div class="form-group">
-                        <label>Set Kuis</label>
-                        <div class="select-wrapper">
-                            <select id="q-quizset" required>
+                    <!-- Top Row: Meta Info -->
+                    <div class="form-row compact-row">
+                        <div class="form-group" style="flex:1">
+                            <label>Set Kuis</label>
+                            <select id="q-quizset" required class="input-modern">
                                 <option value="1">Kuis 1 (UMUM)</option>
                                 <option value="2">Kuis 2 (EVENT)</option>
                                 <option value="3">Kuis 3 (BIDANG)</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Kategori</label>
-                        <input type="text" id="q-category" placeholder="Contoh: Sejarah, Fiqih, Umum" list="category-list">
-                        <datalist id="category-list">
-                            <!-- Populated by JS -->
-                        </datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Pertanyaan</label>
-                        <!-- Rich Text Toolbar -->
-                        <div class="rich-text-toolbar">
-                            <button type="button" class="btn-tool" data-tag="b" title="Bold"><i class="fas fa-bold"></i></button>
-                            <button type="button" class="btn-tool" data-tag="i" title="Italic"><i class="fas fa-italic"></i></button>
-                            <button type="button" class="btn-tool" data-tag="u" title="Underline"><i class="fas fa-underline"></i></button>
-                            <button type="button" class="btn-tool" data-tag="code" title="Code"><i class="fas fa-code"></i></button>
-                            <button type="button" class="btn-tool" data-tag="br" title="Baris Baru"><i class="fas fa-level-down-alt"></i></button>
-                        </div>
-                        <textarea id="q-question" class="input-expandable" required placeholder="Tulis soal di sini..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Pilihan Jawaban</label>
-                        <div class="option-grid">
-                            <div class="input-group">
-                                <span class="input-prefix">A</span>
-                                <textarea id="q-a" class="input-expandable" required placeholder="Opsi A"></textarea>
-                            </div>
-                            <div class="input-group">
-                                <span class="input-prefix">B</span>
-                                <textarea id="q-b" class="input-expandable" required placeholder="Opsi B"></textarea>
-                            </div>
-                            <div class="input-group">
-                                <span class="input-prefix">C</span>
-                                <textarea id="q-c" class="input-expandable" required placeholder="Opsi C"></textarea>
-                            </div>
-                            <div class="input-group">
-                                <span class="input-prefix">D</span>
-                                <textarea id="q-d" class="input-expandable" required placeholder="Opsi D"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="form-group" style="flex:1">
-                            <label>Kunci Jawaban</label>
-                            <div class="select-wrapper">
-                                <select id="q-correct" required>
-                                    <option value="a">A</option>
-                                    <option value="b">B</option>
-                                    <option value="c">C</option>
-                                    <option value="d">D</option>
-                                </select>
-                            </div>
+                            <label>Kategori</label>
+                            <input type="text" id="q-category" placeholder="Sejarah, Fiqih..." list="category-list" class="input-modern">
+                            <datalist id="category-list">
+                                <!-- Populated by JS -->
+                            </datalist>
                         </div>
-                        <div class="form-group" style="flex:1">
+                        <div class="form-group" style="width:100px;">
                             <label>Status</label>
-                            <div class="select-wrapper">
-                                <select id="q-active">
-                                    <option value="true">Aktif</option>
-                                    <option value="false">Nonaktif</option>
-                                </select>
+                            <select id="q-active" class="input-modern">
+                                <option value="true">Aktif</option>
+                                <option value="false">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Main Question Area -->
+                    <div class="form-group" style="margin-top:12px;">
+                        <label>Pertanyaan</label>
+                        <div class="rich-input-container">
+                            <textarea id="q-question" class="textarea-large" required placeholder="Tulis soal di sini..."></textarea>
+                            <div class="rich-tools">
+                                <button type="button" class="tool-btn" data-tag="b"><b>B</b></button>
+                                <button type="button" class="tool-btn" data-tag="i"><i>I</i></button>
+                                <button type="button" class="tool-btn" data-tag="code">&lt;/&gt;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options & Key Area -->
+                    <div class="options-section">
+                        <div class="options-header">
+                            <label>Pilihan Jawaban</label>
+                            <span class="info-label">Pilih radio button untuk kunci jawaban</span>
+                        </div>
+                        
+                        <div class="options-grid-form">
+                            <!-- Option A -->
+                            <div class="opt-input-group" data-key="a">
+                                <div class="opt-radio-wrapper">
+                                    <input type="radio" name="correct_answer" value="a" id="radio-a" required>
+                                    <label for="radio-a" class="opt-badge">A</label>
+                                </div>
+                                <input type="text" id="q-a" class="input-opt" required placeholder="Jawaban A">
+                            </div>
+
+                            <!-- Option B -->
+                            <div class="opt-input-group" data-key="b">
+                                <div class="opt-radio-wrapper">
+                                    <input type="radio" name="correct_answer" value="b" id="radio-b" required>
+                                    <label for="radio-b" class="opt-badge">B</label>
+                                </div>
+                                <input type="text" id="q-b" class="input-opt" required placeholder="Jawaban B">
+                            </div>
+
+                            <!-- Option C -->
+                            <div class="opt-input-group" data-key="c">
+                                <div class="opt-radio-wrapper">
+                                    <input type="radio" name="correct_answer" value="c" id="radio-c" required>
+                                    <label for="radio-c" class="opt-badge">C</label>
+                                </div>
+                                <input type="text" id="q-c" class="input-opt" required placeholder="Jawaban C">
+                            </div>
+
+                            <!-- Option D -->
+                            <div class="opt-input-group" data-key="d">
+                                <div class="opt-radio-wrapper">
+                                    <input type="radio" name="correct_answer" value="d" id="radio-d" required>
+                                    <label for="radio-d" class="opt-badge">D</label>
+                                </div>
+                                <input type="text" id="q-d" class="input-opt" required placeholder="Jawaban D">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary" id="save-btn">Simpan</button>
-                    <button type="button" class="btn btn-secondary" id="save-add-btn">Simpan & Tambah</button>
+                <!-- Sticky Footer Actions -->
+                <div class="modal-footer-sticky">
+                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('question-modal').classList.add('hidden')">Batal</button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn btn-secondary" id="save-add-btn">Simpan & Baru</button>
+                        <button type="submit" class="btn btn-primary" id="save-btn">Simpan</button>
+                    </div>
                 </div>
             </form>
         </div>

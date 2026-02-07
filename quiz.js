@@ -530,9 +530,26 @@ window.handleAnswer = function(key) {
     });
     userAnswers[currentQuestionIndex] = key;
     nextBtn.disabled = false;
+};
+
+// --- Reset Logic ---
+window.resetQuiz = function() {
+    if (!questionsData || !questionsData.length) return;
     
-    // Optional: Subtle feedback that answer is selected
-    // if (window.Toast) Toast.show('Jawaban dipilih', 'info');
+    // Konfirmasi dialog untuk mencegah reset tidak disengaja
+    if (!confirm('Apakah Anda yakin ingin mengulang kuis dari awal? Semua jawaban saat ini akan dihapus.')) return;
+    
+    // Logika menghapus semua jawaban yang tersimpan, skor, dan progres
+    currentQuestionIndex = 0;
+    userScore = 0;
+    userAnswers = [];
+    startTime = Date.now(); // Reset timer juga
+    
+    // UI Update
+    if (window.Toast) Toast.show('Kuis direset. Selamat mengerjakan ulang!', 'info');
+    
+    // Pengalihan kembali ke bagian awal (nomor 1)
+    renderQuestion();
 };
 
 async function nextQuestion() {
@@ -698,6 +715,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startBtn) {
         startBtn.addEventListener('click', () => {
             fetchQuestions();
+        });
+    }
+
+    const resetBtn = document.getElementById('reset-quiz-btn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (typeof window.resetQuiz === 'function') window.resetQuiz();
         });
     }
 

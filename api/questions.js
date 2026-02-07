@@ -25,27 +25,49 @@ async function list(req, res) {
     }
     
     // Fetch Top 1 Global High Score (Single Champion)
-    // We select the distinct best attempt for each user first, then order by best scores.
-    // Using Postgres DISTINCT ON to get one row per user_id.
-    const topScoresGlobal = (await query`
-      SELECT * FROM (
-        SELECT DISTINCT ON (user_id) username, score, total, percent, quiz_set, created_at, time_spent
-        FROM results
-        ORDER BY user_id, percent DESC, score DESC, time_spent ASC, created_at ASC
-      ) as best_attempts
-      ORDER BY percent DESC, score DESC, time_spent ASC
-      LIMIT 1
-    `).rows;
+    let topScoresGlobal = [];
+    try {
+        // We select the distinct best attempt for each user first, then order by best scores.
+        // Using Postgres DISTINCT ON to get one row per user_id.
+        // JOIN with users table to ensure username availability and correctness
+        topScoresGlobal = (await query`
+          SELECT 
+            u.username, 
+            best_attempts.score, 
+            best_attempts.total, 
+            best_attempts.percent, 
+            best_attempts.quiz_set, 
+            best_attempts.created_at, 
+            best_attempts.time_spent
+          FROM (
+            SELECT DISTINCT ON (user_id) user_id, score, total, percent, quiz_set, created_at, time_spent
+            FROM results
+            ORDER BY user_id, percent DESC, score DESC, time_spent ASC, created_at ASC
+          ) as best_attempts
+          JOIN users u ON best_attempts.user_id = u.id
+          ORDER BY best_attempts.percent DESC, best_attempts.score DESC, best_attempts.time_spent ASC
+          LIMIT 1
+        `).rows;
+    } catch (e) {
+        console.error('Failed to fetch top scores:', e);
+        // Fallback: empty list (feature disabled if error)
+    }
 
     // Also fetch Dynamic Next Quiz Info from quiz_schedules
     // We look for the next upcoming active schedule
-    const nextSchedule = (await query`
-      SELECT title, description, start_time 
-      FROM quiz_schedules 
-      WHERE active = true AND start_time > NOW() 
-      ORDER BY start_time ASC 
-      LIMIT 1
-    `).rows[0];
+    let nextSchedule = null;
+    try {
+        nextSchedule = (await query`
+          SELECT title, description, start_time 
+          FROM quiz_schedules 
+          WHERE active = true AND start_time > NOW() 
+          ORDER BY start_time ASC 
+          LIMIT 1
+        `).rows[0];
+    } catch (e) {
+        console.error('Failed to fetch schedule:', e);
+        // Fallback: null (feature disabled if error/table missing)
+    }
 
     let nextQuiz = null;
     if (nextSchedule) {

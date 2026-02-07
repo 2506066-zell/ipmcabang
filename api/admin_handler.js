@@ -149,6 +149,20 @@ async function handleResetSet(req, res) {
     const quiz_set = Number(body.quiz_set || 0);
     if (!quiz_set) return json(res, 400, { status: 'error', message: 'Missing quiz_set' });
     
+    // Notify users before deletion (Best Practice)
+    try {
+        // Find users who have results for this set
+        const affectedUsers = (await query`SELECT DISTINCT user_id FROM results WHERE quiz_set=${quiz_set}`).rows;
+        if (affectedUsers.length > 0) {
+             const msg = `Admin telah mereset Kuis Set ${quiz_set}. Anda dapat mengerjakannya kembali.`;
+             // Bulk insert not supported by template literal helper easily, loop for now (safe for small scale)
+             // Ideally: INSERT INTO notifications ... SELECT ...
+             for(const u of affectedUsers) {
+                 await query`INSERT INTO notifications (user_id, message) VALUES (${u.user_id}, ${msg})`;
+             }
+        }
+    } catch (e) { console.error('Failed to notify users:', e); }
+
     await query`DELETE FROM results WHERE quiz_set=${quiz_set}`;
     
     // Log Activity
