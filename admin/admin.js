@@ -195,6 +195,14 @@
     }
     function setStatus(msg, type = 'info') {
         console.log(`[Admin] Status: ${msg} (${type})`);
+        
+        // Use Toast if available
+        if (window.Toast) {
+            const t = type === 'ok' ? 'success' : type;
+            window.Toast.show(msg, t);
+        }
+
+        // Fallback or specific login status
         if (els.status) {
             els.status.textContent = msg;
             els.status.className = 'status ' + type;
@@ -203,10 +211,6 @@
                     els.status.textContent = ''; 
                 }
             }, 5000);
-        } else {
-            // Use Toast if available in admin page context, else alert/console
-            // Admin page might not have toast.js loaded, use alert for error
-            if (type === 'error') alert(msg);
         }
     }
 
@@ -420,17 +424,17 @@
                 return `
                 <div class="list-item" data-id="${q.id}">
                     <div class="list-item-header">
-                        <span class="item-badge" style="background:#3b82f6; color:#fff;">${escapeHtml(setLabel)}</span>
+                        <span class="item-badge" style="background:rgba(59, 130, 246, 0.15); color:var(--accent-secondary); border:1px solid rgba(59, 130, 246, 0.2);">${escapeHtml(setLabel)}</span>
                         <span class="item-badge ${badgeClass}">${activeLabel}</span>
                     </div>
                     <div class="item-title">${escapeHtml(q.question)}</div>
                     <div class="item-meta">
                         <span><i class="fas fa-tag"></i> ${escapeHtml(q.category || 'Umum')}</span>
-                        <span><i class="fas fa-check"></i> Jawaban: ${escapeHtml((q.correct_answer||'').toUpperCase())}</span>
+                        <span><i class="fas fa-check-circle"></i> Kunci: ${escapeHtml((q.correct_answer||'').toUpperCase())}</span>
                     </div>
-                    <div class="actions" style="margin-top:12px; display:flex; gap:8px;">
-                        <button class="btn btn-secondary" style="flex:1; height:36px; min-height:36px;" data-action="edit"><i class="fas fa-pen"></i> Edit</button>
-                        <button class="btn btn-secondary" style="flex:1; height:36px; min-height:36px; color:var(--accent-danger); border-color:rgba(239,68,68,0.3);" data-action="delete"><i class="fas fa-trash"></i> Hapus</button>
+                    <div class="actions" style="margin-top:16px; display:flex; gap:12px;">
+                        <button class="btn btn-secondary" style="flex:1; height:40px; font-size:0.9rem;" data-action="edit"><i class="fas fa-pen"></i> Edit</button>
+                        <button class="btn btn-secondary" style="flex:1; height:40px; font-size:0.9rem; color:var(--accent-danger); border-color:rgba(239,68,68,0.3);" data-action="delete"><i class="fas fa-trash"></i> Hapus</button>
                     </div>
                 </div>
                 `;
@@ -620,7 +624,10 @@
 
     // User Modal
     window.openUserModal = (id = null) => {
+        hideAllModalPanels();
         els.userModalPanel.classList.remove('hidden');
+        showModalContainer();
+        
         if (id) {
             const u = state.users.find(x => x.id === id);
             els.usrId.value = u.id;
@@ -779,20 +786,10 @@
         els.schEnd.value = toLocalISO(s.end_time);
         
         // Show Modal
-        if (els.scheduleModalPanel) {
-            els.scheduleModalPanel.classList.remove('hidden');
-            // Re-use question modal container if needed or create specific one
-            // Here we assume scheduleModalPanel is inside a modal structure or we show it
-            const modal = document.getElementById('question-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                // Hide other panels
-                document.querySelectorAll('.modal-content > form, .modal-content > div').forEach(el => el.classList.add('hidden'));
-                document.querySelector('.modal-tabs').classList.add('hidden'); // Hide tabs for schedule
-                els.scheduleModalPanel.classList.remove('hidden');
-                if (els.modalTitle) els.modalTitle.textContent = 'Edit Jadwal';
-            }
-        }
+        hideAllModalPanels();
+        if (els.scheduleModalPanel) els.scheduleModalPanel.classList.remove('hidden');
+        if (els.modalTitle) els.modalTitle.textContent = 'Edit Jadwal';
+        showModalContainer();
     };
 
     window.deleteSchedule = async (id) => {
@@ -879,8 +876,38 @@
         } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
     });
 
+    // --- HELPER: Modal Panel Switcher ---
+    function showModalContainer() {
+        if (els.modal) {
+            els.modal.classList.add('active');
+            els.modal.setAttribute('aria-hidden', 'false');
+        }
+    }
+    
+    function hideAllModalPanels() {
+        if (els.userModalPanel) els.userModalPanel.classList.add('hidden');
+        if (els.scheduleModalPanel) els.scheduleModalPanel.classList.add('hidden');
+        if (els.questionForm) {
+            // questionForm is a form element, so we can't just hide it if it's the main container?
+            // In my new HTML, question-form wraps modal-body.
+            // I should hide the form itself.
+            els.questionForm.classList.add('hidden');
+        }
+        // Also hide tabs if not question
+        const tabs = document.querySelector('.modal-tabs');
+        if (tabs) tabs.classList.add('hidden');
+        
+        const preview = document.getElementById('preview-panel');
+        if (preview) preview.classList.add('hidden');
+    }
+
     // --- MODAL QUESTION LOGIC ---
     function openModal(q = null) {
+        hideAllModalPanels();
+        if (els.questionForm) els.questionForm.classList.remove('hidden');
+        const tabs = document.querySelector('.modal-tabs');
+        if (tabs) tabs.classList.remove('hidden'); // Show tabs for questions
+
         if (q) {
             els.modalTitle.textContent = 'Edit Soal';
             els.qId.value = q.id;
@@ -912,8 +939,7 @@
                 }
             } catch {}
         }
-        els.modal.classList.add('active');
-        els.modal.setAttribute('aria-hidden', 'false');
+        showModalContainer();
         setTimeout(() => { if (els.qQuestion) els.qQuestion.style.height = els.qQuestion.scrollHeight + 'px'; }, 100);
     }
 
@@ -936,7 +962,11 @@
             category: els.qCategory.value,
             quiz_set: Number(els.qQuizSet.value)
         };
+        
+        const btn = addMore ? els.saveAddBtn : els.saveBtn;
+        if (btn) btn.classList.add('loading');
         showLoader('Menyimpan...');
+        
         try {
             const action = id ? 'update' : 'create';
             const data = await apiAdminVercel('POST', `/api/admin/questions?action=${action}`, payload);
@@ -957,7 +987,11 @@
                 closeModal();
                 setStatus('Soal berhasil disimpan.', 'ok');
             }
-        } catch (e) { alert('Gagal menyimpan: ' + e.message); } finally { hideLoader(); }
+        } catch (e) { alert('Gagal menyimpan: ' + e.message); } 
+        finally { 
+            hideLoader(); 
+            if (btn) btn.classList.remove('loading');
+        }
     }
 
     async function handleDelete(id) {
@@ -968,7 +1002,7 @@
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menghapus.');
             await loadQuestions(paging.qPage);
             setStatus('Soal dihapus.', 'ok');
-        } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
+        } catch (e) { setStatus('Error: ' + e.message, 'error'); } finally { hideLoader(); }
     }
 
     // --- EVENT LISTENERS ---
