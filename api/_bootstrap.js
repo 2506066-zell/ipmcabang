@@ -49,6 +49,22 @@ async function ensureSchema() {
     attempted_at TIMESTAMP DEFAULT NOW(),
     success BOOLEAN DEFAULT FALSE
   )`;
+
+  await query`CREATE TABLE IF NOT EXISTS activity_logs (
+    id SERIAL PRIMARY KEY,
+    admin_id INT REFERENCES users(id),
+    action TEXT NOT NULL,
+    details JSONB,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
   
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -62,6 +78,8 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_results_user_id ON results(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_results_quiz_set ON results(quiz_set)`;
   await query`CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`;
 }
 
 module.exports = { ensureSchema };

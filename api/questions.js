@@ -1,11 +1,15 @@
 const { query, rawQuery } = require('./_db');
 const { json, cacheHeaders } = require('./_util');
 
+const { getSessionUser } = require('./_auth');
+
 async function list(req, res) {
   const mode = req.query.mode ? String(req.query.mode).trim() : '';
+  const user = await getSessionUser(req);
   
   if (mode === 'summary') {
     // Return list of quiz sets and question counts
+    // Also include 'attempted' status if user is logged in
     const rows = (await query`
       SELECT quiz_set, COUNT(*)::int as count 
       FROM questions 
@@ -13,7 +17,42 @@ async function list(req, res) {
       GROUP BY quiz_set 
       ORDER BY quiz_set ASC
     `).rows;
-    return json(res, 200, { status: 'success', sets: rows }, cacheHeaders(60));
+
+    // Enhance summary with attempted status and top score
+    let attempts = [];
+    if (user) {
+      attempts = (await query`SELECT quiz_set FROM results WHERE user_id=${user.id}`).rows.map(r => r.quiz_set);
+    }
+    
+    // Fetch Top Scores for each set
+    // We want the highest score for each set, and who got it
+    // This query gets the top result for each quiz_set
+    const topScoresRes = (await query`
+      SELECT DISTINCT ON (quiz_set) quiz_set, username, score, total, time_spent
+      FROM results
+      ORDER BY quiz_set, score DESC, time_spent ASC
+    `).rows;
+    
+    const topScores = {};
+    topScoresRes.forEach(r => {
+      topScores[r.quiz_set] = { username: r.username, score: r.score, total: r.total };
+    });
+
+    const enhancedSets = rows.map(r => ({
+      ...r,
+      attempted: attempts.includes(r.quiz_set),
+      top_score: topScores[r.quiz_set] || null
+    }));
+
+    // Add Next Quiz Info (Mock/Hardcoded for now)
+    // In a real app, this would come from a schedule table
+    const nextQuiz = {
+      title: "Kuis Spesial Ramadhan",
+      topic: "Sejarah Islam & Puasa",
+      countdown_target: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+    };
+
+    return json(res, 200, { status: 'success', sets: enhancedSets, next_quiz: nextQuiz }, cacheHeaders(0)); // No cache for dynamic status
   }
 
   if (mode === 'categories') {

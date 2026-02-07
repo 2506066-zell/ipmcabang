@@ -52,6 +52,8 @@ const quizHeader = document.getElementById('quiz-header');
 const quizBody = document.getElementById('quiz-body');
 const nextBtn = document.getElementById('next-btn');
 
+let countdownInterval;
+
 // --- Quiz Logic ---
 
 async function fetchQuestions() {
@@ -72,6 +74,11 @@ async function fetchQuestions() {
         
         const payload = await response.json();
         const sets = payload.sets || [];
+        
+        // Handle Next Quiz Info
+        if (payload.next_quiz) {
+            initNextQuiz(payload.next_quiz);
+        }
         
         if (!sets.length) {
             quizBody.style.display = 'block';
@@ -115,24 +122,58 @@ function showSetPicker(summarySets) {
     if (window.Toast) Toast.show('Silakan pilih topik kuis untuk memulai.', 'info');
 
     if (quizSetGrid) {
-        const counts = {};
+        // Map data for easier access
+        const setsData = {};
         summarySets.forEach(s => {
-            counts[s.quiz_set] = s.count;
+            setsData[s.quiz_set] = s;
         });
 
         quizSetGrid.querySelectorAll('.set-card').forEach(btn => {
-            const set = Number(btn.dataset.set || 1);
-            const count = counts[set] || 0;
+            const setNum = Number(btn.dataset.set || 1);
+            const data = setsData[setNum];
+            const count = data ? data.count : 0;
+            const attempted = data ? data.attempted : false;
+            const topScore = data ? data.top_score : null;
             
-            const small = quizSetGrid.querySelector(`small[data-count="${set}"]`);
+            // Update Count
+            const small = btn.querySelector('small');
             if (small) small.textContent = `${count} soal`;
             
+            // Handle Attempted Status
+            if (attempted) {
+                btn.classList.add('attempted');
+                btn.dataset.attempted = 'true';
+            } else {
+                btn.classList.remove('attempted');
+                btn.dataset.attempted = 'false';
+            }
+
+            // Handle Top Score Display
+            // Remove existing top score info if any
+            const existingTop = btn.querySelector('.top-score-info');
+            if (existingTop) existingTop.remove();
+
+            if (topScore) {
+                const badge = document.createElement('div');
+                badge.className = 'top-score-info';
+                badge.innerHTML = `<i class="fas fa-crown"></i> ${topScore.username} (${Math.round((topScore.score/topScore.total)*100)}%)`;
+                btn.appendChild(badge);
+            }
+            
             btn.disabled = count === 0;
+            
+            // Click Handler
             btn.onclick = async () => {
-                currentQuizSet = set;
+                // If attempted, show modal
+                if (btn.dataset.attempted === 'true') {
+                    openAttemptModal();
+                    return;
+                }
+
+                currentQuizSet = setNum;
                 try {
                     showLoader('Mengunduh Soal...');
-                    const qRes = await fetch(`${API_URL}/questions?set=${set}`);
+                    const qRes = await fetch(`${API_URL}/questions?set=${setNum}`);
                     if (!qRes.ok) throw new Error('Gagal mengunduh soal.');
                     const qPayload = await qRes.json();
                     let qData = normalizeQuestionsResponse(qPayload);
@@ -166,6 +207,83 @@ function showSetPicker(summarySets) {
         });
     }
 }
+
+// --- Next Quiz & Modal Logic ---
+
+function initNextQuiz(info) {
+    const section = document.getElementById('next-quiz-section');
+    if (!section || !info) return;
+    
+    section.style.display = 'block';
+    
+    if (info.title) document.getElementById('nq-title').textContent = info.title;
+    if (info.topic) document.getElementById('nq-topic').textContent = `Topik: ${info.topic}`;
+    
+    if (info.countdown_target) {
+        startCountdown(new Date(info.countdown_target).getTime());
+    }
+}
+
+function startCountdown(targetTime) {
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    function update() {
+        const now = Date.now();
+        const diff = targetTime - now;
+        
+        if (diff <= 0) {
+            clearInterval(countdownInterval);
+            document.getElementById('timer-h').textContent = '00';
+            document.getElementById('timer-m').textContent = '00';
+            document.getElementById('timer-s').textContent = '00';
+            return;
+        }
+        
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        document.getElementById('timer-h').textContent = String(h).padStart(2, '0');
+        document.getElementById('timer-m').textContent = String(m).padStart(2, '0');
+        document.getElementById('timer-s').textContent = String(s).padStart(2, '0');
+    }
+    
+    update();
+    countdownInterval = setInterval(update, 1000);
+}
+
+window.toggleRemind = function() {
+    const btn = document.getElementById('remind-btn');
+    if (!btn) return;
+    
+    const isActive = btn.classList.contains('active');
+    if (isActive) {
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="far fa-bell"></i> Ingatkan Saya';
+        if (window.Toast) Toast.show('Pengingat dimatikan.', 'info');
+    } else {
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fas fa-bell"></i> Pengingat Aktif';
+        if (window.Toast) Toast.show('Anda akan diingatkan saat kuis dimulai!', 'success');
+    }
+};
+
+window.openAttemptModal = function() {
+    const modal = document.getElementById('attempt-modal');
+    if (modal) {
+        modal.setAttribute('aria-hidden', 'false');
+        // Prevent scrolling on body
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+window.closeAttemptModal = function() {
+    const modal = document.getElementById('attempt-modal');
+    if (modal) {
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+};
 
 function startQuiz() {
     if (!questionsData || !questionsData.length) {
@@ -362,6 +480,26 @@ function shuffleOptions(options, rng) {
     return options; 
 }
 
+// --- Notifications ---
+async function checkNotifications() {
+    try {
+        const res = await fetch(`${API_URL}/notifications`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.notifications && data.notifications.length > 0) {
+            const unread = data.notifications.filter(n => !n.is_read);
+            if (unread.length > 0) {
+                // Show latest unread notification
+                unread.forEach(n => {
+                     if (window.Toast) Toast.show(n.message, 'info');
+                });
+                // Mark all as read
+                await fetch(`${API_URL}/notifications?action=markRead`, { method: 'POST' });
+            }
+        }
+    } catch {}
+}
+
 // --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
     // Define Globals
@@ -389,4 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchQuestions();
         });
     }
+
+    checkNotifications();
 });

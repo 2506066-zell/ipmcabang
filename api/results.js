@@ -75,6 +75,12 @@ async function create(req, res) {
     return json(res, 200, { status: 'success', id: recentDup.id, score, total, percent, idempotent: true });
   }
 
+  // Strict One-Time Per Set Check
+  const existingAttempt = (await query`SELECT id FROM results WHERE user_id=${userRow.id} AND quiz_set=${quiz_set}`).rows[0];
+  if (existingAttempt) {
+      return json(res, 403, { status: 'error', message: 'Anda sudah mengerjakan kuis set ini. Hubungi admin untuk reset jika perlu.' });
+  }
+
   const last = (await query`SELECT finished_at FROM results WHERE user_id=${userRow.id} ORDER BY id DESC LIMIT 1`).rows[0];
   if (last && Number(last.finished_at || 0) > 0) {
     const delta = finished_at - Number(last.finished_at);

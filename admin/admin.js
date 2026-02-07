@@ -18,6 +18,8 @@
         totalQuestions: 0,
         categories: [],
         results: [],
+        users: [], // New state for users
+        logs: [], // New state for logs
         connected: false,
         prefs: { tab: 'questions', search: '', status: 'all', set: 'all', category: 'all' },
         backend: 'vercel',
@@ -69,6 +71,7 @@
             // Tabs & Nav
             tabQuestions: document.getElementById('tab-questions'),
             tabResults: document.getElementById('tab-results'),
+            tabUsers: document.getElementById('tab-users'), // New tab
             bottomNav: document.getElementById('bottom-nav'),
             navItems: document.querySelectorAll('.nav-item'),
             navRefresh: document.getElementById('nav-refresh'),
@@ -91,6 +94,15 @@
             rPrev: document.getElementById('r-prev'),
             rNext: document.getElementById('r-next'),
             rPageInfo: document.getElementById('r-page-info'),
+
+            // Users List (New)
+            usersList: document.getElementById('users-list'),
+            refreshUsersBtn: document.getElementById('refresh-users-btn'),
+
+            // Logs List
+            tabLogs: document.getElementById('tab-logs'),
+            logsList: document.getElementById('logs-list'),
+            refreshLogsBtn: document.getElementById('refresh-logs-btn'),
 
             // Modal
             modal: document.getElementById('question-modal'),
@@ -261,6 +273,8 @@
         
         if (els.tabQuestions) els.tabQuestions.classList.toggle('hidden', tabName !== 'questions');
         if (els.tabResults) els.tabResults.classList.toggle('hidden', tabName !== 'results');
+        if (els.tabUsers) els.tabUsers.classList.toggle('hidden', tabName !== 'users');
+        if (els.tabLogs) els.tabLogs.classList.toggle('hidden', tabName !== 'logs');
         
         // Toggle FAB: only show on questions tab
         if (els.fabAdd) els.fabAdd.classList.toggle('hidden', tabName !== 'questions');
@@ -270,6 +284,8 @@
         
         if (tabName === 'questions' && state.questions.length === 0) loadQuestions();
         if (tabName === 'results' && state.results.length === 0) loadResults();
+        if (tabName === 'users' && state.users.length === 0) loadUsers();
+        if (tabName === 'logs' && state.logs.length === 0) loadLogs();
     }
 
     // --- QUESTIONS LOGIC ---
@@ -429,6 +445,131 @@
         } finally {
             hideLoader();
         }
+    }
+
+    // --- USERS & ATTEMPT RESET LOGIC ---
+    async function loadUsers() {
+        showLoader('Memuat User...');
+        try {
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=usersStatus');
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat user.');
+            state.users = data.users || [];
+            renderUsers();
+        } catch (e) {
+            console.error(e);
+            els.usersList.innerHTML = `<div class="card" style="text-align:center; color:var(--accent-danger)"><p>Gagal memuat data user: ${e.message}</p></div>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function renderUsers() {
+        if (state.users.length === 0) {
+            els.usersList.innerHTML = `<div class="card" style="text-align:center"><p>Belum ada user.</p></div>`;
+            return;
+        }
+
+        els.usersList.innerHTML = state.users.map(u => {
+            // Render quiz status
+            const quizSets = [1, 2, 3]; // Hardcoded for now, or get from config
+            const statusHtml = quizSets.map(setId => {
+                const attempt = u.attempts && u.attempts[setId];
+                if (attempt) {
+                    return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.05); padding:8px; border-radius:8px; margin-top:4px;">
+                        <div>
+                            <span style="font-weight:bold; font-size:0.9rem;">Kuis ${setId}</span>
+                            <span style="font-size:0.8rem; color:green; margin-left:8px;">✅ Selesai (${attempt.score}/${attempt.total})</span>
+                        </div>
+                        <button class="btn btn-secondary" style="font-size:0.8rem; padding:4px 8px; color:var(--accent-danger); border-color:rgba(239,68,68,0.3);" onclick="handleResetAttempt(${u.id}, ${setId})">
+                            Reset
+                        </button>
+                    </div>`;
+                } else {
+                    return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.02); padding:8px; border-radius:8px; margin-top:4px;">
+                        <span style="font-weight:bold; font-size:0.9rem; color:#888;">Kuis ${setId}</span>
+                        <span style="font-size:0.8rem; color:#888;">Belum Mengisi</span>
+                    </div>`;
+                }
+            }).join('');
+
+            return `
+            <div class="list-item">
+                <div class="list-item-header">
+                    <span class="item-title" style="font-size:1.1rem">${escapeHtml(u.username)}</span>
+                    <span class="item-badge" style="background:${u.role === 'admin' ? 'purple' : '#ccc'}; color:#fff;">${escapeHtml(u.role)}</span>
+                </div>
+                <div style="font-size:0.9rem; color:#666; margin-bottom:8px;">${escapeHtml(u.nama_panjang || '-')}</div>
+                <div style="margin-top:12px;">
+                    <div style="font-size:0.85rem; font-weight:600; margin-bottom:4px; text-transform:uppercase; color:#888;">Status Kuis</div>
+                    ${statusHtml}
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    window.handleResetAttempt = async (userId, quizSet) => {
+        if (!confirm(`Reset attempt user ini untuk Kuis ${quizSet}? User bisa mengisi ulang.`)) return;
+        
+        showLoader('Mereset...');
+        try {
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=resetAttempt', { user_id: userId, quiz_set: quizSet });
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
+            
+            // Reload users to update UI
+            await loadUsers();
+            setStatus('Attempt berhasil direset.', 'ok');
+        } catch (e) {
+            alert('Error: ' + e.message);
+        } finally {
+            hideLoader();
+        }
+    };
+
+    // --- LOGS LOGIC ---
+    async function loadLogs() {
+        showLoader('Memuat Log...');
+        try {
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=activityLogs');
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat log.');
+            state.logs = data.logs || [];
+            renderLogs();
+        } catch (e) {
+            console.error(e);
+            els.logsList.innerHTML = `<div class="card" style="text-align:center; color:var(--accent-danger)"><p>Gagal memuat log: ${e.message}</p></div>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function renderLogs() {
+        if (state.logs.length === 0) {
+            els.logsList.innerHTML = `<div class="card" style="text-align:center"><p>Belum ada aktivitas.</p></div>`;
+            return;
+        }
+        
+        els.logsList.innerHTML = state.logs.map(l => {
+            let detailsStr = '';
+            try {
+                if (typeof l.details === 'object') detailsStr = JSON.stringify(l.details, null, 2);
+                else detailsStr = String(l.details);
+            } catch {}
+            
+            return `
+            <div class="list-item">
+                <div class="list-item-header">
+                    <span class="item-title" style="font-size:1rem">${escapeHtml(l.action)}</span>
+                    <span class="item-badge" style="background:#666; color:#fff;">${escapeHtml(l.admin_name || 'Admin')}</span>
+                </div>
+                <div style="font-size:0.85rem; color:#444; margin:4px 0; font-family:monospace; background:#f5f5f5; padding:4px; border-radius:4px; overflow-x:auto;">${escapeHtml(detailsStr)}</div>
+                <div class="item-meta">
+                    <span><i class="fas fa-clock"></i> ${escapeHtml(l.created_at)}</span>
+                </div>
+            </div>
+            `;
+        }).join('');
     }
 
     // --- MODAL LOGIC ---
@@ -625,6 +766,7 @@
             if (!btn) return;
             if (btn.id === 'nav-refresh') {
                 if (state.prefs.tab === 'questions') loadQuestions();
+                else if (state.prefs.tab === 'users') loadUsers();
                 else loadResults();
             } else {
                 activateTab(btn.dataset.tab);
@@ -683,6 +825,9 @@
         els.rNext?.addEventListener('click', () => {
             paging.rPage++; renderResults();
         });
+
+        els.refreshUsersBtn?.addEventListener('click', loadUsers);
+        els.refreshLogsBtn?.addEventListener('click', loadLogs);
     }
 
     // --- INIT ---

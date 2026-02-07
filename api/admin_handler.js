@@ -45,19 +45,6 @@ async function handleUpdate(req, res) {
   params.push(id);
   const sql = `UPDATE questions SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`;
   
-  // Use raw query for dynamic updates
-  const { Pool } = require('pg'); 
-  // We need to use the shared pool from _db.js but it doesn't expose raw query with dynamic string construction easily
-  // Actually _db.js has rawQuery exported? Let's check _db.js content again.
-  // Yes, line 1: const { query, rawQuery } = require('./_db');
-  // Wait, I saw query exported but not rawQuery in the Read output of _db.js?
-  // Let me re-read _db.js to be sure.
-  // Ah, the previous Read output of _db.js showed:
-  // 65-> async function query(strings, ...values) {
-  // It does NOT seem to export rawQuery directly in the snippet I saw.
-  // Wait, questions.js uses `rawQuery` on line 61. So it MUST be exported.
-  // Let's assume it is.
-  
   const { rawQuery } = require('./_db');
   const result = await rawQuery(sql, params);
   
@@ -74,12 +61,95 @@ async function handleDelete(req, res) {
   return json(res, 200, { status: 'success' });
 }
 
+// --- NEW ADMIN FUNCTIONS ---
+
+async function handleGetUsersStatus(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+    
+    // Get all users
+    const users = (await query`SELECT id, username, nama_panjang, role FROM users ORDER BY username ASC`).rows;
+    
+    // Get attempts per user per quiz set
+    const attempts = (await query`SELECT user_id, quiz_set, score, total FROM results`).rows;
+    
+    // Map attempts to user
+    // structure: { [userId]: { [quizSetId]: { score, total } } }
+    const attemptMap = {};
+    attempts.forEach(a => {
+        if (!attemptMap[a.user_id]) attemptMap[a.user_id] = {};
+        attemptMap[a.user_id][a.quiz_set] = { score: a.score, total: a.total };
+    });
+    
+    const data = users.map(u => ({
+        id: u.id,
+        username: u.username,
+        nama_panjang: u.nama_panjang,
+        attempts: attemptMap[u.id] || {}
+    }));
+    
+    return json(res, 200, { status: 'success', users: data });
+}
+
+async function handleResetAttempt(req, res) {
+    let adminId = null;
+    try { 
+        const admin = await requireAdminAuth(req); 
+        adminId = admin.id;
+    } catch (e) { 
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
+    }
+    const b = parseJsonBody(req);
+    const userId = Number(b.user_id);
+    const quizSet = Number(b.quiz_set);
+    
+    if (!userId || !quizSet) return json(res, 400, { status: 'error', message: 'User ID dan Quiz Set wajib diisi' });
+    
+    // Log Activity
+    const details = { target_user_id: userId, quiz_set: quizSet };
+    try {
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'RESET_ATTEMPT', ${details})`;
+    } catch (e) { console.error('Failed to log activity:', e); }
+
+    // Create Notification
+    const msg = `Admin telah mereset status pengerjaan Kuis Set ${quizSet} Anda. Anda dapat mengerjakannya kembali.`;
+    try {
+        await query`INSERT INTO notifications (user_id, message) VALUES (${userId}, ${msg})`;
+    } catch (e) { console.error('Failed to create notification:', e); }
+    
+    // Delete result for this user and quiz set
+    await query`DELETE FROM results WHERE user_id=${userId} AND quiz_set=${quizSet}`;
+    
+    return json(res, 200, { status: 'success', message: 'Attempt berhasil direset.' });
+}
+
+async function handleGetActivityLogs(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+    
+    const logs = (await query`
+        SELECT l.id, l.action, l.details, l.created_at, u.username as admin_name 
+        FROM activity_logs l 
+        LEFT JOIN users u ON l.admin_id = u.id 
+        ORDER BY l.created_at DESC 
+        LIMIT 100
+    `).rows;
+    
+    return json(res, 200, { status: 'success', logs });
+}
+
 module.exports = async (req, res) => {
   try {
     const action = req.query.action;
     
-    // Ensure only POST method is used for these actions
-    if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    if (req.method !== 'POST') {
+        // Allow GET for fetching user status if action is usersStatus
+        if (req.method === 'GET' && action === 'usersStatus') {
+            return await handleGetUsersStatus(req, res);
+        }
+        if (req.method === 'GET' && action === 'activityLogs') {
+            return await handleGetActivityLogs(req, res);
+        }
+        return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    }
 
     switch (action) {
       case 'create':
@@ -88,6 +158,10 @@ module.exports = async (req, res) => {
         return await handleUpdate(req, res);
       case 'delete':
         return await handleDelete(req, res);
+      case 'usersStatus': // Can be POST too if we want
+        return await handleGetUsersStatus(req, res);
+      case 'resetAttempt':
+        return await handleResetAttempt(req, res);
       default:
         return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
     }
