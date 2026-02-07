@@ -74,4 +74,11 @@ module.exports = async (req, res) => {
     clearInterval(interval);
     res.end();
   });
+
+  // Auto-close after 25s to prevent Vercel Function Timeout errors
+  // This forces client to reconnect and frees up the lambda slot
+  setTimeout(() => {
+    clearInterval(interval);
+    res.end();
+  }, 25000);
 };

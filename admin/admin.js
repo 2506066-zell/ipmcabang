@@ -147,6 +147,7 @@
             schEnd: document.getElementById('sch-end'),
             previewSchBtn: document.getElementById('preview-sch-btn'),
             previewPanel: document.getElementById('preview-panel'),
+
             previewBox: document.getElementById('preview-box'),
             
             // Global Reset
@@ -351,7 +352,7 @@
         if (tabName === 'results' && state.results.length === 0) loadResults();
         if (tabName === 'users' && state.users.length === 0) loadUsers();
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
-        if (tabName === 'schedules' && state.schedules.length === 0) loadSchedules();
+        if (tabName === 'schedules') loadSchedules();
     };
 
     // --- DASHBOARD LOGIC ---
@@ -359,7 +360,7 @@
         // Parallel fetch for stats
         try {
             const [usersData, questionsData, logsData, schedulesData, resultsData] = await Promise.all([
-                apiAdminVercel('GET', '/api/admin/questions?action=usersExtended'),
+                apiAdminVercel('GET', '/api/admin/users?action=extended'),
                 apiGetVercel('/api/questions?size=1'), // Just to get total count
                 apiAdminVercel('GET', '/api/admin/questions?action=activityLogs'),
                 apiAdminVercel('GET', '/api/admin/questions?action=schedules'),
@@ -517,7 +518,7 @@
     async function loadUsers() {
         showLoader('Memuat User...');
         try {
-            const data = await apiAdminVercel('GET', '/api/admin/questions?action=usersExtended');
+            const data = await apiAdminVercel('GET', '/api/admin/users?action=extended');
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat user.');
             state.users = data.users || [];
             renderUsers();
@@ -608,7 +609,7 @@
         if (!confirm('Yakin hapus user ini? Semua data kuis mereka akan hilang.')) return;
         showLoader('Menghapus...');
         try {
-            const data = await apiAdminVercel('POST', '/api/admin/questions?action=deleteUser', { user_id: id });
+            const data = await apiAdminVercel('DELETE', `/api/admin/users?id=${id}`);
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal hapus.');
             await loadUsers();
             setStatus('User dihapus.', 'ok');
@@ -619,7 +620,7 @@
         if (!confirm(`Reset attempt user ini untuk Kuis ${quizSet}? User bisa mengisi ulang.`)) return;
         showLoader('Mereset...');
         try {
-            const data = await apiAdminVercel('POST', '/api/admin/questions?action=resetAttempt', { user_id: userId, quiz_set: quizSet });
+            const data = await apiAdminVercel('POST', '/api/admin/users?action=resetAttempt', { user_id: userId, quiz_set: quizSet });
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
             await loadUsers();
             setStatus('Attempt berhasil direset.', 'ok');

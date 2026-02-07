@@ -58,16 +58,25 @@ let countdownInterval;
 
 async function fetchQuestions() {
     showLoader('Mempersiapkan Soal...');
-    await new Promise(r => requestAnimationFrame(r));
+    // Clear previous state
     nextBtn.style.display = 'none';
     quizHeader.style.display = 'none';
 
+    // Timeout logic for robustness
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     try {
-        const response = await fetch(`${API_URL}/questions?mode=summary`);
+        const response = await fetch(`${API_URL}/questions?mode=summary`, { 
+            signal: controller.signal,
+            headers: { 'Cache-Control': 'no-cache' } 
+        });
         
+        clearTimeout(timeoutId);
+
         const ct = response.headers.get('content-type');
         if (!ct || !ct.includes('application/json')) {
-            throw new Error(`Server Error: ${response.status}`);
+            throw new Error(`Server Error: ${response.status} (Invalid Content-Type)`);
         }
 
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
@@ -75,7 +84,7 @@ async function fetchQuestions() {
         const payload = await response.json();
         const sets = payload.sets || [];
         
-        // Handle Next Quiz Info
+        // Handle Next Quiz Info (REST Source - Primary)
         if (payload.next_quiz) {
             initNextQuiz(payload.next_quiz);
         }
@@ -99,21 +108,24 @@ async function fetchQuestions() {
             if (btn) btn.addEventListener('click', () => fetchQuestions());
             return;
         }
+        
         quizBody.innerHTML = '';
         showSetPicker(sets);
 
     } catch (error) {
+        clearTimeout(timeoutId);
+        console.error('Fetch Questions Error:', error);
+        
         quizBody.style.display = 'block';
         quizBody.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">⚠️</div>
                 <h3>Gagal memuat kuis</h3>
-                <p>${error.message}</p>
+                <p>${error.name === 'AbortError' ? 'Koneksi lambat (Timeout)' : error.message}</p>
                 <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
             </div>`;
         const btn = document.getElementById('empty-reload-quiz');
         if (btn) btn.addEventListener('click', () => fetchQuestions());
-        console.error(error);
     } finally {
         hideLoader();
     }
@@ -297,6 +309,90 @@ function initSSE() {
             console.error('SSE Error', err);
             evtSource.close();
             // Retry after 10s
+            setTimeout(connect, 10000);
+        };
+    };
+    
+    connect();
+}
+
+// --- SSE & Countdown ---
+function initNextQuiz(data) {
+    const section = document.getElementById('next-quiz-section');
+    if (!section || !data) return;
+    
+    // Update Text
+    document.getElementById('nq-title').textContent = data.title || 'Event Mendatang';
+    document.getElementById('nq-topic').textContent = data.topic ? `Topik: ${data.topic}` : '';
+    section.style.display = 'block';
+    
+    // Start Countdown
+    startCountdown(data.countdown_target);
+}
+
+function startCountdown(targetDateStr) {
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    const target = new Date(targetDateStr).getTime();
+    const els = {
+        h: document.getElementById('timer-h'),
+        m: document.getElementById('timer-m'),
+        s: document.getElementById('timer-s')
+    };
+    
+    if (!els.h || !els.m || !els.s) return;
+    
+    const update = () => {
+        const now = Date.now();
+        const diff = target - now;
+        
+        if (diff <= 0) {
+            clearInterval(countdownInterval);
+            els.h.textContent = '00';
+            els.m.textContent = '00';
+            els.s.textContent = '00';
+            // Refresh quiz if time arrived
+            if (diff > -5000) fetchQuestions(); // Refresh only if just happened
+            return;
+        }
+        
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        els.h.textContent = String(h).padStart(2, '0');
+        els.m.textContent = String(m).padStart(2, '0');
+        els.s.textContent = String(s).padStart(2, '0');
+    };
+    
+    update();
+    countdownInterval = setInterval(update, 1000);
+}
+
+function initSSE() {
+    if (!window.EventSource) return;
+    
+    const connect = () => {
+        const source = new EventSource('/api/events'); // Use direct path handled by Vercel
+        
+        source.onmessage = (e) => {
+            // Heartbeat or simple message
+        };
+        
+        source.addEventListener('schedule_update', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                if (data) {
+                    initNextQuiz(data);
+                    if (window.Toast) Toast.show('Jadwal kuis diperbarui!', 'info');
+                } else {
+                    document.getElementById('next-quiz-section').style.display = 'none';
+                }
+            } catch {}
+        });
+        
+        source.onerror = () => {
+            source.close();
             setTimeout(connect, 10000);
         };
     };
