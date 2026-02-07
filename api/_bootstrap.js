@@ -81,6 +81,7 @@ async function ensureSchema() {
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`;
+  await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE`;
   await query`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS role TEXT`;
 
   // Create Indexes for Performance

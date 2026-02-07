@@ -136,11 +136,82 @@ async function handleGetActivityLogs(req, res) {
     return json(res, 200, { status: 'success', logs });
 }
 
+async function handleCreateUser(req, res) {
+    let adminId = null;
+    try { 
+        const admin = await requireAdminAuth(req); 
+        adminId = admin.id;
+    } catch (e) { 
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
+    }
+    const b = parseJsonBody(req);
+    const username = String(b.username || '').trim();
+    const password = String(b.password || '').trim();
+    const email = b.email ? String(b.email).trim() : null;
+    const role = b.role === 'admin' ? 'admin' : 'user';
+    
+    if (!username || !password) return json(res, 400, { status: 'error', message: 'Username dan Password wajib diisi' });
+    
+    // Hash password
+    const crypto = require('crypto');
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    
+    try {
+        await query`INSERT INTO users (username, password_salt, password_hash, email, role, active) 
+                    VALUES (${username}, ${salt}, ${hash}, ${email}, ${role}, true)`;
+        
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_USER', ${ { username, role } })`;
+        return json(res, 201, { status: 'success', message: 'User created' });
+    } catch (e) {
+        if (e.message.includes('unique')) return json(res, 400, { status: 'error', message: 'Username sudah digunakan' });
+        throw e;
+    }
+}
+
+async function handleUpdateUser(req, res) {
+    let adminId = null;
+    try { 
+        const admin = await requireAdminAuth(req); 
+        adminId = admin.id;
+    } catch (e) { 
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
+    }
+    const b = parseJsonBody(req);
+    const id = Number(b.id);
+    if (!id) return json(res, 400, { status: 'error', message: 'ID required' });
+    
+    const updates = [];
+    const params = [];
+    let idx = 1;
+    
+    if (b.username) { updates.push(`username = $${idx++}`); params.push(String(b.username).trim()); }
+    if (b.email !== undefined) { updates.push(`email = $${idx++}`); params.push(String(b.email).trim() || null); }
+    if (b.role) { updates.push(`role = $${idx++}`); params.push(b.role === 'admin' ? 'admin' : 'user'); }
+    if (b.active !== undefined) { updates.push(`active = $${idx++}`); params.push(Boolean(b.active)); }
+    
+    if (b.password) {
+        const crypto = require('crypto');
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = crypto.pbkdf2Sync(String(b.password), salt, 1000, 64, 'sha512').toString('hex');
+        updates.push(`password_salt = $${idx++}`); params.push(salt);
+        updates.push(`password_hash = $${idx++}`); params.push(hash);
+    }
+    
+    if (updates.length === 0) return json(res, 400, { status: 'error', message: 'No fields' });
+    
+    params.push(id);
+    const { rawQuery } = require('./_db');
+    await rawQuery(`UPDATE users SET ${updates.join(', ')} WHERE id = $${idx}`, params);
+    
+    await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_USER', ${ { target_user_id: id, fields: Object.keys(b) } })`;
+    return json(res, 200, { status: 'success' });
+}
+
 async function handleGetUsersExtended(req, res) {
     try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
     
     // Get users with stats
-    // Note: We group by user to count attempts and avg score
     const users = (await query`
         SELECT 
             u.id, 
@@ -148,6 +219,7 @@ async function handleGetUsersExtended(req, res) {
             u.email,
             u.nama_panjang, 
             u.role, 
+            u.active,
             u.created_at,
             COUNT(r.id) as total_quizzes,
             COALESCE(AVG(r.score), 0) as avg_score
@@ -258,6 +330,10 @@ module.exports = async (req, res) => {
         return await handleDelete(req, res);
       case 'usersStatus': // Can be POST too if we want
         return await handleGetUsersStatus(req, res);
+      case 'createUser':
+        return await handleCreateUser(req, res);
+      case 'updateUser':
+        return await handleUpdateUser(req, res);
       case 'deleteUser':
         return await handleDeleteUser(req, res);
       case 'resetAttempt':

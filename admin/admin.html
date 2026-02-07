@@ -18,185 +18,305 @@
     </div>
 
     <!-- MAIN CONTAINER -->
-    <main class="admin-container">
-        <!-- LOGIN SECTION -->
-        <section class="card" id="login-card">
-            <h1 class="card-title">Admin Kuis</h1>
-            <p class="card-subtitle">
-                Kelola data kuis dan hasil ujian.
-            </p>
-
-            <div class="field">
-                <label for="admin-username">Username</label>
-                <input id="admin-username" type="text" autocomplete="username" placeholder="Username admin">
+    <div class="admin-wrapper">
+        <!-- SIDEBAR (Desktop) -->
+        <aside class="sidebar hidden-mobile" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Admin IPM</h2>
             </div>
-            <div class="field">
-                <label for="admin-password">Password</label>
-                <div style="position:relative">
-                    <input id="admin-password" type="password" autocomplete="current-password" placeholder="Password admin">
-                    <button type="button" id="toggle-admin-password" class="btn-ghost" style="position:absolute;right:0;top:0;height:100%;width:48px;" aria-label="Toggle password">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="field hidden">
-                <label for="admin-token-input">Admin Token (Opsional)</label>
-                <input id="admin-token-input" type="password" placeholder="Token khusus operasi database">
-            </div>
-
-            <div class="actions">
-                <button class="btn btn-primary" id="admin-login-btn" type="button">
-                    <i class="fas fa-right-to-bracket"></i> Masuk
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="dashboard">
+                    <i class="fas fa-home"></i> <span>Dashboard</span>
                 </button>
-                <span class="status" id="status"></span>
+                <button class="nav-item" data-tab="questions">
+                    <i class="fas fa-list-ul"></i> <span>Bank Soal</span>
+                </button>
+                <button class="nav-item" data-tab="results">
+                    <i class="fas fa-chart-bar"></i> <span>Hasil Kuis</span>
+                </button>
+                <button class="nav-item" data-tab="users">
+                    <i class="fas fa-users"></i> <span>Manajemen User</span>
+                </button>
+                <button class="nav-item" data-tab="schedules">
+                    <i class="fas fa-calendar-alt"></i> <span>Jadwal & Setting</span>
+                </button>
+                <button class="nav-item" data-tab="logs">
+                    <i class="fas fa-history"></i> <span>Activity Logs</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="nav-item" id="sidebar-logout">
+                    <i class="fas fa-right-from-bracket"></i> <span>Keluar</span>
+                </button>
             </div>
-        </section>
+        </aside>
 
-        <!-- APP SECTION -->
-        <section class="hidden" id="app-card">
-            <!-- Header/Toolbar -->
-            <div class="card" style="position:sticky; top:0; z-index:100; border-radius: 0 0 16px 16px; margin: -16px -16px 20px -16px;">
-                <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px">
-                    <input id="search-input" type="search" placeholder="Cari soal..." style="flex:1">
-                    <button class="btn btn-ghost btn-icon" id="logout-btn" title="Keluar">
-                        <i class="fas fa-right-from-bracket"></i>
+        <main class="admin-main">
+            <!-- LOGIN SECTION -->
+            <section class="card" id="login-card">
+                <h1 class="card-title">Admin Kuis</h1>
+                <p class="card-subtitle">
+                    Kelola data kuis dan hasil ujian.
+                </p>
+
+                <div class="field">
+                    <label for="admin-username">Username</label>
+                    <input id="admin-username" type="text" autocomplete="username" placeholder="Username admin">
+                </div>
+                <div class="field">
+                    <label for="admin-password">Password</label>
+                    <div style="position:relative">
+                        <input id="admin-password" type="password" autocomplete="current-password" placeholder="Password admin">
+                        <button type="button" id="toggle-admin-password" class="btn-ghost" style="position:absolute;right:0;top:0;height:100%;width:48px;" aria-label="Toggle password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field hidden">
+                    <label for="admin-token-input">Admin Token (Opsional)</label>
+                    <input id="admin-token-input" type="password" placeholder="Token khusus operasi database">
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" id="admin-login-btn" type="button">
+                        <i class="fas fa-right-to-bracket"></i> Masuk
                     </button>
+                    <span class="status" id="status"></span>
                 </div>
-                <div class="flex-center" style="justify-content:space-between; overflow-x:auto; gap:8px; padding-bottom:4px">
-                     <select id="quiz-set-filter" style="width:auto; min-width:100px; font-size:14px; padding:8px">
-                        <option value="all">Semua Kuis</option>
-                        <option value="1">Kuis 1</option>
-                        <option value="2">Kuis 2</option>
-                        <option value="3">Kuis 3</option>
-                    </select>
-                    <select id="category-filter" style="width:auto; min-width:120px; font-size:14px; padding:8px">
-                        <option value="all">Semua Kategori</option>
-                    </select>
-                </div>
-            </div>
+            </section>
 
-            <!-- TABS CONTENT -->
-            <div id="tab-questions">
-                <div id="questions-list" class="list-container">
-                    <!-- JS will populate cards here -->
+            <!-- APP SECTION -->
+            <section class="hidden" id="app-card">
+                <!-- Header/Toolbar -->
+                <div class="top-bar">
+                    <h2 id="page-title">Dashboard</h2>
+                    <div class="top-actions">
+                        <button class="btn-ghost btn-icon" id="theme-toggle" title="Ganti Tema">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        <button class="btn-ghost btn-icon mobile-only" id="logout-btn" title="Keluar">
+                            <i class="fas fa-right-from-bracket"></i>
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="flex-center" style="margin-top:20px; gap:12px">
-                    <button class="btn btn-secondary" id="q-prev">Prev</button>
-                    <span id="q-page-info" class="small">Page 1</span>
-                    <button class="btn btn-secondary" id="q-next">Next</button>
-                </div>
-            </div>
 
-            <div id="tab-results" class="hidden">
-                 <div class="toolbar-right" style="margin-bottom:16px">
-                    <button class="btn btn-secondary" id="refresh-results-btn">
-                        <i class="fas fa-rotate"></i> Refresh Data
-                    </button>
+                <!-- DASHBOARD TAB -->
+                <div id="tab-dashboard">
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:rgba(59,130,246,0.2); color:#3b82f6"><i class="fas fa-users"></i></div>
+                            <div class="stat-info">
+                                <h3 id="stat-users">0</h3>
+                                <p>Total User</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:rgba(16,185,129,0.2); color:#10b981"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-info">
+                                <h3 id="stat-quizzes">0</h3>
+                                <p>Kuis Selesai</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:rgba(245,158,11,0.2); color:#f59e0b"><i class="fas fa-question-circle"></i></div>
+                            <div class="stat-info">
+                                <h3 id="stat-questions">0</h3>
+                                <p>Total Soal</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background:rgba(239,68,68,0.2); color:#ef4444"><i class="fas fa-calendar-day"></i></div>
+                            <div class="stat-info">
+                                <h3 id="stat-schedules">0</h3>
+                                <p>Jadwal Aktif</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top:24px">
+                        <h3>Aktivitas Terbaru</h3>
+                        <div id="dashboard-logs-list" class="list-container" style="margin-top:16px"></div>
+                    </div>
                 </div>
-                <div id="results-list" class="list-container">
-                    <!-- JS will populate results here -->
-                </div>
-                <div class="flex-center" style="margin-top:20px; gap:12px">
-                    <button class="btn btn-secondary" id="r-prev">Prev</button>
-                    <span id="r-page-info" class="small">Page 1</span>
-                    <button class="btn btn-secondary" id="r-next">Next</button>
-                </div>
-            </div>
-        <div id="tab-users" class="hidden">
-        <div class="toolbar-right" style="margin-bottom:16px; display:flex; gap:8px; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-            <div style="display:flex; gap:8px; flex:1;">
-                <input type="text" id="user-search-input" placeholder="Cari nama..." style="padding:8px; border-radius:8px; border:1px solid #ddd; flex:1; max-width:300px;">
-                <select id="user-sort-select" style="padding:8px; border-radius:8px; border:1px solid #ddd;">
-                    <option value="newest">Terbaru</option>
-                    <option value="score_desc">Skor Tertinggi</option>
-                    <option value="score_asc">Skor Terendah</option>
-                    <option value="quiz_desc">Kuis Terbanyak</option>
-                </select>
-            </div>
-           <button class="btn btn-secondary" id="refresh-users-btn">
-               <i class="fas fa-rotate"></i> Refresh Data
-           </button>
-       </div>
-       <div id="users-list" class="list-container">
-           <!-- JS will populate users here -->
-       </div>
-   </div>
 
-   <div id="tab-logs" class="hidden">
-        <div class="toolbar-right" style="margin-bottom:16px">
-           <button class="btn btn-secondary" id="refresh-logs-btn">
-               <i class="fas fa-rotate"></i> Refresh Log
-           </button>
-       </div>
-       <div id="logs-list" class="list-container">
-           <!-- JS will populate logs here -->
-       </div>
-   </div>
+                <!-- QUESTIONS TAB -->
+                <div id="tab-questions" class="hidden">
+                     <div class="toolbar-sticky">
+                        <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+                            <input id="search-input" type="search" placeholder="Cari soal..." style="flex:1; min-width:200px;">
+                             <select id="quiz-set-filter" style="width:auto; min-width:120px; font-size:14px; padding:8px">
+                                <option value="all">Semua Kuis</option>
+                                <option value="1">Kuis 1</option>
+                                <option value="2">Kuis 2</option>
+                                <option value="3">Kuis 3</option>
+                            </select>
+                            <select id="category-filter" style="width:auto; min-width:140px; font-size:14px; padding:8px">
+                                <option value="all">Semua Kategori</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="questions-list" class="list-container">
+                        <!-- JS will populate cards here -->
+                    </div>
+                    
+                    <div class="flex-center" style="margin-top:20px; gap:12px">
+                        <button class="btn btn-secondary" id="q-prev">Prev</button>
+                        <span id="q-page-info" class="small">Page 1</span>
+                        <button class="btn btn-secondary" id="q-next">Next</button>
+                    </div>
+                </div>
 
-   <div id="tab-schedules" class="hidden">
-        <div class="card" style="margin-bottom:16px">
-            <h3 style="margin-bottom:12px">Atur Jadwal Kuis</h3>
-            <div id="schedules-list"></div>
-            <button class="btn btn-secondary" id="add-schedule-btn" style="margin-top:12px; width:100%">
-                <i class="fas fa-plus"></i> Tambah Jadwal Baru
-            </button>
+                <!-- RESULTS TAB -->
+                <div id="tab-results" class="hidden">
+                     <div class="toolbar-right" style="margin-bottom:16px">
+                        <button class="btn btn-secondary" id="refresh-results-btn">
+                            <i class="fas fa-rotate"></i> Refresh Data
+                        </button>
+                    </div>
+                    <div id="results-list" class="list-container">
+                        <!-- JS will populate results here -->
+                    </div>
+                    <div class="flex-center" style="margin-top:20px; gap:12px">
+                        <button class="btn btn-secondary" id="r-prev">Prev</button>
+                        <span id="r-page-info" class="small">Page 1</span>
+                        <button class="btn btn-secondary" id="r-next">Next</button>
+                    </div>
+                </div>
+
+                <!-- USERS TAB -->
+                <div id="tab-users" class="hidden">
+                    <div class="toolbar-right" style="margin-bottom:16px; display:flex; gap:8px; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                        <div style="display:flex; gap:8px; flex:1; flex-wrap:wrap;">
+                            <input type="text" id="user-search-input" placeholder="Cari nama atau email..." style="padding:8px; border-radius:8px; border:1px solid #ddd; flex:1; min-width:200px;">
+                            <select id="user-sort-select" style="padding:8px; border-radius:8px; border:1px solid #ddd;">
+                                <option value="newest">Terbaru</option>
+                                <option value="score_desc">Skor Tertinggi</option>
+                                <option value="score_asc">Skor Terendah</option>
+                                <option value="quiz_desc">Kuis Terbanyak</option>
+                            </select>
+                            <select id="user-status-filter" style="padding:8px; border-radius:8px; border:1px solid #ddd;">
+                                <option value="all">Semua Status</option>
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Nonaktif</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-primary" id="add-user-btn">
+                                <i class="fas fa-plus"></i> Tambah User
+                            </button>
+                            <button class="btn btn-secondary" id="refresh-users-btn">
+                                <i class="fas fa-rotate"></i> Refresh
+                            </button>
+                        </div>
+                   </div>
+                   <div id="users-list" class="list-container">
+                       <!-- JS will populate users here -->
+                   </div>
+               </div>
+
+               <!-- LOGS TAB -->
+               <div id="tab-logs" class="hidden">
+                    <div class="toolbar-right" style="margin-bottom:16px">
+                       <button class="btn btn-secondary" id="refresh-logs-btn">
+                           <i class="fas fa-rotate"></i> Refresh Log
+                       </button>
+                   </div>
+                   <div id="logs-list" class="list-container">
+                       <!-- JS will populate logs here -->
+                   </div>
+               </div>
+
+               <!-- SCHEDULES TAB -->
+               <div id="tab-schedules" class="hidden">
+                    <div class="card" style="margin-bottom:16px">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                            <h3>Atur Jadwal Kuis</h3>
+                            <input type="date" id="schedule-date-filter" style="width:auto; padding:8px;">
+                        </div>
+                        <div id="schedules-list"></div>
+                        <button class="btn btn-secondary" id="add-schedule-btn" style="margin-top:12px; width:100%">
+                            <i class="fas fa-plus"></i> Tambah Jadwal Baru
+                        </button>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-bottom:12px">Manajemen Kuis</h3>
+                        <div class="form-group">
+                            <label>Reset Total Set Kuis (Hapus semua data user untuk set ini)</label>
+                            <div style="display:flex; gap:8px;">
+                                <select id="reset-set-select" style="flex:1; padding:8px;">
+                                    <option value="1">Kuis 1</option>
+                                    <option value="2">Kuis 2</option>
+                                    <option value="3">Kuis 3</option>
+                                </select>
+                                <button class="btn btn-secondary" style="color:var(--accent-danger); border-color:var(--accent-danger);" id="global-reset-btn">
+                                    Reset Set
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+               </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON (Mobile Only) -->
+    <button class="fab hidden" id="fab-add-question" aria-label="Tambah Soal">
+    <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- BOTTOM NAVIGATION (Mobile Only) -->
+    <nav class="bottom-nav hidden" id="bottom-nav">
+        <button class="nav-item active" data-tab="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" data-tab="questions">
+            <i class="fas fa-list-ul"></i>
+            <span>Soal</span>
+        </button>
+        <button class="nav-item" data-tab="users">
+            <i class="fas fa-users"></i>
+            <span>User</span>
+        </button>
+        <button class="nav-item" data-tab="schedules">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Set</span>
+        </button>
+        <button class="nav-item" id="nav-more">
+            <i class="fas fa-ellipsis-h"></i>
+            <span>Menu</span>
+        </button>
+    </nav>
+
+    <!-- MOBILE MENU MODAL -->
+    <div class="modal" id="menu-modal" aria-hidden="true">
+        <div class="modal-content" style="height:auto; min-height:300px;">
+            <div class="modal-header">
+                <h3>Menu Lainnya</h3>
+                <button class="btn-ghost btn-icon" onclick="closeMenuModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px;">
+                 <button class="btn btn-secondary" style="flex-direction:column; padding:20px;" onclick="activateTab('results'); closeMenuModal();">
+                    <i class="fas fa-chart-bar" style="font-size:24px; margin-bottom:8px;"></i> Hasil Kuis
+                 </button>
+                 <button class="btn btn-secondary" style="flex-direction:column; padding:20px;" onclick="activateTab('logs'); closeMenuModal();">
+                    <i class="fas fa-history" style="font-size:24px; margin-bottom:8px;"></i> Logs
+                 </button>
+                 <button class="btn btn-secondary" style="flex-direction:column; padding:20px;" id="menu-theme-toggle">
+                    <i class="fas fa-moon" style="font-size:24px; margin-bottom:8px;"></i> Ganti Tema
+                 </button>
+                 <button class="btn btn-secondary" style="flex-direction:column; padding:20px; color:var(--accent-danger); border-color:var(--accent-danger);" id="menu-logout-btn">
+                    <i class="fas fa-right-from-bracket" style="font-size:24px; margin-bottom:8px;"></i> Keluar
+                 </button>
+            </div>
         </div>
-        <div class="card">
-            <h3 style="margin-bottom:12px">Manajemen Kuis</h3>
-            <div class="form-group">
-                <label>Reset Total Set Kuis (Hapus semua data user untuk set ini)</label>
-                <div style="display:flex; gap:8px;">
-                    <select id="reset-set-select" style="flex:1; padding:8px;">
-                        <option value="1">Kuis 1</option>
-                        <option value="2">Kuis 2</option>
-                        <option value="3">Kuis 3</option>
-                    </select>
-                    <button class="btn btn-secondary" style="color:var(--accent-danger); border-color:var(--accent-danger);" id="global-reset-btn">
-                        Reset Set
-                    </button>
-                </div>
-            </div>
-        </div>
-   </div>
-</section>
-</main>
+    </div>
 
-<!-- FLOATING ACTION BUTTON -->
-<button class="fab hidden" id="fab-add-question" aria-label="Tambah Soal">
-<i class="fas fa-plus"></i>
-</button>
-
-<!-- BOTTOM NAVIGATION -->
-<nav class="bottom-nav hidden" id="bottom-nav">
-<button class="nav-item active" data-tab="questions">
-   <i class="fas fa-list-ul"></i>
-   <span>Soal</span>
-</button>
-<button class="nav-item" data-tab="results">
-   <i class="fas fa-chart-bar"></i>
-   <span>Hasil</span>
-</button>
-<button class="nav-item" data-tab="users">
-    <i class="fas fa-users"></i>
-    <span>User</span>
- </button>
-<button class="nav-item" data-tab="logs">
-   <i class="fas fa-history"></i>
-   <span>Logs</span>
-</button>
-<button class="nav-item" data-tab="schedules">
-   <i class="fas fa-calendar-alt"></i>
-   <span>Setting</span>
-</button>
-<button class="nav-item" id="nav-refresh">
-   <i class="fas fa-rotate"></i>
-   <span>Refresh</span>
-</button>
-</nav>
-
-    <!-- MODAL (Overlay) -->
+    <!-- MAIN MODAL (Question) -->
     <div class="modal" id="question-modal" aria-hidden="true">
         <div class="modal-content">
             <div class="modal-header">
@@ -206,7 +326,6 @@
                 </button>
             </div>
             
-            <!-- Modal Tabs -->
             <div class="modal-tabs">
                 <button type="button" class="modal-tab active" data-view="edit">Edit</button>
                 <button type="button" class="modal-tab" data-view="preview">Preview</button>
@@ -252,6 +371,45 @@
                 </form>
             </div>
 
+            <!-- User Modal -->
+            <div id="user-modal-panel" class="hidden">
+                 <form id="user-form">
+                    <input type="hidden" id="usr-id">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="usr-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="text" id="usr-email">
+                    </div>
+                    <div class="form-group">
+                        <label>Password (Kosongkan jika tidak diubah)</label>
+                        <input type="password" id="usr-password" placeholder="Password baru">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1">
+                            <label>Role</label>
+                            <select id="usr-role">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Status</label>
+                            <select id="usr-active">
+                                <option value="true">Aktif</option>
+                                <option value="false">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Simpan User</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Batal</button>
+                    </div>
+                </form>
+            </div>
+
             <form id="question-form">
                 <input type="hidden" id="q-id">
                 
@@ -260,7 +418,7 @@
                     <div class="select-wrapper">
                         <select id="q-quizset" required>
                             <option value="1">Kuis 1 (UMUM)</option>
-                            <option value="2">Kuis 2 (AGAMA)</option>
+                            <option value="2">Kuis 2 (EVENT)</option>
                             <option value="3">Kuis 3 (BIDANG)</option>
                         </select>
                     </div>
@@ -347,6 +505,6 @@
             });
         }
     </script>
-    <script src="admin.js?v=2"></script>
+    <script src="admin.js?v=3"></script>
 </body>
 </html>

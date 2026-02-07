@@ -24,17 +24,16 @@ async function list(req, res) {
       attempts = (await query`SELECT quiz_set FROM results WHERE user_id=${user.id}`).rows.map(r => r.quiz_set);
     }
     
-    // Fetch Top 5 Scores (Global, or per set if needed)
-    // The requirement says "Notifikasi Top Score Terpisah" and "Tampilkan minimal 5 top scorer".
-    // We will fetch top 5 overall highest scorers regardless of set, OR top 5 per set?
-    // "Pindahkan tampilan top score dari grid set quiz ke komponen terpisah" suggests a global leaderboard or a specific section.
-    // Let's return Top 5 Global High Scores (across all sets, or sum? Usually highest single attempt score).
-    // Let's assume highest single attempt score for now.
-    
+    // Fetch Top 5 Global High Scores (One best score per user)
+    // We select the distinct best attempt for each user first, then order by best scores.
+    // Using Postgres DISTINCT ON to get one row per user_id.
     const topScoresGlobal = (await query`
-      SELECT username, score, total, percent, quiz_set, created_at
-      FROM results
-      ORDER BY percent DESC, score DESC, time_spent ASC, created_at ASC
+      SELECT * FROM (
+        SELECT DISTINCT ON (user_id) username, score, total, percent, quiz_set, created_at, time_spent
+        FROM results
+        ORDER BY user_id, percent DESC, score DESC, time_spent ASC, created_at ASC
+      ) as best_attempts
+      ORDER BY percent DESC, score DESC, time_spent ASC
       LIMIT 5
     `).rows;
 

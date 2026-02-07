@@ -31,6 +31,34 @@ Semua endpoint admin memerlukan header `Authorization: Bearer <session_token>` a
   }
   ```
 
+### Create User
+**POST** `/admin/questions?action=createUser`
+- Body:
+  ```json
+  {
+    "username": "newuser",
+    "password": "password123",
+    "email": "email@example.com",
+    "role": "user" // or "admin"
+  }
+  ```
+- Response: `{ "status": "success", "message": "User created" }`
+
+### Update User
+**POST** `/admin/questions?action=updateUser`
+- Body:
+  ```json
+  {
+    "id": 123,
+    "username": "updatedname", // optional
+    "email": "newemail@example.com", // optional
+    "password": "newpassword", // optional
+    "role": "admin", // optional
+    "active": true // optional
+  }
+  ```
+- Response: `{ "status": "success", "message": "User updated" }`
+
 ### Delete User
 **POST** `/admin/questions?action=deleteUser`
 - Body: `{ "user_id": 123 }`

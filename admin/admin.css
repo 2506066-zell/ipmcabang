@@ -23,6 +23,7 @@
     --header-height: 60px;
     --bottom-nav-height: 64px;
     --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+    --sidebar-width: 250px;
     
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -36,6 +37,20 @@
     /* Animation */
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
+}
+
+/* Light Mode Override */
+body.light-mode {
+    --primary-bg: #f1f5f9;
+    --card-bg: #ffffff;
+    --surface-bg: #e2e8f0;
+    
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    
+    --border-color: #e2e8f0;
+    --input-bg: #f8fafc;
 }
 
 /* === RESET & BASE === */
@@ -59,6 +74,115 @@ body {
     overflow-x: hidden;
     padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-bottom)); /* Space for bottom nav */
 }
+
+/* === LAYOUT STRUCTURE === */
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-main {
+    flex: 1;
+    padding: 16px;
+    width: 100%;
+}
+
+/* === SIDEBAR (Desktop) === */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.hidden-mobile { display: none; }
+
+.sidebar-header {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.sidebar-nav .nav-item {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 24px;
+    gap: 12px;
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    border-left: 3px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.sidebar-nav .nav-item:hover {
+    background: var(--surface-bg);
+    color: var(--text-primary);
+}
+
+.sidebar-nav .nav-item.active {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent-primary);
+    border-left-color: var(--accent-primary);
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* === TOP BAR === */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.top-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* === DASHBOARD === */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+.stat-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+.stat-info h3 { margin: 0; font-size: 1.5rem; }
+.stat-info p { margin: 0; font-size: 0.875rem; color: var(--text-secondary); }
 
 /* === MODAL TABS === */
 .modal-tabs {
@@ -177,14 +301,6 @@ body {
 .flex-center { display: flex; align-items: center; justify-content: center; }
 .text-gold { color: var(--accent-primary); }
 
-/* === LAYOUT MOBILE FIRST === */
-.admin-container {
-    width: 100%;
-    padding: 16px;
-    max-width: 100%;
-    margin: 0 auto;
-}
-
 /* === TYPOGRAPHY === */
 h1, h2, h3 { line-height: 1.2; font-weight: 700; color: var(--text-primary); }
 h1 { font-size: var(--text-2xl); margin-bottom: 8px; }
@@ -216,6 +332,8 @@ input[type="text"],
 input[type="password"],
 input[type="search"],
 input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
 textarea,
 select {
     width: 100%;
@@ -318,7 +436,7 @@ textarea {
     box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
 }
 
-.nav-item {
+.bottom-nav .nav-item {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -333,8 +451,8 @@ textarea {
     transition: color 0.2s;
 }
 
-.nav-item i { font-size: 20px; margin-bottom: 2px; }
-.nav-item.active { color: var(--accent-primary); }
+.bottom-nav .nav-item i { font-size: 20px; margin-bottom: 2px; }
+.bottom-nav .nav-item.active { color: var(--accent-primary); }
 
 /* === FLOATING ACTION BUTTON (FAB) === */
 .fab {
@@ -406,15 +524,6 @@ textarea {
     gap: 12px;
 }
 
-/* === LOADING SKELETON === */
-.skeleton {
-    background: linear-gradient(90deg, var(--surface-bg) 25%, var(--card-bg) 50%, var(--surface-bg) 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 4px;
-}
-@keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
 /* === MODAL (FULL SCREEN ON MOBILE) === */
 .modal {
     position: fixed;
@@ -450,10 +559,12 @@ textarea {
 /* === RESPONSIVE UTILS === */
 @media (min-width: 768px) {
     /* Tablet & Desktop Overrides */
-    .admin-container {
-        max-width: 1024px;
+    
+    .hidden-mobile { display: flex; }
+    .mobile-only { display: none !important; }
+
+    .admin-main {
         padding: 32px;
-        padding-bottom: 32px; /* Reset bottom padding */
     }
 
     body { padding-bottom: 0; }
@@ -461,15 +572,12 @@ textarea {
     .bottom-nav { display: none; }
     .fab { display: none; } /* Use header button instead */
     
-    .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
+    .dashboard-grid {
+        grid-template-columns: repeat(4, 1fr);
     }
     
     .btn { width: auto; }
     
-    /* Show standard table on desktop if needed, or keep cards grid */
     .list-container {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -490,13 +598,10 @@ textarea {
         max-height: 80vh;
         flex: none;
         width: 100%;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
     
     .modal-header {
         border-radius: 16px 16px 0 0;
     }
-}
-
-@media (min-width: 1024px) {
-    .admin-container { max-width: 1200px; }
 }

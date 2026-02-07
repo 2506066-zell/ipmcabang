@@ -8,12 +8,16 @@ Dokumen ini menjelaskan cara menggunakan fitur administrasi untuk mengelola kuis
 3. Klik "Masuk".
 
 ## 2. Dashboard Admin
-Setelah login, Anda akan melihat beberapa tab:
-- **Soal**: Manajemen bank soal (CRUD).
-- **Hasil**: Melihat riwayat pengerjaan kuis oleh user.
-- **User**: Manajemen data pengguna.
-- **Logs**: Catatan aktivitas sistem/admin.
-- **Setting**: Pengaturan jadwal dan reset data.
+Setelah login, Anda akan melihat Sidebar navigasi di sebelah kiri (desktop) atau menu bawah (mobile).
+- **Dashboard**: Ringkasan statistik (Total User, Kuis Selesai, Jadwal Aktif) dan aktivitas terbaru.
+- **Bank Soal**: Manajemen bank soal (CRUD).
+- **Hasil Kuis**: Melihat riwayat pengerjaan kuis oleh user.
+- **Manajemen User**: Pengelolaan data pengguna lengkap.
+- **Jadwal & Setting**: Pengaturan jadwal kuis dan reset data.
+- **Activity Logs**: Catatan audit trail sistem.
+
+Fitur tambahan:
+- **Dark Mode**: Toggle tema gelap/terang di pojok kanan atas.
 
 ## 3. Manajemen Soal (Tab Soal)
 - **Tambah Soal**: Klik tombol FAB (+) di pojok kanan bawah. Isi form soal, opsi jawaban, kunci jawaban, kategori, dan set kuis.
@@ -23,11 +27,11 @@ Setelah login, Anda akan melihat beberapa tab:
 - **Cari**: Gunakan kolom pencarian untuk mencari isi pertanyaan.
 
 ## 4. Manajemen User (Tab User)
-- **Daftar User**: Menampilkan semua user terdaftar beserta statistik (Total Kuis, Rata-rata Skor).
-- **Pencarian**: Gunakan kolom pencarian untuk mencari user berdasarkan nama atau email.
-- **Sortir**: Urutkan user berdasarkan Terbaru, Skor Tertinggi/Terendah, atau Aktivitas Terbanyak.
-- **Reset Attempt**: Jika user ingin mengulang kuis tertentu, klik tombol "Reset Kuis X" pada kartu user tersebut. User akan bisa mengerjakan ulang kuis set tersebut.
-- **Hapus User**: Klik "Hapus User" untuk menghapus akun dan semua data hasil kuis user tersebut secara permanen.
+- **Tambah User**: Klik tombol "Tambah User" untuk mendaftarkan user baru atau admin baru secara manual.
+- **Edit User**: Klik tombol "Edit" pada kartu user untuk mengubah Username, Email, Role, Password, atau Status Aktif.
+- **Filter & Sortir**: Filter berdasarkan status (Aktif/Nonaktif) dan urutkan berdasarkan skor atau aktivitas.
+- **Reset Attempt**: Reset status pengerjaan kuis spesifik user agar bisa mengerjakan ulang.
+- **Hapus User**: Menghapus user beserta seluruh data riwayatnya (Logs, Hasil, Notifikasi).
 
 ## 5. Pengaturan Jadwal & Reset (Tab Setting)
 ### Manajemen Jadwal
