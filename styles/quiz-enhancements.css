@@ -451,119 +451,116 @@
 }
 
 /* --- COMPACT NEXT QUIZ SECTION --- */
+/* --- SCANNER LOADER (Ranking Style) --- */
+.scanner-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+}
+
+.scanner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--accent-primary, #10b981), transparent);
+    box-shadow: 0 0 15px var(--accent-primary, #10b981);
+    animation: scan 1.5s ease-in-out infinite;
+    z-index: 2;
+}
+
+@keyframes scan {
+
+    0%,
+    100% {
+        top: 0;
+        opacity: 0;
+    }
+
+    50% {
+        top: 100%;
+        opacity: 1;
+    }
+}
+
+/* --- FUTURISTIC NEWS COUNTDOWN --- */
 .next-quiz-compact {
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-    border-radius: 14px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 16px;
     position: relative;
     overflow: hidden;
 }
 
-.next-quiz-compact::before {
-    content: '';
+.next-quiz-compact::after {
+    content: 'LIVE FEED';
     position: absolute;
-    top: -20px;
-    right: -20px;
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 50%;
+    top: 8px;
+    right: 12px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #ef4444;
+    letter-spacing: 1px;
+    animation: blink 1s step-end infinite;
 }
 
-.nq-compact-inner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    position: relative;
-    z-index: 1;
-}
-
-.nq-status {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-}
-
-.nq-status.nq-active {
-    background: rgba(16, 185, 129, 0.2);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.nq-status.nq-upcoming {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    animation: pulse-red 2s infinite;
-}
-
-@keyframes pulse-red {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
+@keyframes blink {
     50% {
-        opacity: 0.7;
+        opacity: 0.3;
     }
-}
-
-.nq-title-compact {
-    color: white;
-    font-size: 0.95rem;
-    font-weight: 700;
-    flex: 1;
-    min-width: 80px;
 }
 
 .nq-timer-compact {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.nq-timer-compact span {
-    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-    font-size: 1.4rem;
+.nq-timer-segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.nq-timer-segment:not(:last-child)::after {
+    content: ':';
+    position: absolute;
+    right: -6px;
+    top: 10px;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.nq-timer-segment span {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 1.6rem;
     font-weight: 800;
     color: #fff;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    letter-spacing: 1px;
-    min-width: 2ch;
-    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-.nq-timer-compact span:not(:last-child):not(#timer-h):not(#timer-m):not(#timer-s) {
+.nq-timer-segment small {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: rgba(255, 255, 255, 0.5);
-    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 2px;
 }
 
-/* Mobile responsive */
-@media (max-width: 400px) {
-    .nq-compact-inner {
-        justify-content: center;
-    }
-
-    .nq-title-compact {
-        width: 100%;
-        text-align: center;
-        order: -1;
-    }
-
-    .nq-timer-compact span {
-        font-size: 1.2rem;
-    }
+.nq-status.nq-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
 }

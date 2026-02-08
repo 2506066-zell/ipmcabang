@@ -104,11 +104,14 @@ export function initArticles(state, els, api) {
 
     // Modal Logic
     function openModal() {
+        console.log('[Articles] openModal called');
         modal.classList.remove('hidden');
+        modal.classList.add('active');  // CSS uses .modal.active for visibility
         document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
+        modal.classList.remove('active');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
     }

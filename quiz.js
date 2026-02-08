@@ -191,6 +191,7 @@ function renderNextQuizSection(schedules) {
 }
 
 function updateNextQuizTimer(schedules) {
+    const timerD = document.getElementById('timer-d');
     const timerH = document.getElementById('timer-h');
     const timerM = document.getElementById('timer-m');
     const timerS = document.getElementById('timer-s');
@@ -212,10 +213,12 @@ function updateNextQuizTimer(schedules) {
     }
 
     const totalSeconds = Math.floor(diff / 1000);
-    const h = Math.floor(totalSeconds / 3600);
+    const d = Math.floor(totalSeconds / 86400);
+    const h = Math.floor((totalSeconds % 86400) / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = totalSeconds % 60;
 
+    if (timerD) timerD.textContent = String(d).padStart(2, '0');
     timerH.textContent = String(h).padStart(2, '0');
     timerM.textContent = String(m).padStart(2, '0');
     timerS.textContent = String(s).padStart(2, '0');

@@ -18,11 +18,14 @@
 <body class="page-quiz">
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-content">
-            <picture>
-                <source srcset="ipm (2).webp" type="image/webp">
-                <img src="ipm (2).png" alt="Loading..." class="loading-logo" loading="lazy" decoding="async"
-                    fetchpriority="low">
-            </picture>
+            <div class="scanner-container">
+                <picture>
+                    <source srcset="ipm (2).webp" type="image/webp">
+                    <img src="ipm (2).png" alt="Loading..." class="loading-logo" loading="lazy" decoding="async"
+                        fetchpriority="low">
+                </picture>
+                <div class="scanner"></div>
+            </div>
             <p id="loading-text">Memuat...</p>
         </div>
     </div>
@@ -92,7 +95,22 @@
                     <span class="nq-status" id="nq-status-text">⏰ Sedang berlangsung</span>
                     <span class="nq-title-compact" id="nq-title">Kuis</span>
                     <div class="nq-timer-compact">
-                        <span id="timer-h">00</span>:<span id="timer-m">00</span>:<span id="timer-s">00</span>
+                        <div class="nq-timer-segment">
+                            <span id="timer-d">00</span>
+                            <small>Hari</small>
+                        </div>
+                        <div class="nq-timer-segment">
+                            <span id="timer-h">00</span>
+                            <small>Jam</small>
+                        </div>
+                        <div class="nq-timer-segment">
+                            <span id="timer-m">00</span>
+                            <small>Menit</small>
+                        </div>
+                        <div class="nq-timer-segment">
+                            <span id="timer-s">00</span>
+                            <small>Detik</small>
+                        </div>
                     </div>
                 </div>
             </div>

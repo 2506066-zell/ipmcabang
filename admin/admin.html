@@ -622,7 +622,7 @@
             <div class="modal-header">
                 <h3 id="article-modal-title">Tambah Artikel</h3>
                 <button class="btn-ghost btn-icon"
-                    onclick="document.getElementById('article-modal').classList.add('hidden')">
+                    onclick="document.getElementById('article-modal').classList.remove('active'); document.getElementById('article-modal').classList.add('hidden'); document.body.style.overflow=''">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -663,7 +663,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary"
-                        onclick="document.getElementById('article-modal').classList.add('hidden')">Batal</button>
+                        onclick="document.getElementById('article-modal').classList.remove('active'); document.getElementById('article-modal').classList.add('hidden'); document.body.style.overflow=''">Batal</button>
                     <button type="submit" class="btn btn-primary" id="art-save-btn">Simpan</button>
                 </div>
             </form>
