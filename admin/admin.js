@@ -885,6 +885,141 @@
         }
     };
 
+    // Admin Preview Logic (Mirrors quiz.js)
+    function renderAdminPreview(schedules) {
+        const titleEl = document.getElementById('admin-countdown-title');
+        const clockEl = document.getElementById('admin-countdown-clock');
+        if (!titleEl || !clockEl) return;
+
+        // Reset
+        titleEl.textContent = "Tidak ada event aktif/akan datang";
+        clockEl.innerHTML = `<div style="font-size:0.9rem; color:#999;">(Menunggu Jadwal)</div>`;
+
+        const now = Date.now();
+        let target = null;
+        let mode = '';
+
+        // Active?
+        const activeSch = schedules.find(s => {
+            const start = new Date(s.start_time).getTime();
+            const end = s.end_time ? new Date(s.end_time).getTime() : Infinity;
+            return now >= start && now < end;
+        });
+
+        if (activeSch) {
+            target = activeSch;
+            mode = 'end';
+        } else {
+            // Next?
+            const upcoming = schedules.filter(s => new Date(s.start_time).getTime() > now).sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
+            if (upcoming) {
+                target = upcoming;
+                mode = 'start';
+            }
+        }
+
+        if (!target) return;
+
+        titleEl.textContent = mode === 'start' ? `Segera Hadir: ${target.title}` : `Sedang Berlangsung: ${target.title}`;
+
+        // Render Units
+        clockEl.innerHTML = `
+            ${createFlipUnitAdmin('Hari', 'd')}
+            ${createFlipUnitAdmin('Jam', 'h')}
+            ${createFlipUnitAdmin('Menit', 'm')}
+            ${createFlipUnitAdmin('Detik', 's')}
+        `;
+
+        // Start Update Loop for Admin (clear previous if any)
+        if (window.adminPreviewInterval) clearInterval(window.adminPreviewInterval);
+
+        const update = () => {
+            const now = Date.now();
+            let diff = 0;
+            if (mode === 'end') {
+                const end = target.end_time ? new Date(target.end_time).getTime() : Infinity;
+                diff = Math.max(0, end - now);
+            } else {
+                diff = Math.max(0, new Date(target.start_time).getTime() - now);
+            }
+
+            const s = Math.floor(diff / 1000);
+            const d = Math.floor(s / 86400);
+            const h = Math.floor((s % 86400) / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = s % 60;
+
+            updateFlipCardAdmin('d', d);
+            updateFlipCardAdmin('h', h);
+            updateFlipCardAdmin('m', m);
+            updateFlipCardAdmin('s', sec);
+        };
+
+        update();
+        window.adminPreviewInterval = setInterval(update, 1000);
+    }
+
+    function createFlipUnitAdmin(label, id) {
+        return `
+            <div class="flip-unit">
+                <div class="flip-card" id="admin-flip-${id}">00</div>
+                <div class="flip-label" style="font-size:0.6rem">${label}</div>
+            </div>
+        `;
+    }
+
+    function updateFlipCardAdmin(id, val) {
+        const el = document.getElementById(`admin-flip-${id}`);
+        if (el) el.innerText = String(val).padStart(2, '0');
+    }
+
+    function renderScheduleItem(s) {
+        const start = s.start_time ? new Date(s.start_time).toLocaleString() : '';
+        const end = s.end_time ? new Date(s.end_time).toLocaleString() : '';
+        const now = Date.now();
+        const startTime = s.start_time ? new Date(s.start_time).getTime() : 0;
+        const endTime = s.end_time ? new Date(s.end_time).getTime() : 0;
+
+        // Calculate initial countdown
+        let cdText = "00 : 00 : 00 : 00";
+        if (startTime > now) {
+            // Future
+            const diff = startTime - now;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const sec = Math.floor((diff % (1000 * 60)) / 1000);
+            cdText = `${String(d).padStart(2, '0')} : ${String(h).padStart(2, '0')} : ${String(m).padStart(2, '0')} : ${String(sec).padStart(2, '0')}`;
+        } else if (endTime > now) {
+            // Active
+            cdText = "SEDANG BERLANGSUNG";
+        } else {
+            // Ended
+            cdText = "SELESAI";
+        }
+
+        return `
+        <div class="schedule-card-new" data-id="${s.id}" data-target="${startTime}">
+            <div class="sc-header">
+                <input type="text" class="sc-title-edit" value="${escapeHtml(s.title)}" readonly onclick="editSchedule(${s.id})">
+                <div class="sc-countdown-preview">${cdText}</div>
+            </div>
+            <div class="sc-body">
+                <textarea class="sc-desc-edit" readonly onclick="editSchedule(${s.id})">${escapeHtml(s.description || '')}</textarea>
+                <div class="sc-time-range">
+                    <span class="sc-time-label">WAKTU MULAI - SELESAI</span>
+                    <div style="color:var(--text-primary); font-size:0.9rem;">
+                        ${start} <span style="color:var(--text-secondary); margin:0 8px;">s/d</span> ${end}
+                    </div>
+                </div>
+            </div>
+            <div class="sc-footer">
+                <button class="sc-btn sc-btn-del" onclick="deleteSchedule(${s.id})">Hapus</button>
+                <button class="sc-btn sc-btn-save" onclick="editSchedule(${s.id})">Edit Detail</button>
+            </div>
+        </div>`;
+    }
+
     // Add Schedule Button Logic
     if (els.addScheduleBtn) {
         els.addScheduleBtn.addEventListener('click', () => {

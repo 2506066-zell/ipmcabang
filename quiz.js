@@ -103,17 +103,138 @@ function showSetPicker(summarySets) {
         .then(data => {
             const schedules = data.schedules || [];
             updateSetCards(summarySets, schedules);
+            renderHeroCountdown(schedules);
 
             // Start Global Timer for Countdowns
             if (window.setTimerInterval) clearInterval(window.setTimerInterval);
             window.setTimerInterval = setInterval(() => {
                 updateSetCards(summarySets, schedules, true); // Update time only
+                updateHeroCountdown(schedules); // Update flip clock
             }, 1000);
         })
         .catch(err => {
             console.error('Failed to load schedules', err);
             updateSetCards(summarySets, [], false); // Fallback
         });
+}
+
+// --- FLIP CLOCK HERO ---
+function renderHeroCountdown(schedules) {
+    const heroEl = document.getElementById('hero-countdown');
+    if (!heroEl) return;
+
+    // Find the most relevant schedule to show in Hero
+    // Priority: Active & Ending Soon > Active > Coming Soon
+    const now = Date.now();
+    let target = null;
+    let mode = ''; // 'start' or 'end'
+
+    const activeSch = schedules.find(s => {
+        const start = new Date(s.start_time).getTime();
+        const end = s.end_time ? new Date(s.end_time).getTime() : Infinity;
+        return now >= start && now < end;
+    });
+
+    if (activeSch) {
+        target = activeSch;
+        mode = 'end';
+    } else {
+        // Find next upcoming
+        const upcoming = schedules.filter(s => new Date(s.start_time).getTime() > now).sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
+        if (upcoming) {
+            target = upcoming;
+            mode = 'start';
+        }
+    }
+
+    if (!target) {
+        heroEl.style.display = 'none';
+        return;
+    }
+
+    heroEl.style.display = 'flex';
+    document.getElementById('countdown-title').textContent = mode === 'start' ? `Segera Hadir: ${target.title}` : `Sedang Berlangsung: ${target.title}`;
+
+    // Initial Render of Clock Face
+    const clockEl = document.getElementById('countdown-clock');
+    clockEl.innerHTML = `
+        ${createFlipUnit('Hari', 'days')}
+        ${createFlipUnit('Jam', 'hours')}
+        ${createFlipUnit('Menit', 'minutes')}
+        ${createFlipUnit('Detik', 'seconds')}
+    `;
+
+    updateHeroCountdown(schedules);
+}
+
+function createFlipUnit(label, id) {
+    return `
+        <div class="flip-unit">
+            <div class="flip-card" id="flip-${id}">00</div>
+            <div class="flip-label">${label}</div>
+        </div>
+    `;
+}
+
+function updateHeroCountdown(schedules) {
+    const heroEl = document.getElementById('hero-countdown');
+    if (!heroEl || heroEl.style.display === 'none') return;
+
+    // Re-evaluate target (same logic as render, optimized)
+    const now = Date.now();
+    let target = null;
+    let isUrgent = false;
+
+    // We store the target ID on the element to avoid flickering if switching targets? 
+    // For now, simpler: just find best fit.
+    const activeSch = schedules.find(s => {
+        const start = new Date(s.start_time).getTime();
+        const end = s.end_time ? new Date(s.end_time).getTime() : Infinity;
+        return now >= start && now < end;
+    });
+
+    let diff = 0;
+    if (activeSch) {
+        const end = activeSch.end_time ? new Date(activeSch.end_time).getTime() : Infinity;
+        diff = Math.max(0, end - now);
+        if (diff < 3600000) isUrgent = true; // < 1 hour
+    } else {
+        const upcoming = schedules.filter(s => new Date(s.start_time).getTime() > now).sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
+        if (upcoming) {
+            diff = Math.max(0, new Date(upcoming.start_time).getTime() - now);
+        } else {
+            heroEl.style.display = 'none'; // No more schedules
+            return;
+        }
+    }
+
+    if (isUrgent) heroEl.classList.add('urgent');
+    else heroEl.classList.remove('urgent');
+
+    const s = Math.floor(diff / 1000);
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+
+    updateFlipCard('days', d);
+    updateFlipCard('hours', h);
+    updateFlipCard('minutes', m);
+    updateFlipCard('seconds', sec);
+}
+
+function updateFlipCard(id, val) {
+    const el = document.getElementById(`flip-${id}`);
+    if (!el) return;
+    const current = el.innerText;
+    const next = String(val).padStart(2, '0');
+    if (current !== next) {
+        el.innerText = next;
+        // Trigger generic animation if we added one
+        // el.classList.remove('flip');
+        // void el.offsetWidth;
+        // el.classList.add('flip');
+    }
 }
 
 function updateSetCards(summarySets, schedules, timeOnly = false) {
