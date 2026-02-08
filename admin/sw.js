@@ -34,20 +34,28 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
         fetch(e.request)
             .then((response) => {
-                // Check if we received a valid response
                 if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
                 const responseToCache = response.clone();
-                caches.open(CACHE_NAME)
-                    .then((cache) => {
-                        cache.put(e.request, responseToCache);
-                    });
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(e.request, responseToCache);
+                });
                 return response;
             })
             .catch(() => {
-                // If network fails, try cache
-                return caches.match(e.request);
+                return caches.match(e.request).then(cachedResponse => {
+                    if (cachedResponse) return cachedResponse;
+                    // Optional: Return a fallback offline page or JSON if it's an API
+                    // For now, allow it to fail if neither exists (browser will show error)
+                    // or return a basic offline message if HTML
+                    if (e.request.headers.get('accept').includes('text/html')) {
+                        return new Response('<h1>Offline</h1><p>Anda sedang offline dan halaman ini belum tersimpan.</p>', {
+                            headers: { 'Content-Type': 'text/html' }
+                        });
+                    }
+                    return undefined; // Let browser handle it
+                });
             })
     );
 });

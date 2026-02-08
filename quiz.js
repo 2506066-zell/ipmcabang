@@ -250,6 +250,15 @@ function renderQuestion() {
         </div>
     `;
 
+    // Button State
+    if (currentQuestionIndex === total - 1) {
+        nextBtn.innerHTML = '<i class="fas fa-check"></i> Kirim';
+        nextBtn.classList.add('btn-finish'); // Optional styling hook
+    } else {
+        nextBtn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+        nextBtn.classList.remove('btn-finish');
+    }
+
     nextBtn.disabled = true;
     nextBtn.onclick = nextQuestion;
 }
@@ -301,9 +310,16 @@ async function finishQuiz() {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
     // Submit result
+    // Submit result
     if (window.isSubmitting) return; // Guard
     window.isSubmitting = true;
-    showLoader('Mengirim jawaban...');
+
+    // UX: Loading State
+    nextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+    nextBtn.disabled = true;
+
+    // Optional: Toast "Mengirim..."
+    if (window.Toast) window.Toast.show('Mengirim jawaban...', 'info');
 
     try {
         const response = await fetch(API_URL + '/results', {
@@ -312,14 +328,12 @@ async function finishQuiz() {
             body: JSON.stringify({
                 session: existingSession,
                 answers: answersPayload,
-                // score: score, // Removed, let server calc
-                // total: total, // Server will recalc total based on DB to be safe, but we can send it or ignore it
                 time_spent: timeSpent,
                 quiz_set: currentQuizSet
             })
         });
 
-        // Check for non-JSON response (e.g. 500 error page)
+        // Check for non-JSON response
         const ct = response.headers.get('content-type');
         if (!ct || !ct.includes('application/json')) {
             const text = await response.text();
@@ -328,9 +342,10 @@ async function finishQuiz() {
 
         const data = await response.json();
 
-        // Handle success or idempotent success (200/201)
         if (response.ok && data.status === 'success') {
             try { localStorage.removeItem('ipm_ranking_cache'); } catch { }
+
+            if (window.Toast) window.Toast.show('Jawaban berhasil dikirim! 🎉', 'success');
 
             // Show result UI with Server Data
             quizHeader.style.display = 'none';
@@ -340,30 +355,55 @@ async function finishQuiz() {
             const resDiv = document.getElementById('result-container');
             resDiv.style.display = 'block';
 
+            // Animation for Result
+            resDiv.classList.add('slide-in');
+
             // Use server returned score/percent
             const serverScore = data.score || 0;
             const serverTotal = data.total || total;
             const serverPercent = data.percent !== undefined ? data.percent : Math.round((serverScore / serverTotal) * 100);
 
-            document.getElementById('score-text').textContent = `${serverPercent}%`;
-            document.getElementById('score-details').textContent = `Benar ${serverScore} dari ${serverTotal} soal`;
+            const scoreText = document.getElementById('score-text');
+            const scoreDetail = document.getElementById('score-details');
 
+            // Animate Score Counter
+            let currentP = 0;
+            const targetP = serverPercent;
+            const interval = setInterval(() => {
+                if (currentP >= targetP) {
+                    clearInterval(interval);
+                    scoreText.textContent = `${targetP}%`;
+                } else {
+                    currentP++;
+                    scoreText.textContent = `${currentP}%`;
+                }
+            }, 20);
+
+            scoreDetail.textContent = `Benar ${serverScore} dari ${serverTotal} soal`;
+
+            // Setup Buttons
             const restartBtn = document.getElementById('restart-btn');
             if (restartBtn) restartBtn.onclick = () => window.location.reload();
+
+            // UX: Scroll to result
+            resDiv.scrollIntoView({ behavior: 'smooth' });
+
         } else {
             throw new Error(data.message || 'Gagal menyimpan hasil.');
         }
 
     } catch (e) {
         console.error(e);
-        alert('Gagal menyimpan hasil: ' + e.message);
-        // Re-enable submit only on error so user can retry manually if it was network error
-        // But for logic errors (like daily limit), they are stuck anyway, which is fine.
+        if (window.Toast) window.Toast.show('Gagal: ' + e.message, 'error');
+        else alert('Gagal menyimpan hasil: ' + e.message);
+
+        // UX: Restore button state on error
+        nextBtn.innerHTML = '<i class="fas fa-check"></i> Kirim Ulang';
+        nextBtn.disabled = false;
+
         window.isSubmitting = false;
     } finally {
-        hideLoader();
-        // Do NOT set isSubmitting = false here if success, to prevent double submission
-        // We only clear it on error (inside catch) or if we reload the page.
+        // hideLoader(); // We removed showLoader call above to use Button Loading instead
     }
 }
 

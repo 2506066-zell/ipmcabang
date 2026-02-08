@@ -266,6 +266,7 @@ module.exports = async (req, res) => {
       // GET Requests
       if (req.method === 'GET' && action === 'activityLogs') return await handleGetActivityLogs(req, res);
       if (req.method === 'GET' && action === 'schedules') return await handleGetSchedules(req, res);
+      if (req.method === 'GET' && action === 'listQuestions') return await handleListQuestions(req, res);
 
       return json(res, 405, { status: 'error', message: 'Method not allowed' });
     }
@@ -277,8 +278,7 @@ module.exports = async (req, res) => {
         return await handleUpdate(req, res);
       case 'delete':
         return await handleDelete(req, res);
-      case 'listQuestions':
-        return await handleListQuestions(req, res);
+      // case 'listQuestions': moved to GET
       case 'resetSet':
         return await handleResetSet(req, res);
       case 'migrate':

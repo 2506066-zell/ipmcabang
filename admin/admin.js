@@ -52,6 +52,7 @@
     let els = {};
 
     function initEls() {
+        if (!document.body) { console.warn('Body not ready'); return; }
         console.log('[Admin] Initializing DOM elements...');
         els = {
             loadingOverlay: document.getElementById('loading-overlay'),
@@ -1302,8 +1303,8 @@
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => { try { init(); } catch (e) { console.error('Init failed', e); } });
     } else {
-        init();
+        try { init(); } catch (e) { console.error('Init failed', e); }
     }
 })();
