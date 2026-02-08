@@ -329,7 +329,7 @@
         });
 
         // Hide all tabs
-        ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules'].forEach(t => {
+        ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules', 'articles'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
