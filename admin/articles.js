@@ -57,6 +57,17 @@ export function initArticles(state, els, api) {
             };
         }
 
+        // Line Spacing
+        const lineSpacingSelector = document.getElementById('editor-line-spacing');
+        if (lineSpacingSelector) {
+            lineSpacingSelector.onchange = (e) => {
+                editorArea.style.lineHeight = e.target.value;
+                editorArea.focus();
+            };
+            // Set initial
+            editorArea.style.lineHeight = lineSpacingSelector.value;
+        }
+
         // Sync content to hidden textarea on change
         editorArea.oninput = () => {
             inpContent.value = editorArea.innerHTML;
