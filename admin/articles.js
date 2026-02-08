@@ -70,12 +70,13 @@ export function initArticles(state, els, api) {
 
         // Sync content to hidden textarea on change
         editorArea.oninput = () => {
-            inpContent.value = editorArea.innerHTML;
+            if (inpContent) inpContent.value = editorArea.innerHTML;
             updateWordCount();
         };
     }
 
     function updateWordCount() {
+        if (!editorArea) return;
         const text = editorArea.innerText || "";
         const words = text.trim() ? text.trim().split(/\s+/).length : 0;
         if (statusText) statusText.textContent = `Draft • ${words} kata`;
@@ -83,11 +84,12 @@ export function initArticles(state, els, api) {
 
     // Load Articles
     async function loadArticles(page = 1) {
+        if (!list) return;
         state.loading = true;
         list.innerHTML = '<div style="text-align:center; padding:20px;">Memuat...</div>';
 
         try {
-            const q = searchInput.value || '';
+            const q = searchInput ? (searchInput.value || '') : '';
             let url = `/api/articles?page=${page}&size=10&sort=newest`;
             if (q) url += `&search=${encodeURIComponent(q)}`;
 
@@ -108,6 +110,7 @@ export function initArticles(state, els, api) {
     }
 
     function renderList(articles) {
+        if (!list) return;
         if (articles.length === 0) {
             list.innerHTML = '<div style="text-align:center; padding:20px;">Belum ada artikel.</div>';
             return;
@@ -143,14 +146,64 @@ export function initArticles(state, els, api) {
         if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
     }
 
+    function setDateInputToLocal(date, targetInput) {
+        if (!targetInput) return;
+        const d = date instanceof Date ? date : new Date(date || Date.now());
+        if (Number.isNaN(d.getTime())) return;
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        targetInput.value = d.toISOString().slice(0, 16);
+    }
+
+    function setPreviewImage(src) {
+        if (!previewDiv) return;
+        const img = previewDiv.querySelector('img');
+        if (img) img.src = src || '';
+        previewDiv.style.display = src ? 'block' : 'none';
+    }
+
+    function resetForm() {
+        if (inpId) inpId.value = '';
+        if (inpTitle) inpTitle.value = '';
+        if (inpAuthor) inpAuthor.value = '';
+        if (inpCategory) inpCategory.value = 'Umum';
+        if (inpDate) setDateInputToLocal(new Date(), inpDate);
+        if (editorArea) editorArea.innerHTML = '';
+        if (inpContent) inpContent.value = '';
+        if (inpBase64) inpBase64.value = '';
+        if (inpFile) inpFile.value = '';
+        setPreviewImage('');
+        updateWordCount();
+    }
+
+    async function loadArticleIntoForm(id) {
+        const data = await api.fetchJsonWithRetry(`/api/articles?id=${id}`, { method: 'GET' });
+        if (!data || data.status !== 'success' || !data.article) {
+            throw new Error('Artikel tidak ditemukan');
+        }
+
+        const a = data.article;
+        if (inpId) inpId.value = a.id || '';
+        if (inpTitle) inpTitle.value = a.title || '';
+        if (inpAuthor) inpAuthor.value = a.author || '';
+        if (inpCategory) inpCategory.value = a.category || 'Umum';
+        if (editorArea) editorArea.innerHTML = a.content || '';
+        if (inpContent) inpContent.value = a.content || '';
+        if (inpDate) setDateInputToLocal(a.publish_date, inpDate);
+        if (a.image) setPreviewImage(a.image);
+        else setPreviewImage('');
+        updateWordCount();
+    }
+
     // Modal Logic
     function openModal() {
+        if (!modal) return;
         modal.classList.remove('hidden');
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
 
         // Focus title with instant feel
         requestAnimationFrame(() => {
+            if (!inpTitle) return;
             inpTitle.focus();
             // Move cursor to end if editing
             if (inpTitle.value) {
@@ -162,17 +215,34 @@ export function initArticles(state, els, api) {
     }
 
     function closeModal() {
+        if (!modal) return;
         modal.classList.remove('active');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
     }
 
     // Create/Edit
-    addBtn.onclick = () => {
-        window.location.href = 'editor.html';
-    };
+    if (addBtn) {
+        addBtn.onclick = () => {
+            if (modal && form && editorArea) {
+                resetForm();
+                openModal();
+                return;
+            }
+            window.location.href = 'editor.html';
+        };
+    }
 
     async function openEdit(id) {
+        if (modal && form && editorArea) {
+            try {
+                await loadArticleIntoForm(id);
+                openModal();
+                return;
+            } catch (e) {
+                alert('Gagal memuat artikel: ' + e.message);
+            }
+        }
         window.location.href = `editor.html?id=${id}`;
     }
 
@@ -201,11 +271,8 @@ export function initArticles(state, els, api) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const res = e.target.result;
-                inpBase64.value = res;
-                if (previewDiv && previewDiv.querySelector('img')) {
-                    previewDiv.querySelector('img').src = res;
-                    previewDiv.style.display = 'block';
-                }
+                if (inpBase64) inpBase64.value = res;
+                setPreviewImage(res);
             };
             reader.readAsDataURL(file);
         };
@@ -215,7 +282,7 @@ export function initArticles(state, els, api) {
         removeImgBtn.onclick = () => {
             if (inpBase64) inpBase64.value = '';
             if (inpFile) inpFile.value = '';
-            if (previewDiv) previewDiv.style.display = 'none';
+            setPreviewImage('');
         };
     }
 
@@ -263,13 +330,13 @@ export function initArticles(state, els, api) {
     }
 
     // Close Actions
-    closeBtn.onclick = closeModal;
-    cancelBtn.onclick = closeModal;
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
 
     // Search & Paging
-    searchInput.oninput = api.debounce(() => loadArticles(1), 500);
-    prevBtn.onclick = () => loadArticles(currentPage - 1);
-    nextBtn.onclick = () => loadArticles(currentPage + 1);
+    if (searchInput) searchInput.oninput = api.debounce(() => loadArticles(1), 500);
+    if (prevBtn) prevBtn.onclick = () => loadArticles(currentPage - 1);
+    if (nextBtn) nextBtn.onclick = () => loadArticles(currentPage + 1);
 
     function escapeHtml(text) {
         if (!text) return '';
