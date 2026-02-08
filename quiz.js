@@ -114,20 +114,106 @@ function showSetPicker(summarySets) {
         .then(r => r.json())
         .then(data => {
             const schedules = data.schedules || [];
+            console.log('[Quiz] Loaded schedules:', schedules);
             updateSetCards(summarySets, schedules);
             renderHeroCountdown(schedules);
+            renderNextQuizSection(schedules); // NEW: Render next-quiz-section
 
             // Start Global Timer for Countdowns
             if (window.setTimerInterval) clearInterval(window.setTimerInterval);
             window.setTimerInterval = setInterval(() => {
                 updateSetCards(summarySets, schedules, true); // Update time only
                 updateHeroCountdown(schedules); // Update flip clock
+                updateNextQuizTimer(schedules); // NEW: Update next-quiz timer
             }, 1000);
         })
         .catch(err => {
             console.error('Failed to load schedules', err);
             updateSetCards(summarySets, [], false); // Fallback
         });
+}
+
+// --- NEXT QUIZ SECTION ---
+function renderNextQuizSection(schedules) {
+    const section = document.getElementById('next-quiz-section');
+    if (!section) return;
+
+    const now = Date.now();
+
+    // Find upcoming or active schedule
+    let target = null;
+    let isActive = false;
+
+    // First check for active schedules
+    const activeSchedule = schedules.find(s => {
+        const start = new Date(s.start_time).getTime();
+        const end = s.end_time ? new Date(s.end_time).getTime() : Infinity;
+        return now >= start && now < end;
+    });
+
+    if (activeSchedule) {
+        target = activeSchedule;
+        isActive = true;
+    } else {
+        // Find next upcoming
+        const upcoming = schedules
+            .filter(s => new Date(s.start_time).getTime() > now)
+            .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
+        if (upcoming) target = upcoming;
+    }
+
+    if (!target) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    const titleEl = document.getElementById('nq-title');
+    const topicEl = document.getElementById('nq-topic');
+    const headerEl = section.querySelector('.nq-header');
+
+    if (titleEl) titleEl.textContent = target.title || 'Kuis Berikutnya';
+    if (topicEl) topicEl.textContent = target.topic ? `Topik: ${target.topic}` : (isActive ? 'Sedang berlangsung!' : 'Segera hadir');
+    if (headerEl) headerEl.innerHTML = isActive
+        ? '<i class="fas fa-clock"></i> Kuis Aktif - Berakhir Dalam:'
+        : '<i class="fas fa-hourglass-half"></i> Kuis Berikutnya';
+
+    // Store target for timer updates
+    window._nextQuizTarget = { target, isActive };
+
+    updateNextQuizTimer(schedules);
+}
+
+function updateNextQuizTimer(schedules) {
+    const timerH = document.getElementById('timer-h');
+    const timerM = document.getElementById('timer-m');
+    const timerS = document.getElementById('timer-s');
+    if (!timerH || !timerM || !timerS) return;
+
+    const stored = window._nextQuizTarget;
+    if (!stored || !stored.target) return;
+
+    const { target, isActive } = stored;
+    const now = Date.now();
+
+    let diff = 0;
+    if (isActive) {
+        const end = target.end_time ? new Date(target.end_time).getTime() : Infinity;
+        diff = Math.max(0, end - now);
+    } else {
+        const start = new Date(target.start_time).getTime();
+        diff = Math.max(0, start - now);
+    }
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+
+    timerH.textContent = String(h).padStart(2, '0');
+    timerM.textContent = String(m).padStart(2, '0');
+    timerS.textContent = String(s).padStart(2, '0');
 }
 
 // --- FLIP CLOCK HERO ---

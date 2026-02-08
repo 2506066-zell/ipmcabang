@@ -13,6 +13,20 @@ export function initArticles(state, els, api) {
     const nextBtn = document.getElementById('art-next');
     const pageInfo = document.getElementById('art-page-info');
 
+    // Debug: Check critical elements
+    console.log('[Articles] Elements:', {
+        list: !!list,
+        addBtn: !!addBtn,
+        modal: !!modal,
+        form: !!form
+    });
+
+    // Validate critical elements exist
+    if (!list || !addBtn || !modal || !form) {
+        console.error('[Articles] Critical elements missing!', { list, addBtn, modal, form });
+        return;
+    }
+
     // Inputs
     const inpId = document.getElementById('art-id');
     const inpTitle = document.getElementById('art-title');
