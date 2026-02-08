@@ -47,6 +47,9 @@
                 <button class="nav-item" data-tab="logs">
                     <i class="fas fa-history"></i> <span>Activity Logs</span>
                 </button>
+                <button class="nav-item" data-tab="articles">
+                    <i class="fas fa-newspaper"></i> <span>Artikel</span>
+                </button>
             </nav>
             <div class="sidebar-footer">
                 <button class="nav-item" id="sidebar-logout">
@@ -299,6 +302,23 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ARTICLES TAB -->
+                <div id="tab-articles" class="hidden">
+                    <div class="toolbar-right" style="margin-bottom:16px">
+                        <input type="text" id="article-search" placeholder="Cari artikel..."
+                            style="padding:8px; border-radius:8px; border:1px solid #ddd;">
+                        <button class="btn btn-primary" id="add-article-btn">
+                            <i class="fas fa-plus"></i> Tambah Artikel
+                        </button>
+                    </div>
+                    <div id="articles-list" class="list-container"></div>
+                    <div class="flex-center" style="margin-top:20px; gap:12px">
+                        <button class="btn btn-secondary" id="art-prev">Prev</button>
+                        <span id="art-page-info" class="small">Page 1</span>
+                        <button class="btn btn-secondary" id="art-next">Next</button>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
@@ -319,6 +339,10 @@
         <button class="nav-item" data-tab="questions">
             <i class="fas fa-list-ul"></i>
             <span>Soal</span>
+        </button>
+        <button class="nav-item" data-tab="articles">
+            <i class="fas fa-newspaper"></i>
+            <span>Artikel</span>
         </button>
         <button class="nav-item" data-tab="users">
             <i class="fas fa-users"></i>
@@ -587,6 +611,60 @@
                         <button type="button" class="btn btn-secondary" id="save-add-btn">Simpan & Baru</button>
                         <button type="submit" class="btn btn-primary" id="save-btn">Simpan</button>
                     </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Article Modal -->
+    <div class="modal" id="article-modal" aria-hidden="true">
+        <div class="modal-content" style="max-width:800px;">
+            <div class="modal-header">
+                <h3 id="article-modal-title">Tambah Artikel</h3>
+                <button class="btn-ghost btn-icon"
+                    onclick="document.getElementById('article-modal').classList.add('hidden')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="article-form">
+                <input type="hidden" id="art-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Judul Artikel</label>
+                        <input type="text" id="art-title" required placeholder="Judul menarik...">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1">
+                            <label>Kategori</label>
+                            <select id="art-category">
+                                <option value="Umum">Umum</option>
+                                <option value="Kader">Kader</option>
+                                <option value="Opini">Opini</option>
+                                <option value="Berita">Berita</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label>Tanggal Publish</label>
+                            <input type="datetime-local" id="art-date">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Gambar Utama (Max 150KB)</label>
+                        <input type="file" id="art-image-file" accept="image/png, image/jpeg">
+                        <input type="hidden" id="art-image-base64">
+                        <div id="art-image-preview" style="margin-top:8px; max-width:200px; display:none;">
+                            <img src="" style="width:100%; border-radius:8px;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Konten</label>
+                        <textarea id="art-content" class="textarea-large" style="height:300px" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="document.getElementById('article-modal').classList.add('hidden')">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="art-save-btn">Simpan</button>
                 </div>
             </form>
         </div>

@@ -66,6 +66,19 @@ async function ensureSchema() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS articles (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    slug TEXT UNIQUE,
+    content TEXT,
+    author TEXT,
+    image TEXT,
+    publish_date TIMESTAMP DEFAULT NOW(),
+    views INT DEFAULT 0,
+    category TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   await query`CREATE TABLE IF NOT EXISTS quiz_schedules (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
@@ -76,7 +89,7 @@ async function ensureSchema() {
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
-  
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -84,7 +97,7 @@ async function ensureSchema() {
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE`;
   await query`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS role TEXT`;
-  
+
   // Ensure description column exists for quiz_schedules
   await query`ALTER TABLE quiz_schedules ADD COLUMN IF NOT EXISTS description TEXT`;
 

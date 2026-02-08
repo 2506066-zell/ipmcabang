@@ -354,6 +354,16 @@
         if (tabName === 'users' && state.users.length === 0) loadUsers();
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();
+
+        // Dynamic Import for Articles to save bundle size if needed, but standard import is fine for now
+        if (tabName === 'articles') {
+            import('./articles.js').then(mod => {
+                if (!state.articlesInitialized) {
+                    mod.initArticles(state, els, { apiGetVercel, apiAdminVercel, fetchJsonWithRetry, debounce });
+                    state.articlesInitialized = true;
+                }
+            });
+        }
     };
 
     // --- DASHBOARD LOGIC ---

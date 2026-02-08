@@ -6,17 +6,13 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#006400">
-    <title>Artikel - PC IPM Panawuan</title>
-    <meta name="description" content="Baca artikel terbaru dari IPM Panawuan.">
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="Artikel IPM Panawuan">
-    <meta property="og:description" content="Baca artikel terbaru dari IPM Panawuan.">
+    <meta name="description" content="Kumpulan artikel, berita, dan opini terbaru dari IPM Panawuan.">
+    <title>Artikel Organisasi - PC IPM Panawuan</title>
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="page-article-detail">
+<body class="page-articles">
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-content">
@@ -31,18 +27,19 @@
 
     <header class="mobile-header" id="mobile-header">
         <div class="logo-container">
-            <a href="index.html" style="display:flex; align-items:center; text-decoration:none; color:inherit;">
-                <picture>
-                    <source srcset="ipm (2).webp" type="image/webp">
-                    <img src="ipm (2).png" alt="Logo IPM" class="header-logo" loading="lazy" decoding="async"
-                        fetchpriority="low">
-                </picture>
-                <span class="header-title">PC IPM Panawuan</span>
-            </a>
+            <picture>
+                <source srcset="ipm (2).webp" type="image/webp">
+                <img src="ipm (2).png" alt="Logo IPM" class="header-logo" loading="lazy" decoding="async"
+                    fetchpriority="low">
+            </picture>
+            <span class="header-title">PC IPM Panawuan</span>
         </div>
         <div class="header-right-icons">
-            <a href="articles.html" class="header-icon" aria-label="Kembali ke Artikel">
-                <i class="fas fa-arrow-left"></i>
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
             </a>
             <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false"
                 aria-controls="mobile-nav">
@@ -66,11 +63,39 @@
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <main class="main-content" style="padding-top:70px; padding-bottom:100px;">
-        <div class="container" style="max-width:800px; margin:0 auto;">
-            <div id="article-detail-container">
-                <div style="text-align:center; padding:40px;">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Memuat artikel...
-                </div>
+        <div class="container">
+            <h1 style="margin-bottom:20px; text-align:center;">Artikel & Berita</h1>
+
+            <!-- Filter & Search -->
+            <div class="articles-toolbar" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="text" id="search-input" placeholder="Cari artikel..."
+                    style="flex:1; min-width:200px; padding:10px; border-radius:8px; border:1px solid #ddd;">
+
+                <select id="sort-select" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+                    <option value="newest">Terbaru</option>
+                    <option value="popular">Terpopuler</option>
+                    <option value="oldest">Terlama</option>
+                </select>
+                <select id="category-select" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+                    <option value="all">Semua Kategori</option>
+                    <option value="Umum">Umum</option>
+                    <option value="Kader">Kader</option>
+                    <option value="Opini">Opini</option>
+                    <option value="Berita">Berita</option>
+                </select>
+            </div>
+
+            <div id="loading-indicator" style="text-align:center; display:none; padding:20px;">
+                <i class="fas fa-spinner fa-spin"></i> Memuat...
+            </div>
+
+            <div id="articles-grid" class="articles-grid"
+                style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
+                <!-- JS will inject cards here -->
+            </div>
+
+            <div style="text-align:center; margin-top:30px;">
+                <button id="load-more-btn" class="btn btn-secondary" style="display:none;">Muat Lebih Banyak</button>
             </div>
         </div>
     </main>
