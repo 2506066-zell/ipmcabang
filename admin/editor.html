@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <title>Editor Artikel - Admin IPM</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Specific overrides for standalone editor page */
+        body {
+            padding-top: 0 !important;
+            background: #f1f5f9;
+        }
+
+        .editor-page-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .editor-header {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .editor-scroll-area {
+            flex: 1;
+            padding: 40px 20px;
+        }
+    </style>
+</head>
+
+<body class="page-editor">
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="loading-content">
+            <div class="scanner-container">
+                <div class="scanner"></div>
+            </div>
+            <p id="loading-text">Menyambungkan...</p>
+        </div>
+    </div>
+
+    <div class="editor-page-wrapper">
+        <div class="editor-header">
+            <div class="editor-header-left">
+                <a href="admin.html#articles" class="btn btn-ghost" title="Kembali">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <span class="editor-status" id="editor-status">Siap menulis...</span>
+            </div>
+            <div class="editor-header-right">
+                <button type="submit" form="article-form" class="btn btn-primary" id="art-save-btn">
+                    <i class="fas fa-paper-plane"></i> Publikasikan
+                </button>
+            </div>
+        </div>
+
+        <form id="article-form" class="editor-form">
+            <input type="hidden" id="art-id">
+
+            <div class="editor-scroll-area">
+                <div class="editor-container">
+                    <!-- Main Title Section -->
+                    <div class="editor-title-container">
+                        <input type="text" id="art-title" class="editor-title-input" required
+                            placeholder="Tulis judul artikel di sini..." autofocus>
+                    </div>
+
+                    <!-- Meta Info Row -->
+                    <div class="editor-meta-row">
+                        <div class="editor-meta-item">
+                            <i class="fas fa-user-edit"></i>
+                            <input type="text" id="art-author" placeholder="Nama Penulis" required>
+                        </div>
+                        <div class="editor-meta-item">
+                            <i class="fas fa-tag"></i>
+                            <select id="art-category">
+                                <option value="Umum">Umum</option>
+                                <option value="Kader">Kader</option>
+                                <option value="Opini">Opini</option>
+                                <option value="Berita">Berita</option>
+                            </select>
+                        </div>
+                        <div class="editor-meta-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <input type="datetime-local" id="art-date">
+                        </div>
+                    </div>
+
+                    <!-- Image Upload Section -->
+                    <div class="editor-image-section">
+                        <div class="image-upload-wrapper">
+                            <label for="art-image-file" class="image-upload-label">
+                                <i class="fas fa-image"></i>
+                                <span>Tambahkan Gambar Sampul</span>
+                            </label>
+                            <input type="file" id="art-image-file" accept="image/png, image/jpeg" style="display:none">
+                            <input type="hidden" id="art-image-base64">
+                        </div>
+                        <div id="art-image-preview" class="editor-image-preview" style="display:none">
+                            <img src="" alt="Preview">
+                            <button type="button" class="remove-image-btn" id="remove-art-image">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Unified Content Editor -->
+                    <div class="editor-writing-area">
+                        <!-- Minimal Toolbar -->
+                        <div class="editor-toolbar" id="editor-toolbar">
+                            <button type="button" class="tool-btn" data-command="bold" title="Bold">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" class="tool-btn" data-command="italic" title="Italic">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" class="tool-btn" data-command="underline" title="Underline">
+                                <i class="fas fa-underline"></i>
+                            </button>
+                            <div class="tool-divider"></div>
+                            <button type="button" class="tool-btn" data-command="insertUnorderedList"
+                                title="Bulleted List">
+                                <i class="fas fa-list-ul"></i>
+                            </button>
+                            <div class="tool-divider"></div>
+                            <div class="tool-select-wrapper">
+                                <select id="editor-line-spacing" title="Jarak Spasi">
+                                    <option value="1.0">1.0</option>
+                                    <option value="1.2" selected>1.2</option>
+                                    <option value="1.5">1.5</option>
+                                    <option value="1.8">1.8</option>
+                                    <option value="2.0">2.0</option>
+                                </select>
+                            </div>
+                            <div class="tool-divider"></div>
+                            <div class="tool-color-wrapper">
+                                <input type="color" id="editor-color-picker" title="Warna Teks" value="#000000">
+                            </div>
+                        </div>
+
+                        <!-- Scrollable Contentable Area -->
+                        <div id="art-editor" class="editor-content-editable" contenteditable="true"
+                            placeholder="Mulai menulis artikel di sini..."></div>
+
+                        <!-- Hidden textarea for backward compatibility/sync -->
+                        <textarea id="art-content" style="display:none"></textarea>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="../scripts/toast.js"></script>
+    <script src="editor.js" defer></script>
+</body>
+
+</html>

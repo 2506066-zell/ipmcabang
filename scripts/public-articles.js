@@ -32,9 +32,23 @@ function initListPage() {
     async function fetchArticles(append = false) {
         if (state.loading) return;
         state.loading = true;
-        loader.style.display = 'block';
 
-        if (!append) grid.innerHTML = '';
+        // Show skeleton instead of simple loader for main grid
+        if (!append) {
+            grid.innerHTML = Array(6).fill(0).map(() => `
+                <div class="skeleton-card">
+                    <div class="skeleton-img"><div class="shimmer"></div></div>
+                    <div class="skeleton-text">
+                        <div class="skeleton-line title"><div class="shimmer"></div></div>
+                        <div class="skeleton-line"><div class="shimmer"></div></div>
+                        <div class="skeleton-line"><div class="shimmer"></div></div>
+                        <div class="skeleton-line short"><div class="shimmer"></div></div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            loader.style.display = 'block';
+        }
 
         try {
             const params = new URLSearchParams({
@@ -74,7 +88,7 @@ function initListPage() {
             return;
         }
 
-        const html = articles.map(art => {
+        const cards = articles.map((art, index) => {
             const thumbUrl = art.image || 'https://via.placeholder.com/400x250?text=No+Thumbnail';
 
             // Create excerpt
@@ -83,9 +97,13 @@ function initListPage() {
             const excerpt = div.textContent || div.innerText || '';
             const publishDate = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
-            return `
-            <a href="article.html?slug=${art.slug || ''}&id=${art.id}" class="article-card">
-                <div class="card-thumbnail" style="background-image: url('${thumbUrl}')">
+            const card = document.createElement('a');
+            card.href = `article.html?slug=${art.slug || ''}&id=${art.id}`;
+            card.className = 'article-card';
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.innerHTML = `
+                <div class="card-thumbnail">
+                    <img src="${thumbUrl}" alt="${art.title}" onload="this.classList.add('loaded')">
                     <span class="card-category-badge">${art.category || 'Umum'}</span>
                 </div>
                 <div class="card-content">
@@ -99,15 +117,12 @@ function initListPage() {
                         <span class="publish-date">${publishDate}</span>
                     </div>
                 </div>
-            </a>
             `;
-        }).join('');
+            return card;
+        });
 
-        if (append) {
-            grid.insertAdjacentHTML('beforeend', html);
-        } else {
-            grid.innerHTML = html;
-        }
+        if (!append) grid.innerHTML = '';
+        cards.forEach(card => grid.appendChild(card));
     }
 
     // Events
@@ -275,3 +290,24 @@ function initDetailPage() {
 
     loadDetail();
 }
+
+window.shareArticle = function (platform) {
+    const url = window.location.href;
+    const title = document.title;
+    const text = encodeURIComponent(`Baca artikel menarik ini: ${title}\n\n`);
+
+    switch (platform) {
+        case 'whatsapp':
+            window.open(`https://wa.me/?text=${text}${encodeURIComponent(url)}`, '_blank');
+            break;
+        case 'twitter':
+            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank');
+            break;
+        case 'copy':
+            navigator.clipboard.writeText(url).then(() => {
+                if (window.Toast) window.Toast.show('Tautan disalin ke papan klip!', 'success');
+                else alert('Tautan disalin!');
+            });
+            break;
+    }
+};

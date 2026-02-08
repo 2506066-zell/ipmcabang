@@ -52,4 +52,173 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'login.html';
         });
     }
+
+    // --- DYNAMIC FEATURES (Phase 4) ---
+
+    // Typewriter Effect
+    const typewriterEl = document.getElementById('typewriter');
+    if (typewriterEl) {
+        const phrases = [
+            "\"Dari Pemahaman, Menata Arah Gerak\"",
+            "PC IPM Panawuan",
+            "Pelajar Berkemajuan",
+            "Nuun Wal Qolami Wamaa Yasthuruun"
+        ];
+        let i = 0, j = 0, isDeleting = false;
+
+        function type() {
+            const current = phrases[i];
+            if (isDeleting) {
+                typewriterEl.textContent = current.substring(0, j - 1);
+                j--;
+            } else {
+                typewriterEl.textContent = current.substring(0, j + 1);
+                j++;
+            }
+
+            let speed = isDeleting ? 50 : 100;
+            if (!isDeleting && j === current.length) {
+                isDeleting = true;
+                speed = 2000; // Pause at end
+            } else if (isDeleting && j === 0) {
+                isDeleting = false;
+                i = (i + 1) % phrases.length;
+                speed = 500;
+            }
+            setTimeout(type, speed);
+        }
+        type();
+    }
+
+    // Mouse Parallax for Hero Logo
+    const heroLogo = document.querySelector('.hero-logo');
+    if (heroLogo && window.innerWidth > 768) {
+        document.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) / 50;
+            const moveY = (e.clientY - window.innerHeight / 2) / 50;
+            heroLogo.style.transform = `translate(${moveX}px, ${moveY}px) rotate(${moveX / 2}deg)`;
+        });
+    }
+
+    // Scroll Reveal
+    const revealElements = document.querySelectorAll('.reveal');
+    const observerOptions = {
+        threshold: 0.15,
+        rootMargin: "0px 0px -50px 0px"
+    };
+
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // Fetch Latest Articles
+    const articlesGrid = document.getElementById('featured-articles-grid');
+    if (articlesGrid) {
+        fetch('/api/articles?page=1&size=3&sort=newest')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.articles) {
+                    renderLatestArticles(data.articles);
+                }
+            })
+            .catch(err => console.error('Error fetching latest articles:', err));
+    }
+
+    function renderLatestArticles(articles) {
+        if (!articlesGrid) return;
+        if (articles.length === 0) {
+            articlesGrid.innerHTML = '<p>Belum ada artikel terbaru.</p>';
+            return;
+        }
+
+        articlesGrid.innerHTML = articles.map(art => `
+            <article class="article-card">
+                <div class="article-card-image">
+                    <img src="${art.image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800'}" alt="${art.title}" loading="lazy">
+                </div>
+                <div class="article-card-content">
+                    <span class="article-badge">${art.category || 'Umum'}</span>
+                    <h3 class="article-card-title">${art.title}</h3>
+                    <div class="article-card-meta">
+                        <span><i class="fas fa-user-edit"></i> ${art.author}</span>
+                        <span><i class="fas fa-calendar-day"></i> ${new Date(art.publish_date).toLocaleDateString('id-ID')}</span>
+                    </div>
+                    <a href="article.html?slug=${art.slug}" class="stretched-link" style="position:absolute; inset:0; z-index:1;"></a>
+                </div>
+            </article>
+        `).join('');
+    }
+
+    // --- PREMIUM UX POLISH (Phase 5) ---
+
+    // 1. Smooth Page Transitions
+    const transitionOverlay = document.createElement('div');
+    transitionOverlay.className = 'page-transition-overlay';
+    document.body.appendChild(transitionOverlay);
+
+    // Fade out on load
+    requestAnimationFrame(() => {
+        transitionOverlay.classList.add('fade-out');
+    });
+
+    // Fade in on link click
+    document.querySelectorAll('a').forEach(link => {
+        if (link.hostname === window.location.hostname &&
+            !link.hash &&
+            link.target !== '_blank' &&
+            !link.classList.contains('no-transition')) {
+            link.addEventListener('click', (e) => {
+                const href = link.href;
+                if (!href || href.includes('javascript:')) return;
+
+                e.preventDefault();
+                transitionOverlay.classList.remove('fade-out');
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 400);
+            });
+        }
+    });
+
+    // 2. Premium Floating Action Button (FAB)
+    const activeDoc = window.location.pathname;
+    const isPublicPage = activeDoc.includes('index.html') ||
+        activeDoc.includes('articles.html') ||
+        activeDoc.includes('article.html') ||
+        activeDoc.includes('quiz.html') ||
+        activeDoc.includes('ranking.html') ||
+        activeDoc.endsWith('/');
+
+    if (isPublicPage && !activeDoc.includes('/admin/')) {
+        const fabContainer = document.createElement('div');
+        fabContainer.className = 'premium-fab-container';
+        fabContainer.innerHTML = `
+            <button class="fab-main" id="fab-main"><i class="fas fa-plus"></i></button>
+            <div class="fab-options">
+                <a href="ranking.html" class="fab-option" data-label="Peringkat"><i class="fas fa-trophy"></i></a>
+                <a href="quiz.html" class="fab-option" data-label="Ikuti Kuis"><i class="fas fa-gamepad"></i></a>
+                <a href="help.html" class="fab-option" data-label="Bantuan"><i class="fas fa-question"></i></a>
+            </div>
+        `;
+        document.body.appendChild(fabContainer);
+
+        const fabMain = document.getElementById('fab-main');
+        fabMain.addEventListener('click', () => {
+            fabContainer.classList.toggle('open');
+        });
+
+        // Close FAB when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!fabContainer.contains(e.target)) {
+                fabContainer.classList.remove('open');
+            }
+        });
+    }
 });

@@ -7,7 +7,17 @@
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#006400">
     <meta name="description" content="Kumpulan artikel, berita, dan opini terbaru dari IPM Panawuan.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Artikel Organisasi - PC IPM Panawuan">
+    <meta property="og:description"
+        content="Kumpulan artikel, berita, dan opini terbaru dari Ikatan Pelajar Muhammadiyah PC Panawuan.">
+    <meta property="og:image" content="https://ipmpanawuan.or.id/ipm%20(2).png">
+
     <title>Artikel Organisasi - PC IPM Panawuan</title>
+
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/quiz-enhancements.css">
     <link rel="stylesheet" href="styles/article-enhancements.css">
@@ -18,11 +28,13 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-content">
-            <picture>
-                <source srcset="ipm (2).webp" type="image/webp">
-                <img src="ipm (2).png" alt="Loading..." class="loading-logo" loading="lazy" decoding="async"
-                    fetchpriority="low">
-            </picture>
+            <div class="scanner-container">
+                <picture>
+                    <source srcset="ipm (2).webp" type="image/webp">
+                    <img src="ipm (2).png" alt="Loading..." class="loading-logo" fetchpriority="high" decoding="async">
+                </picture>
+                <div class="scanner"></div>
+            </div>
             <p id="loading-text">Memuat...</p>
         </div>
     </div>
@@ -31,8 +43,7 @@
         <div class="logo-container">
             <picture>
                 <source srcset="ipm (2).webp" type="image/webp">
-                <img src="ipm (2).png" alt="Logo IPM" class="header-logo" loading="lazy" decoding="async"
-                    fetchpriority="low">
+                <img src="ipm (2).png" alt="Logo IPM" class="header-logo" fetchpriority="high" decoding="async">
             </picture>
             <span class="header-title">PC IPM Panawuan</span>
         </div>

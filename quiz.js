@@ -699,6 +699,9 @@ async function finishQuiz() {
                 if (currentP >= targetP) {
                     clearInterval(interval);
                     scoreText.textContent = `${targetP}%`;
+                    if (targetP >= 70 && window.Confetti) {
+                        Confetti.fire(4000);
+                    }
                 } else {
                     currentP++;
                     scoreText.textContent = `${currentP}%`;

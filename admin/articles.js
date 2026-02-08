@@ -169,53 +169,11 @@ export function initArticles(state, els, api) {
 
     // Create/Edit
     addBtn.onclick = () => {
-        form.reset();
-        editorArea.innerHTML = '';
-        inpId.value = '';
-        inpBase64.value = '';
-        previewDiv.style.display = 'none';
-
-        // Default values
-        inpAuthor.value = state.username || '';
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        inpDate.value = now.toISOString().slice(0, 16);
-
-        openModal();
+        window.location.href = 'editor.html';
     };
 
     async function openEdit(id) {
-        try {
-            const data = await api.fetchJsonWithRetry(`/api/articles?id=${id}`);
-            if (data.status === 'success' && data.article) {
-                const a = data.article;
-                inpId.value = a.id;
-                inpTitle.value = a.title;
-                inpAuthor.value = a.author || '';
-                inpCategory.value = a.category || 'Umum';
-
-                // Contentable sync
-                editorArea.innerHTML = a.content || '';
-                inpContent.value = a.content || '';
-
-                const d = new Date(a.publish_date);
-                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                inpDate.value = d.toISOString().slice(0, 16);
-
-                if (a.image) {
-                    inpBase64.value = a.image;
-                    previewDiv.querySelector('img').src = a.image;
-                    previewDiv.style.display = 'block';
-                } else {
-                    inpBase64.value = '';
-                    previewDiv.style.display = 'none';
-                }
-
-                openModal();
-            }
-        } catch (e) {
-            alert('Gagal mengambil data: ' + e.message);
-        }
+        window.location.href = `editor.html?id=${id}`;
     }
 
     async function handleDelete(id) {
