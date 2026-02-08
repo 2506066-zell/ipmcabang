@@ -160,7 +160,7 @@ export function initMaterials(state, els, api) {
 
         try {
             const q = searchInput ? searchInput.value : '';
-            let url = `/api/admin_handler?action=listMaterials&page=${page}&size=10`;
+            let url = `/api/admin/materials?page=${page}&size=10`;
             if (q) url += `&search=${encodeURIComponent(q)}`;
 
             const data = await api.apiAdminVercel('GET', url);
@@ -267,14 +267,14 @@ export function initMaterials(state, els, api) {
     }
 
     async function fetchSingle(id) {
-        const data = await api.apiAdminVercel('GET', `/api/admin_handler?action=listMaterials`);
+        const data = await api.apiAdminVercel('GET', `/api/admin/materials`);
         return data.materials?.find(m => m.id == id);
     }
 
     async function handleDelete(id) {
         if (!confirm('Yakin hapus materi ini?')) return;
         try {
-            await api.apiAdminVercel('POST', `/api/admin_handler?action=deleteMaterial`, { id });
+            await api.apiAdminVercel('POST', `/api/admin/materials?action=deleteMaterial`, { id });
             loadMaterials(currentPage);
             if (window.Toast) Toast.show('Materi berhasil dihapus', 'success');
         } catch (e) {
@@ -315,7 +315,7 @@ export function initMaterials(state, els, api) {
                 active: inpActive.checked
             };
 
-            await api.apiAdminVercel('POST', '/api/admin_handler?action=upsertMaterial', payload);
+            await api.apiAdminVercel('POST', '/api/admin/materials?action=upsertMaterial', payload);
             closeModal();
             loadMaterials(currentPage);
             if (window.Toast) Toast.show('Materi berhasil disimpan!', 'success');

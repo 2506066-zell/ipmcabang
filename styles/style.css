@@ -4286,6 +4286,11 @@ body.light-mode .timer-unit {
     pointer-events: none;
 }
 
+/* Hide global FAB during active quiz to prevent overlap */
+body.quiz-active .premium-fab-container {
+    display: none !important;
+}
+
 @media (max-width: 768px) {
     .premium-fab-container {
         bottom: 84px;

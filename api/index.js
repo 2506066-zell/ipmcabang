@@ -3,7 +3,11 @@ const { json } = require('./_util');
 // Internal Route Map
 const routes = {
   'auth': require('./_handler_auth'),
-  'admin/questions': require('./_handler_admin'), // Legacy mapping
+  'auth_handler': require('./_handler_auth'), // Legacy support
+  'admin/questions': require('./_handler_admin'),
+  'admin/materials': require('./_handler_admin'), // Admin materials logic is here
+  'admin/users': require('./_handler_users'),    // Admin users logic is here
+  'admin_handler': require('./_handler_admin'), // Legacy support
   'admin': require('./_handler_admin'),
   'articles': require('./_handler_articles'),
   'materials': require('./_handler_materials'),
@@ -27,8 +31,22 @@ module.exports = async (req, res) => {
 
     // Direct match or nested match
     let handler = routes[segment];
-    if (segment === 'admin' && subSegment === 'questions') {
-      handler = routes['admin/questions'];
+
+    // Handle nested admin routes: /api/admin/users -> users handler, etc.
+    if (segment === 'admin' && subSegment) {
+      if (routes[`admin/${subSegment}`]) {
+        handler = routes[`admin/${subSegment}`];
+      } else if (routes[subSegment]) {
+        handler = routes[subSegment];
+      }
+    }
+
+    // Special case for admin_handler legacy path
+    if (segment === 'admin_handler') {
+      handler = routes['admin'];
+    }
+    if (segment === 'auth_handler') {
+      handler = routes['auth'];
     }
 
     if (handler) {

@@ -491,7 +491,7 @@ async function handleSetSelection(set, count) {
         const srng = seededRandom(quizSeed);
         const shuffled = shuffleArray(qData, srng).map(q => ({
             ...q,
-            optionOrder: shuffleArray(['a', 'b', 'c', 'd'], srng)
+            optionOrder: ['a', 'b', 'c', 'd'] // Options in alphabetical order
         }));
         questionsData = shuffled;
 
@@ -534,6 +534,9 @@ function startQuiz() {
     userScore = 0;
     userAnswers = [];
     startTime = Date.now();
+
+    // Hide global FAB via CSS
+    document.body.classList.add('quiz-active');
 
     // Show quiz UI
     quizHeader.style.display = 'flex';
@@ -716,6 +719,9 @@ async function finishQuiz() {
 
             // UX: Scroll to result
             resDiv.scrollIntoView({ behavior: 'smooth' });
+
+            // Restore global FAB
+            document.body.classList.remove('quiz-active');
 
         } else {
             throw new Error(data.message || 'Gagal menyimpan hasil.');

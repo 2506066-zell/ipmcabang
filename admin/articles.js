@@ -187,71 +187,80 @@ export function initArticles(state, els, api) {
     }
 
     // Image Handling
-    inpFile.onchange = () => {
-        const file = inpFile.files[0];
-        if (!file) return;
+    if (inpFile) {
+        inpFile.onchange = () => {
+            const file = inpFile.files[0];
+            if (!file) return;
 
-        if (file.size > 200 * 1024) { // Increased to 200KB for better quality sampul
-            alert('Ukuran gambar maksimal 200KB!');
-            inpFile.value = '';
-            return;
-        }
+            if (file.size > 200 * 1024) { // Increased to 200KB for better quality sampul
+                alert('Ukuran gambar maksimal 200KB!');
+                inpFile.value = '';
+                return;
+            }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const res = e.target.result;
-            inpBase64.value = res;
-            previewDiv.querySelector('img').src = res;
-            previewDiv.style.display = 'block';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const res = e.target.result;
+                inpBase64.value = res;
+                if (previewDiv && previewDiv.querySelector('img')) {
+                    previewDiv.querySelector('img').src = res;
+                    previewDiv.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(file);
         };
-        reader.readAsDataURL(file);
-    };
+    }
 
-    removeImgBtn.onclick = () => {
-        inpBase64.value = '';
-        inpFile.value = '';
-        previewDiv.style.display = 'none';
-    };
+    if (removeImgBtn) {
+        removeImgBtn.onclick = () => {
+            if (inpBase64) inpBase64.value = '';
+            if (inpFile) inpFile.value = '';
+            if (previewDiv) previewDiv.style.display = 'none';
+        };
+    }
 
     // Save
-    form.onsubmit = async (e) => {
-        e.preventDefault();
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
 
-        // Final sync
-        inpContent.value = editorArea.innerHTML;
+            // Final sync
+            if (editorArea && inpContent) inpContent.value = editorArea.innerHTML;
 
-        const id = inpId.value;
-        const payload = {
-            id,
-            title: inpTitle.value,
-            author: inpAuthor.value,
-            category: inpCategory.value,
-            content: inpContent.value,
-            image: inpBase64.value,
-            publish_date: inpDate.value ? new Date(inpDate.value).toISOString() : new Date().toISOString()
-        };
+            const id = inpId.value;
+            const payload = {
+                id,
+                title: inpTitle.value,
+                author: inpAuthor.value,
+                category: inpCategory.value,
+                content: inpContent.value,
+                image: inpBase64.value,
+                publish_date: inpDate.value ? new Date(inpDate.value).toISOString() : new Date().toISOString()
+            };
 
-        const btn = document.getElementById('art-save-btn');
-        const oldHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mempublikasikan...';
-        btn.disabled = true;
+            const btn = document.getElementById('art-save-btn');
+            if (!btn) return;
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mempublikasikan...';
+            btn.disabled = true;
 
-        try {
-            if (id) {
-                await api.apiAdminVercel('PUT', '/api/articles', payload);
-            } else {
-                await api.apiAdminVercel('POST', '/api/articles', payload);
+            try {
+                if (id) {
+                    await api.apiAdminVercel('PUT', '/api/articles', payload);
+                } else {
+                    await api.apiAdminVercel('POST', '/api/articles', payload);
+                }
+                closeModal();
+                loadArticles(currentPage);
+                if (window.toast) toast.show('Artikel berhasil dipublikasikan!', 'success');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
             }
-            closeModal();
-            loadArticles(currentPage);
-            if (window.toast) toast.show('Artikel berhasil dipublikasikan!', 'success');
-        } catch (err) {
-            alert('Error: ' + err.message);
-        } finally {
-            btn.innerHTML = oldHtml;
-            btn.disabled = false;
-        }
-    };
+        };
+    }
 
     // Close Actions
     closeBtn.onclick = closeModal;
