@@ -247,56 +247,30 @@ function initNextQuiz(info) {
 function startCountdown(targetTime) {
     if (countdownInterval) clearInterval(countdownInterval);
     
-    // Cached DOM elements
-    const els = {
-        d: document.getElementById('timer-d'),
-        h: document.getElementById('timer-h'),
-        m: document.getElementById('timer-m'),
-        s: document.getElementById('timer-s'),
-        topic: document.getElementById('nq-topic')
-    };
-
-    let prevSec = -1;
-
     function update() {
         const now = Date.now();
         const diff = targetTime - now;
         
         if (diff <= 0) {
             clearInterval(countdownInterval);
-            ['d','h','m','s'].forEach(k => els[k].textContent = '00');
+            document.getElementById('timer-h').textContent = '00';
+            document.getElementById('timer-m').textContent = '00';
+            document.getElementById('timer-s').textContent = '00';
             
-            // Subtle pulse for ended state
-            if (els.topic) {
-                els.topic.textContent = "Kuis telah dimulai! Silakan refresh.";
-                els.topic.style.color = 'var(--accent-success)';
-                els.topic.style.fontWeight = 'bold';
-                els.topic.style.animation = 'pulseText 2s infinite';
-            }
+            // Optional: Auto refresh or show "Started"
+            document.getElementById('nq-topic').textContent = "Kuis telah dimulai! Silakan refresh.";
+            document.getElementById('nq-topic').style.color = 'var(--accent-primary)';
+            document.getElementById('nq-topic').style.fontWeight = 'bold';
             return;
         }
         
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const h = Math.floor(diff / (1000 * 60 * 60));
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((diff % (1000 * 60)) / 1000);
         
-        // Update DOM with leading zeros
-        if (els.d) els.d.textContent = String(d).padStart(2, '0');
-        if (els.h) els.h.textContent = String(h).padStart(2, '0');
-        if (els.m) els.m.textContent = String(m).padStart(2, '0');
-        
-        if (els.s) {
-            const sStr = String(s).padStart(2, '0');
-            if (els.s.textContent !== sStr) {
-                els.s.textContent = sStr;
-                // Subtle Animation per second
-                els.s.parentElement.animate([
-                    { transform: 'scale(0.96)', opacity: 0.8 },
-                    { transform: 'scale(1)', opacity: 1 }
-                ], { duration: 200, easing: 'ease-out' });
-            }
-        }
+        document.getElementById('timer-h').textContent = String(h).padStart(2, '0');
+        document.getElementById('timer-m').textContent = String(m).padStart(2, '0');
+        document.getElementById('timer-s').textContent = String(s).padStart(2, '0');
     }
     
     update();
@@ -456,12 +430,10 @@ function renderTopScores(scores) {
     grid.innerHTML = scores.slice(0, 5).map((s, i) => {
         const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : ''));
         return `
-        <div style="background:var(--card-bg); padding:10px; border-radius:8px; border:1px solid var(--border-color); text-align:center; font-size:0.9rem;">
-            <div style="font-weight:bold; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                ${medal} ${s.username}
-            </div>
-            <div style="color:var(--accent-primary); font-weight:bold;">${Math.round(s.score)}%</div>
-            <div style="font-size:0.75rem; color:#888;">${s.quiz_title || 'Kuis'}</div>
+        <div class="top-score-card">
+            <div class="username">${medal} ${s.username}</div>
+            <div class="score">${Math.round(s.score)}%</div>
+            <div class="quiz-title">${s.quiz_title || 'Kuis'}</div>
         </div>
         `;
     }).join('');
@@ -599,7 +571,11 @@ async function nextQuestion() {
     }
 }
 
+let isFinishing = false;
 async function finishQuiz() {
+    if (isFinishing) return;
+    isFinishing = true;
+
     // Calculate score
     let score = 0;
     questionsData.forEach((q, i) => {

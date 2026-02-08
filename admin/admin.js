@@ -167,7 +167,7 @@
             qB: document.getElementById('q-b'),
             qC: document.getElementById('q-c'),
             qD: document.getElementById('q-d'),
-            // qCorrect: document.getElementById('q-correct'), // Removed in new design
+            qCorrect: document.getElementById('q-correct'),
             qActive: document.getElementById('q-active'),
             qQuizSet: document.getElementById('q-quizset'),
             qCategory: document.getElementById('q-category'),
@@ -786,74 +786,41 @@
         }
         
         els.schedulesList.innerHTML = schedules.map(s => {
-            const start = s.start_time ? new Date(s.start_time).toLocaleString() : '';
-            const end = s.end_time ? new Date(s.end_time).toLocaleString() : '';
-            const now = Date.now();
-            const startTime = s.start_time ? new Date(s.start_time).getTime() : 0;
-            const endTime = s.end_time ? new Date(s.end_time).getTime() : 0;
-            
-            // Calculate initial countdown
-            let cdText = "00 : 00 : 00 : 00";
-            if (startTime > now) {
-                // Future
-                const diff = startTime - now;
-                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const sec = Math.floor((diff % (1000 * 60)) / 1000);
-                cdText = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(sec).padStart(2,'0')}`;
-            } else if (endTime > now) {
-                // Active
-                cdText = "SEDANG BERLANGSUNG";
-            } else {
-                // Ended
-                cdText = "SELESAI";
-            }
+            const start = s.start_time ? new Date(s.start_time).toLocaleString() : '-';
+            const end = s.end_time ? new Date(s.end_time).toLocaleString() : '-';
+            const isActive = s.active; // Assuming active is boolean
+            const statusClass = isActive ? 'status-active' : 'status-inactive';
+            const statusText = isActive ? 'AKTIF' : 'NONAKTIF';
 
             return `
-            <div class="schedule-card-new" data-id="${s.id}" data-target="${startTime}">
-                <div class="sc-header">
-                    <input type="text" class="sc-title-edit" value="${escapeHtml(s.title)}" readonly onclick="editSchedule(${s.id})">
-                    <div class="sc-countdown-preview">${cdText}</div>
-                </div>
-                <div class="sc-body">
-                    <textarea class="sc-desc-edit" readonly onclick="editSchedule(${s.id})">${escapeHtml(s.description || '')}</textarea>
-                    <div class="sc-time-range">
-                        <span class="sc-time-label">WAKTU MULAI - SELESAI</span>
-                        <div style="color:var(--text-primary); font-size:0.9rem;">
-                            ${start} <span style="color:var(--text-secondary); margin:0 8px;">s/d</span> ${end}
+            <div class="schedule-card">
+                <div class="schedule-status ${statusClass}">${statusText}</div>
+                <div class="schedule-content">
+                    <div class="schedule-title">${escapeHtml(s.title)}</div>
+                    <div class="schedule-desc" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        ${escapeHtml(s.description || '-')}
+                    </div>
+                    <div class="schedule-time-grid">
+                        <div class="time-row">
+                            <i class="fas fa-play-circle"></i>
+                            <span class="time-value">${start}</span>
+                        </div>
+                        <div class="time-row">
+                            <i class="fas fa-stop-circle"></i>
+                            <span class="time-value">${end}</span>
                         </div>
                     </div>
-                </div>
-                <div class="sc-footer">
-                    <button class="sc-btn sc-btn-del" onclick="deleteSchedule(${s.id})">Hapus</button>
-                    <button class="sc-btn sc-btn-save" onclick="editSchedule(${s.id})">Edit Detail</button>
+                    <div class="schedule-actions">
+                        <button class="btn-schedule btn-edit" onclick="editSchedule(${s.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn-schedule btn-delete" onclick="deleteSchedule(${s.id})">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
                 </div>
             </div>`;
         }).join('');
-
-        // Start Live Countdown Interval for Admin
-        if (window.adminCdInterval) clearInterval(window.adminCdInterval);
-        window.adminCdInterval = setInterval(() => {
-            document.querySelectorAll('.schedule-card-new').forEach(card => {
-                const target = Number(card.dataset.target);
-                const preview = card.querySelector('.sc-countdown-preview');
-                if (!target || !preview) return;
-                
-                const now = Date.now();
-                if (target <= now) {
-                    if (preview.textContent.includes(':')) preview.textContent = "SEDANG BERLANGSUNG";
-                    return;
-                }
-                
-                const diff = target - now;
-                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const sec = Math.floor((diff % (1000 * 60)) / 1000);
-                preview.textContent = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(sec).padStart(2,'0')}`;
-            });
-        }, 1000);
     }
 
     window.editSchedule = (id) => {
@@ -962,6 +929,52 @@
         if (modal) modal.classList.add('hidden');
         document.querySelector('.modal-tabs').classList.remove('hidden'); // Restore tabs
     };
+
+    if (els.scheduleForm) {
+        els.scheduleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = els.schId.value;
+            const title = els.schTitle.value;
+            const description = els.schDesc.value;
+            const start = els.schStart.value;
+            const end = els.schEnd.value;
+            
+            showLoader('Menyimpan...');
+            try {
+                const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', {
+                    id: id ? Number(id) : undefined,
+                    title,
+                    description,
+                    start_time: start ? new Date(start).toISOString() : null,
+                    end_time: end ? new Date(end).toISOString() : null
+                });
+                
+                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
+                setStatus('Jadwal tersimpan', 'success');
+                window.closeScheduleModal();
+                loadSchedules();
+            } catch (e) {
+                setStatus(e.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        });
+    }
+    
+    els.scheduleDateFilter?.addEventListener('change', renderSchedules);
+
+    els.globalResetBtn?.addEventListener('click', async () => {
+        const set = els.resetSetSelect.value;
+        if (!confirm(`PERINGATAN KERAS:\nAnda akan menghapus SEMUA data jawaban user untuk Kuis Set ${set}.\nKetik "RESET" untuk konfirmasi.`)) return;
+        const verification = prompt('Ketik "RESET" untuk melanjutkan:');
+        if (verification !== 'RESET') return alert('Batal.');
+        showLoader('Mereset Global...');
+        try {
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=resetSet', { quiz_set: set });
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
+            setStatus(`Kuis Set ${set} berhasil direset total.`, 'ok');
+        } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
+    });
 
     // --- HELPER: Modal Panel Switcher ---
     function showModalContainer() {
@@ -1244,53 +1257,6 @@
         els.userSortSelect?.addEventListener('change', () => renderUsers());
         els.userStatusFilter?.addEventListener('change', () => renderUsers());
         els.refreshLogsBtn?.addEventListener('click', loadLogs);
-
-        // Schedules
-        if (els.scheduleForm) {
-            els.scheduleForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const id = els.schId.value;
-                const title = els.schTitle.value;
-                const description = els.schDesc.value;
-                const start = els.schStart.value;
-                const end = els.schEnd.value;
-                
-                showLoader('Menyimpan...');
-                try {
-                    const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', {
-                        id: id ? Number(id) : undefined,
-                        title,
-                        description,
-                        start_time: start ? new Date(start).toISOString() : null,
-                        end_time: end ? new Date(end).toISOString() : null
-                    });
-                    
-                    if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
-                    setStatus('Jadwal tersimpan', 'success');
-                    window.closeScheduleModal();
-                    loadSchedules();
-                } catch (e) {
-                    setStatus(e.message, 'error');
-                } finally {
-                    hideLoader();
-                }
-            });
-        }
-        
-        els.scheduleDateFilter?.addEventListener('change', renderSchedules);
-
-        els.globalResetBtn?.addEventListener('click', async () => {
-            const set = els.resetSetSelect.value;
-            if (!confirm(`PERINGATAN KERAS:\nAnda akan menghapus SEMUA data jawaban user untuk Kuis Set ${set}.\nKetik "RESET" untuk konfirmasi.`)) return;
-            const verification = prompt('Ketik "RESET" untuk melanjutkan:');
-            if (verification !== 'RESET') return alert('Batal.');
-            showLoader('Mereset Global...');
-            try {
-                const data = await apiAdminVercel('POST', '/api/admin/questions?action=resetSet', { quiz_set: set });
-                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
-                setStatus(`Kuis Set ${set} berhasil direset total.`, 'ok');
-            } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
-        });
     }
 
     // --- INIT ---
