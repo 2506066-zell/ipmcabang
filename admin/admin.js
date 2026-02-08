@@ -437,7 +437,12 @@
                 <div class="q-card" data-id="${q.id}">
                     <div class="q-card-header">
                         <span class="q-set-badge">${escapeHtml(setLabel)}</span>
-                        <span style="color:${statusColor}; font-weight:bold; font-size:0.7rem;">${statusText}</span>
+                        
+                        <!-- Toggle Switch -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${isActive ? 'checked' : ''} data-action="toggle-status">
+                            <span class="slider"></span>
+                        </label>
                     </div>
                     
                     <p class="q-text">${escapeHtml(q.question)}</p>
@@ -917,18 +922,33 @@
             
             // Mock render next quiz card
             const html = `
-            <div class="next-quiz-card" style="background:var(--card-bg); border-radius:12px; padding:20px; border:1px solid var(--border-color); color:var(--text-primary);">
-                <div class="nq-header" style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-weight:bold; color:var(--accent-primary);">
+            <div class="next-quiz-card">
+                <div class="nq-header">
                     <i class="fas fa-hourglass-half"></i> Kuis Berikutnya
                 </div>
                 <h3 style="font-size:1.2rem; margin-bottom:8px;">${escapeHtml(title)}</h3>
-                <p style="opacity:0.8; margin-bottom:16px; font-size:0.9rem;">${escapeHtml(desc)}</p>
-                <div class="nq-timer" style="display:flex; gap:8px; justify-content:center; margin-bottom:16px;">
-                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">01</span><small>Jam</small></div>
-                    <div style="font-size:1.5rem; font-weight:bold; padding-top:4px;">:</div>
-                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">30</span><small>Mnt</small></div>
-                    <div style="font-size:1.5rem; font-weight:bold; padding-top:4px;">:</div>
-                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">00</span><small>Dtk</small></div>
+                <p style="opacity:0.8; margin-bottom:12px; font-size:0.9rem;">${escapeHtml(desc)}</p>
+                
+                <div class="nq-timer-grid">
+                    <div class="timer-unit">
+                        <span class="timer-val">01</span>
+                        <span class="timer-label">HARI</span>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit">
+                        <span class="timer-val">12</span>
+                        <span class="timer-label">JAM</span>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit">
+                        <span class="timer-val">30</span>
+                        <span class="timer-label">MENIT</span>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit">
+                        <span class="timer-val">00</span>
+                        <span class="timer-label">DETIK</span>
+                    </div>
                 </div>
             </div>`;
             
@@ -1086,6 +1106,49 @@
         } catch (e) { setStatus('Error: ' + e.message, 'error'); } finally { hideLoader(); }
     }
 
+    async function handleToggleStatus(id, currentStatus) {
+        // Toggle the boolean
+        const newStatus = !currentStatus;
+        
+        // Optimistic UI Update (optional, but good for perceived speed)
+        // Note: For now we'll wait for server response to be safe, or show loader.
+        showLoader('Mengupdate Status...');
+        
+        try {
+            // We use the 'update' action but only send the fields we want to change
+            // However, the backend might expect full object or we need a specific 'toggle' action.
+            // Let's check api/admin_handler.js. Usually 'update' merges or replaces.
+            // If 'update' replaces, we need full data. If we don't have full data handy (we do in state), we can use it.
+            
+            const q = state.questions.find(x => x.id === id);
+            if (!q) throw new Error('Soal tidak ditemukan di state lokal.');
+
+            const payload = {
+                id: q.id,
+                question: q.question,
+                options: q.options,
+                correct_answer: q.correct_answer,
+                category: q.category,
+                quiz_set: q.quiz_set,
+                active: newStatus // The only change
+            };
+
+            const data = await apiAdminVercel('POST', `/api/admin/questions?action=update`, payload);
+            
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal update status.');
+            
+            // Update local state and re-render to reflect change
+            q.active = newStatus;
+            renderQuestions(); // Re-render the grid
+            setStatus(`Status soal diubah ke ${newStatus ? 'AKTIF' : 'NONAKTIF'}`, 'ok');
+            
+        } catch (e) { 
+            setStatus('Error: ' + e.message, 'error'); 
+        } finally { 
+            hideLoader(); 
+        }
+    }
+
     // --- EVENT LISTENERS ---
     function initEvents() {
         // Auth
@@ -1142,18 +1205,20 @@
         window.closeMenuModal = () => els.menuModal.classList.add('hidden');
 
         // FAB
-        els.fabAdd?.addEventListener('click', () => openModal(null));
+        els.fabAdd?.addEventListener('click', () => window.openQuestionModal(null));
 
         // Question Actions
         els.questionsList?.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
-            const item = btn.closest('.list-item');
+            const item = btn.closest('.q-card'); // Updated selector for new card design
             if (!item) return;
-            const id = item.dataset.id;
-            const q = state.questions.find(x => String(x.id) === String(id));
-            if (btn.dataset.action === 'edit' && q) openModal(q);
+            const id = Number(item.dataset.id);
+            const q = state.questions.find(x => x.id === id);
+            
+            if (btn.dataset.action === 'edit' && q) window.openQuestionModal(q);
             else if (btn.dataset.action === 'delete') handleDelete(id);
+            else if (btn.dataset.action === 'toggle-status') handleToggleStatus(id, q.active);
         });
 
         // Modal

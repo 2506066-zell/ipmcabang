@@ -81,7 +81,7 @@
                 <button class="set-card" data-set="3"><i class="fas fa-sitemap"></i><span>Kuis Bidang</span><small class="small" data-count="3">0 soal</small></button>
             </div>
 
-            <!-- NEXT QUIZ INFO (LIVE COUNTDOWN) -->
+            <!-- NEXT QUIZ INFO -->
             <div class="next-quiz-card" id="next-quiz-section" style="display:none;">
                 <div class="nq-header">
                     <i class="fas fa-hourglass-half"></i> Kuis Berikutnya
@@ -90,11 +90,6 @@
                 <p id="nq-topic" style="opacity:0.8; margin-bottom:12px; font-size:0.95rem; line-height:1.4;">Topik: ...</p>
                 
                 <div class="nq-timer-grid">
-                    <div class="timer-unit">
-                        <span id="timer-d" class="timer-val">00</span>
-                        <span class="timer-label">HARI</span>
-                    </div>
-                    <div class="timer-sep">:</div>
                     <div class="timer-unit">
                         <span id="timer-h" class="timer-val">00</span>
                         <span class="timer-label">JAM</span>
@@ -140,8 +135,8 @@
             </div>
         </div>
 
-        <div id="quiz-header" style="display:none; align-items:center; gap:10px;">
-            <div class="progress-indicator" style="flex:1;">
+        <div id="quiz-header" style="display:none;">
+            <div class="progress-indicator">
                 <div class="progress-text-container">
                     <span id="progress-text">0/10</span>
                 </div>
@@ -149,9 +144,6 @@
                     <div id="progress-bar" class="progress-bar-fill"></div>
                 </div>
             </div>
-            <button id="reset-quiz-btn" class="btn-icon-small" aria-label="Ulangi dari awal" style="background:rgba(255,255,255,0.1); border:none; color:var(--text-secondary); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                <i class="fas fa-redo-alt"></i>
-            </button>
         </div>
 
         <div id="quiz-body" style="display:none;">
