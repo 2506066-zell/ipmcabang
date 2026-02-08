@@ -1,36 +1,48 @@
+// --- Loader System ---
 window.showLoader = function (text) {
-    try {
-        if (window.AppLoader && typeof AppLoader.show === 'function') {
-            AppLoader.show(text || 'Memuat...');
-            return;
-        }
-        let overlay = document.getElementById('loading-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'loading-overlay';
-            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;z-index:9999';
-            const p = document.createElement('p');
-            p.id = 'loading-text';
-            p.textContent = text || 'Memuat...';
-            p.style.cssText = 'font-family:system-ui, sans-serif; color:#222;';
-            overlay.appendChild(p);
-            document.body.appendChild(overlay);
-        } else {
-            const t = document.getElementById('loading-text');
-            if (t) t.textContent = text || 'Memuat...';
-            overlay.style.display = 'flex';
-        }
-    } catch { }
+    text = text || 'Memuat...';
+
+    // Check for AppLoader (WebView context)
+    if (window.AppLoader && typeof AppLoader.show === 'function') {
+        AppLoader.show(text);
+        // We still show ours as fallback/overlay if AppLoader is transparent or non-blocking? 
+        // Actually, usually AppLoader is native. Let's stick to valid check.
+        // return; 
+    }
+
+    let overlay = document.getElementById('custom-loading-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'custom-loading-overlay';
+        overlay.innerHTML = `
+            <div class="loading-spinner-custom"></div>
+            <div class="loading-text-custom">${text}</div>
+        `;
+        document.body.appendChild(overlay);
+    } else {
+        overlay.querySelector('.loading-text-custom').textContent = text;
+    }
+
+    // Force reflow
+    void overlay.offsetWidth;
+    overlay.classList.add('visible');
 };
+
 window.hideLoader = function () {
-    try {
-        if (window.AppLoader && typeof AppLoader.hide === 'function') {
-            AppLoader.hide();
-            return;
-        }
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) overlay.style.display = 'none';
-    } catch { }
+    if (window.AppLoader && typeof AppLoader.hide === 'function') {
+        AppLoader.hide();
+    }
+
+    const overlay = document.getElementById('custom-loading-overlay');
+    if (overlay) {
+        overlay.classList.remove('visible');
+        // Remove after transition
+        setTimeout(() => {
+            if (overlay && !overlay.classList.contains('visible')) {
+                // keep in DOM for perf, just hidden by CSS opacity/pointer-events
+            }
+        }, 300);
+    }
 };
 
 // --- Quiz Initialization ---

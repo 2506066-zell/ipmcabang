@@ -1402,6 +1402,64 @@
                     hideLoader();
                 }
             });
+
+            // PREVIEW BUTTON IN MODAL
+            document.getElementById('preview-sch-btn')?.addEventListener('click', () => {
+                const title = els.schTitle.value || 'Judul Event';
+                const start = els.schStart.value ? new Date(els.schStart.value).getTime() : Date.now() + 3600000;
+                const end = els.schEnd.value ? new Date(els.schEnd.value).getTime() : Date.now() + 7200000;
+                const now = Date.now();
+
+                let mode = 'start';
+                let diff = 0;
+                let label = '';
+
+                if (now >= start && now < end) {
+                    mode = 'end';
+                    diff = end - now;
+                    label = `Sedang Berlangsung: ${title}`;
+                } else if (now < start) {
+                    mode = 'start';
+                    diff = start - now;
+                    label = `Segera Hadir: ${title}`;
+                } else {
+                    label = `Event Selesai: ${title}`;
+                    diff = 0;
+                }
+
+                // Show in a mini-popup or alert?
+                // The HTML has a #preview-panel overlay already for questions, let's reuse/adapt it or just show alert for now to keep it simple?
+                // Actually admin.html has a specific #preview-panel inside #schedule-modal-panel!
+                // Let's use that.
+
+                const panel = document.querySelector('#schedule-modal-panel #preview-panel');
+                const box = document.querySelector('#schedule-modal-panel #preview-box');
+                if (panel && box) {
+                    panel.classList.remove('hidden');
+
+                    // Simple Static Preview Generation
+                    const s = Math.floor(diff / 1000);
+                    const d = Math.floor(s / 86400);
+                    const h = Math.floor((s % 86400) / 3600);
+                    const m = Math.floor((s % 3600) / 60);
+                    const sec = s % 60;
+
+                    box.innerHTML = `
+                        <div class="hero-countdown-container" style="background:transparent; zoom:0.8;">
+                             <div class="hero-countdown-title" style="color:white;">${label}</div>
+                             <div class="flip-clock">
+                                <div class="flip-unit"><div class="flip-card">${String(d).padStart(2, '0')}</div><div class="flip-label" style="color:#ddd">Hari</div></div>
+                                <div class="flip-unit"><div class="flip-card">${String(h).padStart(2, '0')}</div><div class="flip-label" style="color:#ddd">Jam</div></div>
+                                <div class="flip-unit"><div class="flip-card">${String(m).padStart(2, '0')}</div><div class="flip-label" style="color:#ddd">Menit</div></div>
+                                <div class="flip-unit"><div class="flip-card">${String(sec).padStart(2, '0')}</div><div class="flip-label" style="color:#ddd">Detik</div></div>
+                             </div>
+                             <div style="margin-top:20px; color:#ccc; font-size:0.9rem;">
+                                *Preview ini adalah simulasi tampilan saat ini.
+                             </div>
+                        </div>
+                    `;
+                }
+            });
         }
 
         els.scheduleDateFilter?.addEventListener('change', renderSchedules);
