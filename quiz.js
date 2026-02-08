@@ -436,12 +436,19 @@ const nextBtn = document.getElementById('next-btn');
 
 document.getElementById('result-container').style.display = 'none';
 
-// Show quiz UI
-quizHeader.style.display = 'flex';
-quizBody.style.display = 'block';
-nextBtn.style.display = 'flex';
+function startQuiz() {
+    // Reset state
+    currentQuestionIndex = 0;
+    userScore = 0;
+    userAnswers = [];
+    startTime = Date.now();
 
-renderQuestion();
+    // Show quiz UI
+    quizHeader.style.display = 'flex';
+    quizBody.style.display = 'block';
+    nextBtn.style.display = 'flex';
+
+    renderQuestion();
 }
 
 function renderQuestion() {

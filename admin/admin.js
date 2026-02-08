@@ -357,11 +357,15 @@
 
         // Dynamic Import for Articles to save bundle size if needed, but standard import is fine for now
         if (tabName === 'articles') {
+            console.log('[Admin] Loading articles module...');
             import('./articles.js').then(mod => {
+                console.log('[Admin] Articles module loaded successfully');
                 if (!state.articlesInitialized) {
                     mod.initArticles(state, els, { apiGetVercel, apiAdminVercel, fetchJsonWithRetry, debounce });
                     state.articlesInitialized = true;
                 }
+            }).catch(err => {
+                console.error('[Admin] Failed to load articles module:', err);
             });
         }
     };
