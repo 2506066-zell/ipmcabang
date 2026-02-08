@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#006400">
+    <meta name="description" content="Pusat unduhan materi, ebook, dan dokumen organisasi IPM Panawuan.">
+
+    <title>Materi & E-Book - PC IPM Panawuan</title>
+
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/quiz-enhancements.css">
+    <link rel="stylesheet" href="styles/article-enhancements.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .materi-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .materi-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-primary);
+        }
+
+        .materi-thumb {
+            width: 100%;
+            aspect-ratio: 3/4;
+            background: #1a2a1a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--accent-primary);
+            object-fit: cover;
+        }
+
+        .materi-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .materi-info p {
+            font-size: 0.85rem;
+            color: #aaa;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .materi-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .materi-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-download {
+            background: var(--accent-primary);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-download:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        .type-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .materi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 600px) {
+            .materi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body class="page-articles-unified">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="scanner-container">
+                <img src="ipm (2).png" alt="Loading..." class="loading-logo">
+                <div class="scanner"></div>
+            </div>
+            <p id="loading-text">Memuat Materi...</p>
+        </div>
+    </div>
+
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <img src="ipm (2).png" alt="Logo IPM" class="header-logo">
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <div class="header-right-icons">
+            <a href="index.html" class="header-icon"><i class="fas fa-home"></i></a>
+            <button class="hamburger-menu" id="hamburger-menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur</a>
+            </li>
+            <li><a href="articles.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="materi.html" class="mobile-nav-link active"><i class="fas fa-book"></i> Materi</a></li>
+            <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content" style="padding-top:80px; padding-bottom:100px;">
+        <div class="container">
+            <h1 class="page-title">Materi & E-Book</h1>
+            <p style="color: #aaa; margin-bottom: 30px;">Download panduan, modul, dan buku elektronik seputar Ikatan
+                Pelajar Muhammadiyah.</p>
+
+            <div class="articles-toolbar"
+                style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px;">
+                <div class="search-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="mat-search" placeholder="Cari materi...">
+                </div>
+                <div class="filter-wrapper">
+                    <select id="mat-category-select">
+                        <option value="all">Semua Kategori</option>
+                        <option value="Organisasi">Organisasi</option>
+                        <option value="Kaderisasi">Kaderisasi</option>
+                        <option value="Keilmuan">Keilmuan</option>
+                        <option value="Umum">Umum</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="materi-grid" class="materi-grid">
+                <!-- Data will be injected here -->
+            </div>
+
+            <div id="empty-state" class="hidden" style="text-align:center; padding:60px 20px;">
+                <i class="fas fa-folder-open"
+                    style="font-size:4rem; color:rgba(255,255,255,0.1); margin-bottom:20px;"></i>
+                <p style="color:#888;">Materi tidak ditemukan.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="public-footer">
+        <p class="footer-text">© 2026 Ikatan Pelajar Muhammadiyah - PC Panawuan</p>
+    </footer>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
+            <a href="articles.html"><i class="fas fa-newspaper"></i><span>Artikel</span></a>
+            <a href="materi.html" class="active"><i class="fas fa-book"></i><span>Materi</span></a>
+            <a href="quiz.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+        </div>
+    </nav>
+
+    <script src="scripts/toast.js"></script>
+    <script src="scripts/main.js"></script>
+    <script type="module">
+        import { initPublicMaterials } from './scripts/public-materials.js';
+        document.addEventListener('DOMContentLoaded', initPublicMaterials);
+    </script>
+</body>
+
+</html>

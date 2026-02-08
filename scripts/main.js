@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const date = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
             return `
-                <a href="article.html?slug=${art.slug}" class="highlight-item">
+                <a href="articles.html?id=${art.id}" class="highlight-item">
                     <div class="highlight-date">
                         <i class="fas fa-calendar-alt"></i> ${date}
                     </div>
@@ -176,22 +176,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        articlesGrid.innerHTML = articles.map(art => `
-            <article class="article-card">
-                <div class="article-card-image">
-                    <img src="${art.image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800'}" alt="${art.title}" loading="lazy">
-                </div>
-                <div class="article-card-content">
-                    <span class="article-badge">${art.category || 'Umum'}</span>
-                    <h3 class="article-card-title">${art.title}</h3>
-                    <div class="article-card-meta">
-                        <span><i class="fas fa-user-edit"></i> ${art.author}</span>
-                        <span><i class="fas fa-calendar-day"></i> ${new Date(art.publish_date).toLocaleDateString('id-ID')}</span>
+        articlesGrid.innerHTML = articles.map(art => {
+            const date = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            return `
+                <article class="article-card reveal">
+                    <div class="article-card-image">
+                        <img src="${art.image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800'}" alt="${art.title}" loading="lazy">
                     </div>
-                    <a href="article.html?slug=${art.slug}" class="stretched-link" style="position:absolute; inset:0; z-index:1;"></a>
-                </div>
-            </article>
-        `).join('');
+                    <div class="article-card-content">
+                        <span class="article-badge">${art.category || 'Umum'}</span>
+                        <h3 class="article-card-title">${art.title}</h3>
+                        <div class="article-card-meta">
+                            <span><i class="fas fa-user-edit"></i> ${art.author}</span>
+                            <span><i class="fas fa-calendar-day"></i> ${date}</span>
+                        </div>
+                        <a href="articles.html?id=${art.id}" class="stretched-link" style="position:absolute; inset:0; z-index:1;"></a>
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        // Re-observe new elements
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
     }
 
     // --- PREMIUM UX POLISH (Phase 5) ---
@@ -239,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeDoc = window.location.pathname;
     const isPublicPage = activeDoc.includes('index.html') ||
         activeDoc.includes('articles.html') ||
-        activeDoc.includes('article.html') ||
         activeDoc.includes('quiz.html') ||
         activeDoc.includes('ranking.html') ||
         activeDoc.endsWith('/');

@@ -90,6 +90,20 @@ async function ensureSchema() {
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS materials (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    file_type TEXT, -- pdf, ebook, doc, etc
+    file_url TEXT,
+    thumbnail TEXT,
+    category TEXT,
+    author TEXT,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -109,6 +123,8 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)`;
   await query`CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_materials_active ON materials(active)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category)`;
 }
 
 module.exports = { ensureSchema };

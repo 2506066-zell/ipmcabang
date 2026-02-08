@@ -1,37 +1,55 @@
-const { query, getConnHost } = require('./_db');
-const { json, parseJsonBody, cacheHeaders } = require('./_util');
+const { json } = require('./_util');
+
+// Internal Route Map
+const routes = {
+  'auth': require('./_handler_auth'),
+  'admin/questions': require('./_handler_admin'), // Legacy mapping
+  'admin': require('./_handler_admin'),
+  'articles': require('./_handler_articles'),
+  'materials': require('./_handler_materials'),
+  'questions': require('./_handler_questions'),
+  'results': require('./_handler_results'),
+  'users': require('./_handler_users')
+};
 
 module.exports = async (req, res) => {
   try {
-    const action = req.query.action || '';
-    
-    // Health Checks
-    if (req.method === 'GET' && action === 'health') {
-        return json(res, 200, { status: 'success', ok: true, ts: Date.now() }, cacheHeaders(10));
-    }
-    
-    if (req.method === 'GET' && action === 'dbHealth') {
-        const now = (await query`SELECT NOW() AS now`).rows[0]?.now;
-        const host = getConnHost();
-        return json(res, 200, { status: 'success', db: 'ok', host, now });
+    // Parse the path to find the segment after /api/
+    // Example: /api/articles -> articles
+    // Example: /api/auth/login -> auth
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const pathParts = url.pathname.split('/').filter(p => p);
+
+    // Find segment after 'api'
+    const apiIdx = pathParts.indexOf('api');
+    const segment = (apiIdx !== -1 && pathParts[apiIdx + 1]) ? pathParts[apiIdx + 1] : null;
+    const subSegment = (apiIdx !== -1 && pathParts[apiIdx + 2]) ? pathParts[apiIdx + 2] : null;
+
+    // Direct match or nested match
+    let handler = routes[segment];
+    if (segment === 'admin' && subSegment === 'questions') {
+      handler = routes['admin/questions'];
     }
 
-    if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
-    const body = parseJsonBody(req);
-    const bodyAction = String(body.action || '').trim();
-    
-    if (bodyAction === 'publicCanAttempt') {
-      const session = String(body.session || '').trim();
-      if (!session) return json(res, 401, { status: 'error', message: 'Unauthorized' });
-      const row = (await query`SELECT s.id FROM sessions s WHERE s.token=${session} AND s.expires_at > NOW()`).rows[0];
-      if (!row) return json(res, 401, { status: 'error', message: 'Unauthorized' });
-      return json(res, 200, { status: 'success' });
+    if (handler) {
+      return await handler(req, res);
     }
-    if (bodyAction === 'logEvent') {
-      return json(res, 202, { status: 'success' });
+
+    // Fallback for root /api calls (Old Logic)
+    if (!segment) {
+      const { query, getConnHost } = require('./_db');
+      const action = req.query.action || '';
+      if (req.method === 'GET' && action === 'health') return json(res, 200, { status: 'success', ok: true });
+      if (req.method === 'GET' && action === 'dbHealth') {
+        const now = (await query`SELECT NOW() AS now`).rows[0]?.now;
+        return json(res, 200, { status: 'success', db: 'ok', now });
+      }
     }
-    json(res, 400, { status: 'error', message: 'Invalid action' });
+
+    return json(res, 404, { status: 'error', message: `Route /api/${segment || ''} not found` });
+
   } catch (e) {
-    json(res, 500, { status: 'error', message: String(e.message || e) });
+    console.error('Router Error:', e);
+    return json(res, 500, { status: 'error', message: 'Internal Server Error' });
   }
 };

@@ -136,6 +136,7 @@ body {
     font-size: 1.25rem;
     background: linear-gradient(90deg, #fff, #94a3b8);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -304,6 +305,7 @@ body {
     line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin: 0;
@@ -947,6 +949,7 @@ input:checked+.slider:before {
     color: var(--text-primary);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -1914,4 +1917,102 @@ body.light-mode .writing-mode-content {
     background: transparent;
     cursor: pointer;
     padding: 0;
+}
+
+/* === UPLOAD UI ENHANCEMENTS === */
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+    background: rgba(255, 255, 255, 0.02);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.upload-zone:hover {
+    border-color: var(--accent-secondary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.upload-zone.drag-over {
+    border-color: var(--accent-success);
+    background: rgba(16, 185, 129, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-secondary);
+}
+
+.upload-placeholder i {
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+.upload-placeholder small {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.upload-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-bg);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.upload-status .file-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
+.btn-remove-file {
+    background: transparent;
+    border: none;
+    color: var(--accent-danger);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.btn-remove-file:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.thumb-zone {
+    aspect-ratio: 16/9;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#mat-thumb-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.progress-bar-bg {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#upload-progress-bar {
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }

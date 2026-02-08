@@ -1,19 +1,93 @@
 {
   "version": 2,
   "routes": [
-    { "src": "/api/auth/login", "dest": "/api/auth_handler?action=login" },
-    { "src": "/api/auth/register", "dest": "/api/auth_handler?action=register" },
-    { "src": "/api/auth/adminLogin", "dest": "/api/auth_handler?action=adminLogin" },
-    { "src": "/api/auth/promoteAdmin", "dest": "/api/auth_handler?action=promoteAdmin" },
-    { "src": "/api/auth/seedAdmins", "dest": "/api/auth_handler?action=seedAdmins" },
-    { "src": "/api/dbHealth", "dest": "/api/index?action=dbHealth" },
-    { "src": "/api/health", "dest": "/api/index?action=health" },
-    { "src": "/api/migrate", "dest": "/api/admin_handler?action=migrate" },
-    { "src": "/api/resetSet", "dest": "/api/admin_handler?action=resetSet" },
-    { "src": "/api/notifications", "dest": "/api/users?action=notifications" },
-    { "src": "/api/admin/users", "dest": "/api/users" },
-    { "src": "/api/admin/questions", "dest": "/api/admin_handler" },
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/$1" }
+    {
+      "src": "/api/auth/login",
+      "dest": "/api/index?segment=auth&action=login"
+    },
+    {
+      "src": "/api/auth/register",
+      "dest": "/api/index?segment=auth&action=register"
+    },
+    {
+      "src": "/api/auth/adminLogin",
+      "dest": "/api/index?segment=auth&action=adminLogin"
+    },
+    {
+      "src": "/api/auth/promoteAdmin",
+      "dest": "/api/index?segment=auth&action=promoteAdmin"
+    },
+    {
+      "src": "/api/auth/seedAdmins",
+      "dest": "/api/index?segment=auth&action=seedAdmins"
+    },
+    {
+      "src": "/api/dbHealth",
+      "dest": "/api/index?action=dbHealth"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/index?action=health"
+    },
+    {
+      "src": "/api/migrate",
+      "dest": "/api/index?segment=admin&action=migrate"
+    },
+    {
+      "src": "/api/resetSet",
+      "dest": "/api/index?segment=admin&action=resetSet"
+    },
+    {
+      "src": "/api/notifications",
+      "dest": "/api/index?segment=users&action=notifications"
+    },
+    {
+      "src": "/api/admin/users",
+      "dest": "/api/index?segment=users"
+    },
+    {
+      "src": "/api/admin/questions",
+      "dest": "/api/index?segment=admin"
+    },
+    {
+      "src": "/api/admin/materials",
+      "dest": "/api/index?segment=admin&action=listMaterials"
+    },
+    {
+      "src": "/api/articles",
+      "dest": "/api/index?segment=articles"
+    },
+    {
+      "src": "/api/materials",
+      "dest": "/api/index?segment=materials"
+    },
+    {
+      "src": "/api/questions",
+      "dest": "/api/index?segment=questions"
+    },
+    {
+      "src": "/api/results",
+      "dest": "/api/index?segment=results"
+    },
+    {
+      "src": "/api/users",
+      "dest": "/api/index?segment=users"
+    },
+    {
+      "src": "/api/events",
+      "dest": "/api/events"
+    },
+    {
+      "src": "/api/upload",
+      "dest": "/api/upload"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
   ]
 }

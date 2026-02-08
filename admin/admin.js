@@ -329,7 +329,7 @@
         });
 
         // Hide all tabs
-        ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules', 'articles'].forEach(t => {
+        ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules', 'articles', 'materials'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
@@ -355,18 +355,26 @@
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();
 
-        // Dynamic Import for Articles to save bundle size if needed, but standard import is fine for now
+        // Dynamic Import for Articles
         if (tabName === 'articles') {
             console.log('[Admin] Loading articles module...');
             import('./articles.js').then(mod => {
-                console.log('[Admin] Articles module loaded successfully');
                 if (!state.articlesInitialized) {
                     mod.initArticles(state, els, { apiGetVercel, apiAdminVercel, fetchJsonWithRetry, debounce });
                     state.articlesInitialized = true;
                 }
-            }).catch(err => {
-                console.error('[Admin] Failed to load articles module:', err);
-            });
+            }).catch(err => console.error('[Admin] Failed to load articles module:', err));
+        }
+
+        // Dynamic Import for Materials
+        if (tabName === 'materials') {
+            console.log('[Admin] Loading materials module...');
+            import('./materials.js').then(mod => {
+                if (!state.materialsInitialized) {
+                    mod.initMaterials(state, els, { apiGetVercel, apiAdminVercel, fetchJsonWithRetry, debounce });
+                    state.materialsInitialized = true;
+                }
+            }).catch(err => console.error('[Admin] Failed to load materials module:', err));
         }
     };
 
