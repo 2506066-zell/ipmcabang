@@ -167,7 +167,7 @@
             qB: document.getElementById('q-b'),
             qC: document.getElementById('q-c'),
             qD: document.getElementById('q-d'),
-            qCorrect: document.getElementById('q-correct'),
+            // qCorrect: document.getElementById('q-correct'), // Removed in new design
             qActive: document.getElementById('q-active'),
             qQuizSet: document.getElementById('q-quizset'),
             qCategory: document.getElementById('q-category'),
@@ -437,12 +437,7 @@
                 <div class="q-card" data-id="${q.id}">
                     <div class="q-card-header">
                         <span class="q-set-badge">${escapeHtml(setLabel)}</span>
-                        
-                        <!-- Toggle Switch -->
-                        <label class="toggle-switch">
-                            <input type="checkbox" ${isActive ? 'checked' : ''} data-action="toggle-status">
-                            <span class="slider"></span>
-                        </label>
+                        <span style="color:${statusColor}; font-weight:bold; font-size:0.7rem;">${statusText}</span>
                     </div>
                     
                     <p class="q-text">${escapeHtml(q.question)}</p>
@@ -786,41 +781,74 @@
         }
         
         els.schedulesList.innerHTML = schedules.map(s => {
-            const start = s.start_time ? new Date(s.start_time).toLocaleString() : '-';
-            const end = s.end_time ? new Date(s.end_time).toLocaleString() : '-';
-            const isActive = s.active; // Assuming active is boolean
-            const statusClass = isActive ? 'status-active' : 'status-inactive';
-            const statusText = isActive ? 'AKTIF' : 'NONAKTIF';
+            const start = s.start_time ? new Date(s.start_time).toLocaleString() : '';
+            const end = s.end_time ? new Date(s.end_time).toLocaleString() : '';
+            const now = Date.now();
+            const startTime = s.start_time ? new Date(s.start_time).getTime() : 0;
+            const endTime = s.end_time ? new Date(s.end_time).getTime() : 0;
+            
+            // Calculate initial countdown
+            let cdText = "00 : 00 : 00 : 00";
+            if (startTime > now) {
+                // Future
+                const diff = startTime - now;
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const sec = Math.floor((diff % (1000 * 60)) / 1000);
+                cdText = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(sec).padStart(2,'0')}`;
+            } else if (endTime > now) {
+                // Active
+                cdText = "SEDANG BERLANGSUNG";
+            } else {
+                // Ended
+                cdText = "SELESAI";
+            }
 
             return `
-            <div class="schedule-card">
-                <div class="schedule-status ${statusClass}">${statusText}</div>
-                <div class="schedule-content">
-                    <div class="schedule-title">${escapeHtml(s.title)}</div>
-                    <div class="schedule-desc" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-                        ${escapeHtml(s.description || '-')}
-                    </div>
-                    <div class="schedule-time-grid">
-                        <div class="time-row">
-                            <i class="fas fa-play-circle"></i>
-                            <span class="time-value">${start}</span>
-                        </div>
-                        <div class="time-row">
-                            <i class="fas fa-stop-circle"></i>
-                            <span class="time-value">${end}</span>
+            <div class="schedule-card-new" data-id="${s.id}" data-target="${startTime}">
+                <div class="sc-header">
+                    <input type="text" class="sc-title-edit" value="${escapeHtml(s.title)}" readonly onclick="editSchedule(${s.id})">
+                    <div class="sc-countdown-preview">${cdText}</div>
+                </div>
+                <div class="sc-body">
+                    <textarea class="sc-desc-edit" readonly onclick="editSchedule(${s.id})">${escapeHtml(s.description || '')}</textarea>
+                    <div class="sc-time-range">
+                        <span class="sc-time-label">WAKTU MULAI - SELESAI</span>
+                        <div style="color:var(--text-primary); font-size:0.9rem;">
+                            ${start} <span style="color:var(--text-secondary); margin:0 8px;">s/d</span> ${end}
                         </div>
                     </div>
-                    <div class="schedule-actions">
-                        <button class="btn-schedule btn-edit" onclick="editSchedule(${s.id})">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="btn-schedule btn-delete" onclick="deleteSchedule(${s.id})">
-                            <i class="fas fa-trash"></i> Hapus
-                        </button>
-                    </div>
+                </div>
+                <div class="sc-footer">
+                    <button class="sc-btn sc-btn-del" onclick="deleteSchedule(${s.id})">Hapus</button>
+                    <button class="sc-btn sc-btn-save" onclick="editSchedule(${s.id})">Edit Detail</button>
                 </div>
             </div>`;
         }).join('');
+
+        // Start Live Countdown Interval for Admin
+        if (window.adminCdInterval) clearInterval(window.adminCdInterval);
+        window.adminCdInterval = setInterval(() => {
+            document.querySelectorAll('.schedule-card-new').forEach(card => {
+                const target = Number(card.dataset.target);
+                const preview = card.querySelector('.sc-countdown-preview');
+                if (!target || !preview) return;
+                
+                const now = Date.now();
+                if (target <= now) {
+                    if (preview.textContent.includes(':')) preview.textContent = "SEDANG BERLANGSUNG";
+                    return;
+                }
+                
+                const diff = target - now;
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const sec = Math.floor((diff % (1000 * 60)) / 1000);
+                preview.textContent = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(sec).padStart(2,'0')}`;
+            });
+        }, 1000);
     }
 
     window.editSchedule = (id) => {
@@ -889,33 +917,18 @@
             
             // Mock render next quiz card
             const html = `
-            <div class="next-quiz-card">
-                <div class="nq-header">
+            <div class="next-quiz-card" style="background:var(--card-bg); border-radius:12px; padding:20px; border:1px solid var(--border-color); color:var(--text-primary);">
+                <div class="nq-header" style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-weight:bold; color:var(--accent-primary);">
                     <i class="fas fa-hourglass-half"></i> Kuis Berikutnya
                 </div>
                 <h3 style="font-size:1.2rem; margin-bottom:8px;">${escapeHtml(title)}</h3>
-                <p style="opacity:0.8; margin-bottom:12px; font-size:0.9rem;">${escapeHtml(desc)}</p>
-                
-                <div class="nq-timer-grid">
-                    <div class="timer-unit">
-                        <span class="timer-val">01</span>
-                        <span class="timer-label">HARI</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-unit">
-                        <span class="timer-val">12</span>
-                        <span class="timer-label">JAM</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-unit">
-                        <span class="timer-val">30</span>
-                        <span class="timer-label">MENIT</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-unit">
-                        <span class="timer-val">00</span>
-                        <span class="timer-label">DETIK</span>
-                    </div>
+                <p style="opacity:0.8; margin-bottom:16px; font-size:0.9rem;">${escapeHtml(desc)}</p>
+                <div class="nq-timer" style="display:flex; gap:8px; justify-content:center; margin-bottom:16px;">
+                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">01</span><small>Jam</small></div>
+                    <div style="font-size:1.5rem; font-weight:bold; padding-top:4px;">:</div>
+                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">30</span><small>Mnt</small></div>
+                    <div style="font-size:1.5rem; font-weight:bold; padding-top:4px;">:</div>
+                    <div style="background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; text-align:center;"><span style="display:block; font-size:1.5rem; font-weight:bold;">00</span><small>Dtk</small></div>
                 </div>
             </div>`;
             
@@ -929,52 +942,6 @@
         if (modal) modal.classList.add('hidden');
         document.querySelector('.modal-tabs').classList.remove('hidden'); // Restore tabs
     };
-
-    if (els.scheduleForm) {
-        els.scheduleForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = els.schId.value;
-            const title = els.schTitle.value;
-            const description = els.schDesc.value;
-            const start = els.schStart.value;
-            const end = els.schEnd.value;
-            
-            showLoader('Menyimpan...');
-            try {
-                const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', {
-                    id: id ? Number(id) : undefined,
-                    title,
-                    description,
-                    start_time: start ? new Date(start).toISOString() : null,
-                    end_time: end ? new Date(end).toISOString() : null
-                });
-                
-                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
-                setStatus('Jadwal tersimpan', 'success');
-                window.closeScheduleModal();
-                loadSchedules();
-            } catch (e) {
-                setStatus(e.message, 'error');
-            } finally {
-                hideLoader();
-            }
-        });
-    }
-    
-    els.scheduleDateFilter?.addEventListener('change', renderSchedules);
-
-    els.globalResetBtn?.addEventListener('click', async () => {
-        const set = els.resetSetSelect.value;
-        if (!confirm(`PERINGATAN KERAS:\nAnda akan menghapus SEMUA data jawaban user untuk Kuis Set ${set}.\nKetik "RESET" untuk konfirmasi.`)) return;
-        const verification = prompt('Ketik "RESET" untuk melanjutkan:');
-        if (verification !== 'RESET') return alert('Batal.');
-        showLoader('Mereset Global...');
-        try {
-            const data = await apiAdminVercel('POST', '/api/admin/questions?action=resetSet', { quiz_set: set });
-            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
-            setStatus(`Kuis Set ${set} berhasil direset total.`, 'ok');
-        } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
-    });
 
     // --- HELPER: Modal Panel Switcher ---
     function showModalContainer() {
@@ -1119,49 +1086,6 @@
         } catch (e) { setStatus('Error: ' + e.message, 'error'); } finally { hideLoader(); }
     }
 
-    async function handleToggleStatus(id, currentStatus) {
-        // Toggle the boolean
-        const newStatus = !currentStatus;
-        
-        // Optimistic UI Update (optional, but good for perceived speed)
-        // Note: For now we'll wait for server response to be safe, or show loader.
-        showLoader('Mengupdate Status...');
-        
-        try {
-            // We use the 'update' action but only send the fields we want to change
-            // However, the backend might expect full object or we need a specific 'toggle' action.
-            // Let's check api/admin_handler.js. Usually 'update' merges or replaces.
-            // If 'update' replaces, we need full data. If we don't have full data handy (we do in state), we can use it.
-            
-            const q = state.questions.find(x => x.id === id);
-            if (!q) throw new Error('Soal tidak ditemukan di state lokal.');
-
-            const payload = {
-                id: q.id,
-                question: q.question,
-                options: q.options,
-                correct_answer: q.correct_answer,
-                category: q.category,
-                quiz_set: q.quiz_set,
-                active: newStatus // The only change
-            };
-
-            const data = await apiAdminVercel('POST', `/api/admin/questions?action=update`, payload);
-            
-            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal update status.');
-            
-            // Update local state and re-render to reflect change
-            q.active = newStatus;
-            renderQuestions(); // Re-render the grid
-            setStatus(`Status soal diubah ke ${newStatus ? 'AKTIF' : 'NONAKTIF'}`, 'ok');
-            
-        } catch (e) { 
-            setStatus('Error: ' + e.message, 'error'); 
-        } finally { 
-            hideLoader(); 
-        }
-    }
-
     // --- EVENT LISTENERS ---
     function initEvents() {
         // Auth
@@ -1218,20 +1142,18 @@
         window.closeMenuModal = () => els.menuModal.classList.add('hidden');
 
         // FAB
-        els.fabAdd?.addEventListener('click', () => window.openQuestionModal(null));
+        els.fabAdd?.addEventListener('click', () => openModal(null));
 
         // Question Actions
         els.questionsList?.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
-            const item = btn.closest('.q-card'); // Updated selector for new card design
+            const item = btn.closest('.list-item');
             if (!item) return;
-            const id = Number(item.dataset.id);
-            const q = state.questions.find(x => x.id === id);
-            
-            if (btn.dataset.action === 'edit' && q) window.openQuestionModal(q);
+            const id = item.dataset.id;
+            const q = state.questions.find(x => String(x.id) === String(id));
+            if (btn.dataset.action === 'edit' && q) openModal(q);
             else if (btn.dataset.action === 'delete') handleDelete(id);
-            else if (btn.dataset.action === 'toggle-status') handleToggleStatus(id, q.active);
         });
 
         // Modal
@@ -1257,6 +1179,53 @@
         els.userSortSelect?.addEventListener('change', () => renderUsers());
         els.userStatusFilter?.addEventListener('change', () => renderUsers());
         els.refreshLogsBtn?.addEventListener('click', loadLogs);
+
+        // Schedules
+        if (els.scheduleForm) {
+            els.scheduleForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = els.schId.value;
+                const title = els.schTitle.value;
+                const description = els.schDesc.value;
+                const start = els.schStart.value;
+                const end = els.schEnd.value;
+                
+                showLoader('Menyimpan...');
+                try {
+                    const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', {
+                        id: id ? Number(id) : undefined,
+                        title,
+                        description,
+                        start_time: start ? new Date(start).toISOString() : null,
+                        end_time: end ? new Date(end).toISOString() : null
+                    });
+                    
+                    if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
+                    setStatus('Jadwal tersimpan', 'success');
+                    window.closeScheduleModal();
+                    loadSchedules();
+                } catch (e) {
+                    setStatus(e.message, 'error');
+                } finally {
+                    hideLoader();
+                }
+            });
+        }
+        
+        els.scheduleDateFilter?.addEventListener('change', renderSchedules);
+
+        els.globalResetBtn?.addEventListener('click', async () => {
+            const set = els.resetSetSelect.value;
+            if (!confirm(`PERINGATAN KERAS:\nAnda akan menghapus SEMUA data jawaban user untuk Kuis Set ${set}.\nKetik "RESET" untuk konfirmasi.`)) return;
+            const verification = prompt('Ketik "RESET" untuk melanjutkan:');
+            if (verification !== 'RESET') return alert('Batal.');
+            showLoader('Mereset Global...');
+            try {
+                const data = await apiAdminVercel('POST', '/api/admin/questions?action=resetSet', { quiz_set: set });
+                if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
+                setStatus(`Kuis Set ${set} berhasil direset total.`, 'ok');
+            } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
+        });
     }
 
     // --- INIT ---
