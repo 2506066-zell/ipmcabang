@@ -1418,14 +1418,21 @@ textarea:focus {
 
 /* Sidebar Visibility */
 @media (max-width: 768px) {
+
+    .sidebar,
     .sidebar.hidden-mobile {
-        display: none;
+        display: none !important;
+        width: 0 !important;
+        transform: translateX(-100%);
     }
 
     .admin-main {
         padding: 12px;
         padding-bottom: 90px;
         /* Space for bottom nav + FAB */
+        width: 100vw;
+        max-width: 100vw;
+        overflow-x: hidden;
     }
 
     .top-bar {

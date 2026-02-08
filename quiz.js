@@ -434,28 +434,14 @@ const quizHeader = document.getElementById('quiz-header');
 const quizBody = document.getElementById('quiz-body');
 const nextBtn = document.getElementById('next-btn');
 
-function startQuiz() {
-    if (!questionsData || !questionsData.length) {
-        alert('Data soal tidak ditemukan.');
-        return;
-    }
+document.getElementById('result-container').style.display = 'none';
 
-    currentQuestionIndex = 0;
-    userScore = 0;
-    userAnswers = [];
-    startTime = Date.now();
+// Show quiz UI
+quizHeader.style.display = 'flex';
+quizBody.style.display = 'block';
+nextBtn.style.display = 'flex';
 
-    // Hide other screens
-    userInfoScreen.style.display = 'none';
-    if (quizSetPicker) quizSetPicker.style.display = 'none';
-    document.getElementById('result-container').style.display = 'none';
-
-    // Show quiz UI
-    quizHeader.style.display = 'flex';
-    quizBody.style.display = 'block';
-    nextBtn.style.display = 'flex';
-
-    renderQuestion();
+renderQuestion();
 }
 
 function renderQuestion() {

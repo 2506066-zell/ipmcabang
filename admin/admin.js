@@ -137,7 +137,6 @@
 
             // Schedules
             schedulesList: document.getElementById('schedules-list'),
-            addScheduleBtn: document.getElementById('add-schedule-btn'),
             scheduleModalPanel: document.getElementById('schedule-modal-panel'),
             scheduleForm: document.getElementById('schedule-form'),
             scheduleDateFilter: document.getElementById('schedule-date-filter'),
@@ -146,6 +145,7 @@
             schDesc: document.getElementById('sch-desc'),
             schStart: document.getElementById('sch-start'),
             schEnd: document.getElementById('sch-end'),
+            addScheduleBtn: document.getElementById('add-schedule-btn'),
             previewSchBtn: document.getElementById('preview-sch-btn'),
             previewPanel: document.getElementById('preview-panel'),
 
@@ -1373,6 +1373,20 @@
         els.refreshLogsBtn?.addEventListener('click', loadLogs);
 
         // Schedules
+        els.addScheduleBtn?.addEventListener('click', () => {
+            els.scheduleForm.reset();
+            els.schId.value = '';
+            // Set default dates if needed
+            // const now = new Date();
+            // const nextHour = new Date(now.getTime() + 60*60*1000);
+            // els.schStart.value = nextHour.toISOString().slice(0,16);
+
+            document.getElementById('modal-title').textContent = 'Tambah Jadwal Event';
+            hideAllModalPanels();
+            if (els.scheduleModalPanel) els.scheduleModalPanel.classList.remove('hidden');
+            showModalContainer();
+        });
+
         if (els.scheduleForm) {
             els.scheduleForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
