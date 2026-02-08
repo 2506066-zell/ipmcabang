@@ -92,84 +92,192 @@ async function fetchQuestions() {
     }
 }
 
+// --- DYNAMIC SCHEDULE LOGIC ---
 function showSetPicker(summarySets) {
     userInfoScreen.style.display = 'none';
     if (quizSetPicker) quizSetPicker.style.display = 'block';
-    if (quizSetGrid) {
-        const counts = {};
-        // summarySets is array of { quiz_set: 1, count: 10 }
-        summarySets.forEach(s => {
-            counts[s.quiz_set] = s.count;
+
+    // Fetch Schedules relative to sets
+    fetch(`${API_URL}/questions?mode=schedules`)
+        .then(r => r.json())
+        .then(data => {
+            const schedules = data.schedules || [];
+            updateSetCards(summarySets, schedules);
+
+            // Start Global Timer for Countdowns
+            if (window.setTimerInterval) clearInterval(window.setTimerInterval);
+            window.setTimerInterval = setInterval(() => {
+                updateSetCards(summarySets, schedules, true); // Update time only
+            }, 1000);
+        })
+        .catch(err => {
+            console.error('Failed to load schedules', err);
+            updateSetCards(summarySets, [], false); // Fallback
         });
+}
 
-        quizSetGrid.querySelectorAll('.set-card').forEach(btn => {
-            const set = Number(btn.dataset.set || 1);
-            const count = counts[set] || 0;
+function updateSetCards(summarySets, schedules, timeOnly = false) {
+    if (!quizSetGrid) return;
 
-            const small = quizSetGrid.querySelector(`small[data-count="${set}"]`);
-            if (small) small.textContent = `${count} soal`;
+    const counts = {};
+    summarySets.forEach(s => counts[s.quiz_set] = s.count);
 
-            btn.disabled = count === 0;
+    quizSetGrid.querySelectorAll('.set-card').forEach(btn => {
+        const set = Number(btn.dataset.set || 1);
+        const count = counts[set] || 0;
+
+        // Find Schedule for this Set (Basic keyword matching)
+        // Keywords: "Mingguan" -> 1, "Event" -> 2, "Bidang" -> 3
+        let schedule = null;
+        const keywords = { 1: 'mingguan', 2: 'event', 3: 'bidang' };
+
+        // Try to find specific schedule
+        schedule = schedules.find(s => s.title.toLowerCase().includes(keywords[set] || 'xyz'));
+
+        // Status determination
+        const now = Date.now();
+        let status = 'active'; // default if no schedule
+        let label = 'Tersedia';
+        let subLabel = `${count} soal`;
+        let colorClass = 'status-available';
+        let isLocked = false;
+
+        if (schedule) {
+            const start = schedule.start_time ? new Date(schedule.start_time).getTime() : 0;
+            const end = schedule.end_time ? new Date(schedule.end_time).getTime() : null;
+
+            if (start > now) {
+                status = 'coming_soon';
+                isLocked = true;
+                const diff = start - now;
+                label = `<div>Mulai dalam:</div><div class="countdown-timer">${formatFullDuration(diff)}</div>`;
+                colorClass = 'status-locked';
+            } else if (end && end < now) {
+                status = 'ended';
+                label = 'Kuis telah berakhir';
+                colorClass = 'status-ended';
+            } else if (end && end > now) {
+                status = 'ending_soon';
+                const diff = end - now;
+                label = `<div>Berakhir dalam:</div><div class="countdown-timer text-urgent">${formatFullDuration(diff)}</div>`;
+                colorClass = 'status-closing';
+                if (diff < 3600000) colorClass += ' urgent'; // < 1 hour
+            }
+        }
+
+        if (count === 0) {
+            status = 'empty';
+            label = 'Belum ada soal';
+            isLocked = true;
+            colorClass = 'status-empty';
+        }
+
+        // Render (only if not time-only update, or update label specifically)
+        // We ALWAYS update label for countdowns if element exists
+        let badge = btn.querySelector('.set-status-badge');
+        if (!badge && !timeOnly) {
+            badge = document.createElement('div');
+            badge.className = 'set-status-badge';
+            const span = btn.querySelector('span');
+            if (span) span.after(badge); else btn.appendChild(badge);
+        }
+
+        if (badge) {
+            // Only update class if not time-only to avoid flicker, OR update always? 
+            // Updating class always is safer for "urgent" transitions.
+            badge.className = `set-status-badge ${colorClass}`;
+            // Use innerHTML for multiline support
+            badge.innerHTML = `${getIconForStatus(status)} <span>${label}</span>`;
+        }
+
+        const small = btn.querySelector('small');
+        if (small && !timeOnly) {
+            // ... existing small update logic ...
+            if (status === 'active' || status === 'ending_soon') {
+                small.innerHTML = `🔥 ${count} Soal &middot; Aktif`;
+                small.className = 'small active-text';
+            } else {
+                small.innerHTML = `${count} Soal`;
+                small.className = 'small';
+            }
+        }
+
+        btn.disabled = isLocked;
+
+        if (!timeOnly) {
+            // Attach Click Event once
             btn.onclick = async () => {
+                if (isLocked) return;
                 currentQuizSet = set;
-                try {
-                    // Check eligibility
-                    // Use unified POST to /api with action inside body is a bit weird if we don't have a main entry point.
-                    // But wait, the previous code called `API_URL` which is `/api`.
-                    // Let's check if there is an index.js in api/ to handle this.
-                    // If not, we should use specific endpoint or ensure /api/index.js exists.
-                    // Assuming /api/index.js exists and handles 'publicCanAttempt'.
-                    // If not, we might need to skip this check or implement it in a specific endpoint.
-
-                    // FIX: Use specific endpoint or try-catch properly. 
-                    // Since we don't have a guaranteed main handler, let's skip the check for now OR use a known working endpoint.
-                    // Actually, let's assume questions?mode=summary works, so maybe we can check eligibility via questions?mode=check&set=...
-                    // But for now, to fix the "Start" button, let's assume eligibility is checked on submission or just allowed.
-                    /*
-                    const can = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'publicCanAttempt', session: existingSession, quiz_set: currentQuizSet }) });
-                    const data = await can.json();
-                    if (!can.ok || data.status !== 'success') {
-                        alert(data.message || 'Anda sudah mencoba set ini.');
-                        return;
-                    }
-                    */
-
-                    // Fetch actual questions for this set
-                    showLoader('Mengunduh Soal...');
-                    const qRes = await fetch(`${API_URL}/questions?set=${set}`);
-                    if (!qRes.ok) throw new Error('Gagal mengunduh soal.');
-                    const qPayload = await qRes.json();
-                    let qData = normalizeQuestionsResponse(qPayload);
-                    qData = qData.filter(q => q.active !== false);
-
-                    if (!qData.length) {
-                        alert('Set ini kosong.');
-                        hideLoader();
-                        return;
-                    }
-
-                    // Prepare quiz
-                    quizSeed = `${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
-                    const srng = seededRandom(quizSeed);
-                    // Shuffle questions and options
-                    // We store 'optionOrder' which is the shuffled array of keys ['a','b','c','d']
-                    const shuffled = shuffleArray(qData, srng).map(q => ({
-                        ...q,
-                        optionOrder: shuffleArray(['a', 'b', 'c', 'd'], srng)
-                    }));
-                    questionsData = shuffled;
-
-                    if (quizSetPicker) quizSetPicker.style.display = 'none';
-                    hideLoader();
-                    startQuiz();
-
-                } catch (e) {
-                    console.error(e);
-                    alert('Terjadi kesalahan saat memulai kuis: ' + e.message);
-                    hideLoader();
-                }
+                handleSetSelection(set, count);
             };
-        });
+        }
+    });
+}
+
+function formatFullDuration(ms) {
+    if (ms <= 0) return "00 bln 00 hr 00 jam 00 mnt 00 dtk";
+
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    const days = Math.floor((ms / (1000 * 60 * 60 * 24)) % 30);
+    const months = Math.floor((ms / (1000 * 60 * 60 * 24 * 30)));
+
+    let parts = [];
+    if (months > 0) parts.push(`<b>${months}</b> bln`);
+    if (days > 0 || months > 0) parts.push(`<b>${days}</b> hr`);
+    parts.push(`<b>${String(hours).padStart(2, '0')}</b> jam`);
+    parts.push(`<b>${String(minutes).padStart(2, '0')}</b> mnt`);
+    parts.push(`<b>${String(seconds).padStart(2, '0')}</b> dtk`);
+
+    return parts.join(' ');
+}
+
+function formatDuration(ms) {
+    // Legacy support or short version if needed
+    return formatFullDuration(ms);
+}
+
+function getIconForStatus(s) {
+    if (s === 'coming_soon') return '<i class="fas fa-clock"></i>';
+    if (s === 'ending_soon') return '<i class="fas fa-hourglass-half"></i>';
+    if (s === 'ended') return '<i class="fas fa-flag-checkered"></i>';
+    if (s === 'empty') return '<i class="fas fa-ban"></i>';
+    return '<i class="fas fa-check-circle"></i>';
+}
+
+async function handleSetSelection(set, count) {
+    try {
+        showLoader('Mengunduh Soal...');
+        const qRes = await fetch(`${API_URL}/questions?set=${set}`);
+        if (!qRes.ok) throw new Error('Gagal mengunduh soal.');
+        const qPayload = await qRes.json();
+        let qData = normalizeQuestionsResponse(qPayload);
+        qData = qData.filter(q => q.active !== false);
+
+        if (!qData.length) {
+            alert('Set ini kosong.');
+            hideLoader();
+            return;
+        }
+
+        quizSeed = `${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+        const srng = seededRandom(quizSeed);
+        const shuffled = shuffleArray(qData, srng).map(q => ({
+            ...q,
+            optionOrder: shuffleArray(['a', 'b', 'c', 'd'], srng)
+        }));
+        questionsData = shuffled;
+
+        if (quizSetPicker) quizSetPicker.style.display = 'none';
+        hideLoader();
+        startQuiz();
+
+    } catch (e) {
+        console.error(e);
+        alert('Terjadi kesalahan saat memulai kuis: ' + e.message);
+        hideLoader();
     }
 }
 

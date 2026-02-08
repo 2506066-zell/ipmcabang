@@ -11,7 +11,8 @@
     --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
     --text-primary: #2d3436;
     --text-secondary: #636e72;
-    --accent-color: #0984e3; /* IPM Blue-ish or similar competitive color */
+    --accent-color: #0984e3;
+    /* IPM Blue-ish or similar competitive color */
     --card-radius: 16px;
     --anim-speed: 0.3s;
 }
@@ -20,7 +21,8 @@
 .ranking-container {
     max-width: 800px;
     margin: 0 auto;
-    padding: 20px 16px 100px; /* Bottom padding for bottom nav */
+    padding: 20px 16px 100px;
+    /* Bottom padding for bottom nav */
     min-height: 100vh;
 }
 
@@ -73,7 +75,7 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
     transform: rotate(45deg);
     pointer-events: none;
 }
@@ -126,7 +128,7 @@
 #search-input {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid rgba(0,0,0,0.05);
+    border: 2px solid rgba(0, 0, 0, 0.05);
     border-radius: 12px;
     background: white;
     font-family: inherit;
@@ -151,7 +153,7 @@
 
 .filter-btn {
     background: white;
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 0.85rem;
@@ -175,7 +177,8 @@
     align-items: flex-end;
     gap: 12px;
     margin-bottom: 3rem;
-    padding-top: 2rem; /* Space for crown/avatar */
+    padding-top: 2rem;
+    /* Space for crown/avatar */
 }
 
 .podium-item {
@@ -191,9 +194,20 @@
     transform: translateY(-5px);
 }
 
-.podium-item.rank-1 { order: 2; z-index: 3; }
-.podium-item.rank-2 { order: 1; z-index: 2; }
-.podium-item.rank-3 { order: 3; z-index: 1; }
+.podium-item.rank-1 {
+    order: 2;
+    z-index: 3;
+}
+
+.podium-item.rank-2 {
+    order: 1;
+    z-index: 2;
+}
+
+.podium-item.rank-3 {
+    order: 3;
+    z-index: 1;
+}
 
 .avatar-container {
     width: 60px;
@@ -201,7 +215,7 @@
     border-radius: 50%;
     background: white;
     border: 3px solid white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -220,8 +234,13 @@
     background: linear-gradient(135deg, #fff, #fff9e6);
 }
 
-.rank-2 .avatar-container { border-color: var(--rank-silver); }
-.rank-3 .avatar-container { border-color: var(--rank-bronze); }
+.rank-2 .avatar-container {
+    border-color: var(--rank-silver);
+}
+
+.rank-3 .avatar-container {
+    border-color: var(--rank-bronze);
+}
 
 .crown-icon {
     position: absolute;
@@ -248,19 +267,19 @@
 
 .rank-1 .podium-base {
     height: 160px;
-    background: linear-gradient(to bottom, var(--rank-bg-gold), rgba(255,255,255,0.9));
+    background: linear-gradient(to bottom, var(--rank-bg-gold), rgba(255, 255, 255, 0.9));
     border-top: 4px solid var(--rank-gold);
 }
 
 .rank-2 .podium-base {
     height: 130px;
-    background: linear-gradient(to bottom, var(--rank-bg-silver), rgba(255,255,255,0.9));
+    background: linear-gradient(to bottom, var(--rank-bg-silver), rgba(255, 255, 255, 0.9));
     border-top: 4px solid var(--rank-silver);
 }
 
 .rank-3 .podium-base {
     height: 110px;
-    background: linear-gradient(to bottom, var(--rank-bg-bronze), rgba(255,255,255,0.9));
+    background: linear-gradient(to bottom, var(--rank-bg-bronze), rgba(255, 255, 255, 0.9));
     border-top: 4px solid var(--rank-bronze);
 }
 
@@ -280,9 +299,17 @@
     font-size: 1.1rem;
 }
 
-.rank-1 .podium-score { color: #d4af37; }
-.rank-2 .podium-score { color: #7f8c8d; }
-.rank-3 .podium-score { color: #a05523; }
+.rank-1 .podium-score {
+    color: #d4af37;
+}
+
+.rank-2 .podium-score {
+    color: #7f8c8d;
+}
+
+.rank-3 .podium-score {
+    color: #a05523;
+}
 
 /* List Ranking */
 .ranking-list {
@@ -298,7 +325,7 @@
     background: white;
     border-radius: 12px;
     padding: 12px 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     transition: all 0.2s ease;
     border-left: 4px solid transparent;
     opacity: 0;
@@ -307,7 +334,7 @@
 
 .rank-item:hover {
     transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .rank-item.is-me {
@@ -321,9 +348,17 @@
     font-size: 1rem;
 }
 
-.rank-item:nth-child(1) .rank-pos { color: var(--rank-gold); }
-.rank-item:nth-child(2) .rank-pos { color: var(--rank-silver); }
-.rank-item:nth-child(3) .rank-pos { color: var(--rank-bronze); }
+.rank-item:nth-child(1) .rank-pos {
+    color: var(--rank-gold);
+}
+
+.rank-item:nth-child(2) .rank-pos {
+    color: var(--rank-silver);
+}
+
+.rank-item:nth-child(3) .rank-pos {
+    color: var(--rank-bronze);
+}
 
 .rank-info {
     display: flex;
@@ -364,6 +399,7 @@
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -371,14 +407,29 @@
 }
 
 @keyframes float {
-    0%, 100% { transform: translate(-50%, 0); }
-    50% { transform: translate(-50%, -8px); }
+
+    0%,
+    100% {
+        transform: translate(-50%, 0);
+    }
+
+    50% {
+        transform: translate(-50%, -8px);
+    }
 }
 
 @keyframes pulse-glow {
-    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+    }
 }
 
 /* Notification Toast (Custom for Ranking) */
@@ -391,7 +442,7 @@
     color: white;
     padding: 12px 24px;
     border-radius: 50px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -434,14 +485,239 @@
     .top-3-container {
         gap: 8px;
     }
-    
-    .rank-1 .podium-base { height: 140px; }
-    .rank-2 .podium-base { height: 110px; }
-    .rank-3 .podium-base { height: 90px; }
-    
-    .avatar-container { width: 50px; height: 50px; font-size: 1.2rem; }
-    .rank-1 .avatar-container { width: 70px; height: 70px; }
-    
-    .podium-name { font-size: 0.8rem; }
-    .podium-score { font-size: 1rem; }
+
+    .rank-1 .podium-base {
+        height: 140px;
+    }
+
+    .rank-2 .podium-base {
+        height: 110px;
+    }
+
+    .rank-3 .podium-base {
+        height: 90px;
+    }
+
+    .podium-name {
+        font-size: 0.8rem;
+    }
+
+    .podium-score {
+        font-size: 1rem;
+    }
+}
+
+/* --- New UX Enhancements --- */
+
+/* Active Indicators */
+.active-badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    margin-left: 4px;
+    animation: pulse-fire 2s infinite;
+    cursor: help;
+}
+
+.active-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background: #2ecc71;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes pulse-fire {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+        filter: drop-shadow(0 0 4px orange);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+
+/* Rank Movement */
+.rank-move {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 16px;
+    margin-top: 2px;
+    font-size: 0.8rem;
+}
+
+.rank-up {
+    color: #2ecc71;
+    animation: slideUpSmall 0.3s ease;
+}
+
+.rank-down {
+    color: #e74c3c;
+    animation: slideDownSmall 0.3s ease;
+}
+
+.rank-same {
+    color: #bdc3c7;
+    opacity: 0.5;
+    font-size: 0.6rem;
+}
+
+.rank-new {
+    background: var(--accent-color);
+    color: white;
+    font-size: 0.5rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+@keyframes slideUpSmall {
+    from {
+        transform: translateY(5px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDownSmall {
+    from {
+        transform: translateY(-5px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Motivational Copy */
+.rank-motivation-text {
+    font-size: 0.75rem;
+    color: #e67e22;
+    margin-top: 4px;
+    font-weight: 500;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    animation: fadeIn 0.5s ease;
+}
+
+.cta-mini {
+    background: var(--accent-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.7rem;
+    font-weight: 700;
+    transition: transform 0.2s;
+}
+
+.cta-mini:hover {
+    transform: scale(1.05);
+    background: #076dbf;
+}
+
+/* Global CTA */
+.ranking-footer-cta {
+    margin-top: 24px;
+    text-align: center;
+    padding-bottom: 20px;
+}
+
+.btn-shine {
+    position: relative;
+    padding: 12px 30px;
+    background: linear-gradient(135deg, var(--accent-color), #0984e3);
+    color: white;
+    font-family: inherit;
+    font-weight: 700;
+    border: none;
+    border-radius: 50px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4);
+    transition: transform 0.2s;
+}
+
+.btn-shine:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(9, 132, 227, 0.5);
+}
+
+.btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% {
+        left: -100%;
+    }
+
+    20% {
+        left: 100%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+/* Enhanced Podium Badges */
+.badge-box {
+    position: absolute;
+    bottom: -5px;
+    background: var(--text-primary);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid white;
+    z-index: 3;
+}
+
+.badge-box.silver {
+    background: var(--rank-silver);
+}
+
+.badge-box.bronze {
+    background: var(--rank-bronze);
+}
+
+.crown-box {
+    position: absolute;
+    top: -24px;
+    font-size: 1.4rem;
+    color: var(--rank-gold);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    animation: float 2s ease-in-out infinite;
 }

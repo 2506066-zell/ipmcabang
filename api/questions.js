@@ -6,7 +6,7 @@ const { getSessionUser } = require('./_auth');
 async function list(req, res) {
   const mode = req.query.mode ? String(req.query.mode).trim() : '';
   const user = await getSessionUser(req);
-  
+
   if (mode === 'summary') {
     // Return list of quiz sets and question counts
     // Also include 'attempted' status if user is logged in
@@ -23,14 +23,14 @@ async function list(req, res) {
     if (user) {
       attempts = (await query`SELECT quiz_set FROM results WHERE user_id=${user.id}`).rows.map(r => r.quiz_set);
     }
-    
+
     // Fetch Top 1 Global High Score (Single Champion)
     let topScoresGlobal = [];
     try {
-        // We select the distinct best attempt for each user first, then order by best scores.
-        // Using Postgres DISTINCT ON to get one row per user_id.
-        // JOIN with users table to ensure username availability and correctness
-        topScoresGlobal = (await query`
+      // We select the distinct best attempt for each user first, then order by best scores.
+      // Using Postgres DISTINCT ON to get one row per user_id.
+      // JOIN with users table to ensure username availability and correctness
+      topScoresGlobal = (await query`
           SELECT 
             u.username, 
             best_attempts.score, 
@@ -49,15 +49,15 @@ async function list(req, res) {
           LIMIT 1
         `).rows;
     } catch (e) {
-        console.error('Failed to fetch top scores:', e);
-        // Fallback: empty list (feature disabled if error)
+      console.error('Failed to fetch top scores:', e);
+      // Fallback: empty list (feature disabled if error)
     }
 
     // Also fetch Dynamic Next Quiz Info from quiz_schedules
     // We look for the next upcoming active schedule
     let nextSchedule = null;
     try {
-        nextSchedule = (await query`
+      nextSchedule = (await query`
           SELECT title, description, start_time 
           FROM quiz_schedules 
           WHERE active = true AND start_time > NOW() 
@@ -65,20 +65,20 @@ async function list(req, res) {
           LIMIT 1
         `).rows[0];
     } catch (e) {
-        console.error('Failed to fetch schedule:', e);
-        // Fallback: null (feature disabled if error/table missing)
+      console.error('Failed to fetch schedule:', e);
+      // Fallback: null (feature disabled if error/table missing)
     }
 
     let nextQuiz = null;
     if (nextSchedule) {
-        nextQuiz = {
-            title: nextSchedule.title,
-            topic: nextSchedule.description || "Event Mendatang", 
-            countdown_target: nextSchedule.start_time
-        };
+      nextQuiz = {
+        title: nextSchedule.title,
+        topic: nextSchedule.description || "Event Mendatang",
+        countdown_target: nextSchedule.start_time
+      };
     } else {
-        // Fallback or empty
-        nextQuiz = null;
+      // Fallback or empty
+      nextQuiz = null;
     }
 
     const enhancedSets = rows.map(r => ({
@@ -99,13 +99,27 @@ async function list(req, res) {
     return json(res, 200, { status: 'success', categories: rows.map(r => r.category) }, cacheHeaders(300));
   }
 
+  if (mode === 'schedules') {
+    // Public endpoint for active schedules
+    // We fetch all active future schedules, OR currently running ones
+    // We'll let the frontend decide how to map them
+    const now = new Date().toISOString();
+    const schedules = (await query`
+      SELECT title, description, start_time, end_time 
+      FROM quiz_schedules 
+      WHERE (end_time IS NULL OR end_time > NOW()) 
+      ORDER BY start_time ASC
+    `).rows;
+    return json(res, 200, { status: 'success', schedules }, cacheHeaders(60));
+  }
+
   const set = req.query.set ? Number(req.query.set) : null;
   const category = req.query.category ? String(req.query.category).trim() : '';
   const search = req.query.search ? String(req.query.search).trim() : '';
-  
+
   const page = req.query.page ? Number(req.query.page) : 1;
   const size = req.query.size ? Number(req.query.size) : 50; // Default size 50
-  
+
   const limit = Math.max(1, Math.min(500, size));
   const offset = Math.max(0, (page - 1) * limit);
 
@@ -114,17 +128,17 @@ async function list(req, res) {
   let pIdx = 1;
 
   if (set) {
-      whereClauses.push(`quiz_set = $${pIdx++}`);
-      params.push(set);
+    whereClauses.push(`quiz_set = $${pIdx++}`);
+    params.push(set);
   }
   if (category && category !== 'all') {
-      whereClauses.push(`LOWER(category) = $${pIdx++}`);
-      params.push(category.toLowerCase());
+    whereClauses.push(`LOWER(category) = $${pIdx++}`);
+    params.push(category.toLowerCase());
   }
   if (search) {
-      whereClauses.push(`(LOWER(question) LIKE $${pIdx} OR LOWER(options::text) LIKE $${pIdx})`);
-      params.push(`%${search.toLowerCase()}%`);
-      pIdx++;
+    whereClauses.push(`(LOWER(question) LIKE $${pIdx} OR LOWER(options::text) LIKE $${pIdx})`);
+    params.push(`%${search.toLowerCase()}%`);
+    pIdx++;
   }
 
   // Ensure only active questions are shown to public unless 'all_status' is requested by admin (handled in admin_handler)
@@ -139,7 +153,7 @@ async function list(req, res) {
   // We should add a separate 'adminList' action in admin_handler or allow this one to filter if authorized.
   // Given the instruction, I will keep this simple and safe:
   // If no auth token, force active=true. If auth token present and valid, allow all.
-  
+
   // Actually, to strictly follow "no admin logic in public endpoint", I should probably create a separate list endpoint for admin.
   // But that duplicates code.
   // I'll make this endpoint safe by default (active=true), but allow override if a special param + auth is present?
@@ -150,22 +164,22 @@ async function list(req, res) {
   whereClauses.push(`active = true`);
 
   const whereSql = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : '';
-  
+
   // Count
   const countRes = await rawQuery(`SELECT COUNT(*)::int as total FROM questions ${whereSql}`, params);
   const total = countRes.rows[0]?.total || 0;
-  
+
   // Data
   const dataRes = await rawQuery(`SELECT id, question, options, category, quiz_set FROM questions ${whereSql} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`, params);
   // Note: I removed 'correct_answer' and 'active' from SELECT to prevent cheating/leaking, 
   // though 'active' is true anyway. 'correct_answer' MUST NOT be sent to public.
-  
-  json(res, 200, { 
-      status: 'success', 
-      questions: dataRes.rows, 
-      total: total,
-      page: page,
-      size: limit 
+
+  json(res, 200, {
+    status: 'success',
+    questions: dataRes.rows,
+    total: total,
+    page: page,
+    size: limit
   }, cacheHeaders(0));
 }
 

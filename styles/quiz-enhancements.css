@@ -3,8 +3,10 @@
 /* Container for positioning */
 .quiz-container {
     position: relative;
-    overflow: hidden; /* Prevent scroll during slide */
-    min-height: 400px; /* Prevent collapse during transition */
+    overflow: hidden;
+    /* Prevent scroll during slide */
+    min-height: 400px;
+    /* Prevent collapse during transition */
 }
 
 /* Question Card Animations */
@@ -19,7 +21,8 @@
 
 .question-exit {
     animation: slideOutLeft 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-    position: absolute; /* Take out of flow to allow next one to slide in */
+    position: absolute;
+    /* Take out of flow to allow next one to slide in */
     top: 0;
     left: 0;
     width: 100%;
@@ -30,6 +33,7 @@
         opacity: 0;
         transform: translateX(50px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -41,6 +45,7 @@
         opacity: 1;
         transform: translateX(0);
     }
+
     to {
         opacity: 0;
         transform: translateX(-50px);
@@ -49,20 +54,33 @@
 
 /* Option Card Staggered Animation */
 .option-card {
-    opacity: 0; /* Start hidden for stagger */
+    opacity: 0;
+    /* Start hidden for stagger */
     animation: fadeInSlideUp 0.4s ease-out forwards;
 }
 
-.option-card:nth-child(1) { animation-delay: 0.1s; }
-.option-card:nth-child(2) { animation-delay: 0.15s; }
-.option-card:nth-child(3) { animation-delay: 0.2s; }
-.option-card:nth-child(4) { animation-delay: 0.25s; }
+.option-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.option-card:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.option-card:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.option-card:nth-child(4) {
+    animation-delay: 0.25s;
+}
 
 @keyframes fadeInSlideUp {
     from {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -72,7 +90,8 @@
 /* Toast Notifications */
 .toast-container {
     position: fixed;
-    top: 24px; /* Move to top for better visibility on mobile */
+    top: 24px;
+    /* Move to top for better visibility on mobile */
     left: 50%;
     transform: translateX(-50%);
     z-index: 10000;
@@ -81,7 +100,8 @@
     gap: 10px;
     width: 90%;
     max-width: 400px;
-    pointer-events: none; /* Let clicks pass through container */
+    pointer-events: none;
+    /* Let clicks pass through container */
 }
 
 .toast {
@@ -131,6 +151,7 @@
         opacity: 0;
         transform: translateY(-20px) scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -142,6 +163,7 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+
     to {
         opacity: 0;
         transform: translateY(-20px) scale(0.9);
@@ -349,7 +371,8 @@
     transition: all 0.2s;
 }
 
-.btn-remind:hover, .btn-remind.active {
+.btn-remind:hover,
+.btn-remind.active {
     background: white;
     color: #1e3a8a;
 }
@@ -367,7 +390,7 @@
     align-items: center;
     gap: 4px;
     justify-content: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .set-card.attempted {
@@ -383,4 +406,46 @@
     right: 8px;
     font-size: 1.2rem;
     filter: none;
+}
+
+/* Detailed Countdown Styles */
+.set-status-badge {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.countdown-timer {
+    font-family: 'Courier New', Courier, monospace;
+    /* Monospaced for stability */
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: inherit;
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 2px;
+}
+
+.countdown-timer b {
+    font-size: 0.95rem;
+    color: #000;
+}
+
+.text-urgent b {
+    color: #c62828;
+    animation: flash 1s infinite;
+}
+
+@keyframes flash {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }

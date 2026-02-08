@@ -162,9 +162,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Order for podium: 2, 1, 3
         const reordered = [null, null, null];
-        if (top3Data[0]) reordered[1] = top3Data[0]; // Rank 1 -> Center
-        if (top3Data[1]) reordered[0] = top3Data[1]; // Rank 2 -> Left
-        if (top3Data[2]) reordered[2] = top3Data[2]; // Rank 3 -> Right
+
+        // FIX: Handle cases where there are fewer than 3 players
+        if (top3Data.length === 1) {
+            reordered[1] = top3Data[0]; // Center
+        } else if (top3Data.length === 2) {
+            reordered[1] = top3Data[0]; // Center (1st)
+            reordered[0] = top3Data[1]; // Left (2nd)
+        } else {
+            reordered[1] = top3Data[0]; // Rank 1 -> Center
+            reordered[0] = top3Data[1]; // Rank 2 -> Left
+            reordered[2] = top3Data[2]; // Rank 3 -> Right
+        }
 
         reordered.forEach((p, i) => {
             if (!p) return;
@@ -178,14 +187,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const podiumItem = document.createElement('div');
             podiumItem.className = `podium-item rank-${rank}`;
 
+            // UX: Active Indicator for Top 3
+            const lastActive = new Date(p.ts || p.timestamp);
+            const isToday = lastActive.setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0);
+            const activeBadge = isToday ? '<span class="active-dot" title="Aktif Hari Ini"></span>' : '';
+
             podiumItem.innerHTML = `
-                <div class="avatar-container">
-                    ${rank === 1 ? '<i class="fas fa-crown crown-icon"></i>' : ''}
-                    ${(p.username || '').charAt(0).toUpperCase()}
+                <div class="avatar-container ring-${rank}">
+                    ${rank === 1 ? '<div class="crown-box"><i class="fas fa-crown crown-icon"></i></div>' : ''}
+                    ${rank === 2 ? '<div class="badge-box silver">2</div>' : ''}
+                    ${rank === 3 ? '<div class="badge-box bronze">3</div>' : ''}
+                    <div class="avatar-char">${(p.username || '?').charAt(0).toUpperCase()}</div>
+                    ${activeBadge}
                 </div>
                 <div class="podium-base">
                     <div class="podium-name">${p.username}</div>
-                    <div class="podium-score">${p.score}</div>
+                    <div class="podium-score">${p.score} <span>pts</span></div>
                 </div>
             `;
 
@@ -208,20 +225,58 @@ document.addEventListener('DOMContentLoaded', () => {
         restData.forEach((p, index) => {
             const rank = index + 4; // Start from 4
 
+            // UX: Determine Rank Movement (Simulated or Real if we had history)
+            // For now, let's use a simple randomized simulation for "feeling" if it's a new session, 
+            // OR strict comparison if we have previous data.
+            // Since we persist previousRanks in memory during session, we can use that.
+            let movementIcon = '';
+            const oldRank = previousRanks.get(p.username);
+            if (oldRank) {
+                if (rank < oldRank) movementIcon = '<span class="rank-up" title="Naik Peringkat"><i class="fas fa-caret-up"></i></span>';
+                else if (rank > oldRank) movementIcon = '<span class="rank-down" title="Turun Peringkat"><i class="fas fa-caret-down"></i></span>';
+                else movementIcon = '<span class="rank-same"><i class="fas fa-minus"></i></span>';
+            } else {
+                movementIcon = '<span class="rank-new">NEW</span>';
+            }
+
+            // UX: Active Today Indicator
+            const lastActive = new Date(p.ts || p.timestamp);
+            const isToday = lastActive.setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0);
+            const activeBadge = isToday ? '<span class="active-badge" title="Aktif Hari Ini">🔥</span>' : '';
+
             const item = document.createElement('div');
             item.className = 'rank-item';
             if (p.username.toLowerCase() === currentUser.toLowerCase()) {
                 item.classList.add('is-me');
+
+                // Add motivational copy for YOU
+                const nextUser = restData[index - 1] || (index === 0 ? allData[2] : null); // the guy above you
+                let copy = '';
+                if (nextUser) {
+                    const diff = nextUser.score - p.score;
+                    if (diff > 0) copy = `<div class="rank-motivation">Kejar <b>${diff} poin</b> lagi untuk salip ${nextUser.username}! 🚀</div>`;
+                    else copy = `<div class="rank-motivation">Skor sama! Ayo main lagi untuk menyalip! 🔥</div>`;
+                }
+
+                // Append copy to item later or handle structure
+                // Let's modify structure slightly for 'is-me'
+                item.dataset.motivation = copy ? "true" : "false"; // Hook for CSS
             }
 
             // Animation delay based on index
             item.style.animationDelay = `${index * 0.05}s`;
 
             item.innerHTML = `
-                <div class="rank-pos">#${rank}</div>
+                <div class="rank-pos">
+                    ${rank}
+                    <div class="rank-move">${movementIcon}</div>
+                </div>
                 <div class="rank-info">
-                    <div class="rank-name">${p.username}</div>
+                    <div class="rank-name">
+                        ${p.username} ${activeBadge}
+                    </div>
                     <div class="rank-meta">${new Date(p.ts || p.timestamp).toLocaleDateString('id-ID')}</div>
+                    ${item.classList.contains('is-me') && index > 0 ? `<div class="rank-motivation-text"><small>Selisih ${(restData[index - 1] || allData[2]).score - p.score} poin ke posisi #${rank - 1}</small> <a href="quiz.html" class="cta-mini">Ejar!</a></div>` : ''}
                 </div>
                 <div class="rank-score-box">
                     <div class="rank-score">${p.score}</div>
@@ -231,6 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             rankingList.appendChild(item);
         });
+
+        // Add Global CTA at bottom
+        const ctaParams = document.createElement('div');
+        ctaParams.className = 'ranking-footer-cta';
+        ctaParams.innerHTML = `<button onclick="window.location.href='quiz.html'" class="btn-shine">🔥 Tantang Pemain Lain!</button>`;
+        rankingList.appendChild(ctaParams);
     }
 
     function handleFilterAndSearch() {
