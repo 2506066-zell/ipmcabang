@@ -85,6 +85,18 @@
 
         <div id="quiz-set-picker" style="display:none;">
             <h2 style="margin-bottom:10px">Pilih Kuis</h2>
+
+            <!-- NEXT QUIZ INFO - Compact/Minimalist -->
+            <div class="next-quiz-compact" id="next-quiz-section" style="display:none;">
+                <div class="nq-compact-inner">
+                    <span class="nq-status" id="nq-status-text">⏰ Sedang berlangsung</span>
+                    <span class="nq-title-compact" id="nq-title">Kuis</span>
+                    <div class="nq-timer-compact">
+                        <span id="timer-h">00</span>:<span id="timer-m">00</span>:<span id="timer-s">00</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="set-grid" id="quiz-set-grid">
                 <button class="set-card" data-set="1"><i class="fas fa-calendar-week"></i><span>Kuis
                         Mingguan</span><small class="small" data-count="1">0 soal</small></button>
@@ -92,37 +104,6 @@
                         class="small" data-count="2">0 soal</small></button>
                 <button class="set-card" data-set="3"><i class="fas fa-sitemap"></i><span>Kuis Bidang</span><small
                         class="small" data-count="3">0 soal</small></button>
-            </div>
-
-            <!-- NEXT QUIZ INFO -->
-            <div class="next-quiz-card" id="next-quiz-section" style="display:none;">
-                <div class="nq-header">
-                    <i class="fas fa-hourglass-half"></i> Kuis Berikutnya
-                </div>
-                <h3 id="nq-title">Kuis Spesial</h3>
-                <p id="nq-topic" style="opacity:0.8; margin-bottom:12px; font-size:0.95rem; line-height:1.4;">Topik: ...
-                </p>
-
-                <div class="nq-timer-grid">
-                    <div class="timer-unit">
-                        <span id="timer-h" class="timer-val">00</span>
-                        <span class="timer-label">JAM</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-unit">
-                        <span id="timer-m" class="timer-val">00</span>
-                        <span class="timer-label">MENIT</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-unit">
-                        <span id="timer-s" class="timer-val">00</span>
-                        <span class="timer-label">DETIK</span>
-                    </div>
-                </div>
-
-                <button class="btn-remind" id="remind-btn" onclick="toggleRemind()">
-                    <i class="far fa-bell"></i> Ingatkan Saya
-                </button>
             </div>
 
             <!-- TOP SCORES SECTION -->

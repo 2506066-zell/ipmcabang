@@ -115,12 +115,20 @@ export function initArticles(state, els, api) {
 
     // Create/Edit
     addBtn.onclick = () => {
-        form.reset();
-        inpId.value = '';
-        inpBase64.value = '';
-        previewDiv.style.display = 'none';
-        document.getElementById('article-modal-title').textContent = 'Tambah Artikel';
-        openModal();
+        console.log('[Articles] Add button clicked');
+        try {
+            form.reset();
+            if (inpId) inpId.value = '';
+            if (inpBase64) inpBase64.value = '';
+            if (previewDiv) previewDiv.style.display = 'none';
+            const modalTitle = document.getElementById('article-modal-title');
+            if (modalTitle) modalTitle.textContent = 'Tambah Artikel';
+            console.log('[Articles] Opening modal...');
+            openModal();
+            console.log('[Articles] Modal opened');
+        } catch (e) {
+            console.error('[Articles] Error opening modal:', e);
+        }
     };
 
     async function openEdit(id) {

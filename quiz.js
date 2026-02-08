@@ -169,15 +169,20 @@ function renderNextQuizSection(schedules) {
 
     section.style.display = 'block';
 
+    const statusEl = document.getElementById('nq-status-text');
     const titleEl = document.getElementById('nq-title');
-    const topicEl = document.getElementById('nq-topic');
-    const headerEl = section.querySelector('.nq-header');
 
-    if (titleEl) titleEl.textContent = target.title || 'Kuis Berikutnya';
-    if (topicEl) topicEl.textContent = target.topic ? `Topik: ${target.topic}` : (isActive ? 'Sedang berlangsung!' : 'Segera hadir');
-    if (headerEl) headerEl.innerHTML = isActive
-        ? '<i class="fas fa-clock"></i> Kuis Aktif - Berakhir Dalam:'
-        : '<i class="fas fa-hourglass-half"></i> Kuis Berikutnya';
+    if (titleEl) titleEl.textContent = target.title || 'Kuis';
+
+    if (statusEl) {
+        if (isActive) {
+            statusEl.textContent = '🟢 Sedang berlangsung';
+            statusEl.className = 'nq-status nq-active';
+        } else {
+            statusEl.textContent = '🔴 Yang akan datang';
+            statusEl.className = 'nq-status nq-upcoming';
+        }
+    }
 
     // Store target for timer updates
     window._nextQuizTarget = { target, isActive };
