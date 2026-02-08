@@ -1568,15 +1568,15 @@ textarea:focus {
 /* === WRITING MODE (BLOGGER-LIKE EDITOR) === */
 .writing-mode-content {
     max-width: 1000px !important;
-    width: 95vw !important;
-    height: 95vh !important;
+    width: 98vw !important;
+    height: 98vh !important;
     background: #ffffff !important;
-    color: #1a1a1a !important;
+    color: #0f172a !important;
     padding: 0 !important;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-    border-radius: 8px !important;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 20px 50px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important;
     overflow: hidden;
 }
 
@@ -1632,62 +1632,72 @@ body.light-mode .writing-mode-content {
     margin: 0 auto;
 }
 
-/* Title Input */
+/* Title Input - Focused Headline */
 .editor-title-container {
-    margin-bottom: 24px;
+    margin-bottom: 32px;
 }
 
 .editor-title-input {
     width: 100%;
     border: none;
     background: transparent;
-    font-size: 2.75rem;
-    font-weight: 800;
-    color: inherit;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #0f172a !important;
     outline: none;
     padding: 0;
-    line-height: 1.2;
+    line-height: 1.1;
     font-family: var(--font-sans);
+    letter-spacing: -0.02em;
 }
 
 .editor-title-input::placeholder {
-    color: rgba(0, 0, 0, 0.1);
+    color: #e2e8f0;
 }
 
 @media (prefers-color-scheme: dark) {
+    .editor-title-input {
+        color: #f8fafc !important;
+    }
+
     .editor-title-input::placeholder {
-        color: rgba(255, 255, 255, 0.1);
+        color: #334155;
     }
 }
 
-/* Meta Row */
+/* Meta Row - Subtle & Horizontal */
 .editor-meta-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    gap: 24px;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .editor-meta-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #6b7280;
-    font-size: 0.9rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.editor-meta-item i {
+    font-size: 0.8rem;
+    opacity: 0.7;
 }
 
 .editor-meta-item input,
 .editor-meta-item select {
     border: none;
     background: transparent;
-    color: inherit;
+    color: #475569;
     font-size: inherit;
     outline: none;
-    padding: 4px 0;
+    padding: 2px 0;
     font-weight: 600;
-    border-bottom: 1px solid transparent;
 }
 
 .editor-meta-item input:focus,
@@ -1695,9 +1705,9 @@ body.light-mode .writing-mode-content {
     border-bottom-color: var(--accent-secondary);
 }
 
-/* Image Section */
+/* Image Section - Constrained & Focused */
 .editor-image-section {
-    margin-bottom: 40px;
+    margin-bottom: 48px;
 }
 
 .image-upload-wrapper {
@@ -1728,14 +1738,17 @@ body.light-mode .writing-mode-content {
 
 .editor-image-preview {
     position: relative;
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
     margin-top: 10px;
+    max-height: 320px;
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .editor-image-preview img {
     width: 100%;
-    max-height: 400px;
+    height: 320px;
     object-fit: cover;
     display: block;
 }
@@ -1757,9 +1770,11 @@ body.light-mode .writing-mode-content {
     backdrop-filter: blur(4px);
 }
 
-/* Writing Area & Toolbar */
+/* Writing Area & Content - Maximum Focus */
 .editor-writing-area {
     position: relative;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .editor-toolbar {
@@ -1793,18 +1808,23 @@ body.light-mode .writing-mode-content {
 }
 
 .editor-content-editable {
-    font-size: 1.15rem;
-    line-height: 1.8;
-    color: inherit;
+    font-size: 1.2rem;
+    line-height: 1.9;
+    color: #334155;
     outline: none;
-    min-height: 400px;
-    padding-bottom: 100px;
+    min-height: 500px;
+    padding-bottom: 150px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .editor-content-editable {
+        color: #cbd5e1;
+    }
 }
 
 .editor-content-editable:empty:before {
     content: attr(placeholder);
-    color: #9ca3af;
-    cursor: text;
+    color: #cbd5e1;
 }
 
 /* Typography styles inside editor */

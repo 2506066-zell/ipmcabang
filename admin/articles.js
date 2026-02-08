@@ -138,8 +138,15 @@ export function initArticles(state, els, api) {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
 
-        // Focus title with slight delay for transition
-        setTimeout(() => inpTitle.focus(), 300);
+        // Focus title with instant feel
+        requestAnimationFrame(() => {
+            inpTitle.focus();
+            // Move cursor to end if editing
+            if (inpTitle.value) {
+                const len = inpTitle.value.length;
+                inpTitle.setSelectionRange(len, len);
+            }
+        });
         updateWordCount();
     }
 
