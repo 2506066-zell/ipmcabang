@@ -183,7 +183,7 @@ async function initSidebar() {
 
     // 2. Mocking Categories (Since API doesn't have a specific endpoint, we extract from main select or common list)
     if (categoriesList) {
-        const categories = ['Umum', 'Kader', 'Opini', 'Berita'];
+        const categories = ['Umum', 'Kader', 'Opini', 'Berita', 'Program Kerja'];
         categoriesList.innerHTML = categories.map(cat => `
             <button class="tag-btn" onclick="document.getElementById('category-select').value='${cat}'; document.getElementById('category-select').dispatchEvent(new Event('change'))">${cat}</button>
         `).join('');

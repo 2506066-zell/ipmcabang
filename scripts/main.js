@@ -118,10 +118,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     revealElements.forEach(el => revealObserver.observe(el));
 
-    // Fetch Latest Articles
+    // Fetch Program Kerja Highlights
+    const highlightsGrid = document.getElementById('highlights-content');
+    if (highlightsGrid) {
+        fetch('/api/articles?page=1&size=3&category=Program Kerja&sort=newest')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.articles) {
+                    renderHighlights(data.articles);
+                }
+            })
+            .catch(err => console.error('Error fetching highlights:', err));
+    }
+
+    function renderHighlights(articles) {
+        if (!highlightsGrid) return;
+        if (articles.length === 0) {
+            highlightsGrid.innerHTML = '<p>Belum ada program kerja mendatang.</p>';
+            return;
+        }
+
+        highlightsGrid.innerHTML = articles.map(art => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = art.content;
+            const snippet = tempDiv.textContent.substring(0, 150) + '...';
+            const date = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            return `
+                <a href="article.html?slug=${art.slug}" class="highlight-item">
+                    <div class="highlight-date">
+                        <i class="fas fa-calendar-alt"></i> ${date}
+                    </div>
+                    <h3 class="highlight-item-title">${art.title}</h3>
+                    <p class="highlight-item-snippet">${snippet}</p>
+                </a>
+            `;
+        }).join('');
+    }
+
+    // Fetch Latest Articles (excluding Program Kerja to avoid duplication)
     const articlesGrid = document.getElementById('featured-articles-grid');
     if (articlesGrid) {
-        fetch('/api/articles?page=1&size=3&sort=newest')
+        fetch('/api/articles?page=1&size=3&category=!Program Kerja&sort=newest')
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success' && data.articles) {
@@ -168,22 +206,32 @@ document.addEventListener('DOMContentLoaded', () => {
         transitionOverlay.classList.add('fade-out');
     });
 
-    // Fade in on link click
-    document.querySelectorAll('a').forEach(link => {
-        if (link.hostname === window.location.hostname &&
-            !link.hash &&
-            link.target !== '_blank' &&
-            !link.classList.contains('no-transition')) {
-            link.addEventListener('click', (e) => {
-                const href = link.href;
-                if (!href || href.includes('javascript:')) return;
+    // Use Event Delegation for all links (handles dynamic content too)
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (!link) return;
 
-                e.preventDefault();
-                transitionOverlay.classList.remove('fade-out');
-                setTimeout(() => {
-                    window.location.href = href;
-                }, 400);
-            });
+        // Check if internal link and not a special case
+        const isInternal = link.hostname === window.location.hostname;
+        const isSelf = link.target === '_self' || !link.target;
+        const noTransition = link.classList.contains('no-transition');
+        const isAction = link.href.includes('javascript:') || link.getAttribute('href')?.startsWith('#');
+
+        if (isInternal && isSelf && !noTransition && !isAction && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
+            const href = link.href;
+            if (!href) return;
+
+            e.preventDefault();
+
+            // Prevent multiple rapid clicks
+            if (!transitionOverlay.classList.contains('fade-out')) return;
+
+            transitionOverlay.classList.remove('fade-out');
+            transitionOverlay.style.pointerEvents = 'all'; // Block interactions while transitioning
+
+            setTimeout(() => {
+                window.location.href = href;
+            }, 300); // Faster for better responsiveness
         }
     });
 
@@ -200,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fabContainer = document.createElement('div');
         fabContainer.className = 'premium-fab-container';
         fabContainer.innerHTML = `
+            <a href="javascript:void(0)" class="fab-option back-to-top" id="back-to-top" data-label="Kembali ke Atas"><i class="fas fa-chevron-up"></i></a>
             <button class="fab-main" id="fab-main"><i class="fas fa-plus"></i></button>
             <div class="fab-options">
                 <a href="ranking.html" class="fab-option" data-label="Peringkat"><i class="fas fa-trophy"></i></a>
@@ -210,8 +259,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(fabContainer);
 
         const fabMain = document.getElementById('fab-main');
+        const backToTopBtn = document.getElementById('back-to-top');
+
         fabMain.addEventListener('click', () => {
             fabContainer.classList.toggle('open');
+        });
+
+        backToTopBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Show/Hide Back to Top on Scroll
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 400) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
         });
 
         // Close FAB when clicking outside
@@ -219,6 +284,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!fabContainer.contains(e.target)) {
                 fabContainer.classList.remove('open');
             }
+        });
+    }
+
+    // 3. Scroll Progress Bar (for Article Detail)
+    if (activeDoc.includes('article.html') && !activeDoc.includes('articles.html')) {
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'scroll-progress-container';
+        progressContainer.innerHTML = '<div class="scroll-progress-bar" id="scroll-bar"></div>';
+        document.body.appendChild(progressContainer);
+
+        const scrollBar = document.getElementById('scroll-bar');
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            if (scrollBar) scrollBar.style.width = scrolled + "%";
         });
     }
 });

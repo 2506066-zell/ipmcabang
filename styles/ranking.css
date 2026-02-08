@@ -257,29 +257,56 @@
     border-radius: 12px 12px 0 0;
     padding: 25px 5px 15px;
     text-align: center;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(15px) saturate(160%);
+    -webkit-backdrop-filter: blur(15px) saturate(160%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     display: flex;
     flex-direction: column;
     gap: 4px;
+    position: relative;
+    overflow: hidden;
 }
 
 .rank-1 .podium-base {
     height: 160px;
-    background: linear-gradient(to bottom, var(--rank-bg-gold), rgba(255, 255, 255, 0.9));
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 255, 255, 0.6));
     border-top: 4px solid var(--rank-gold);
+}
+
+.rank-1 .podium-base::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at top, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
+    animation: gold-pulse 3s infinite;
+}
+
+@keyframes gold-pulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 .rank-2 .podium-base {
     height: 130px;
-    background: linear-gradient(to bottom, var(--rank-bg-silver), rgba(255, 255, 255, 0.9));
+    background: linear-gradient(135deg, rgba(192, 192, 192, 0.2), rgba(255, 255, 255, 0.6));
     border-top: 4px solid var(--rank-silver);
 }
 
 .rank-3 .podium-base {
     height: 110px;
-    background: linear-gradient(to bottom, var(--rank-bg-bronze), rgba(255, 255, 255, 0.9));
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(255, 255, 255, 0.6));
     border-top: 4px solid var(--rank-bronze);
 }
 

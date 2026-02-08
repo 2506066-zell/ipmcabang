@@ -207,16 +207,19 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             top3Container.appendChild(podiumItem);
+        });
 
-            // Animate entry
-            gsap.from(podiumItem, {
-                y: 50,
+        // Cinematic GSAP entry for Top 3
+        if (window.gsap) {
+            gsap.from(".podium-item", {
+                y: 60,
                 opacity: 0,
-                duration: 0.6,
-                delay: i * 0.1,
+                scale: 0.9,
+                duration: 0.8,
+                stagger: 0.2,
                 ease: "back.out(1.7)"
             });
-        });
+        }
     }
 
     function renderRest(restData) {

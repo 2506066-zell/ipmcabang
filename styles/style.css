@@ -194,16 +194,20 @@ body.body-no-scroll {
 }
 
 .user-dropdown {
-    position: absolute;
-    right: 12px;
-    top: 56px;
-    background: #fff;
-    border: 1px solid #efefef;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    border-radius: 10px;
-    padding: 8px;
-    display: none;
-    z-index: 1200;
+    position: fixed;
+    top: 65px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .user-dropdown.open {
@@ -267,25 +271,17 @@ body.body-no-scroll {
 /* --- Mobile Navigation Panel (Dropdown) --- */
 .mobile-nav {
     position: fixed;
-    /* Changed to fixed */
-    top: 56px;
-    /* Position below the header */
+    top: 60px;
     left: 0;
-    right: 0;
-    width: 100%;
-    background-color: #fff;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-    z-index: 1099;
-    /* Adjusted z-index */
-    border-bottom-left-radius: 16px;
-    border-bottom-right-radius: 16px;
-    overflow: hidden;
-
-    /* Start hidden */
-    opacity: 0;
-    transform: translateY(-20px);
-    visibility: hidden;
-    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+    width: 280px;
+    height: calc(100% - 60px);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 1400;
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .mobile-nav.open {
@@ -3667,22 +3663,6 @@ body.page-quiz {
         0 0 1px rgba(0, 0, 0, 0.15);
     animation: slideUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform: translateZ(0);
-}
-
-/* DENGAN KODE DI BAWAH INI */
-.page-struktur .anggota-detail-card {
-    background: white;
-    border-radius: 28px;
-    overflow: hidden;
-    max-width: 400px;
-    width: 100%;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-        0 0 1px rgba(0, 0, 0, 0.15);
-    animation: slideUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    transform: translateZ(0);
     position: relative;
     /* Penting untuk posisi tombol */
 }
@@ -4226,6 +4206,23 @@ body.light-mode .timer-unit {
     transform: rotate(45deg);
 }
 
+.fab-option.back-to-top {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: #2D7A4A;
+    color: white;
+    border: none;
+}
+
+.fab-option.back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    margin-bottom: 8px;
+}
+
 .fab-option {
     width: 48px;
     height: 48px;
@@ -4278,13 +4275,15 @@ body.light-mode .timer-unit {
     height: 100%;
     background: #ffffff;
     z-index: 10000;
-    pointer-events: none;
+    pointer-events: all;
+    /* Block by default until fade out */
     opacity: 1;
-    transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .page-transition-overlay.fade-out {
     opacity: 0;
+    pointer-events: none;
 }
 
 @media (max-width: 768px) {
