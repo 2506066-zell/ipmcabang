@@ -57,38 +57,44 @@
     </nav>
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
-    <main class="quiz-container">
-        <section id="user-info-screen" class="quiz-screen">
+    <div class="quiz-container">
+        <div id="user-info-screen">
             <h1>Quis IPM</h1>
             <p>Siap untuk menguji pengetahuanmu?</p>
             <div class="input-group">
-                <div class="user-badge" id="user-badge">
+                <div class="user-badge" id="user-badge" style="margin-bottom: 20px;">
                     <i class="fas fa-user-circle"></i>
                     <div class="user-badge-text">
                         <span id="user-name-text">Memuat...</span>
                     </div>
                 </div>
                 <input type="hidden" id="username">
-                <button id="start-quiz-btn" class="btn-large btn-primary">Mulai Quiz</button>
+                <button id="start-quiz-btn" class="btn-large" style="width: 100%; padding: 15px; font-size: 1.1rem; border-radius: 12px; background: var(--accent-primary); color: #000; font-weight: bold; border: none; cursor: pointer;">Mulai Quiz</button>
             </div>
-        </section>
+        </div>
 
-        <section id="quiz-set-picker" class="quiz-screen" style="display:none;">
-            <h2>Pilih Kuis</h2>
+        <div id="quiz-set-picker" style="display:none;">
+            <h2 style="margin-bottom:10px">Pilih Kuis</h2>
             <div class="set-grid" id="quiz-set-grid">
                 <button class="set-card" data-set="1"><i class="fas fa-calendar-week"></i><span>Kuis Mingguan</span><small class="small" data-count="1">0 soal</small></button>
                 <button class="set-card" data-set="2"><i class="fas fa-calendar-days"></i><span>Kuis Event</span><small class="small" data-count="2">0 soal</small></button>
                 <button class="set-card" data-set="3"><i class="fas fa-sitemap"></i><span>Kuis Bidang</span><small class="small" data-count="3">0 soal</small></button>
             </div>
 
+            <!-- NEXT QUIZ INFO (LIVE COUNTDOWN) -->
             <div class="next-quiz-card" id="next-quiz-section" style="display:none;">
                 <div class="nq-header">
                     <i class="fas fa-hourglass-half"></i> Kuis Berikutnya
                 </div>
                 <h3 id="nq-title">Kuis Spesial</h3>
-                <p id="nq-topic">Topik: ...</p>
+                <p id="nq-topic" style="opacity:0.8; margin-bottom:12px; font-size:0.95rem; line-height:1.4;">Topik: ...</p>
                 
                 <div class="nq-timer-grid">
+                    <div class="timer-unit">
+                        <span id="timer-d" class="timer-val">00</span>
+                        <span class="timer-label">HARI</span>
+                    </div>
+                    <div class="timer-sep">:</div>
                     <div class="timer-unit">
                         <span id="timer-h" class="timer-val">00</span>
                         <span class="timer-label">JAM</span>
@@ -110,13 +116,16 @@
                 </button>
             </div>
 
-            <div id="top-scores-section" style="display:none;">
-                <h3><i class="fas fa-trophy"></i> Top Scorer Global</h3>
-                <div class="top-scores-grid" id="top-scores-grid">
+            <!-- TOP SCORES SECTION -->
+            <div id="top-scores-section" style="margin-top:24px; display:none;">
+                <h3 style="margin-bottom:12px; font-size:1.1rem; color:var(--text-primary);"><i class="fas fa-trophy" style="color:gold;"></i> Top Scorer Global</h3>
+                <div class="top-scores-grid" id="top-scores-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px;">
+                    <!-- JS will populate -->
                 </div>
             </div>
-        </section>
+        </div>
 
+        <!-- CUSTOM MODAL FOR ALREADY ATTEMPTED -->
         <div class="custom-modal-overlay" id="attempt-modal" aria-hidden="true">
             <div class="custom-modal">
                 <div class="modal-icon warning">
@@ -131,8 +140,8 @@
             </div>
         </div>
 
-        <header id="quiz-header" class="quiz-screen" style="display:none;">
-            <div class="progress-indicator">
+        <div id="quiz-header" style="display:none; align-items:center; gap:10px;">
+            <div class="progress-indicator" style="flex:1;">
                 <div class="progress-text-container">
                     <span id="progress-text">0/10</span>
                 </div>
@@ -140,15 +149,16 @@
                     <div id="progress-bar" class="progress-bar-fill"></div>
                 </div>
             </div>
-            <button id="reset-quiz-btn" class="btn-icon-small" aria-label="Ulangi dari awal">
+            <button id="reset-quiz-btn" class="btn-icon-small" aria-label="Ulangi dari awal" style="background:rgba(255,255,255,0.1); border:none; color:var(--text-secondary); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                 <i class="fas fa-redo-alt"></i>
             </button>
-        </header>
+        </div>
 
-        <section id="quiz-body" class="quiz-screen" style="display:none;">
-        </section>
+        <div id="quiz-body" style="display:none;">
+            <!-- Konten kuis akan dirender oleh JavaScript di sini -->
+        </div>
 
-        <section id="result-container" class="quiz-screen" style="display:none;">
+        <div id="result-container" style="display:none;">
             <div class="particle-container"></div>
             <h2>Hasil Akhir</h2>
             <p>Skor Kamu:</p>
@@ -159,12 +169,12 @@
                 <a href="ranking.html" id="ranking-btn" class="result-button">Lihat Peringkat</a>
                 <button id="share-btn" class="result-button">Bagikan</button>
             </div>
-        </section>
+        </div>
 
         <button id="next-btn" class="floating-action-btn" disabled>
             <i class="fas fa-arrow-right"></i>
         </button>
-    </main>
+    </div>
 
     <nav class="bottom-nav">
       <div class="bottom-nav-inner">
