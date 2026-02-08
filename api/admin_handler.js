@@ -15,7 +15,7 @@ async function handleCreate(req, res) {
   const category = b.category ? String(b.category) : null;
   const quiz_set = Number(b.quiz_set || 1);
   if (!q || !options.a || !options.b || !options.d) return json(res, 400, { status: 'error', message: 'Opsi A, B, D dan pertanyaan wajib diisi' });
-  if (!['a','b','c','d'].includes(correct)) return json(res, 400, { status: 'error', message: 'Jawaban benar harus A/B/C/D' });
+  if (!['a', 'b', 'c', 'd'].includes(correct)) return json(res, 400, { status: 'error', message: 'Jawaban benar harus A/B/C/D' });
   const ins = await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (${q}, ${options}, ${correct}, ${active}, ${category}, ${quiz_set}) RETURNING *`;
   return json(res, 201, { status: 'success', question: ins.rows[0] });
 }
@@ -47,10 +47,10 @@ async function handleUpdate(req, res) {
 
   params.push(id);
   const sql = `UPDATE questions SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`;
-  
+
   const { rawQuery } = require('./_db');
   const result = await rawQuery(sql, params);
-  
+
   if (result.rows.length === 0) return json(res, 404, { status: 'error', message: 'Question not found' });
   return json(res, 200, { status: 'success', question: result.rows[0] });
 }
@@ -64,156 +64,210 @@ async function handleDelete(req, res) {
   return json(res, 200, { status: 'success' });
 }
 
+async function handleListQuestions(req, res) {
+  try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+
+  const set = req.query.set ? Number(req.query.set) : null;
+  const category = req.query.category ? String(req.query.category).trim() : '';
+  const search = req.query.search ? String(req.query.search).trim() : '';
+
+  const page = req.query.page ? Number(req.query.page) : 1;
+  const size = req.query.size ? Number(req.query.size) : 50;
+
+  const limit = Math.max(1, Math.min(500, size));
+  const offset = Math.max(0, (page - 1) * limit);
+
+  let whereClauses = [];
+  let params = [];
+  let pIdx = 1;
+
+  if (set) {
+    whereClauses.push(`quiz_set = $${pIdx++}`);
+    params.push(set);
+  }
+  if (category && category !== 'all') {
+    whereClauses.push(`LOWER(category) = $${pIdx++}`);
+    params.push(category.toLowerCase());
+  }
+  if (search) {
+    whereClauses.push(`(LOWER(question) LIKE $${pIdx} OR LOWER(options::text) LIKE $${pIdx})`);
+    params.push(`%${search.toLowerCase()}%`);
+    pIdx++;
+  }
+
+  // Admin sees ALL (Active & Inactive)
+  // No "active = true" filter here.
+
+  const whereSql = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : '';
+
+  const { rawQuery } = require('./_db');
+
+  // Count
+  const countRes = await rawQuery(`SELECT COUNT(*)::int as total FROM questions ${whereSql}`, params);
+  const total = countRes.rows[0]?.total || 0;
+
+  // Data
+  // Note: We include 'active' and 'correct_answer' because this is admin.
+  const dataRes = await rawQuery(`SELECT * FROM questions ${whereSql} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`, params);
+
+  return json(res, 200, {
+    status: 'success',
+    questions: dataRes.rows,
+    total: total,
+    page: page
+  });
+}
+
 // --- Schedule Management ---
 
 async function handleGetSchedules(req, res) {
-    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
-    const schedules = (await query`SELECT * FROM quiz_schedules ORDER BY id ASC`).rows;
-    return json(res, 200, { status: 'success', schedules });
+  try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+  const schedules = (await query`SELECT * FROM quiz_schedules ORDER BY id ASC`).rows;
+  return json(res, 200, { status: 'success', schedules });
 }
 
 async function handleUpdateSchedule(req, res) {
-    let adminId = null;
-    try { 
-        const admin = await requireAdminAuth(req); 
-        adminId = admin.id;
-    } catch (e) { 
-        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
-    }
-    
-    const b = parseJsonBody(req);
-    const id = Number(b.id);
-    const title = String(b.title || '');
-    const description = String(b.description || '');
-    const start_time = b.start_time ? String(b.start_time) : null;
-    const end_time = b.end_time ? String(b.end_time) : null;
-    
-    if (start_time && end_time && new Date(start_time) >= new Date(end_time)) {
-        return json(res, 400, { status: 'error', message: 'Waktu selesai harus setelah waktu mulai' });
-    }
-    
-    if (id) {
-        await query`UPDATE quiz_schedules SET title=${title}, description=${description}, start_time=${start_time}, end_time=${end_time}, updated_at=NOW() WHERE id=${id}`;
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_SCHEDULE', ${ { id, title, description, start_time, end_time } })`;
-    } else {
-        await query`INSERT INTO quiz_schedules (title, description, start_time, end_time) VALUES (${title}, ${description}, ${start_time}, ${end_time})`;
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_SCHEDULE', ${ { title, description, start_time, end_time } })`;
-    }
-    
-    return json(res, 200, { status: 'success' });
+  let adminId = null;
+  try {
+    const admin = await requireAdminAuth(req);
+    adminId = admin.id;
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const b = parseJsonBody(req);
+  const id = Number(b.id);
+  const title = String(b.title || '');
+  const description = String(b.description || '');
+  const start_time = b.start_time ? String(b.start_time) : null;
+  const end_time = b.end_time ? String(b.end_time) : null;
+
+  if (start_time && end_time && new Date(start_time) >= new Date(end_time)) {
+    return json(res, 400, { status: 'error', message: 'Waktu selesai harus setelah waktu mulai' });
+  }
+
+  if (id) {
+    await query`UPDATE quiz_schedules SET title=${title}, description=${description}, start_time=${start_time}, end_time=${end_time}, updated_at=NOW() WHERE id=${id}`;
+    await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_SCHEDULE', ${{ id, title, description, start_time, end_time }})`;
+  } else {
+    await query`INSERT INTO quiz_schedules (title, description, start_time, end_time) VALUES (${title}, ${description}, ${start_time}, ${end_time})`;
+    await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_SCHEDULE', ${{ title, description, start_time, end_time }})`;
+  }
+
+  return json(res, 200, { status: 'success' });
 }
 
 async function handleDeleteSchedule(req, res) {
-    let adminId = null;
-    try { 
-        const admin = await requireAdminAuth(req); 
-        adminId = admin.id;
-    } catch (e) { 
-        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); 
-    }
-    
-    const b = parseJsonBody(req);
-    const id = Number(b.id);
-    if (!id) return json(res, 400, { status: 'error', message: 'ID required' });
-    
-    await query`DELETE FROM quiz_schedules WHERE id=${id}`;
-    await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'DELETE_SCHEDULE', ${ { id } })`;
-    
-    return json(res, 200, { status: 'success' });
+  let adminId = null;
+  try {
+    const admin = await requireAdminAuth(req);
+    adminId = admin.id;
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const b = parseJsonBody(req);
+  const id = Number(b.id);
+  if (!id) return json(res, 400, { status: 'error', message: 'ID required' });
+
+  await query`DELETE FROM quiz_schedules WHERE id=${id}`;
+  await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'DELETE_SCHEDULE', ${{ id }})`;
+
+  return json(res, 200, { status: 'success' });
 }
 
 // --- System & Logs ---
 
 async function handleGetActivityLogs(req, res) {
-    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
-    
-    const logs = (await query`
+  try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+
+  const logs = (await query`
         SELECT l.id, l.action, l.details, l.created_at, u.username as admin_name 
         FROM activity_logs l 
         LEFT JOIN users u ON l.admin_id = u.id 
         ORDER BY l.created_at DESC 
         LIMIT 100
     `).rows;
-    
-    return json(res, 200, { status: 'success', logs });
+
+  return json(res, 200, { status: 'success', logs });
 }
 
 async function handleResetSet(req, res) {
-    let adminId = null;
-    try { 
-        const admin = await requireAdminAuth(req); 
-        adminId = admin.id;
-    } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
-    
-    const body = parseJsonBody(req);
-    const quiz_set = Number(body.quiz_set || 0);
-    if (!quiz_set) return json(res, 400, { status: 'error', message: 'Missing quiz_set' });
-    
-    // Notify users before deletion (Best Practice)
-    try {
-        // Find users who have results for this set
-        const affectedUsers = (await query`SELECT DISTINCT user_id FROM results WHERE quiz_set=${quiz_set}`).rows;
-        if (affectedUsers.length > 0) {
-             const msg = `Admin telah mereset Kuis Set ${quiz_set}. Anda dapat mengerjakannya kembali.`;
-             // Bulk insert not supported by template literal helper easily, loop for now (safe for small scale)
-             // Ideally: INSERT INTO notifications ... SELECT ...
-             for(const u of affectedUsers) {
-                 await query`INSERT INTO notifications (user_id, message) VALUES (${u.user_id}, ${msg})`;
-             }
-        }
-    } catch (e) { console.error('Failed to notify users:', e); }
+  let adminId = null;
+  try {
+    const admin = await requireAdminAuth(req);
+    adminId = admin.id;
+  } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
 
-    await query`DELETE FROM results WHERE quiz_set=${quiz_set}`;
-    
-    // Log Activity
-    try {
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'RESET_SET', ${ { quiz_set } })`;
-    } catch (e) { console.error('Failed to log activity:', e); }
-  
-    return json(res, 200, { status: 'success' });
+  const body = parseJsonBody(req);
+  const quiz_set = Number(body.quiz_set || 0);
+  if (!quiz_set) return json(res, 400, { status: 'error', message: 'Missing quiz_set' });
+
+  // Notify users before deletion (Best Practice)
+  try {
+    // Find users who have results for this set
+    const affectedUsers = (await query`SELECT DISTINCT user_id FROM results WHERE quiz_set=${quiz_set}`).rows;
+    if (affectedUsers.length > 0) {
+      const msg = `Admin telah mereset Kuis Set ${quiz_set}. Anda dapat mengerjakannya kembali.`;
+      // Bulk insert not supported by template literal helper easily, loop for now (safe for small scale)
+      // Ideally: INSERT INTO notifications ... SELECT ...
+      for (const u of affectedUsers) {
+        await query`INSERT INTO notifications (user_id, message) VALUES (${u.user_id}, ${msg})`;
+      }
+    }
+  } catch (e) { console.error('Failed to notify users:', e); }
+
+  await query`DELETE FROM results WHERE quiz_set=${quiz_set}`;
+
+  // Log Activity
+  try {
+    await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'RESET_SET', ${{ quiz_set }})`;
+  } catch (e) { console.error('Failed to log activity:', e); }
+
+  return json(res, 200, { status: 'success' });
 }
 
 async function handleMigrate(req, res) {
-    try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
-    
-    await ensureSchema();
-  
-    const qcRaw = (await query`SELECT COUNT(*)::int AS c FROM questions`).rows[0]?.c;
-    const qc = typeof qcRaw === 'number' ? qcRaw : Number(qcRaw || 0);
-    if (qc === 0) {
-      await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
-        ${'Apa kepanjangan IPM?'}, ${ { a: 'Ikatan Pelajar Muhammadiyah', b: 'Ikatan Pemuda Muslim', c: 'Ikatan Pemuda Merdeka', d: 'Ikatan Pelajar Merdeka' } }, ${'a'}, ${true}, ${'Organisasi'}, ${1}
+  try { await requireAdminAuth(req); } catch { return json(res, 401, { status: 'error', message: 'Unauthorized' }); }
+
+  await ensureSchema();
+
+  const qcRaw = (await query`SELECT COUNT(*)::int AS c FROM questions`).rows[0]?.c;
+  const qc = typeof qcRaw === 'number' ? qcRaw : Number(qcRaw || 0);
+  if (qc === 0) {
+    await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
+        ${'Apa kepanjangan IPM?'}, ${{ a: 'Ikatan Pelajar Muhammadiyah', b: 'Ikatan Pemuda Muslim', c: 'Ikatan Pemuda Merdeka', d: 'Ikatan Pelajar Merdeka' }}, ${'a'}, ${true}, ${'Organisasi'}, ${1}
       )`;
-      await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
-        ${'Hari jadi IPM?'}, ${ { a: '5 Mei 1961', b: '5 Mei 1962', c: '5 Juni 1961', d: '5 Juni 1962' } }, ${'a'}, ${true}, ${'Sejarah'}, ${1}
+    await query`INSERT INTO questions (question, options, correct_answer, active, category, quiz_set) VALUES (
+        ${'Hari jadi IPM?'}, ${{ a: '5 Mei 1961', b: '5 Mei 1962', c: '5 Juni 1961', d: '5 Juni 1962' }}, ${'a'}, ${true}, ${'Sejarah'}, ${1}
       )`;
+  }
+
+  const adminU = String((process.env.ADMIN_USERNAME || '')).trim().toLowerCase();
+  const adminP = String((process.env.ADMIN_PASSWORD || ''));
+  if (adminU && adminP) {
+    const exists = (await query`SELECT id FROM users WHERE LOWER(username)=${adminU}`).rows[0];
+    if (!exists) {
+      const crypto = require('crypto');
+      const salt = crypto.randomBytes(16).toString('hex');
+      const dk = crypto.scryptSync(adminP, salt, 64);
+      const hash = dk.toString('hex');
+      await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${salt}, ${hash}, ${'admin'})`;
     }
-  
-    const adminU = String((process.env.ADMIN_USERNAME || '')).trim().toLowerCase();
-    const adminP = String((process.env.ADMIN_PASSWORD || ''));
-    if (adminU && adminP) {
-      const exists = (await query`SELECT id FROM users WHERE LOWER(username)=${adminU}`).rows[0];
-      if (!exists) {
-        const crypto = require('crypto');
-        const salt = crypto.randomBytes(16).toString('hex');
-        const dk = crypto.scryptSync(adminP, salt, 64);
-        const hash = dk.toString('hex');
-        await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${salt}, ${hash}, ${'admin'})`;
-      }
-    }
-    return json(res, 200, { status: 'success' });
+  }
+  return json(res, 200, { status: 'success' });
 }
 
 module.exports = async (req, res) => {
   try {
     const action = req.query.action;
-    
+
     if (req.method !== 'POST') {
-        // GET Requests
-        if (req.method === 'GET' && action === 'activityLogs') return await handleGetActivityLogs(req, res);
-        if (req.method === 'GET' && action === 'schedules') return await handleGetSchedules(req, res);
-        
-        return json(res, 405, { status: 'error', message: 'Method not allowed' });
+      // GET Requests
+      if (req.method === 'GET' && action === 'activityLogs') return await handleGetActivityLogs(req, res);
+      if (req.method === 'GET' && action === 'schedules') return await handleGetSchedules(req, res);
+
+      return json(res, 405, { status: 'error', message: 'Method not allowed' });
     }
 
     switch (action) {
@@ -223,6 +277,8 @@ module.exports = async (req, res) => {
         return await handleUpdate(req, res);
       case 'delete':
         return await handleDelete(req, res);
+      case 'listQuestions':
+        return await handleListQuestions(req, res);
       case 'resetSet':
         return await handleResetSet(req, res);
       case 'migrate':
@@ -235,7 +291,7 @@ module.exports = async (req, res) => {
         return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
     }
   } catch (e) {
-    try { console.error(`admin_handler error (${req.query.action}):`, e); } catch {}
+    try { console.error(`admin_handler error (${req.query.action}):`, e); } catch { }
     return json(res, 500, { status: 'error', message: String(e.message || e) });
   }
 };

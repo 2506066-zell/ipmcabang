@@ -19,8 +19,8 @@
         totalQuestions: 0,
         categories: [],
         results: [],
-        users: [], 
-        logs: [], 
+        users: [],
+        logs: [],
         schedules: [],
         connected: false,
         prefs: { tab: 'dashboard', search: '', status: 'all', set: 'all', category: 'all' },
@@ -32,7 +32,7 @@
     // --- HELPER ---
     function debounce(func, wait) {
         let timeout;
-        return function(...args) {
+        return function (...args) {
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), wait);
         };
@@ -57,13 +57,13 @@
             loadingOverlay: document.getElementById('loading-overlay'),
             loadingText: document.getElementById('loading-text'),
             themeToggle: document.getElementById('theme-toggle'),
-            
+
             // Layout
             sidebar: document.getElementById('sidebar'),
             sidebarNav: document.querySelector('.sidebar-nav'),
             sidebarLogout: document.getElementById('sidebar-logout'),
             pageTitle: document.getElementById('page-title'),
-            
+
             // Login
             loginCard: document.getElementById('login-card'),
             usernameInput: document.getElementById('admin-username'),
@@ -76,7 +76,7 @@
             // App
             appCard: document.getElementById('app-card'),
             logoutBtn: document.getElementById('logout-btn'),
-            
+
             // Tabs
             tabDashboard: document.getElementById('tab-dashboard'),
             tabQuestions: document.getElementById('tab-questions'),
@@ -84,10 +84,10 @@
             tabUsers: document.getElementById('tab-users'),
             tabLogs: document.getElementById('tab-logs'),
             tabSchedules: document.getElementById('tab-schedules'),
-            
+
             bottomNav: document.getElementById('bottom-nav'),
             navItems: document.querySelectorAll('.nav-item'),
-            
+
             // Dashboard
             statUsers: document.getElementById('stat-users'),
             statQuizzes: document.getElementById('stat-quizzes'),
@@ -119,7 +119,7 @@
             userSortSelect: document.getElementById('user-sort-select'),
             userStatusFilter: document.getElementById('user-status-filter'),
             addUserBtn: document.getElementById('add-user-btn'),
-            
+
             // User Modal
             userModalPanel: document.getElementById('user-modal-panel'),
             userForm: document.getElementById('user-form'),
@@ -149,7 +149,7 @@
             previewPanel: document.getElementById('preview-panel'),
 
             previewBox: document.getElementById('preview-box'),
-            
+
             // Global Reset
             resetSetSelect: document.getElementById('reset-set-select'),
             globalResetBtn: document.getElementById('global-reset-btn'),
@@ -159,7 +159,7 @@
             modalTitle: document.getElementById('modal-title'),
             modalCloseBtn: document.getElementById('modal-close-btn'),
             questionForm: document.getElementById('question-form'),
-            
+
             // Form Inputs (Question)
             qId: document.getElementById('q-id'),
             qQuestion: document.getElementById('q-question'),
@@ -171,10 +171,10 @@
             qActive: document.getElementById('q-active'),
             qQuizSet: document.getElementById('q-quizset'),
             qCategory: document.getElementById('q-category'),
-            
+
             saveBtn: document.getElementById('save-btn'),
             saveAddBtn: document.getElementById('save-add-btn'),
-            
+
             // Mobile Menu
             menuModal: document.getElementById('menu-modal'),
             navMore: document.getElementById('nav-more'),
@@ -200,7 +200,7 @@
     }
     function setStatus(msg, type = 'info') {
         console.log(`[Admin] Status: ${msg} (${type})`);
-        
+
         // Use Toast if available
         if (window.Toast) {
             const t = type === 'ok' ? 'success' : type;
@@ -211,9 +211,9 @@
         if (els.status) {
             els.status.textContent = msg;
             els.status.className = 'status ' + type;
-            setTimeout(() => { 
+            setTimeout(() => {
                 if (els.status && els.status.textContent === msg) {
-                    els.status.textContent = ''; 
+                    els.status.textContent = '';
                 }
             }, 5000);
         }
@@ -225,7 +225,7 @@
         const ct = response.headers.get('content-type');
         let data = null;
         if (ct && ct.includes('application/json')) {
-            try { data = await response.json(); } catch {}
+            try { data = await response.json(); } catch { }
         }
         if (!data) throw new Error('Respon bukan JSON');
         if (!response.ok) {
@@ -262,10 +262,10 @@
 
     // --- AUTH ---
     async function loginVercel(uname, pwd) {
-        const body = { username: String(uname||'').trim(), password: String(pwd||'') };
+        const body = { username: String(uname || '').trim(), password: String(pwd || '') };
         const data = await fetchJson(resolveApiUrl('/api/auth/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (!data || data.status !== 'success' || !data.session) throw new Error(data?.message || 'Login gagal');
-        if (String(data.role||'') !== 'admin') throw new Error('Akun bukan admin');
+        if (String(data.role || '') !== 'admin') throw new Error('Akun bukan admin');
         state.session = String(data.session);
         sessionStorage.setItem(SESSION_KEYS.session, state.session);
         return data;
@@ -278,7 +278,7 @@
         if (els.bottomNav) els.bottomNav.classList.toggle('hidden', !connected);
         if (els.fabAdd) els.fabAdd.classList.toggle('hidden', !connected);
         if (els.sidebar) els.sidebar.classList.toggle('hidden-mobile', !connected); // Desktop sidebar
-        
+
         if (connected) {
             activateTab(state.prefs.tab || 'dashboard');
         }
@@ -294,13 +294,13 @@
             updateThemeIcons(false);
         }
     }
-    
+
     function toggleTheme() {
         const isLight = document.body.classList.toggle('light-mode');
         localStorage.setItem(STORAGE_KEYS.theme, isLight ? 'light' : 'dark');
         updateThemeIcons(isLight);
     }
-    
+
     function updateThemeIcons(isLight) {
         const iconClass = isLight ? 'fas fa-sun' : 'fas fa-moon';
         if (els.themeToggle) els.themeToggle.querySelector('i').className = iconClass;
@@ -312,40 +312,40 @@
         try {
             const obj = JSON.parse(localStorage.getItem(STORAGE_KEYS.prefs) || '{}');
             if (obj && typeof obj === 'object') state.prefs = { ...state.prefs, ...obj };
-        } catch {}
+        } catch { }
     }
     function savePrefs() {
-        try { localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(state.prefs)); } catch {}
+        try { localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(state.prefs)); } catch { }
     }
 
     // --- NAVIGATION ---
-    window.activateTab = function(tabName) {
+    window.activateTab = function (tabName) {
         // Handle Sidebar & Bottom Nav active state
         const allNavs = [...(els.navItems || [])];
         allNavs.forEach(item => {
             if (item.dataset.tab === tabName) item.classList.add('active');
             else item.classList.remove('active');
         });
-        
+
         // Hide all tabs
         ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
-        
+
         // Show active tab
         const activeEl = document.getElementById(`tab-${tabName}`);
         if (activeEl) activeEl.classList.remove('hidden');
-        
+
         // Update Title
         if (els.pageTitle) els.pageTitle.textContent = tabName.charAt(0).toUpperCase() + tabName.slice(1);
-        
+
         // Toggle FAB
         if (els.fabAdd) els.fabAdd.classList.toggle('hidden', tabName !== 'questions');
-        
+
         state.prefs.tab = tabName;
         savePrefs();
-        
+
         // Load Data
         if (tabName === 'dashboard') loadDashboard();
         if (tabName === 'questions' && state.questions.length === 0) loadQuestions();
@@ -369,14 +369,14 @@
 
             // Users Stat
             if (els.statUsers) els.statUsers.textContent = usersData.users ? usersData.users.length : 0;
-            
+
             // Questions Stat
             if (els.statQuestions) els.statQuestions.textContent = questionsData.total || 0;
-            
+
             // Schedules Stat (Active)
             const activeSchedules = (schedulesData.schedules || []).filter(s => s.active).length;
             if (els.statSchedules) els.statSchedules.textContent = activeSchedules;
-            
+
             // Quizzes Finished Stat
             const finished = resultsData.results ? resultsData.results.length : 0;
             if (els.statQuizzes) els.statQuizzes.textContent = finished;
@@ -405,7 +405,7 @@
                 state.categories = data.categories || [];
                 renderCategoryFilter();
             }
-        } catch {}
+        } catch { }
     }
 
     function renderCategoryFilter() {
@@ -416,7 +416,7 @@
     }
 
     function renderQuestions() {
-        const all = state.questions; 
+        const all = state.questions;
         if (all.length === 0) {
             els.questionsList.innerHTML = `<div class="card" style="text-align:center; padding:40px;"><p>Tidak ada soal ditemukan.</p></div>`;
         } else {
@@ -426,11 +426,11 @@
                 const isActive = q.active;
                 const statusColor = isActive ? 'var(--accent-success)' : 'var(--text-muted)';
                 const statusText = isActive ? 'AKTIF' : 'NONAKTIF';
-                
+
                 // Parse options if string (legacy)
                 let opts = q.options;
                 if (typeof opts === 'string') {
-                    try { opts = JSON.parse(opts); } catch { opts = { a:'-', b:'-', c:'-', d:'-' }; }
+                    try { opts = JSON.parse(opts); } catch { opts = { a: '-', b: '-', c: '-', d: '-' }; }
                 }
 
                 return `
@@ -448,16 +448,16 @@
                     <p class="q-text">${escapeHtml(q.question)}</p>
                     
                     <div class="q-options-grid">
-                        ${['a','b','c','d'].map(k => {
-                            const isKey = (q.correct_answer || '').toLowerCase() === k;
-                            const cls = isKey ? 'q-opt correct' : 'q-opt';
-                            return `
+                        ${['a', 'b', 'c', 'd'].map(k => {
+                    const isKey = (q.correct_answer || '').toLowerCase() === k;
+                    const cls = isKey ? 'q-opt correct' : 'q-opt';
+                    return `
                             <div class="${cls}">
                                 <div class="q-opt-key">${k.toUpperCase()}</div>
                                 <div class="q-opt-val">${escapeHtml(opts[k] || '')}</div>
                             </div>
                             `;
-                        }).join('')}
+                }).join('')}
                     </div>
 
                     <div class="q-actions">
@@ -471,23 +471,10 @@
                 </div>
                 `;
             }).join('');
-            
+
             // Re-attach event listeners to new buttons
-            els.questionsList.querySelectorAll('.q-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const card = e.target.closest('.q-card');
-                    const id = Number(card.dataset.id);
-                    const action = e.target.closest('button').dataset.action;
-                    
-                    if (action === 'edit') {
-                        const qData = state.questions.find(x => x.id === id);
-                        if (qData) openQuestionModal(qData);
-                    }
-                    if (action === 'delete') {
-                        deleteQuestion(id);
-                    }
-                });
-            });
+            // REMOVED: Loop attachment to prevent double binding. 
+            // We rely on delegation in initEvents() -> els.questionsList.addEventListener
         }
         // Pagination
         const totalPages = Math.max(1, Math.ceil(state.totalQuestions / paging.qSize));
@@ -501,13 +488,17 @@
         const q = (els.searchInput.value || '').trim();
         const set = els.quizSetFilter.value;
         const cat = els.categoryFilter.value;
-        let url = `/api/questions?page=${page}&size=${paging.qSize}`;
+
+        // Use admin_handler with action=listQuestions
+        let url = `/api/admin/questions?action=listQuestions&page=${page}&size=${paging.qSize}`;
+
         if (q) url += `&search=${encodeURIComponent(q)}`;
         if (set && set !== 'all') url += `&set=${set}`;
         if (cat && cat !== 'all') url += `&category=${encodeURIComponent(cat)}`;
 
         try {
-            const data = await apiGetVercel(url);
+            // using apiAdminVercel to auto-attach token
+            const data = await apiAdminVercel('GET', url);
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat soal.');
             state.questions = Array.isArray(data.questions) ? data.questions : [];
             state.totalQuestions = data.total || 0;
@@ -579,17 +570,17 @@
     function renderUsers() {
         if (!els.usersList) return;
         let users = [...state.users];
-        
+
         // Filter Search
         const q = (els.userSearchInput?.value || '').toLowerCase();
         if (q) {
-            users = users.filter(u => 
+            users = users.filter(u =>
                 (u.username && u.username.toLowerCase().includes(q)) ||
                 (u.nama_panjang && u.nama_panjang.toLowerCase().includes(q)) ||
                 (u.email && u.email.toLowerCase().includes(q))
             );
         }
-        
+
         // Filter Status
         const status = els.userStatusFilter?.value || 'all';
         if (status === 'active') users = users.filter(u => u.active);
@@ -610,10 +601,10 @@
         }
 
         els.usersList.innerHTML = users.map(u => {
-            const activeBadge = u.active ? 
-                `<span class="item-badge badge-active">AKTIF</span>` : 
+            const activeBadge = u.active ?
+                `<span class="item-badge badge-active">AKTIF</span>` :
                 `<span class="item-badge badge-inactive">NONAKTIF</span>`;
-            
+
             return `
             <div class="list-item">
                 <div class="list-item-header">
@@ -676,7 +667,7 @@
         hideAllModalPanels();
         els.userModalPanel.classList.remove('hidden');
         showModalContainer();
-        
+
         if (id) {
             const u = state.users.find(x => x.id === id);
             els.usrId.value = u.id;
@@ -692,7 +683,7 @@
             els.usrActive.value = 'true';
         }
     };
-    
+
     window.closeUserModal = () => {
         els.userModalPanel.classList.add('hidden');
     };
@@ -708,7 +699,7 @@
             active: els.usrActive.value === 'true',
             password: els.usrPassword.value // Optional
         };
-        
+
         showLoader('Menyimpan User...');
         try {
             const action = id ? 'updateUser' : 'createUser';
@@ -743,7 +734,7 @@
             try {
                 if (typeof l.details === 'object') detailsStr = JSON.stringify(l.details, null, 2);
                 else detailsStr = String(l.details);
-            } catch {}
+            } catch { }
             return `
             <div class="list-item">
                 <div class="list-item-header">
@@ -769,7 +760,7 @@
 
     function renderSchedules() {
         let schedules = [...state.schedules];
-        
+
         // Date Filter
         const dateFilter = els.scheduleDateFilter?.value;
         if (dateFilter) {
@@ -784,14 +775,14 @@
             els.schedulesList.innerHTML = `<div class="card" style="grid-column: 1 / -1; text-align:center; padding:40px;"><p>Belum ada jadwal kuis.</p></div>`;
             return;
         }
-        
+
         els.schedulesList.innerHTML = schedules.map(s => {
             const start = s.start_time ? new Date(s.start_time).toLocaleString() : '';
             const end = s.end_time ? new Date(s.end_time).toLocaleString() : '';
             const now = Date.now();
             const startTime = s.start_time ? new Date(s.start_time).getTime() : 0;
             const endTime = s.end_time ? new Date(s.end_time).getTime() : 0;
-            
+
             // Calculate initial countdown
             let cdText = "00 : 00 : 00 : 00";
             if (startTime > now) {
@@ -801,7 +792,7 @@
                 const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const sec = Math.floor((diff % (1000 * 60)) / 1000);
-                cdText = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(sec).padStart(2,'0')}`;
+                cdText = `${String(d).padStart(2, '0')} : ${String(h).padStart(2, '0')} : ${String(m).padStart(2, '0')} : ${String(sec).padStart(2, '0')}`;
             } else if (endTime > now) {
                 // Active
                 cdText = "SEDANG BERLANGSUNG";
@@ -839,19 +830,19 @@
                 const target = Number(card.dataset.target);
                 const preview = card.querySelector('.sc-countdown-preview');
                 if (!target || !preview) return;
-                
+
                 const now = Date.now();
                 if (target <= now) {
                     if (preview.textContent.includes(':')) preview.textContent = "SEDANG BERLANGSUNG";
                     return;
                 }
-                
+
                 const diff = target - now;
                 const d = Math.floor(diff / (1000 * 60 * 60 * 24));
                 const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const sec = Math.floor((diff % (1000 * 60)) / 1000);
-                preview.textContent = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(sec).padStart(2,'0')}`;
+                preview.textContent = `${String(d).padStart(2, '0')} : ${String(h).padStart(2, '0')} : ${String(m).padStart(2, '0')} : ${String(sec).padStart(2, '0')}`;
             });
         }, 1000);
     }
@@ -870,7 +861,7 @@
         };
         els.schStart.value = toLocalISO(s.start_time);
         els.schEnd.value = toLocalISO(s.end_time);
-        
+
         // Show Modal
         hideAllModalPanels();
         if (els.scheduleModalPanel) els.scheduleModalPanel.classList.remove('hidden');
@@ -901,7 +892,7 @@
             els.schDesc.value = '';
             els.schStart.value = '';
             els.schEnd.value = '';
-            
+
             const modal = document.getElementById('question-modal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -919,7 +910,7 @@
             const title = els.schTitle.value || 'Judul Contoh';
             const desc = els.schDesc.value || 'Deskripsi singkat tentang kuis yang akan datang...';
             const start = els.schStart.value ? new Date(els.schStart.value).getTime() : Date.now() + 3600000;
-            
+
             // Mock render next quiz card
             const html = `
             <div class="next-quiz-card">
@@ -951,7 +942,7 @@
                     </div>
                 </div>
             </div>`;
-            
+
             if (els.previewBox) els.previewBox.innerHTML = html;
             if (els.previewPanel) els.previewPanel.classList.remove('hidden');
         });
@@ -970,7 +961,7 @@
             els.modal.setAttribute('aria-hidden', 'false');
         }
     }
-    
+
     function hideAllModalPanels() {
         if (els.userModalPanel) els.userModalPanel.classList.add('hidden');
         if (els.scheduleModalPanel) els.scheduleModalPanel.classList.add('hidden');
@@ -983,7 +974,7 @@
         // Also hide tabs if not question
         const tabs = document.querySelector('.modal-tabs');
         if (tabs) tabs.classList.add('hidden');
-        
+
         const preview = document.getElementById('preview-panel');
         if (preview) preview.classList.add('hidden');
     }
@@ -992,10 +983,10 @@
     window.openQuestionModal = (q = null) => {
         hideAllModalPanels();
         if (els.questionForm) els.questionForm.classList.remove('hidden');
-        
+
         // Hide tabs for cleaner ergonomic form
         const tabs = document.querySelector('.modal-tabs');
-        if (tabs) tabs.classList.add('hidden'); 
+        if (tabs) tabs.classList.add('hidden');
 
         if (q) {
             els.modalTitle.textContent = 'Edit Soal';
@@ -1005,11 +996,11 @@
             els.qB.value = q.options.b;
             els.qC.value = q.options.c;
             els.qD.value = q.options.d;
-            
+
             // Set radio for correct answer
             const radios = document.querySelectorAll('input[name="correct_answer"]');
             radios.forEach(r => { r.checked = (r.value === q.correct_answer); });
-            
+
             els.qActive.value = q.active ? 'true' : 'false';
             els.qCategory.value = q.category || 'Umum';
             els.qQuizSet.value = q.quiz_set || 1;
@@ -1019,7 +1010,7 @@
             els.qId.value = '';
             els.qActive.value = 'true';
             document.getElementById('radio-a').checked = true; // Default A
-            
+
             // Restore draft logic...
             try {
                 const draft = localStorage.getItem(STORAGE_KEYS.draft);
@@ -1033,7 +1024,7 @@
                         els.qD.value = d.options?.d || '';
                     } else localStorage.removeItem(STORAGE_KEYS.draft);
                 }
-            } catch {}
+            } catch { }
         }
         showModalContainer();
     };
@@ -1048,7 +1039,7 @@
     async function handleSave(addMore = false) {
         if (!els.questionForm.checkValidity()) { els.questionForm.reportValidity(); return; }
         const id = els.qId.value;
-        
+
         // Get correct answer from radio
         const selectedRadio = document.querySelector('input[name="correct_answer"]:checked');
         const correctVal = selectedRadio ? selectedRadio.value : 'a';
@@ -1062,11 +1053,11 @@
             category: els.qCategory.value,
             quiz_set: Number(els.qQuizSet.value)
         };
-        
+
         const btn = addMore ? els.saveAddBtn : els.saveBtn;
         if (btn) btn.classList.add('loading');
         showLoader('Menyimpan...');
-        
+
         try {
             const action = id ? 'update' : 'create';
             const data = await apiAdminVercel('POST', `/api/admin/questions?action=${action}`, payload);
@@ -1088,9 +1079,9 @@
                 closeModal();
                 setStatus('Soal berhasil disimpan.', 'ok');
             }
-        } catch (e) { alert('Gagal menyimpan: ' + e.message); } 
-        finally { 
-            hideLoader(); 
+        } catch (e) { alert('Gagal menyimpan: ' + e.message); }
+        finally {
+            hideLoader();
             if (btn) btn.classList.remove('loading');
         }
     }
@@ -1109,17 +1100,17 @@
     async function handleToggleStatus(id, currentStatus) {
         // Toggle the boolean
         const newStatus = !currentStatus;
-        
+
         // Optimistic UI Update (optional, but good for perceived speed)
         // Note: For now we'll wait for server response to be safe, or show loader.
         showLoader('Mengupdate Status...');
-        
+
         try {
             // We use the 'update' action but only send the fields we want to change
             // However, the backend might expect full object or we need a specific 'toggle' action.
             // Let's check api/admin_handler.js. Usually 'update' merges or replaces.
             // If 'update' replaces, we need full data. If we don't have full data handy (we do in state), we can use it.
-            
+
             const q = state.questions.find(x => x.id === id);
             if (!q) throw new Error('Soal tidak ditemukan di state lokal.');
 
@@ -1134,18 +1125,18 @@
             };
 
             const data = await apiAdminVercel('POST', `/api/admin/questions?action=update`, payload);
-            
+
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal update status.');
-            
+
             // Update local state and re-render to reflect change
             q.active = newStatus;
             renderQuestions(); // Re-render the grid
             setStatus(`Status soal diubah ke ${newStatus ? 'AKTIF' : 'NONAKTIF'}`, 'ok');
-            
-        } catch (e) { 
-            setStatus('Error: ' + e.message, 'error'); 
-        } finally { 
-            hideLoader(); 
+
+        } catch (e) {
+            setStatus('Error: ' + e.message, 'error');
+        } finally {
+            hideLoader();
         }
     }
 
@@ -1168,7 +1159,7 @@
                 setConnected(true);
             } catch (e) { setStatus(e.message, 'error'); } finally { hideLoader(); }
         });
-        
+
         // Logout
         const logout = () => {
             if (!confirm('Yakin ingin keluar?')) return;
@@ -1190,7 +1181,7 @@
             if (btn && btn.dataset.tab) handleNav(btn.dataset.tab);
             if (btn && btn.id === 'nav-more') window.openMenuModal();
         });
-        
+
         els.sidebarNav?.addEventListener('click', (e) => {
             const btn = e.target.closest('.nav-item');
             if (btn && btn.dataset.tab) handleNav(btn.dataset.tab);
@@ -1215,7 +1206,7 @@
             if (!item) return;
             const id = Number(item.dataset.id);
             const q = state.questions.find(x => x.id === id);
-            
+
             if (btn.dataset.action === 'edit' && q) window.openQuestionModal(q);
             else if (btn.dataset.action === 'delete') handleDelete(id);
             else if (btn.dataset.action === 'toggle-status') handleToggleStatus(id, q.active);
@@ -1230,7 +1221,7 @@
         els.searchInput?.addEventListener('input', debounce(() => loadQuestions(1), 500));
         els.quizSetFilter?.addEventListener('change', () => loadQuestions(1));
         els.categoryFilter?.addEventListener('change', () => loadQuestions(1));
-        
+
         // Pagination
         els.qPrev?.addEventListener('click', () => { if (paging.qPage > 1) loadQuestions(paging.qPage - 1); });
         els.qNext?.addEventListener('click', () => loadQuestions(paging.qPage + 1));
@@ -1254,7 +1245,7 @@
                 const description = els.schDesc.value;
                 const start = els.schStart.value;
                 const end = els.schEnd.value;
-                
+
                 showLoader('Menyimpan...');
                 try {
                     const data = await apiAdminVercel('POST', '/api/admin/questions?action=updateSchedule', {
@@ -1264,7 +1255,7 @@
                         start_time: start ? new Date(start).toISOString() : null,
                         end_time: end ? new Date(end).toISOString() : null
                     });
-                    
+
                     if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');
                     setStatus('Jadwal tersimpan', 'success');
                     window.closeScheduleModal();
@@ -1276,7 +1267,7 @@
                 }
             });
         }
-        
+
         els.scheduleDateFilter?.addEventListener('change', renderSchedules);
 
         els.globalResetBtn?.addEventListener('click', async () => {
@@ -1300,7 +1291,7 @@
         loadPrefs();
         initTheme();
         initEvents();
-        
+
         const sess = sessionStorage.getItem(SESSION_KEYS.session);
         if (sess) {
             state.session = sess;

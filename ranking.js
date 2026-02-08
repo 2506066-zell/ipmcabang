@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
     const CACHE_KEY = 'ipm_ranking_cache';
-    
+
     // Elements
     const userRankCard = document.getElementById('user-rank-card');
     const top3Container = document.getElementById('top-3-showcase');
@@ -48,30 +48,35 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_URL}/results`);
             if (!response.ok) throw new Error(`Gagal mengambil data (Status: ${response.status})`);
-            
+
             const data = await response.json();
             if (data.status !== 'success') throw new Error(data.message || 'Kesalahan server.');
-            
+
             const newData = Array.isArray(data.results) ? data.results.slice() : [];
             newData.sort((a, b) => (b.score || 0) - (a.score || 0)); // Sort DESC by score
 
-            // Cache data
-            try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: newData }));
-            } catch {}
+            // OPTIMIZATION: Only update if data changed
+            const isChanged = JSON.stringify(newData) !== JSON.stringify(allData);
 
-            // Process Rank Changes
-            processRankChanges(newData);
+            if (isChanged) {
+                // Cache data
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: newData }));
+                } catch { }
 
-            allData = newData;
+                // Process Rank Changes
+                processRankChanges(newData);
 
-            const empty = !Array.isArray(allData) || allData.length === 0;
-            document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
-            document.getElementById('main-content').style.display = empty ? 'none' : 'block';
-            
-            if (!empty) {
-                // Apply current filter
-                handleFilterAndSearch();
+                allData = newData;
+
+                const empty = !Array.isArray(allData) || allData.length === 0;
+                document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
+                document.getElementById('main-content').style.display = empty ? 'none' : 'block';
+
+                if (!empty) {
+                    // Apply current filter
+                    handleFilterAndSearch();
+                }
             }
 
             const last = document.getElementById('last-updated');
@@ -112,10 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 showRankToast('Peringkat Naik! 🚀', `Selamat! Anda naik dari #${userOldRank} ke #${userNewRank}`, 'gold');
             }
         }
-        
+
         // Check if user entered Top 3
         if ((!userOldRank || userOldRank > 3) && userNewRank <= 3) {
-             showRankToast('Masuk 3 Besar! 🏆', `Luar biasa! Anda sekarang berada di posisi #${userNewRank}`, 'gold');
+            showRankToast('Masuk 3 Besar! 🏆', `Luar biasa! Anda sekarang berada di posisi #${userNewRank}`, 'gold');
         }
 
         previousRanks = newRankMap;
@@ -128,12 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderUserRank(data) {
-        const userIndex = data.findIndex(p => String(p.username||'').toLowerCase() === currentUser.toLowerCase());
-        
+        const userIndex = data.findIndex(p => String(p.username || '').toLowerCase() === currentUser.toLowerCase());
+
         if (userIndex !== -1) {
             const user = data[userIndex];
             const rank = userIndex + 1;
-            
+
             userRankCard.innerHTML = `
                 <div class="user-rank-content">
                     <div class="user-rank-info">
@@ -154,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTop3(top3Data) {
         top3Container.innerHTML = '';
-        
+
         // Order for podium: 2, 1, 3
         const reordered = [null, null, null];
         if (top3Data[0]) reordered[1] = top3Data[0]; // Rank 1 -> Center
@@ -163,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         reordered.forEach((p, i) => {
             if (!p) return;
-            
+
             // Determine actual rank based on position in reordered array
             let rank;
             if (i === 1) rank = 1;
@@ -172,20 +177,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const podiumItem = document.createElement('div');
             podiumItem.className = `podium-item rank-${rank}`;
-            
+
             podiumItem.innerHTML = `
                 <div class="avatar-container">
                     ${rank === 1 ? '<i class="fas fa-crown crown-icon"></i>' : ''}
-                    ${(p.username||'').charAt(0).toUpperCase()}
+                    ${(p.username || '').charAt(0).toUpperCase()}
                 </div>
                 <div class="podium-base">
                     <div class="podium-name">${p.username}</div>
                     <div class="podium-score">${p.score}</div>
                 </div>
             `;
-            
+
             top3Container.appendChild(podiumItem);
-            
+
             // Animate entry
             gsap.from(podiumItem, {
                 y: 50,
@@ -199,16 +204,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderRest(restData) {
         rankingList.innerHTML = '';
-        
+
         restData.forEach((p, index) => {
             const rank = index + 4; // Start from 4
-            
+
             const item = document.createElement('div');
             item.className = 'rank-item';
             if (p.username.toLowerCase() === currentUser.toLowerCase()) {
                 item.classList.add('is-me');
             }
-            
+
             // Animation delay based on index
             item.style.animationDelay = `${index * 0.05}s`;
 
@@ -223,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="rank-time">${p.time_spent || 0}s</span>
                 </div>
             `;
-            
+
             rankingList.appendChild(item);
         });
     }
@@ -245,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const empty = filteredData.length === 0;
-        
+
         if (empty) {
             rankingList.innerHTML = `<div style="text-align:center; padding: 20px; color: #888;">Tidak ada data yang cocok.</div>`;
             top3Container.innerHTML = '';
@@ -262,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         titleEl.textContent = title;
         msgEl.textContent = msg;
-        
+
         if (type === 'gold') {
             iconEl.innerHTML = '<i class="fas fa-trophy" style="color: #FFD700;"></i>';
         } else {
@@ -270,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         toast.classList.add('show');
-        
+
         setTimeout(() => {
             toast.classList.remove('show');
         }, 4000);
@@ -278,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     searchInput.addEventListener('input', handleFilterAndSearch);
-    
+
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
             filterButtons.forEach(btn => btn.classList.remove('active'));
@@ -293,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Load (Cache then Network)
     try {
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-        if (cached && Array.isArray(cached.data) && (Date.now() - cached.t < 60000 * 5)) { // 5 min validity for display
+        if (cached && Array.isArray(cached.data) && (Date.now() - cached.t < 60000 * 5)) {
             allData = cached.data;
             if (allData.length > 0) {
                 renderPage(allData);
@@ -302,25 +307,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 showLoading(false);
             }
         }
-    } catch {}
+    } catch { }
 
-    // Fetch fresh data
-    fetchRankingData();
-    
-    // Poll for updates every 30s
-    setInterval(() => {
-        // Silent update
-        fetch(`${API_URL}/results`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success' && Array.isArray(data.results)) {
-                    const newData = data.results.slice();
-                    newData.sort((a, b) => (b.score || 0) - (a.score || 0));
-                    processRankChanges(newData);
-                    allData = newData;
-                    handleFilterAndSearch(); // Re-render with current filter
-                }
-            })
-            .catch(console.error);
-    }, 30000);
+    // Smart Polling Implementation
+    let pollTimeout;
+    async function startPolling() {
+        await fetchRankingData();
+        // Schedule next poll only after current finishes
+        pollTimeout = setTimeout(startPolling, 30000);
+    }
+
+    startPolling();
+
+    // Cleanup on page unload (optional but good practice)
+    window.addEventListener('beforeunload', () => clearTimeout(pollTimeout));
 });

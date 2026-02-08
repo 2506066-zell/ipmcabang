@@ -1,0 +1,9 @@
+@echo off
+echo Adding changes...
+git add .
+echo Committing changes...
+git commit -m "Fix: Quiz validation, ranking optimization, and shuffling implementation"
+echo Pushing to main...
+git push origin main
+echo Done!
+pause
