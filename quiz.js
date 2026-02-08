@@ -169,18 +169,16 @@ function renderNextQuizSection(schedules) {
 
     section.style.display = 'block';
 
-    const statusEl = document.getElementById('nq-status-text');
     const titleEl = document.getElementById('nq-title');
+    const subtextEl = document.getElementById('nq-subtext');
 
-    if (titleEl) titleEl.textContent = target.title || 'Kuis';
+    if (titleEl) titleEl.textContent = target.title || 'Kuis Ramadan';
 
-    if (statusEl) {
+    if (subtextEl) {
         if (isActive) {
-            statusEl.textContent = '🟢 Sedang berlangsung';
-            statusEl.className = 'nq-status nq-active';
+            subtextEl.textContent = 'Event sedang berlangsung, selamat berjuang!';
         } else {
-            statusEl.textContent = '🔴 Yang akan datang';
-            statusEl.className = 'nq-status nq-upcoming';
+            subtextEl.textContent = 'Akan segera dimulai, persiapkan dirimu';
         }
     }
 

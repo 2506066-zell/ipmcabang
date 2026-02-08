@@ -64,38 +64,50 @@ function initListPage() {
 
     function renderArticles(articles, append) {
         if (!articles.length && !append) {
-            grid.innerHTML = '<p style="text-align:center; grid-column:1/-1;">Tidak ada artikel ditemukan.</p>';
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-newspaper"></i></div>
+                    <h3>Belum ada artikel</h3>
+                    <p>Coba cari dengan kata kunci lain atau pilih kategori berbeda.</p>
+                </div>
+            `;
             return;
         }
 
         const html = articles.map(art => {
-            const imgStyle = art.image
-                ? `background-image: url('${art.image}')`
-                : 'background-color: #eee; display:flex; align-items:center; justify-content:center; color:#ccc;';
-            const imgContent = art.image ? '' : '<i class="fas fa-image fa-2x"></i>';
+            const thumbUrl = art.image || 'https://via.placeholder.com/400x250?text=No+Thumbnail';
 
             // Create excerpt
             const div = document.createElement('div');
-            div.innerHTML = (art.content || '').substring(0, 100) + '...';
+            div.innerHTML = (art.content || '').substring(0, 120) + '...';
             const excerpt = div.textContent || div.innerText || '';
+            const publishDate = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
             return `
-            <a href="article.html?slug=${art.slug || ''}&id=${art.id}" class="article-card" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1); transition:transform 0.2s;">
-                <div style="height:180px; ${imgStyle}; background-size:cover; background-position:center;">${imgContent}</div>
-                <div style="padding:16px; flex:1; display:flex; flex-direction:column;">
-                    <div style="font-size:0.8rem; color:var(--accent-primary); font-weight:bold; margin-bottom:6px; text-transform:uppercase;">${art.category || 'Umum'}</div>
-                    <h3 style="margin:0 0 8px 0; font-size:1.1rem; line-height:1.4;">${art.title}</h3>
-                    <p style="font-size:0.9rem; color:#666; margin-bottom:12px; flex:1;">${excerpt}</p>
-                    <div style="font-size:0.8rem; color:#999; display:flex; justify-content:space-between;">
-                        <span><i class="fas fa-user"></i> ${art.author}</span>
-                        <span>${new Date(art.publish_date).toLocaleDateString()}</span>
+            <a href="article.html?slug=${art.slug || ''}&id=${art.id}" class="article-card">
+                <div class="card-thumbnail" style="background-image: url('${thumbUrl}')">
+                    <span class="card-category-badge">${art.category || 'Umum'}</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">${art.title}</h3>
+                    <p class="card-snippet">${excerpt}</p>
+                    <div class="card-meta">
+                        <div class="author-info">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="author-name">${art.author}</span>
+                        </div>
+                        <span class="publish-date">${publishDate}</span>
                     </div>
                 </div>
             </a>
             `;
         }).join('');
 
-        grid.insertAdjacentHTML('beforeend', html);
+        if (append) {
+            grid.insertAdjacentHTML('beforeend', html);
+        } else {
+            grid.innerHTML = html;
+        }
     }
 
     // Events
@@ -126,7 +138,122 @@ function initListPage() {
         fetchArticles(true);
     });
 
+    initSidebar();
     fetchArticles();
+}
+
+// --- Sidebar Logic ---
+async function initSidebar() {
+    const latestList = document.getElementById('latest-articles-list');
+    const categoriesList = document.getElementById('categories-list');
+
+    // 1. Fetch Latest Articles
+    try {
+        const res = await fetch(`${API_BASE}?size=5&sort=newest`);
+        const data = await res.json();
+        if (data.status === 'success' && latestList) {
+            latestList.innerHTML = data.articles.map(art => `
+                <a href="article.html?slug=${art.slug || ''}&id=${art.id}" class="sidebar-item">
+                    <div class="sidebar-item-thumb" style="background-image: url('${art.image || 'https://via.placeholder.com/100'}')"></div>
+                    <div class="sidebar-item-info">
+                        <h4 class="sidebar-item-title">${art.title}</h4>
+                        <span class="sidebar-item-date">${new Date(art.publish_date).toLocaleDateString('id-ID')}</span>
+                    </div>
+                </a>
+            `).join('');
+        }
+    } catch (e) {
+        console.error('Failed to load latest articles sidebar', e);
+    }
+
+    // 2. Mocking Categories (Since API doesn't have a specific endpoint, we extract from main select or common list)
+    if (categoriesList) {
+        const categories = ['Umum', 'Kader', 'Opini', 'Berita'];
+        categoriesList.innerHTML = categories.map(cat => `
+            <button class="tag-btn" onclick="document.getElementById('category-select').value='${cat}'; document.getElementById('category-select').dispatchEvent(new Event('change'))">${cat}</button>
+        `).join('');
+    }
+
+    // 3. Independent Sidebar Countdown
+    initSidebarCountdown();
+}
+
+async function initSidebarCountdown() {
+    const container = document.getElementById('sidebar-countdown-container');
+    const titleEl = document.getElementById('side-nq-title');
+    const timerEl = document.getElementById('side-nq-timer');
+    if (!container || !timerEl) return;
+
+    try {
+        // We reuse the same endpoint from quiz system
+        const res = await fetch('/api/questions?mode=schedules');
+        const data = await res.json();
+        const schedules = data.schedules || [];
+        const now = Date.now();
+
+        let target = schedules.find(s => {
+            const start = new Date(s.start_time).getTime();
+            const end = s.end_time ? new Date(s.end_time).getTime() : Infinity;
+            return now >= start && now < end;
+        });
+
+        let isActive = true;
+        if (!target) {
+            target = schedules
+                .filter(s => new Date(s.start_time).getTime() > now)
+                .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
+            isActive = false;
+        }
+
+        if (target) {
+            container.style.display = 'block';
+            if (titleEl) titleEl.textContent = target.title;
+
+            // Setup segments
+            timerEl.innerHTML = `
+                <div class="nq-min-segment"><span id="side-d" class="nq-min-digit">00</span><small class="nq-min-label">Hr</small></div>
+                <div class="nq-min-separator">:</div>
+                <div class="nq-min-segment"><span id="side-h" class="nq-min-digit">00</span><small class="nq-min-label">Jam</small></div>
+                <div class="nq-min-separator">:</div>
+                <div class="nq-min-segment"><span id="side-m" class="nq-min-digit">00</span><small class="nq-min-label">Mnt</small></div>
+                <div class="nq-min-separator">:</div>
+                <div class="nq-min-segment"><span id="side-s" class="nq-min-digit">00</span><small class="nq-min-label">Dtk</small></div>
+            `;
+
+            const updateTimer = () => {
+                const now = Date.now();
+                let diff = 0;
+                if (isActive) {
+                    const end = target.end_time ? new Date(target.end_time).getTime() : Infinity;
+                    diff = Math.max(0, end - now);
+                } else {
+                    const start = new Date(target.start_time).getTime();
+                    diff = Math.max(0, start - now);
+                }
+
+                const s = Math.floor(diff / 1000);
+                const d = Math.floor(s / 86400);
+                const h = Math.floor((s % 86400) / 3600);
+                const m = Math.floor((s % 3600) / 60);
+                const sec = s % 60;
+
+                const dEl = document.getElementById('side-d');
+                const hEl = document.getElementById('side-h');
+                const mEl = document.getElementById('side-m');
+                const sEl = document.getElementById('side-s');
+
+                if (dEl) dEl.textContent = String(d).padStart(2, '0');
+                if (hEl) hEl.textContent = String(h).padStart(2, '0');
+                if (mEl) mEl.textContent = String(m).padStart(2, '0');
+                if (sEl) sEl.textContent = String(sec).padStart(2, '0');
+            };
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+    } catch (e) {
+        console.warn('Sidebar countdown failed to init', e);
+    }
 }
 
 // --- Detail Page Logic ---

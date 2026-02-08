@@ -485,60 +485,75 @@
     }
 }
 
-/* --- FUTURISTIC NEWS COUNTDOWN --- */
-.next-quiz-compact {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 16px;
-    position: relative;
-    overflow: hidden;
+/* --- MINIMALIST COUNTDOWN --- */
+.next-quiz-minimal {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+    animation: fadeInMinimal 0.8s ease-out;
 }
 
-.next-quiz-compact::after {
-    content: 'LIVE FEED';
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    font-size: 0.6rem;
-    font-weight: 800;
-    color: #ef4444;
-    letter-spacing: 1px;
-    animation: blink 1s step-end infinite;
-}
+@keyframes fadeInMinimal {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
-@keyframes blink {
-    50% {
-        opacity: 0.3;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
-.nq-timer-compact {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+.nq-min-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary, #64748b);
+    margin-bottom: 8px;
 }
 
-.nq-timer-segment {
+.nq-min-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 4px;
+}
+
+.nq-min-subtext {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #64748b);
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.nq-min-timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.nq-min-segment {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
+    min-width: 60px;
 }
 
-.nq-timer-segment:not(:last-child)::after {
-    content: ':';
-    position: absolute;
-    right: -6px;
-    top: 10px;
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 1.2rem;
-    font-weight: 800;
+.nq-min-digit {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--accent-primary, #3b82f6);
+    line-height: 1;
+    transition: all 0.3s ease;
 }
 
 .nq-timer-segment span {

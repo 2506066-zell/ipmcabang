@@ -616,55 +616,111 @@
         </div>
     </div>
 
-    <!-- Article Modal -->
+    <!-- Article Modal (Blogger-like Editor) -->
     <div class="modal hidden" id="article-modal">
-        <div class="modal-content" style="max-width:800px;">
-            <div class="modal-header">
-                <h3 id="article-modal-title">Tambah Artikel</h3>
-                <button class="btn-ghost btn-icon"
-                    onclick="document.getElementById('article-modal').classList.remove('active'); document.getElementById('article-modal').classList.add('hidden'); document.body.style.overflow=''">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="article-form">
-                <input type="hidden" id="art-id">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Judul Artikel</label>
-                        <input type="text" id="art-title" required placeholder="Judul menarik...">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group" style="flex:1">
-                            <label>Kategori</label>
-                            <select id="art-category">
-                                <option value="Umum">Umum</option>
-                                <option value="Kader">Kader</option>
-                                <option value="Opini">Opini</option>
-                                <option value="Berita">Berita</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex:1">
-                            <label>Tanggal Publish</label>
-                            <input type="datetime-local" id="art-date">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Gambar Utama (Max 150KB)</label>
-                        <input type="file" id="art-image-file" accept="image/png, image/jpeg">
-                        <input type="hidden" id="art-image-base64">
-                        <div id="art-image-preview" style="margin-top:8px; max-width:200px; display:none;">
-                            <img src="" style="width:100%; border-radius:8px;">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Konten</label>
-                        <textarea id="art-content" class="textarea-large" style="height:300px" required></textarea>
-                    </div>
+        <div class="modal-content writing-mode-content">
+            <div class="modal-header editor-header">
+                <div class="editor-header-left">
+                    <span class="editor-status" id="editor-status">Menghubungkan...</span>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary"
-                        onclick="document.getElementById('article-modal').classList.remove('active'); document.getElementById('article-modal').classList.add('hidden'); document.body.style.overflow=''">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="art-save-btn">Simpan</button>
+                <div class="editor-header-right">
+                    <button class="btn btn-ghost" id="art-cancel-btn">Batal</button>
+                    <button type="submit" form="article-form" class="btn btn-primary" id="art-save-btn">
+                        <i class="fas fa-paper-plane"></i> Publikasikan
+                    </button>
+                    <button class="btn-ghost btn-icon" id="art-close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <form id="article-form" class="editor-form">
+                <input type="hidden" id="art-id">
+
+                <div class="editor-scroll-area">
+                    <div class="editor-container">
+                        <!-- Main Title Section -->
+                        <div class="editor-title-container">
+                            <input type="text" id="art-title" class="editor-title-input" required
+                                placeholder="Judul Artikel..." autofocus>
+                        </div>
+
+                        <!-- Meta Info Row -->
+                        <div class="editor-meta-row">
+                            <div class="editor-meta-item">
+                                <i class="fas fa-user-edit"></i>
+                                <input type="text" id="art-author" placeholder="Nama Penulis" required>
+                            </div>
+                            <div class="editor-meta-item">
+                                <i class="fas fa-tag"></i>
+                                <select id="art-category">
+                                    <option value="Umum">Umum</option>
+                                    <option value="Kader">Kader</option>
+                                    <option value="Opini">Opini</option>
+                                    <option value="Berita">Berita</option>
+                                </select>
+                            </div>
+                            <div class="editor-meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <input type="datetime-local" id="art-date">
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Section -->
+                        <div class="editor-image-section">
+                            <div class="image-upload-wrapper">
+                                <label for="art-image-file" class="image-upload-label">
+                                    <i class="fas fa-image"></i>
+                                    <span>Tambahkan Gambar Sampul</span>
+                                </label>
+                                <input type="file" id="art-image-file" accept="image/png, image/jpeg"
+                                    style="display:none">
+                                <input type="hidden" id="art-image-base64">
+                            </div>
+                            <div id="art-image-preview" class="editor-image-preview" style="display:none">
+                                <img src="" alt="Preview">
+                                <button type="button" class="remove-image-btn" id="remove-art-image">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Unified Content Editor -->
+                        <div class="editor-writing-area">
+                            <!-- Minimal Toolbar -->
+                            <div class="editor-toolbar" id="editor-toolbar">
+                                <button type="button" class="tool-btn" data-command="bold" title="Bold">
+                                    <i class="fas fa-bold"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="italic" title="Italic">
+                                    <i class="fas fa-italic"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="underline" title="Underline">
+                                    <i class="fas fa-underline"></i>
+                                </button>
+                                <div class="tool-divider"></div>
+                                <button type="button" class="tool-btn" data-command="insertUnorderedList"
+                                    title="Bulleted List">
+                                    <i class="fas fa-list-ul"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="formatBlock" data-value="h2"
+                                    title="Heading 2">
+                                    <i class="fas fa-heading"></i>
+                                </button>
+                                <div class="tool-divider"></div>
+                                <div class="tool-color-wrapper">
+                                    <input type="color" id="editor-color-picker" title="Warna Teks" value="#000000">
+                                </div>
+                            </div>
+
+                            <!-- Scrollable Contentable Area -->
+                            <div id="art-editor" class="editor-content-editable" contenteditable="true"
+                                placeholder="Mulai menulis cerita Anda di sini..."></div>
+
+                            <!-- Hidden textarea for backward compatibility/sync -->
+                            <textarea id="art-content" style="display:none"></textarea>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

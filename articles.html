@@ -9,6 +9,8 @@
     <meta name="description" content="Kumpulan artikel, berita, dan opini terbaru dari IPM Panawuan.">
     <title>Artikel Organisasi - PC IPM Panawuan</title>
     <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/quiz-enhancements.css">
+    <link rel="stylesheet" href="styles/article-enhancements.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -63,40 +65,78 @@
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <main class="main-content" style="padding-top:70px; padding-bottom:100px;">
-        <div class="container">
-            <h1 style="margin-bottom:20px; text-align:center;">Artikel & Berita</h1>
+        <div class="container article-layout-container">
+            <div class="articles-main-col">
+                <h1 class="page-title">Artikel & Berita</h1>
 
-            <!-- Filter & Search -->
-            <div class="articles-toolbar" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
-                <input type="text" id="search-input" placeholder="Cari artikel..."
-                    style="flex:1; min-width:200px; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                <!-- Filter & Search -->
+                <div class="articles-toolbar">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Cari artikel...">
+                    </div>
 
-                <select id="sort-select" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
-                    <option value="newest">Terbaru</option>
-                    <option value="popular">Terpopuler</option>
-                    <option value="oldest">Terlama</option>
-                </select>
-                <select id="category-select" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
-                    <option value="all">Semua Kategori</option>
-                    <option value="Umum">Umum</option>
-                    <option value="Kader">Kader</option>
-                    <option value="Opini">Opini</option>
-                    <option value="Berita">Berita</option>
-                </select>
+                    <div class="filter-wrapper">
+                        <select id="sort-select">
+                            <option value="newest">Terbaru</option>
+                            <option value="popular">Terpopuler</option>
+                            <option value="oldest">Terlama</option>
+                        </select>
+                        <select id="category-select">
+                            <option value="all">Semua Kategori</option>
+                            <option value="Umum">Umum</option>
+                            <option value="Kader">Kader</option>
+                            <option value="Opini">Opini</option>
+                            <option value="Berita">Berita</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="loading-indicator" class="loader-anim">
+                    <div class="scanner-dot"></div>
+                    <span>Memuat Artikel...</span>
+                </div>
+
+                <div id="articles-grid" class="articles-grid">
+                    <!-- JS will inject cards here -->
+                </div>
+
+                <div class="load-more-container">
+                    <button id="load-more-btn" class="btn btn-secondary" style="display:none;">Muat Lebih
+                        Banyak</button>
+                </div>
             </div>
 
-            <div id="loading-indicator" style="text-align:center; display:none; padding:20px;">
-                <i class="fas fa-spinner fa-spin"></i> Memuat...
-            </div>
+            <!-- Sidebar -->
+            <aside class="articles-sidebar">
+                <!-- Countdown Section -->
+                <section class="sidebar-section" id="sidebar-countdown-container" style="display:none;">
+                    <div class="sidebar-card countdown-sidebar-card">
+                        <div class="nq-min-eyebrow">Event Selanjutnya</div>
+                        <h4 class="nq-min-title" id="side-nq-title">Memuat...</h4>
+                        <div id="side-nq-timer" class="nq-min-timer">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </section>
 
-            <div id="articles-grid" class="articles-grid"
-                style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
-                <!-- JS will inject cards here -->
-            </div>
+                <!-- Latest Articles Section -->
+                <section class="sidebar-section">
+                    <h3 class="section-title">Artikel Terbaru</h3>
+                    <div id="latest-articles-list" class="sidebar-list">
+                        <!-- JS will inject here -->
+                        <div class="skeleton-list"></div>
+                    </div>
+                </section>
 
-            <div style="text-align:center; margin-top:30px;">
-                <button id="load-more-btn" class="btn btn-secondary" style="display:none;">Muat Lebih Banyak</button>
-            </div>
+                <!-- Categories Section -->
+                <section class="sidebar-section">
+                    <h3 class="section-title">Kategori</h3>
+                    <div id="categories-list" class="sidebar-tags">
+                        <!-- JS will inject here -->
+                    </div>
+                </section>
+            </aside>
         </div>
     </main>
 

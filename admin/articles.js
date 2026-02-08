@@ -1,4 +1,3 @@
-
 // Logic for Article Management
 export function initArticles(state, els, api) {
     console.log('[Articles] Initializing...');
@@ -13,32 +12,63 @@ export function initArticles(state, els, api) {
     const nextBtn = document.getElementById('art-next');
     const pageInfo = document.getElementById('art-page-info');
 
-    // Debug: Check critical elements
-    console.log('[Articles] Elements:', {
-        list: !!list,
-        addBtn: !!addBtn,
-        modal: !!modal,
-        form: !!form
-    });
-
-    // Validate critical elements exist
-    if (!list || !addBtn || !modal || !form) {
-        console.error('[Articles] Critical elements missing!', { list, addBtn, modal, form });
-        return;
-    }
+    // Editor Specific Elements
+    const editorArea = document.getElementById('art-editor');
+    const toolbar = document.getElementById('editor-toolbar');
+    const statusText = document.getElementById('editor-status');
+    const closeBtn = document.getElementById('art-close-btn');
+    const cancelBtn = document.getElementById('art-cancel-btn');
+    const removeImgBtn = document.getElementById('remove-art-image');
 
     // Inputs
     const inpId = document.getElementById('art-id');
     const inpTitle = document.getElementById('art-title');
+    const inpAuthor = document.getElementById('art-author');
     const inpCategory = document.getElementById('art-category');
     const inpDate = document.getElementById('art-date');
     const inpFile = document.getElementById('art-image-file');
     const inpBase64 = document.getElementById('art-image-base64');
     const previewDiv = document.getElementById('art-image-preview');
-    const inpContent = document.getElementById('art-content');
+    const inpContent = document.getElementById('art-content'); // Hidden backend sync
 
     let currentPage = 1;
     let totalPages = 1;
+
+    // --- RICH EDITOR LOGIC ---
+    function initRichEditor() {
+        if (!toolbar || !editorArea) return;
+
+        toolbar.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const command = btn.dataset.command;
+                const value = btn.dataset.value || null;
+                document.execCommand(command, false, value);
+                editorArea.focus();
+            };
+        });
+
+        // Color Picker
+        const colorPicker = document.getElementById('editor-color-picker');
+        if (colorPicker) {
+            colorPicker.oninput = (e) => {
+                document.execCommand('foreColor', false, e.target.value);
+                editorArea.focus();
+            };
+        }
+
+        // Sync content to hidden textarea on change
+        editorArea.oninput = () => {
+            inpContent.value = editorArea.innerHTML;
+            updateWordCount();
+        };
+    }
+
+    function updateWordCount() {
+        const text = editorArea.innerText || "";
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        if (statusText) statusText.textContent = `Draft • ${words} kata`;
+    }
 
     // Load Articles
     async function loadArticles(page = 1) {
@@ -104,10 +134,13 @@ export function initArticles(state, els, api) {
 
     // Modal Logic
     function openModal() {
-        console.log('[Articles] openModal called');
         modal.classList.remove('hidden');
-        modal.classList.add('active');  // CSS uses .modal.active for visibility
+        modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+
+        // Focus title with slight delay for transition
+        setTimeout(() => inpTitle.focus(), 300);
+        updateWordCount();
     }
 
     function closeModal() {
@@ -118,40 +151,41 @@ export function initArticles(state, els, api) {
 
     // Create/Edit
     addBtn.onclick = () => {
-        console.log('[Articles] Add button clicked');
-        try {
-            form.reset();
-            if (inpId) inpId.value = '';
-            if (inpBase64) inpBase64.value = '';
-            if (previewDiv) previewDiv.style.display = 'none';
-            const modalTitle = document.getElementById('article-modal-title');
-            if (modalTitle) modalTitle.textContent = 'Tambah Artikel';
-            console.log('[Articles] Opening modal...');
-            openModal();
-            console.log('[Articles] Modal opened');
-        } catch (e) {
-            console.error('[Articles] Error opening modal:', e);
-        }
+        form.reset();
+        editorArea.innerHTML = '';
+        inpId.value = '';
+        inpBase64.value = '';
+        previewDiv.style.display = 'none';
+
+        // Default values
+        inpAuthor.value = state.username || '';
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        inpDate.value = now.toISOString().slice(0, 16);
+
+        openModal();
     };
 
     async function openEdit(id) {
-        // Fetch detail
         try {
             const data = await api.fetchJsonWithRetry(`/api/articles?id=${id}`);
             if (data.status === 'success' && data.article) {
                 const a = data.article;
                 inpId.value = a.id;
                 inpTitle.value = a.title;
+                inpAuthor.value = a.author || '';
                 inpCategory.value = a.category || 'Umum';
-                inpContent.value = a.content;
 
-                // Date format for datetime-local: YYYY-MM-DDTHH:mm
+                // Contentable sync
+                editorArea.innerHTML = a.content || '';
+                inpContent.value = a.content || '';
+
                 const d = new Date(a.publish_date);
                 d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
                 inpDate.value = d.toISOString().slice(0, 16);
 
                 if (a.image) {
-                    inpBase64.value = a.image; // Keep existing unless changed
+                    inpBase64.value = a.image;
                     previewDiv.querySelector('img').src = a.image;
                     previewDiv.style.display = 'block';
                 } else {
@@ -159,7 +193,6 @@ export function initArticles(state, els, api) {
                     previewDiv.style.display = 'none';
                 }
 
-                document.getElementById('article-modal-title').textContent = 'Edit Artikel';
                 openModal();
             }
         } catch (e) {
@@ -182,8 +215,8 @@ export function initArticles(state, els, api) {
         const file = inpFile.files[0];
         if (!file) return;
 
-        if (file.size > 150 * 1024) {
-            alert('Ukuran gambar maksimal 150KB!');
+        if (file.size > 200 * 1024) { // Increased to 200KB for better quality sampul
+            alert('Ukuran gambar maksimal 200KB!');
             inpFile.value = '';
             return;
         }
@@ -198,22 +231,33 @@ export function initArticles(state, els, api) {
         reader.readAsDataURL(file);
     };
 
+    removeImgBtn.onclick = () => {
+        inpBase64.value = '';
+        inpFile.value = '';
+        previewDiv.style.display = 'none';
+    };
+
     // Save
     form.onsubmit = async (e) => {
         e.preventDefault();
+
+        // Final sync
+        inpContent.value = editorArea.innerHTML;
+
         const id = inpId.value;
         const payload = {
             id,
             title: inpTitle.value,
+            author: inpAuthor.value,
             category: inpCategory.value,
             content: inpContent.value,
-            image: inpBase64.value, // Will send base64 string
+            image: inpBase64.value,
             publish_date: inpDate.value ? new Date(inpDate.value).toISOString() : new Date().toISOString()
         };
 
         const btn = document.getElementById('art-save-btn');
-        const oldText = btn.textContent;
-        btn.textContent = 'Menyimpan...';
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mempublikasikan...';
         btn.disabled = true;
 
         try {
@@ -224,15 +268,20 @@ export function initArticles(state, els, api) {
             }
             closeModal();
             loadArticles(currentPage);
+            if (window.toast) toast.show('Artikel berhasil dipublikasikan!', 'success');
         } catch (err) {
             alert('Error: ' + err.message);
         } finally {
-            btn.textContent = oldText;
+            btn.innerHTML = oldHtml;
             btn.disabled = false;
         }
     };
 
-    // Events
+    // Close Actions
+    closeBtn.onclick = closeModal;
+    cancelBtn.onclick = closeModal;
+
+    // Search & Paging
     searchInput.oninput = api.debounce(() => loadArticles(1), 500);
     prevBtn.onclick = () => loadArticles(currentPage - 1);
     nextBtn.onclick = () => loadArticles(currentPage + 1);
@@ -242,6 +291,7 @@ export function initArticles(state, els, api) {
         return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    // Init load
+    // Init Editor & Load
+    initRichEditor();
     loadArticles();
 }
