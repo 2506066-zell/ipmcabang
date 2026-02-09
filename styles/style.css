@@ -4394,3 +4394,10 @@ body.quiz-active .premium-fab-container {
         bottom: calc(78px + env(safe-area-inset-bottom, 0px));
     }
 }
+
+.header-icon.profile-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}

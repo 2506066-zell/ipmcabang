@@ -1,4 +1,4 @@
-﻿const STATIC_CACHE = 'static-v6';
+﻿const STATIC_CACHE = 'static-v7';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -14,6 +14,8 @@ const STATIC_ASSETS = [
   '/index.html',
   '/articles.html',
   '/article.html',
+  '/profile/',
+  '/profile/index.html',
   '/quiz.html',
   '/materi.html',
   '/ranking.html',
@@ -25,11 +27,13 @@ const STATIC_ASSETS = [
   '/admin/offline.html',
   '/styles/style.css',
   '/styles/home-dynamic.css',
+  '/styles/profile.css',
   '/styles/install-banner.css',
   '/styles/article-enhancements.css',
   '/styles/quiz-enhancements.css',
   '/styles/ranking.css',
   '/scripts/main.js',
+  '/scripts/profile.js',
   '/scripts/install-banner.js',
   '/scripts/toast.js',
   '/scripts/public-articles.js',
@@ -209,5 +213,6 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(cacheFirst(request));
 });
+
 
 

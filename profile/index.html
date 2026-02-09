@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="theme-color" content="#006400">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Profil - IPM Panawuan</title>
+    <link rel="stylesheet" href="/styles/style.css">
+    <link rel="stylesheet" href="/styles/profile.css">
+    <link rel="stylesheet" href="/styles/install-banner.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="page-profile">
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <picture>
+                <source srcset="/ipm (2).webp" type="image/webp">
+                <img src="/ipm (2).png" alt="Logo IPM" class="header-logo" fetchpriority="high" decoding="async">
+            </picture>
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <div class="header-right-icons">
+            <a href="/ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="/admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="/index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="/struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="/articles.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="/materi.html" class="mobile-nav-link"><i class="fas fa-book"></i> Materi</a></li>
+            <li><a href="/quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+            <li><a href="/help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
+        </ul>
+    </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+    <main class="main-content profile-main" style="padding-top:70px; padding-bottom:100px;">
+        <div id="profile-root" class="profile-root"></div>
+    </main>
+
+    <nav class="bottom-nav" id="bottom-nav">
+        <a href="/index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
+        <a href="/articles.html"><i class="fas fa-newspaper"></i><span>Artikel</span></a>
+        <a href="/materi.html"><i class="fas fa-book"></i><span>Materi</span></a>
+        <a href="/quiz.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+        <a href="/help.html"><i class="fas fa-circle-question"></i><span>Bantuan</span></a>
+    </nav>
+
+    <script src="/scripts/toast.js" defer></script>
+    <script src="/scripts/main.js" defer></script>
+    <script src="/scripts/profile.js" defer></script>
+    <script src="/scripts/install-banner.js" defer></script>
+</body>
+</html>

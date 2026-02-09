@@ -21,41 +21,36 @@
 
     const USER_SESSION_KEY = 'ipmquiz_user_session';
     const USER_USERNAME_KEY = 'ipmquiz_user_username';
-    const session = String(sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '').trim();
-    const username = String(sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '').trim();
-    if (session && headerRight) {
-        const chip = document.createElement('button');
-        chip.className = 'user-chip';
-        chip.type = 'button';
-        chip.innerHTML = '';
+    const getSession = () => sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
+    const getUsername = () => sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '';
+
+    if (headerRight && !document.getElementById('profile-header-btn')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'profile-header-btn';
+        btn.className = 'header-icon profile-icon-btn';
+        btn.setAttribute('aria-label', 'Profil');
         const icon = document.createElement('i');
         icon.className = 'fas fa-user';
-        const span = document.createElement('span');
-        span.textContent = username || 'Pengguna';
-        chip.appendChild(icon);
-        chip.appendChild(span);
-        const dropdown = document.createElement('div');
-        dropdown.className = 'user-dropdown';
-        dropdown.innerHTML = `<button id="logout-btn-header"><i class="fas fa-right-from-bracket"></i> Keluar</button>`;
-        headerRight.appendChild(chip);
-        document.body.appendChild(dropdown);
-        chip.addEventListener('click', () => dropdown.classList.toggle('open'));
-        document.addEventListener('click', (e) => {
-            if (!dropdown.contains(e.target) && !chip.contains(e.target)) dropdown.classList.remove('open');
-        });
-        const logoutBtn = dropdown.querySelector('#logout-btn-header');
-        logoutBtn.addEventListener('click', () => {
-            sessionStorage.removeItem(USER_SESSION_KEY);
-            sessionStorage.removeItem(USER_USERNAME_KEY);
-            localStorage.removeItem(USER_SESSION_KEY);
-            localStorage.removeItem(USER_USERNAME_KEY);
-            try {
-                sessionStorage.setItem('ipmquiz_flash', 'Anda telah keluar. Silakan masuk kembali.');
-            } catch {}
-            if (window.Toast) Toast.show('Berhasil keluar', 'success');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 300);
+        btn.appendChild(icon);
+        const anchor = headerRight.querySelector('#hamburger-menu');
+        if (anchor) headerRight.insertBefore(btn, anchor);
+        else headerRight.appendChild(btn);
+
+        const username = String(getUsername() || '').trim();
+        if (username) btn.title = `Profil ${username}`;
+
+        btn.addEventListener('click', () => {
+            const session = getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+            if (window.ProfilePage && window.ProfilePage.open) {
+                window.ProfilePage.open();
+            } else {
+                window.location.href = '/profile';
+            }
         });
     }
 
@@ -375,5 +370,11 @@
         });
     });
 })();
+
+
+
+
+
+
 
 

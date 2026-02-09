@@ -57,6 +57,11 @@
       const token = String(data.session || '');
       const uname = String(data.username || username);
       storeSession(token, uname, remember);
+      try {
+        const storage = remember ? localStorage : sessionStorage;
+        if (data.nama_panjang) storage.setItem('ipmquiz_user_fullname', data.nama_panjang);
+        if (data.pimpinan) storage.setItem('ipmquiz_user_pimpinan', data.pimpinan);
+      } catch {}
       if (window.Toast) Toast.show('Berhasil masuk', 'success');
       try {
         localStorage.setItem('pwa_install_pending', JSON.stringify({ source: 'login', ts: Date.now() }));
@@ -87,4 +92,5 @@
     }
   });
 })();
+
 
