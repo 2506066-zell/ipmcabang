@@ -3,6 +3,36 @@ const { json, parseJsonBody } = require('./_util');
 const { requireAdminAuth } = require('./_auth');
 const { ensureSchema } = require('./_bootstrap');
 
+const DEFAULT_GAMIFICATION = {
+    enabled: true,
+    timer_seconds: 20,
+    xp_base: 10,
+    streak_bonus: 2,
+    streak_cap: 5,
+    quest_daily_target: 3,
+    quest_highscore_target: 2,
+    highscore_percent: 80
+};
+
+async function getGamificationSettings() {
+    const row = (await query`SELECT value FROM system_settings WHERE key='gamification_settings'`).rows[0];
+    if (!row || !row.value) return DEFAULT_GAMIFICATION;
+    try {
+        const parsed = JSON.parse(row.value);
+        return { ...DEFAULT_GAMIFICATION, ...(parsed || {}) };
+    } catch {
+        return DEFAULT_GAMIFICATION;
+    }
+}
+
+async function saveGamificationSettings(payload) {
+    const merged = { ...DEFAULT_GAMIFICATION, ...(payload || {}) };
+    const serialized = JSON.stringify(merged);
+    await query`INSERT INTO system_settings (key, value, updated_at) VALUES ('gamification_settings', ${serialized}, NOW())
+        ON CONFLICT (key) DO UPDATE SET value=${serialized}, updated_at=NOW()`;
+    return merged;
+}
+
 // --- Questions Management ---
 
 async function handleCreate(req, res) {
@@ -278,6 +308,30 @@ async function handleGetActivityLogs(req, res) {
     return json(res, 200, { status: 'success', logs });
 }
 
+// --- Gamification Settings ---
+async function handleGetGamification(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+    const settings = await getGamificationSettings();
+    return json(res, 200, { status: 'success', settings });
+}
+
+async function handleSaveGamification(req, res) {
+    let adminId = null;
+    try {
+        const admin = await requireAdminAuth(req);
+        adminId = admin.id;
+    } catch (e) {
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+    }
+
+    const b = parseJsonBody(req) || {};
+    const settings = await saveGamificationSettings(b);
+    try {
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_GAMIFICATION', ${settings})`;
+    } catch {}
+    return json(res, 200, { status: 'success', settings });
+}
+
 async function handleResetSet(req, res) {
     let adminId = null;
     try {
@@ -348,6 +402,7 @@ module.exports = async (req, res) => {
             if (req.method === 'GET' && action === 'schedules') return await handleGetSchedules(req, res);
             if (req.method === 'GET' && action === 'listQuestions') return await handleListQuestions(req, res);
             if (req.method === 'GET' && action === 'listMaterials') return await handleListMaterials(req, res);
+            if (req.method === 'GET' && action === 'gamificationGet') return await handleGetGamification(req, res);
             return json(res, 405, { status: 'error', message: 'Method not allowed' });
         }
 
@@ -361,6 +416,7 @@ module.exports = async (req, res) => {
             case 'deleteSchedule': return await handleDeleteSchedule(req, res);
             case 'upsertMaterial': return await handleUpsertMaterial(req, res);
             case 'deleteMaterial': return await handleDeleteMaterial(req, res);
+            case 'gamificationSave': return await handleSaveGamification(req, res);
             default: return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
         }
     } catch (e) {

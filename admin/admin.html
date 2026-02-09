@@ -304,6 +304,62 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="card" style="margin-top:20px;">
+                        <h3 style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-gamepad" style="color:var(--accent-primary)"></i> Pengaturan Gamifikasi
+                        </h3>
+                        <p style="margin:0 0 12px; color:var(--text-muted); font-size:0.9rem;">
+                            Atur XP, streak, quest, dan timer untuk sistem kuis gamified.
+                        </p>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1">
+                                <label>Aktifkan Gamifikasi</label>
+                                <select id="gm-enabled">
+                                    <option value="true">Aktif</option>
+                                    <option value="false">Nonaktif</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <label>Timer per Soal (detik)</label>
+                                <input type="number" id="gm-timer" min="5" max="120" step="1" placeholder="20">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1">
+                                <label>XP Dasar (jawaban benar)</label>
+                                <input type="number" id="gm-xp-base" min="1" max="200" step="1" placeholder="10">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <label>Bonus Streak per langkah</label>
+                                <input type="number" id="gm-streak-bonus" min="0" max="50" step="1" placeholder="2">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <label>Batas Streak Bonus</label>
+                                <input type="number" id="gm-streak-cap" min="0" max="20" step="1" placeholder="5">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1">
+                                <label>Target Kuis Harian</label>
+                                <input type="number" id="gm-quest-daily" min="1" max="10" step="1" placeholder="3">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <label>Target Skor Tinggi</label>
+                                <input type="number" id="gm-quest-highscore" min="1" max="10" step="1" placeholder="2">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <label>Ambang Skor Tinggi (%)</label>
+                                <input type="number" id="gm-highscore-percent" min="50" max="100" step="1" placeholder="80">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:12px;">
+                            <button class="btn btn-primary" id="gm-save-btn">
+                                <i class="fas fa-save"></i> Simpan Pengaturan
+                            </button>
+                            <span class="status" id="gm-status"></span>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="tab-articles" class="hidden">

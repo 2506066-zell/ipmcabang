@@ -46,6 +46,8 @@
         if (button) button.hidden = true;
     };
 
+    const hasAccepted = () => safeGet(ACCEPTED_KEY) === '1';
+
     const updateButtonState = () => {
         if (!button) return;
         if (!isEligibleBase()) {
@@ -53,10 +55,16 @@
             return;
         }
 
+        if (hasAccepted()) {
+            hideButton();
+            return;
+        }
+
         button.hidden = false;
+        const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
         if (!deferredPrompt || dismissedThisSession()) {
             button.disabled = true;
-            button.setAttribute('data-label', 'Belum siap diinstal');
+            button.setAttribute('data-label', isiOS ? 'Tambah ke Layar Utama' : 'Belum siap diinstal');
             button.classList.add('install-disabled');
             return;
         }

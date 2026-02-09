@@ -155,6 +155,18 @@
             resetSetSelect: document.getElementById('reset-set-select'),
             globalResetBtn: document.getElementById('global-reset-btn'),
 
+            // Gamification
+            gmEnabled: document.getElementById('gm-enabled'),
+            gmTimer: document.getElementById('gm-timer'),
+            gmXpBase: document.getElementById('gm-xp-base'),
+            gmStreakBonus: document.getElementById('gm-streak-bonus'),
+            gmStreakCap: document.getElementById('gm-streak-cap'),
+            gmQuestDaily: document.getElementById('gm-quest-daily'),
+            gmQuestHighscore: document.getElementById('gm-quest-highscore'),
+            gmHighscorePercent: document.getElementById('gm-highscore-percent'),
+            gmSaveBtn: document.getElementById('gm-save-btn'),
+            gmStatus: document.getElementById('gm-status'),
+
             // Question Modal
             modal: document.getElementById('question-modal'),
             modalTitle: document.getElementById('modal-title'),
@@ -354,6 +366,7 @@
         if (tabName === 'users' && state.users.length === 0) loadUsers();
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();
+        if (tabName === 'schedules') loadGamificationSettings();
 
         // Dynamic Import for Articles
         if (tabName === 'articles') {
@@ -417,6 +430,51 @@
 
         } catch (e) {
             console.error('Dashboard load error:', e);
+        }
+    }
+
+    async function loadGamificationSettings() {
+        if (!els.gmEnabled) return;
+        try {
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=gamificationGet');
+            if (!data || data.status !== 'success') return;
+            const s = data.settings || {};
+            els.gmEnabled.value = String(s.enabled !== false);
+            els.gmTimer.value = s.timer_seconds ?? 20;
+            els.gmXpBase.value = s.xp_base ?? 10;
+            els.gmStreakBonus.value = s.streak_bonus ?? 2;
+            els.gmStreakCap.value = s.streak_cap ?? 5;
+            els.gmQuestDaily.value = s.quest_daily_target ?? 3;
+            els.gmQuestHighscore.value = s.quest_highscore_target ?? 2;
+            els.gmHighscorePercent.value = s.highscore_percent ?? 80;
+        } catch (e) {
+            console.error('Failed to load gamification settings', e);
+        }
+    }
+
+    async function saveGamificationSettings() {
+        if (!els.gmSaveBtn) return;
+        const payload = {
+            enabled: els.gmEnabled.value === 'true',
+            timer_seconds: Number(els.gmTimer.value || 20),
+            xp_base: Number(els.gmXpBase.value || 10),
+            streak_bonus: Number(els.gmStreakBonus.value || 2),
+            streak_cap: Number(els.gmStreakCap.value || 5),
+            quest_daily_target: Number(els.gmQuestDaily.value || 3),
+            quest_highscore_target: Number(els.gmQuestHighscore.value || 2),
+            highscore_percent: Number(els.gmHighscorePercent.value || 80)
+        };
+
+        showLoader('Menyimpan pengaturan...');
+        try {
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=gamificationSave', payload);
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan');
+            setStatus('Pengaturan gamifikasi disimpan.', 'ok');
+            if (els.gmStatus) els.gmStatus.textContent = 'Tersimpan';
+        } catch (e) {
+            setStatus(e.message || 'Gagal menyimpan', 'error');
+        } finally {
+            hideLoader();
         }
     }
 
@@ -1520,6 +1578,12 @@
                 if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal reset.');
                 setStatus(`Kuis Set ${set} berhasil direset total.`, 'ok');
             } catch (e) { alert('Error: ' + e.message); } finally { hideLoader(); }
+        });
+
+        // Gamification Save
+        els.gmSaveBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            saveGamificationSettings();
         });
     }
 

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="theme-color" content="#006400" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Kuis Gamified - PC IPM Panawuan</title>
+  <link rel="icon" href="/ipm%20(2).png" />
+  <link rel="stylesheet" href="/styles/style.css" />
+  <link rel="stylesheet" href="/styles/profile.css" />
+  <link rel="stylesheet" href="/styles/quiz-react.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="page-quiz">
+  <header class="mobile-header" id="mobile-header">
+    <div class="logo-container">
+      <img src="/ipm%20(2).png" alt="Logo IPM" class="header-logo" />
+      <span class="header-title">PC IPM Panawuan</span>
+    </div>
+    <div class="header-right-icons">
+      <button class="header-icon notif-bell" id="notif-bell" aria-label="Notifikasi">
+        <i class="fas fa-bell"></i>
+        <span class="notif-badge" id="notif-badge" hidden>0</span>
+      </button>
+      <a href="/ranking.html" class="header-icon" aria-label="Peringkat"><i class="fas fa-trophy"></i></a>
+      <a href="/admin/admin.html" class="header-icon" aria-label="Admin"><i class="fas fa-cog"></i></a>
+      <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </div>
+  </header>
+  <div class="notif-overlay" id="notif-overlay" hidden></div>
+  <div class="notif-panel" id="notif-panel" hidden>
+    <div class="notif-panel-header">
+      <span>Notifikasi</span>
+      <button class="notif-close" id="notif-close" aria-label="Tutup">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="notif-panel-list" id="notif-panel-list"></div>
+    <button class="notif-mark-read" id="notif-mark-read">Tandai semua dibaca</button>
+  </div>
+
+  <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+    <ul class="mobile-nav-links">
+      <li><a href="/index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+      <li><a href="/struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+      <li><a href="/articles.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+      <li><a href="/materi.html" class="mobile-nav-link"><i class="fas fa-book"></i> Materi</a></li>
+      <li><a href="/quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+      <li><a href="/help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
+    </ul>
+  </nav>
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+  <main class="main-content">
+    <div id="app" class="quiz-react-root"></div>
+  </main>
+
+  <script src="/scripts/main.js" defer></script>
+  <script src="/scripts/install-header.js" defer></script>
+  <script src="/scripts/profile.js" defer></script>
+  <script src="/scripts/toast.js" defer></script>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script type="text/babel" src="/scripts/quiz-react.js"></script>
+</body>
+</html>

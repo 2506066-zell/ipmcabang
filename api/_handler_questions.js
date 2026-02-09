@@ -5,6 +5,16 @@ const { getSessionUser } = require('./_auth');
 async function list(req, res) {
     const mode = req.query.mode ? String(req.query.mode).trim() : '';
     const user = await getSessionUser(req);
+    const defaultGamification = {
+        enabled: true,
+        timer_seconds: 20,
+        xp_base: 10,
+        streak_bonus: 2,
+        streak_cap: 5,
+        quest_daily_target: 3,
+        quest_highscore_target: 2,
+        highscore_percent: 80
+    };
 
     if (mode === 'summary') {
         const rows = (await query`
@@ -72,6 +82,18 @@ async function list(req, res) {
         }));
 
         return json(res, 200, { status: 'success', sets: enhancedSets, top_scores: topScoresGlobal, next_quiz: nextQuiz }, cacheHeaders(0));
+    }
+
+    if (mode === 'gamification') {
+        let settings = defaultGamification;
+        try {
+            const row = (await query`SELECT value FROM system_settings WHERE key='gamification_settings'`).rows[0];
+            if (row && row.value) {
+                const parsed = JSON.parse(row.value);
+                settings = { ...defaultGamification, ...(parsed || {}) };
+            }
+        } catch { }
+        return json(res, 200, { status: 'success', settings }, cacheHeaders(60));
     }
 
     if (mode === 'categories') {

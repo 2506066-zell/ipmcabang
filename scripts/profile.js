@@ -93,6 +93,12 @@
                     </div>
                     <div class="profile-activity-empty" id="profile-activity-empty">Belum ada aktivitas kuis.</div>
                 </div>
+                <div class="profile-card profile-notif-card">
+                    <div class="profile-activity-header">🔔 Notifikasi</div>
+                    <div class="profile-notif-list" id="profile-notif-list">
+                        <div class="profile-notif-empty">Belum ada notifikasi.</div>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -210,6 +216,33 @@
         } catch {}
     }
 
+    async function loadNotifications(container) {
+        const session = getSession();
+        if (!session) return;
+        const list = container.querySelector('#profile-notif-list');
+        if (!list) return;
+        try {
+            const res = await fetch('/api/notifications', {
+                headers: { Authorization: `Bearer ${session}` }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.status !== 'success' || !Array.isArray(data.notifications)) return;
+
+            if (data.notifications.length === 0) {
+                list.innerHTML = '<div class="profile-notif-empty">Belum ada notifikasi.</div>';
+                return;
+            }
+
+            list.innerHTML = data.notifications.map(n => `
+                <div class="profile-notif-item ${n.is_read ? '' : 'unread'}">
+                    <div class="profile-notif-message">${n.message || 'Ada pembaruan.'}</div>
+                    <div class="profile-notif-time">${new Date(n.created_at).toLocaleString('id-ID')}</div>
+                </div>
+            `).join('');
+        } catch {}
+    }
+
     function bindLogout(container) {
         const btn = container.querySelector('#profile-logout-btn');
         if (!btn) return;
@@ -243,6 +276,7 @@
             bindLogout(root);
             const uname = getStored(USER_USERNAME_KEY);
             loadActivityData(root, uname);
+            loadNotifications(root);
         }
 
         requestAnimationFrame(() => {
@@ -278,6 +312,7 @@
             bindLogout(root);
             const uname = getStored(USER_USERNAME_KEY);
             loadActivityData(root, uname);
+            loadNotifications(root);
         }
     });
 

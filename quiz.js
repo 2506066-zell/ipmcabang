@@ -789,6 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+
     const username = sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || 'Pengguna';
 
     // Update UI

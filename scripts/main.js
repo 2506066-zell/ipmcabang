@@ -21,6 +21,7 @@
 
     const USER_SESSION_KEY = 'ipmquiz_user_session';
     const USER_USERNAME_KEY = 'ipmquiz_user_username';
+    const ARTICLE_SEEN_KEY = 'ipm_last_seen_article_ts';
     const getSession = () => sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
     const getUsername = () => sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '';
 
@@ -52,6 +53,202 @@
                 console.warn('[Profile] Modal belum siap');
             }
         });
+    }
+
+    // --- Notifications (Global) ---
+    if (!window.__notifInitialized && headerRight) {
+        window.__notifInitialized = true;
+
+        const ensureNotifBell = () => {
+            let bell = document.getElementById('notif-bell');
+            if (!bell) {
+                bell = document.createElement('button');
+                bell.type = 'button';
+                bell.id = 'notif-bell';
+                bell.className = 'header-icon notif-bell';
+                bell.setAttribute('aria-label', 'Notifikasi');
+                bell.innerHTML = '<i class="fas fa-bell"></i><span class="notif-badge" id="notif-badge" hidden>0</span>';
+                const anchor = headerRight.querySelector('#profile-header-btn') || headerRight.querySelector('#hamburger-menu');
+                if (anchor) headerRight.insertBefore(bell, anchor);
+                else headerRight.appendChild(bell);
+            }
+            return bell;
+        };
+
+        const ensureNotifPanel = () => {
+            let overlay = document.getElementById('notif-overlay');
+            let panel = document.getElementById('notif-panel');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'notif-overlay';
+                overlay.id = 'notif-overlay';
+                overlay.hidden = true;
+                document.body.appendChild(overlay);
+            }
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.className = 'notif-panel';
+                panel.id = 'notif-panel';
+                panel.hidden = true;
+                panel.innerHTML = `
+                    <div class="notif-panel-header">
+                        <span>Notifikasi</span>
+                        <button class="notif-close" id="notif-close" aria-label="Tutup">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="notif-panel-list" id="notif-panel-list"></div>
+                    <button class="notif-mark-read" id="notif-mark-read">Tandai semua dibaca</button>
+                `;
+                document.body.appendChild(panel);
+            }
+            return { overlay, panel };
+        };
+
+        const state = { notifications: [], unread: 0, articleUnread: 0, latestArticle: null };
+        const session = getSession();
+
+        const fetchNotifications = async () => {
+            try {
+                if (session) {
+                    const res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.status === 'success' && Array.isArray(data.notifications)) {
+                            state.notifications = data.notifications;
+                            state.unread = data.notifications.filter(n => !n.is_read).length;
+                        }
+                    }
+                }
+            } catch {}
+
+            try {
+                const artRes = await fetch('/api/articles?size=1&sort=newest');
+                if (artRes.ok) {
+                    const artData = await artRes.json();
+                    const latest = Array.isArray(artData.articles) ? artData.articles[0] : null;
+                    if (latest) {
+                        const published = new Date(latest.publish_date || latest.created_at || Date.now()).getTime();
+                        const lastSeen = Number(localStorage.getItem(ARTICLE_SEEN_KEY) || 0);
+                        if (published > lastSeen) {
+                            state.articleUnread = 1;
+                            state.latestArticle = latest;
+                        } else {
+                            state.articleUnread = 0;
+                            state.latestArticle = null;
+                        }
+                    }
+                }
+            } catch {}
+
+            const badge = document.getElementById('notif-badge');
+            const bell = document.getElementById('notif-bell');
+            const totalBadge = state.unread + state.articleUnread;
+            if (badge) {
+                badge.textContent = String(totalBadge);
+                badge.hidden = totalBadge === 0;
+            }
+            if (bell) bell.title = `${totalBadge} notifikasi`;
+
+            if (state.articleUnread && window.Toast) {
+                window.Toast.show('Ada artikel terbaru. Lihat di notifikasi.', 'info');
+            }
+            if (state.unread && window.Toast) {
+                state.notifications.filter(n => !n.is_read).forEach(n => {
+                    window.Toast.show(n.message || 'Ada pembaruan pada kuis.', 'info');
+                });
+                if (session) {
+                    fetch('/api/users?action=markNotificationsRead', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session}` },
+                        body: JSON.stringify({})
+                    }).catch(() => {});
+                }
+            }
+        };
+
+        const renderNotifList = () => {
+            const list = document.getElementById('notif-panel-list');
+            if (!list) return;
+            const items = [];
+            if (state.latestArticle && state.articleUnread) {
+                items.push({
+                    title: `Artikel baru: ${state.latestArticle.title}`,
+                    time: state.latestArticle.publish_date || state.latestArticle.created_at,
+                    unread: true,
+                    link: `articles.html?id=${state.latestArticle.id}`
+                });
+            }
+            state.notifications.forEach(n => {
+                items.push({
+                    title: n.message || 'Ada pembaruan pada kuis.',
+                    time: n.created_at,
+                    unread: !n.is_read
+                });
+            });
+            if (!items.length) {
+                list.innerHTML = '<div class="notif-empty">Belum ada notifikasi.</div>';
+                return;
+            }
+            list.innerHTML = items.map(item => `
+                <div class="notif-item ${item.unread ? 'unread' : ''}">
+                    <div class="notif-item-title">${item.title}</div>
+                    <div class="notif-item-meta">${item.time ? new Date(item.time).toLocaleString('id-ID') : ''}</div>
+                    ${item.link ? `<a class="notif-item-link" href="${item.link}">Buka Artikel</a>` : ''}
+                </div>
+            `).join('');
+        };
+
+        const { overlay, panel } = ensureNotifPanel();
+        const bell = ensureNotifBell();
+
+        const openPanel = () => {
+            renderNotifList();
+            panel.hidden = false;
+            overlay.hidden = false;
+        };
+        const closePanel = () => {
+            panel.hidden = true;
+            overlay.hidden = true;
+        };
+
+        bell?.addEventListener('click', openPanel);
+        overlay?.addEventListener('click', closePanel);
+        document.getElementById('notif-close')?.addEventListener('click', closePanel);
+        document.getElementById('notif-mark-read')?.addEventListener('click', () => {
+            if (state.latestArticle) {
+                const published = new Date(state.latestArticle.publish_date || state.latestArticle.created_at || Date.now()).getTime();
+                localStorage.setItem(ARTICLE_SEEN_KEY, String(published));
+            }
+            const badge = document.getElementById('notif-badge');
+            if (badge) {
+                badge.textContent = '0';
+                badge.hidden = true;
+            }
+            state.articleUnread = 0;
+            closePanel();
+        });
+
+        // Update last seen when opening article detail page
+        try {
+            const url = new URL(window.location.href);
+            const isArticleDetail = window.location.pathname.includes('article.html') || (window.location.pathname.includes('articles.html') && (url.searchParams.get('id') || url.searchParams.get('slug')));
+            if (isArticleDetail) {
+                const id = url.searchParams.get('id');
+                const slug = url.searchParams.get('slug');
+                fetch(`/api/articles?${id ? `id=${encodeURIComponent(id)}` : `slug=${encodeURIComponent(slug)}`}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'success' && data.article) {
+                            const published = new Date(data.article.publish_date || data.article.created_at || Date.now()).getTime();
+                            localStorage.setItem(ARTICLE_SEEN_KEY, String(published));
+                        }
+                    })
+                    .catch(() => {});
+            }
+        } catch {}
+
+        fetchNotifications();
     }
 
     // --- DYNAMIC FEATURES (Phase 4) ---

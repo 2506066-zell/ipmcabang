@@ -51,6 +51,10 @@
             <span class="header-title">PC IPM Panawuan</span>
         </div>
         <div class="header-right-icons">
+            <button class="header-icon notif-bell" id="notif-bell" aria-label="Notifikasi">
+                <i class="fas fa-bell"></i>
+                <span class="notif-badge" id="notif-badge" hidden>0</span>
+            </button>
             <a href="ranking.html" class="header-icon" aria-label="Peringkat">
                 <i class="fas fa-trophy"></i>
             </a>
@@ -65,6 +69,17 @@
             </button>
         </div>
     </header>
+    <div class="notif-overlay" id="notif-overlay" hidden></div>
+    <div class="notif-panel" id="notif-panel" hidden>
+        <div class="notif-panel-header">
+            <span>Notifikasi</span>
+            <button class="notif-close" id="notif-close" aria-label="Tutup">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="notif-panel-list" id="notif-panel-list"></div>
+        <button class="notif-mark-read" id="notif-mark-read">Tandai semua dibaca</button>
+    </div>
 
     <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
         <ul class="mobile-nav-links">
@@ -81,6 +96,13 @@
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <div class="quiz-container">
+        <div class="quiz-gamified-cta" id="quiz-gamified-cta" style="display:none;">
+            <div class="quiz-gamified-card">
+                <div class="quiz-gamified-title">Kuis Gamified Baru</div>
+                <div class="quiz-gamified-subtext">Level, XP, streak, quest, dan leaderboard realtime.</div>
+                <a class="quiz-gamified-btn" href="quiz-gamified.html">Buka Kuis Gamified</a>
+            </div>
+        </div>
         <div id="user-info-screen">
             <h1>Quis IPM</h1>
             <p>Siap untuk menguji pengetahuanmu?</p>
@@ -216,6 +238,21 @@
     <script src="scripts/main.js" defer></script>
     <script src="scripts/install-header.js" defer></script>
     <script src="scripts/profile.js" defer></script></body>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const isLegacy = params.get('legacy') === '1';
+            const cta = document.getElementById('quiz-gamified-cta');
+
+            if (!isLegacy) {
+                window.location.replace('quiz-gamified.html');
+                return;
+            }
+
+            if (cta) cta.style.display = 'block';
+        });
+    </script>
 
 </html>
 
