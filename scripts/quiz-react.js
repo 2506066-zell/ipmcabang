@@ -83,7 +83,7 @@ const normalizeOptions = (options) => {
     try {
       const parsed = JSON.parse(options);
       return normalizeOptions(parsed);
-    } catch {
+    } catch (e) {
       return [];
     }
   }

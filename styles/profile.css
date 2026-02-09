@@ -2,7 +2,7 @@
     background: #f8fafc;
 }
 
-.profile-overlay {
+ .profile-overlay {
     position: fixed;
     inset: 0;
     background: transparent;
@@ -10,7 +10,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: flex-end;
-    padding: 72px 16px 16px;
+    padding: 64px 12px 12px;
     overflow: auto;
     opacity: 0;
     transition: opacity 0.2s ease;
@@ -22,10 +22,10 @@
 
 .profile-shell {
     width: 100%;
-    max-width: 360px;
+    max-width: 340px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     transform-origin: top right;
     transform: translateY(-6px) scale(0.98);
     opacity: 0;
@@ -49,8 +49,8 @@
 
 .profile-card {
     background: #ffffff;
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 12px;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
     border: 1px solid rgba(15, 23, 42, 0.06);
     position: relative;
@@ -77,8 +77,8 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: 1px solid rgba(15, 23, 42, 0.08);
     background: #ffffff;
@@ -98,13 +98,13 @@
 .profile-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 8px;
 }
 
 .profile-avatar {
-    width: 58px;
-    height: 58px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -112,12 +112,12 @@
     background: #e2e8f0;
     color: #0f172a;
     font-weight: 800;
-    font-size: 1.1rem;
+    font-size: 1rem;
     letter-spacing: 0.04em;
 }
 
 .profile-username {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 700;
     margin: 0 0 2px;
     color: #0f172a;
@@ -125,7 +125,7 @@
 
 .profile-subtext {
     color: #64748b;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     opacity: 0.8;
 }
 
@@ -133,15 +133,15 @@
     display: grid;
     grid-template-columns: 1fr;
     border-top: 1px solid #e2e8f0;
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 .profile-info-row {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 12px;
-    padding: 6px 0;
+    gap: 10px;
+    padding: 5px 0;
     border-bottom: 1px solid #eef2f7;
 }
 
@@ -150,13 +150,13 @@
 }
 
 .profile-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #94a3b8;
     font-weight: 600;
 }
 
 .profile-value {
-    font-size: 0.92rem;
+    font-size: 0.86rem;
     font-weight: 600;
     color: #0f172a;
     text-align: right;
@@ -165,7 +165,7 @@
 }
 
 .profile-actions {
-    margin-top: 14px;
+    margin-top: 10px;
     display: flex;
     gap: 10px;
 }
@@ -177,8 +177,8 @@
 .profile-btn {
     flex: 1;
     border: none;
-    border-radius: 14px;
-    padding: 12px 16px;
+    border-radius: 8px;
+    padding: 10px 12px;
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -196,14 +196,14 @@
 }
 
 .profile-activity-card {
-    padding: 16px 20px;
+    padding: 0;
 }
 
 .profile-section-header {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .profile-notif-header {
@@ -215,9 +215,9 @@
 .profile-notif-toggle {
     border: 1px solid #e2e8f0;
     background: #ffffff;
-    border-radius: 999px;
-    padding: 4px 10px;
-    font-size: 0.75rem;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
     font-weight: 600;
     cursor: pointer;
 }
@@ -236,8 +236,8 @@
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 12px;
-    padding: 6px 0;
+    gap: 10px;
+    padding: 5px 0;
     border-bottom: 1px solid #eef2f7;
 }
 
@@ -246,8 +246,8 @@
 }
 
 .profile-activity-empty {
-    margin-top: 6px;
-    font-size: 0.8rem;
+    margin-top: 4px;
+    font-size: 0.72rem;
     color: #94a3b8;
 }
 
@@ -297,13 +297,13 @@
 }
 
 .profile-notif-card {
-    padding: 16px 20px;
+    padding: 0;
 }
 
 .profile-notif-list {
     display: grid;
-    gap: 10px;
-    max-height: 420px;
+    gap: 6px;
+    max-height: 220px;
     opacity: 1;
 }
 
@@ -320,9 +320,9 @@
 .profile-notif-more {
     border: 1px solid #e2e8f0;
     background: #ffffff;
-    border-radius: 10px;
-    padding: 8px 10px;
-    font-size: 0.8rem;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.72rem;
     font-weight: 600;
     cursor: pointer;
 }
@@ -332,8 +332,8 @@
 }
 
 .profile-notif-item {
-    padding: 10px 12px;
-    border-radius: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
     border: 1px solid rgba(15, 23, 42, 0.08);
     background: #f8fafc;
 }
@@ -344,7 +344,7 @@
 }
 
 .profile-notif-message {
-    font-size: 0.9rem;
+    font-size: 0.78rem;
     color: #0f172a;
     position: relative;
     padding-right: 14px;
@@ -352,7 +352,7 @@
 
 .profile-notif-time {
     margin-top: 4px;
-    font-size: 0.75rem;
+    font-size: 0.66rem;
     color: #64748b;
 }
 

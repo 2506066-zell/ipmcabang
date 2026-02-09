@@ -121,9 +121,9 @@
         const fetchNotifications = async () => {
             try {
                 if (session) {
-                    let res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
+                    let res = await fetch('/api/users?action=notifications', { headers: { Authorization: `Bearer ${session}` } });
                     if (res.status === 404) {
-                        res = await fetch('/api/users?action=notifications', { headers: { Authorization: `Bearer ${session}` } });
+                        res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
                     }
                     if (res.ok) {
                         const data = await res.json();
