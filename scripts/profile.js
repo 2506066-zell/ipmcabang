@@ -36,8 +36,8 @@
 
     function renderProfile(container) {
         container.innerHTML = `
-            <div class="profile-shell">
-                <div class="profile-card">
+            <div class="profile-shell dropdown">
+                <div class="profile-card compact">
                     <button type="button" class="profile-close-btn" id="profile-close-btn" aria-label="Tutup">
                         <i class="fas fa-times"></i>
                     </button>
@@ -62,11 +62,6 @@
                             <span class="profile-value" id="profile-info-pimpinan">-</span>
                         </div>
                     </div>
-                    <div class="profile-actions">
-                        <button type="button" class="profile-btn primary" id="profile-logout-btn">Logout</button>
-                    </div>
-                </div>
-                <div class="profile-card profile-activity-card">
                     <div class="profile-section-header">📊 Aktivitas</div>
                     <div class="profile-activity-list">
                         <div class="profile-activity-row">
@@ -94,8 +89,10 @@
                     <div class="profile-notif-list collapsed" id="profile-notif-list">
                         <div class="profile-notif-empty">Belum ada notifikasi.</div>
                     </div>
+                    <div class="profile-actions compact-actions">
+                        <button type="button" class="profile-btn primary" id="profile-logout-btn">Logout</button>
+                    </div>
                 </div>
-                <button type="button" class="profile-footer-close" id="profile-footer-close">Tutup</button>
             </div>
         `;
     }
@@ -297,6 +294,12 @@
         document.body.classList.add('body-no-scroll');
         const root = overlayEl.querySelector('#profile-root');
         if (root) {
+            const trigger = document.getElementById('profile-header-btn');
+            if (trigger) {
+                const rect = trigger.getBoundingClientRect();
+                root.style.setProperty('--profile-trigger-top', `${Math.round(rect.bottom + window.scrollY)}px`);
+                root.style.setProperty('--profile-trigger-right', `${Math.round(window.innerWidth - rect.right)}px`);
+            }
             renderProfile(root);
             loadProfileData(root);
             bindLogout(root);
@@ -309,25 +312,6 @@
         requestAnimationFrame(() => {
             overlayEl.classList.add('show');
         });
-
-        // Swipe down to close (mobile)
-        let startY = 0;
-        let currentY = 0;
-        const onTouchStart = (e) => {
-            startY = e.touches[0].clientY;
-            currentY = startY;
-        };
-        const onTouchMove = (e) => {
-            currentY = e.touches[0].clientY;
-        };
-        const onTouchEnd = () => {
-            if (currentY - startY > 120) closeOverlay();
-            startY = 0;
-            currentY = 0;
-        };
-        overlayEl.addEventListener('touchstart', onTouchStart, { passive: true });
-        overlayEl.addEventListener('touchmove', onTouchMove, { passive: true });
-        overlayEl.addEventListener('touchend', onTouchEnd);
     }
 
     function closeOverlay() {
@@ -367,7 +351,6 @@
         if (!overlayEl) return;
         if (e.target === overlayEl) closeOverlay();
         if (e.target && e.target.closest && e.target.closest('#profile-close-btn')) closeOverlay();
-        if (e.target && e.target.closest && e.target.closest('#profile-footer-close')) closeOverlay();
     });
 })();
 

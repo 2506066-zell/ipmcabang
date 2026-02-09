@@ -121,7 +121,10 @@
         const fetchNotifications = async () => {
             try {
                 if (session) {
-                    const res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
+                    let res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
+                    if (res.status === 404) {
+                        res = await fetch('/api/users?action=notifications', { headers: { Authorization: `Bearer ${session}` } });
+                    }
                     if (res.ok) {
                         const data = await res.json();
                         if (data.status === 'success' && Array.isArray(data.notifications)) {
@@ -245,6 +248,7 @@
         // Fallback: event delegation to always close
         document.addEventListener('click', (e) => {
             if (e.target && e.target.closest && e.target.closest('#notif-close')) closePanel();
+            if (e.target && e.target.closest && e.target.closest('#notif-overlay')) closePanel();
         });
 
         document.addEventListener('keydown', (e) => {
@@ -543,6 +547,16 @@
             const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             const scrolled = (winScroll / height) * 100;
             if (scrollBar) scrollBar.style.width = scrolled + "%";
+        });
+    }
+
+    // Quiz instructions toggle (global)
+    const instrToggle = document.getElementById('quiz-instructions-toggle');
+    const instrBody = document.getElementById('quiz-instructions-body');
+    if (instrToggle && instrBody) {
+        instrToggle.addEventListener('click', () => {
+            instrBody.classList.toggle('collapsed');
+            instrToggle.classList.toggle('collapsed');
         });
     }
 });

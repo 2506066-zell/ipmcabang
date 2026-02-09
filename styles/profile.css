@@ -5,39 +5,72 @@
 .profile-overlay {
     position: fixed;
     inset: 0;
-    background: #f8fafc;
+    background: transparent;
     z-index: 1600;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 16px;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 72px 16px 16px;
     overflow: auto;
     opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.2s ease;
 }
 
 .profile-overlay.show {
     opacity: 1;
-    transform: translateY(0);
 }
 
 .profile-shell {
     width: 100%;
-    max-width: 520px;
-    animation: profileFadeIn 0.4s ease;
+    max-width: 360px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+    transform-origin: top right;
+    transform: translateY(-6px) scale(0.98);
+    opacity: 0;
+    transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.profile-root {
+    position: absolute;
+    top: var(--profile-trigger-top, 72px);
+    right: var(--profile-trigger-right, 16px);
+}
+
+.profile-shell.dropdown {
+    align-items: stretch;
+}
+
+.profile-overlay.show .profile-shell {
+    transform: translateY(0) scale(1);
+    opacity: 1;
 }
 
 .profile-card {
     background: #ffffff;
     border-radius: 16px;
-    padding: 20px;
+    padding: 16px;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
     border: 1px solid rgba(15, 23, 42, 0.06);
     position: relative;
+}
+
+.profile-card.compact {
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
+}
+
+.profile-card.compact::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 32px;
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border-left: 1px solid rgba(15, 23, 42, 0.06);
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    transform: rotate(45deg);
 }
 
 .profile-close-btn {
@@ -108,7 +141,7 @@
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
-    padding: 9px 0;
+    padding: 6px 0;
     border-bottom: 1px solid #eef2f7;
 }
 
@@ -127,7 +160,7 @@
     font-weight: 600;
     color: #0f172a;
     text-align: right;
-    max-width: 55%;
+    max-width: 60%;
     word-break: break-word;
 }
 
@@ -135,6 +168,10 @@
     margin-top: 14px;
     display: flex;
     gap: 10px;
+}
+
+.profile-actions.compact-actions {
+    margin-top: 12px;
 }
 
 .profile-btn {
@@ -190,12 +227,17 @@
     gap: 6px;
 }
 
+.profile-card.compact .profile-activity-list {
+    max-height: 220px;
+    overflow: auto;
+}
+
 .profile-activity-row {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
-    padding: 8px 0;
+    padding: 6px 0;
     border-bottom: 1px solid #eef2f7;
 }
 
@@ -209,46 +251,19 @@
     color: #94a3b8;
 }
 
-.profile-footer-close {
-    width: 100%;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 12px 16px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
-}
-
-@media (max-width: 640px) {
-    .profile-footer-close {
-        position: sticky;
-        bottom: 10px;
-        background: #ffffff;
-    }
-}
 
 @keyframes profileFadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 480px) {
     .profile-overlay {
-        align-items: flex-start;
-        padding-top: 16px;
+        padding-top: 64px;
     }
 
     .profile-card {
         padding: 14px;
-    }
-
-    .profile-activity-card {
-        padding: 12px 14px;
-    }
-
-    .profile-notif-card {
-        padding: 12px 14px;
     }
 
     .profile-info-row,
@@ -272,10 +287,6 @@
 
     .profile-username {
         font-size: 1.05rem;
-    }
-
-    .profile-footer-close {
-        padding: 10px 14px;
     }
 }
 
