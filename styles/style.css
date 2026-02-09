@@ -4381,3 +4381,28 @@ body.quiz-active .premium-fab-container {
     opacity: 1;
 }
 
+/* Install button in bottom nav */
+.bottom-nav .install-app-btn {
+    background: transparent;
+    border: none;
+    color: #1a1a1a;
+    font-size: 12px;
+    opacity: 0.7;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 4px;
+    width: 100%;
+}
+
+.bottom-nav .install-app-btn i {
+    font-size: 18px;
+}
+
+.bottom-nav .install-app-btn:hover {
+    opacity: 1;
+}
+

@@ -38,20 +38,57 @@
         container.innerHTML = `
             <div class="profile-shell">
                 <div class="profile-card">
-                    <div class="profile-avatar" id="profile-avatar">U</div>
-                    <h1 class="profile-username" id="profile-username">Pengguna</h1>
-                    <div class="profile-subtext" id="profile-subtext">Profil Akun</div>
-                    <div class="profile-divider"></div>
-                    <div class="profile-info">
-                        <div class="profile-row"><span>Username</span><span id="profile-info-username">-</span></div>
-                        <div class="profile-row"><span>Nama Lengkap</span><span id="profile-info-fullname">-</span></div>
-                        <div class="profile-row"><span>Asal Pimpinan</span><span id="profile-info-pimpinan">-</span></div>
-                        <div class="profile-row"><span>Password</span><span>••••••••</span></div>
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profile-avatar">U</div>
+                        <div class="profile-header-text">
+                            <h1 class="profile-username" id="profile-username">Pengguna</h1>
+                            <div class="profile-subtext" id="profile-subtext">Profil Akun</div>
+                        </div>
+                    </div>
+                    <div class="profile-info-grid">
+                        <div class="profile-info-row">
+                            <span class="profile-label">Username</span>
+                            <span class="profile-value" id="profile-info-username">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-label">Nama Lengkap</span>
+                            <span class="profile-value" id="profile-info-fullname">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-label">Asal Pimpinan</span>
+                            <span class="profile-value" id="profile-info-pimpinan">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-label">Password</span>
+                            <span class="profile-value">••••••••</span>
+                        </div>
                     </div>
                     <div class="profile-actions">
                         <button type="button" class="profile-btn secondary" id="profile-edit-btn" disabled>Edit Profil</button>
                         <button type="button" class="profile-btn primary" id="profile-logout-btn">Logout</button>
                     </div>
+                </div>
+                <div class="profile-card profile-activity-card">
+                    <div class="profile-activity-header">📊 Aktivitas</div>
+                    <div class="profile-activity-list">
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Status Kuis</span>
+                            <span class="profile-value">Belum menyelesaikan kuis</span>
+                        </div>
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Skor Terakhir</span>
+                            <span class="profile-value">-</span>
+                        </div>
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Total Kuis Diselesaikan</span>
+                            <span class="profile-value">0</span>
+                        </div>
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Ranking Saat Ini</span>
+                            <span class="profile-value">-</span>
+                        </div>
+                    </div>
+                    <div class="profile-activity-empty">Belum ada aktivitas kuis.</div>
                 </div>
             </div>
         `;

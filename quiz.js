@@ -74,7 +74,7 @@ async function fetchQuestions() {
             quizBody.style.display = 'block';
             quizBody.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon">ðŸ™‚</div>
+                    <div class="empty-icon"><i class="fas fa-info-circle"></i></div>
                         <h3>Soal belum tersedia</h3>
                         <p>Coba muat ulang beberapa saat lagi.</p>
                         <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
@@ -91,7 +91,7 @@ async function fetchQuestions() {
         quizBody.style.display = 'block';
         quizBody.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">âš ï¸</div>
+                    <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
                     <h3>Gagal memuat kuis</h3>
                     <p>${error.message}</p>
                     <button id="empty-reload-quiz" class="login-button">Muat Ulang</button>
@@ -419,7 +419,7 @@ function updateSetCards(summarySets, schedules, timeOnly = false) {
         if (small && !timeOnly) {
             // ... existing small update logic ...
             if (status === 'active' || status === 'ending_soon') {
-                small.innerHTML = `ðŸ”¥ ${count} Soal &middot; Aktif`;
+                small.innerHTML = `<i class="fas fa-check-circle"></i> ${count} Soal &middot; Aktif`;
                 small.className = 'small active-text';
             } else {
                 small.innerHTML = `${count} Soal`;
@@ -674,7 +674,7 @@ async function finishQuiz() {
         if (response.ok && data.status === 'success') {
             try { localStorage.removeItem('ipm_ranking_cache'); } catch { }
 
-            if (window.Toast) window.Toast.show('Jawaban berhasil dikirim! ðŸŽ‰', 'success');
+            if (window.Toast) window.Toast.show('Jawaban berhasil dikirim!', 'success');
 
             // Show result UI with Server Data
             quizHeader.style.display = 'none';
