@@ -8,7 +8,14 @@
     const bodyClass = document.body && document.body.className || '';
     if (/\bpage-quiz\b/.test(bodyClass)) {
       const s = getSession();
-      if (!s) window.location.href = 'login.html';
+      if (!s) {
+        try {
+          if (!sessionStorage.getItem('ipmquiz_flash')) {
+            sessionStorage.setItem('ipmquiz_flash', 'Silakan login untuk melanjutkan.');
+          }
+        } catch {}
+        window.location.href = 'login.html';
+      }
     }
   }
   document.addEventListener('DOMContentLoaded', guard);

@@ -49,7 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.removeItem(USER_USERNAME_KEY);
             localStorage.removeItem(USER_SESSION_KEY);
             localStorage.removeItem(USER_USERNAME_KEY);
-            window.location.href = 'login.html';
+            try {
+                sessionStorage.setItem('ipmquiz_flash', 'Anda telah keluar. Silakan masuk kembali.');
+            } catch {}
+            if (window.Toast) Toast.show('Berhasil keluar', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 300);
         });
     }
 

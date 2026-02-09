@@ -20,6 +20,13 @@
     if (!input) return;
     input.type = input.type === 'password' ? 'text' : 'password';
   }
+  function showError(msg) {
+    const err = qs('error-message');
+    if (err) {
+      err.textContent = msg || '';
+      err.style.display = msg ? 'block' : 'none';
+    }
+  }
   function onSubmit(e) {
     e.preventDefault();
     const unameEl = qs('username');
@@ -30,9 +37,11 @@
     const password = String(passEl && passEl.value || '');
     const remember = !!(rememberEl && rememberEl.checked);
     if (!username || !password) {
-      if (err) err.textContent = 'Username dan password wajib';
+      showError('Username dan password wajib diisi.');
+      if (window.Toast) Toast.show('Lengkapi username dan password.', 'info');
       return;
     }
+    showError('');
     if (window.AppLoader) AppLoader.show('Masuk...');
     fetch(API_BASE, {
       method: 'POST',
@@ -52,8 +61,11 @@
       window.location.href = 'quiz.html';
     })
     .catch((e) => {
-      if (err) err.textContent = e.message;
-      if (window.Toast) Toast.show(e.message, 'error');
+      const msg = (e && e.message && /username|password|salah|unauthorized/i.test(e.message))
+        ? 'Username atau password salah.'
+        : 'Gagal masuk. Periksa koneksi lalu coba lagi.';
+      showError(msg);
+      if (window.Toast) Toast.show(msg, 'error');
     })
     .finally(() => {
       if (window.AppLoader) AppLoader.hide();
@@ -64,5 +76,11 @@
     const toggle = qs('toggle-password');
     if (toggle) toggle.addEventListener('click', togglePassword);
     if (form) form.addEventListener('submit', onSubmit);
+    const flash = sessionStorage.getItem('ipmquiz_flash');
+    if (flash) {
+      sessionStorage.removeItem('ipmquiz_flash');
+      showError(flash);
+      if (window.Toast) Toast.show(flash, 'info');
+    }
   });
 })();

@@ -780,6 +780,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.existingSession = sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
 
     if (!window.existingSession) {
+        try {
+            if (!sessionStorage.getItem('ipmquiz_flash')) {
+                sessionStorage.setItem('ipmquiz_flash', 'Silakan login untuk mengerjakan kuis.');
+            }
+        } catch {}
         window.location.href = 'login.html';
         return;
     }

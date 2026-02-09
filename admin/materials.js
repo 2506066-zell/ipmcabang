@@ -20,7 +20,6 @@ export function initMaterials(state, els, api) {
     const inpCategory = document.getElementById('mat-category');
     const inpFileUrl = document.getElementById('mat-file-url');
     const inpThumbnail = document.getElementById('mat-thumbnail');
-    const inpAuthor = document.getElementById('mat-author');
     const inpActive = document.getElementById('mat-active');
 
     // Close Buttons
@@ -251,7 +250,6 @@ export function initMaterials(state, els, api) {
             inpCategory.value = mat.category || 'Umum';
             inpFileUrl.value = mat.file_url || '';
             inpThumbnail.value = mat.thumbnail || '';
-            inpAuthor.value = mat.author || '';
             inpActive.checked = mat.active;
 
             if (mat.thumbnail) {
@@ -320,7 +318,6 @@ export function initMaterials(state, els, api) {
                 category: inpCategory.value,
                 file_url: fileUrl,
                 thumbnail: thumbUrl,
-                author: inpAuthor.value,
                 active: inpActive.checked
             };
 

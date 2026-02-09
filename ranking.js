@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const filterButtons = document.querySelectorAll('.filter-btn');
     const rankToast = document.getElementById('rank-toast');
+    const rankingPeriod = document.getElementById('ranking-period');
 
     // State
     let allData = [];
@@ -28,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.style.display = 'block';
         }
         if (isLoading) errorContainer.style.display = 'none';
+    }
+    
+    function setRankingPeriod() {
+        if (!rankingPeriod) return;
+        const now = new Date();
+        const month = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        rankingPeriod.textContent = `Periode: ${month}`;
     }
 
     function showError(message) {
@@ -195,12 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
             podiumItem.innerHTML = `
                 <div class="avatar-container ring-${rank}">
                     ${rank === 1 ? '<div class="crown-box"><i class="fas fa-crown crown-icon"></i></div>' : ''}
+                    ${rank === 1 ? '<div class="badge-box gold">1</div>' : ''}
                     ${rank === 2 ? '<div class="badge-box silver">2</div>' : ''}
                     ${rank === 3 ? '<div class="badge-box bronze">3</div>' : ''}
                     <div class="avatar-char">${(p.username || '?').charAt(0).toUpperCase()}</div>
                     ${activeBadge}
                 </div>
                 <div class="podium-base">
+                    <div class="podium-rank">Juara ${rank}</div>
                     <div class="podium-name">${p.username}</div>
                     <div class="podium-score">${p.score} <span>pts</span></div>
                 </div>
@@ -360,6 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (reloadBtn) reloadBtn.addEventListener('click', () => fetchRankingData());
 
     // Initial Load (Cache then Network)
+    setRankingPeriod();
     try {
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
         if (cached && Array.isArray(cached.data) && (Date.now() - cached.t < 60000 * 5)) {

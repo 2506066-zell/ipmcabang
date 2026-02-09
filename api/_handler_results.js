@@ -2,7 +2,28 @@ const { query, rawQuery } = require('./_db');
 const { json, cacheHeaders, parseJsonBody } = require('./_util');
 const { requireAdminAuth } = require('./_auth');
 
+function getCurrentResetYm() {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+}
+
+async function ensureMonthlyReset() {
+    const ym = getCurrentResetYm();
+    const row = (await query`SELECT value FROM system_settings WHERE key='ranking_reset_ym'`).rows[0];
+    const last = row?.value || '';
+    if (last === ym) return;
+
+    // Reset leaderboard data for new month
+    await query`DELETE FROM results`;
+    await query`INSERT INTO system_settings (key, value, updated_at)
+        VALUES ('ranking_reset_ym', ${ym}, NOW())
+        ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()`;
+}
+
 async function list(req, res) {
+    try { await ensureMonthlyReset(); } catch (e) { console.error('Monthly reset failed:', e); }
     const page = req.query.page ? Number(req.query.page) : 1;
     const size = req.query.size ? Number(req.query.size) : 200;
     const limit = Math.max(1, Math.min(500, size));
@@ -25,6 +46,7 @@ async function list(req, res) {
 }
 
 async function create(req, res) {
+    try { await ensureMonthlyReset(); } catch (e) { console.error('Monthly reset failed:', e); }
     const b = parseJsonBody(req);
     const session = String(b.session || '').trim();
     const quiz_set = Number(b.quiz_set || 1);

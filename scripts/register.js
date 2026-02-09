@@ -7,17 +7,25 @@
     if (!input) return;
     input.type = input.type === 'password' ? 'text' : 'password';
   }
+  function showMessage(msg) {
+    const message = qs('message');
+    if (message) {
+      message.textContent = msg || '';
+      message.style.display = msg ? 'block' : 'none';
+    }
+  }
   function onSubmit(e) {
     e.preventDefault();
     const nama = String(qs('namaPanjang')?.value || '').trim();
     const pimpinan = String(qs('pimpinan')?.value || '').trim();
     const username = String(qs('username')?.value || '').trim().toLowerCase();
     const password = String(qs('password')?.value || '');
-    const message = qs('message');
     if (!nama || !pimpinan || !username || !password) {
-      if (message) message.textContent = 'Semua field wajib diisi';
+      showMessage('Semua field wajib diisi.');
+      if (window.Toast) Toast.show('Lengkapi semua data pendaftaran.', 'info');
       return;
     }
+    showMessage('');
     if (window.AppLoader) AppLoader.show('Mendaftar...');
     fetch(API_BASE, {
       method: 'POST',
@@ -34,8 +42,10 @@
       window.location.href = 'login.html';
     })
     .catch((e) => {
-      if (message) message.textContent = e.message;
-      if (window.Toast) Toast.show(e.message, 'error');
+      const raw = String(e && e.message || '');
+      const msg = raw.toLowerCase().includes('username') ? raw : 'Gagal mendaftar. Coba lagi.';
+      showMessage(msg);
+      if (window.Toast) Toast.show(msg, 'error');
     })
     .finally(() => {
       if (window.AppLoader) AppLoader.hide();
