@@ -99,6 +99,8 @@ const toast = (message, type = 'info') => {
   }
 };
 
+const questionCache = new Map();
+
 function useSession() {
   const [session, setSession] = useState('');
   const [username, setUsername] = useState('Pengguna');
@@ -212,12 +214,12 @@ function useGamificationSettings() {
   return settings;
 }
 
-function Dashboard({ profile, questPop }) {
+function Dashboard({ profile, questPop, questPulse }) {
   const { level, inLevel, next } = calcLevel(profile.xpTotal || 0);
   const settings = profile.__settings || DEFAULT_SETTINGS;
   const progress = Math.min(100, Math.round((inLevel / next) * 100));
   const completedSets = Array.isArray(profile.completedSets) ? profile.completedSets : [];
-  const quests = [
+  const quests = useMemo(() => ([
     {
       id: 'daily-3',
       label: `Selesaikan ${settings.quest_daily_target} kuis hari ini`,
@@ -260,11 +262,13 @@ function Dashboard({ profile, questPop }) {
       total: 2,
       done: completedSets.length >= 2
     }
-  ];
+  ]), [settings, profile.todayCount, profile.highScoreToday, profile.totalCompleted, profile.streak, completedSets.length]);
+
+  const activeQuest = useMemo(() => quests.find(q => !q.done) || quests[quests.length - 1], [quests]);
 
   return (
-    <div className="quiz-grid">
-      <div className="quiz-card xp-card">
+    <div className="quiz-side-by-side">
+      <div className="quiz-card quiz-side-card xp-card">
         <h3>Level {level}</h3>
         <div className="xp-bar"><span style={{ width: `${progress}%` }} /></div>
         <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{inLevel} XP / {next} XP</div>
@@ -274,22 +278,32 @@ function Dashboard({ profile, questPop }) {
         )}
         <a className="quiz-link" href="/ranking.html">Lihat Ranking</a>
       </div>
-      <div className="quiz-card quest-card">
+      <div className={`quiz-card quiz-side-card quest-card ${questPulse ? 'is-celebrating' : ''}`}>
         <h3>Quest Aktif</h3>
         {questPop && (
           <div className="quest-pop" role="status">{questPop}</div>
         )}
-        {quests.map(q => (
-          <div key={q.id} className={`quest-item ${q.done ? 'quest-done' : ''}`}>
+        {activeQuest ? (
+          <div key={activeQuest.id} className={`quest-item is-single ${activeQuest.done ? 'quest-done' : ''}`}>
             <div className="quest-meta">
-              <span>{q.label}</span>
-              <span>{q.value} / {q.total}</span>
+              <span>{activeQuest.label}</span>
+              <span>{activeQuest.value} / {activeQuest.total}</span>
             </div>
             <div className="quest-bar">
-              <span style={{ width: `${Math.min(100, Math.round((q.value / q.total) * 100))}%` }} />
+              <span style={{ width: `${Math.min(100, Math.round((activeQuest.value / activeQuest.total) * 100))}%` }} />
             </div>
           </div>
-        ))}
+        ) : (
+          <div className="quest-item is-single">
+            <div className="quest-meta">
+              <span>Semua quest selesai hari ini</span>
+              <span>100%</span>
+            </div>
+            <div className="quest-bar">
+              <span style={{ width: '100%' }} />
+            </div>
+          </div>
+        )}
         {profile.badges && profile.badges.length > 0 && (
           <div style={{ marginTop: 10 }}>
             {profile.badges.map((b) => (
@@ -338,43 +352,68 @@ function QuizList({ sets, loading, error, onSelect, onReload }) {
   );
 }
 
-function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSeconds, xpBurst, soundOn, onToggleSound, onSound, streak, streakPulse }) {
+function QuizQuestion({
+  quizSet,
+  onExit,
+  onFinish,
+  onImmediateReward,
+  timerSeconds,
+  xpBurst,
+  soundOn,
+  onToggleSound,
+  onSound,
+  streak,
+  streakPulse,
+  initialProgress,
+  onProgress,
+  forcedIndex,
+  onForcedIndexApplied
+}) {
   const [questions, setQuestions] = useState([]);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(initialProgress && typeof initialProgress.index === 'number' ? initialProgress.index : 0);
   const [selected, setSelected] = useState(null);
   const [timer, setTimer] = useState(timerSeconds || 20);
   const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState((initialProgress && initialProgress.answers) || {});
   const [feedback, setFeedback] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackTone, setFeedbackTone] = useState('neutral');
   const [hasCorrect, setHasCorrect] = useState(false);
   const [animate, setAnimate] = useState(false);
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef((initialProgress && initialProgress.startedAt) || Date.now());
   const confettiRef = useRef(null);
+  const popSyncRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/questions?set=${quizSet}`);
-        if (!res.ok) throw new Error('Gagal memuat soal.');
-        const data = await res.json();
-        const rows = Array.isArray(data.questions) ? data.questions : (Array.isArray(data) ? data : []);
-        const normalized = rows.map((q) => ({
-          id: q.id,
-          question: q.question || q.question_text,
-          options: normalizeOptions(q.options),
-          correct: q.correct_answer || q.correct_option || q.correct || null
-        }));
-        if (!mounted) return;
-        setQuestions(normalized);
-        setHasCorrect(normalized.some(q => !!q.correct));
-        setIndex(0);
-        setAnswers({});
+        if (questionCache.has(quizSet)) {
+          const cached = questionCache.get(quizSet);
+          if (!mounted) return;
+          setQuestions(cached);
+          setHasCorrect(cached.some(q => !!q.correct));
+        } else {
+          const res = await fetch(`${API_URL}/questions?set=${quizSet}`);
+          if (!res.ok) throw new Error('Gagal memuat soal.');
+          const data = await res.json();
+          const rows = Array.isArray(data.questions) ? data.questions : (Array.isArray(data) ? data : []);
+          const normalized = rows.map((q) => ({
+            id: q.id,
+            question: q.question || q.question_text,
+            options: normalizeOptions(q.options),
+            correct: q.correct_answer || q.correct_option || q.correct || null
+          }));
+          questionCache.set(quizSet, normalized);
+          if (!mounted) return;
+          setQuestions(normalized);
+          setHasCorrect(normalized.some(q => !!q.correct));
+        }
+        setIndex((initialProgress && typeof initialProgress.index === 'number') ? initialProgress.index : 0);
+        setAnswers((initialProgress && initialProgress.answers) || {});
         setSelected(null);
-        startedAt.current = Date.now();
+        startedAt.current = (initialProgress && initialProgress.startedAt) || Date.now();
       } catch (e) {
         toast(e.message || 'Gagal memuat soal', 'error');
       } finally {
@@ -398,6 +437,29 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
   }, [index, questions, timerSeconds]);
 
   useEffect(() => {
+    if (typeof forcedIndex !== 'number') return;
+    if (forcedIndex === index) return;
+    popSyncRef.current = true;
+    setIndex(Math.max(0, Math.min(forcedIndex, questions.length ? questions.length - 1 : forcedIndex)));
+    if (typeof onForcedIndexApplied === 'function') {
+      onForcedIndexApplied();
+    }
+  }, [forcedIndex, questions.length, index]);
+
+  useEffect(() => {
+    if (!questions.length) return;
+    if (popSyncRef.current) {
+      popSyncRef.current = false;
+      return;
+    }
+    const state = { view: 'question', set: quizSet, index };
+    const current = window.history.state || {};
+    if (current.view !== 'question' || current.set !== quizSet || current.index !== index) {
+      window.history.pushState(state, '', window.location.href);
+    }
+  }, [index, quizSet, questions.length]);
+
+  useEffect(() => {
     if (loading || !questions[index]) return;
     if (timer <= 0) {
       handleAnswer(null);
@@ -406,6 +468,11 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
     const id = setTimeout(() => setTimer(t => t - 1), 1000);
     return () => clearTimeout(id);
   }, [timer, loading, index, questions]);
+
+  useEffect(() => {
+    if (typeof onProgress !== 'function') return;
+    onProgress({ index, answers, startedAt: startedAt.current });
+  }, [index, answers, onProgress]);
 
   const spawnConfetti = () => {
     const host = confettiRef.current;
@@ -563,10 +630,10 @@ function NextQuizCountdown({ nextQuiz }) {
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
       const parts = [];
-      if (days) parts.push(`${days}h`);
-      parts.push(`${String(hours).padStart(2, '0')}j`);
+      parts.push(`${String(days).padStart(2, '0')}d`);
+      parts.push(`${String(hours).padStart(2, '0')}h`);
       parts.push(`${String(minutes).padStart(2, '0')}m`);
-      parts.push(`${String(seconds).padStart(2, '0')}d`);
+      parts.push(`${String(seconds).padStart(2, '0')}s`);
       setTimeLeft(parts.join(' '));
     };
 
@@ -578,12 +645,50 @@ function NextQuizCountdown({ nextQuiz }) {
   if (!nextQuiz || !nextQuiz.title) return null;
 
   return (
-    <div className="quiz-top-grid">
-      <div className="quiz-top-card">
-        <div className="quiz-top-label">Kuis Berikutnya</div>
-        <div className="quiz-top-title">{nextQuiz.title}</div>
-        {nextQuiz.topic && <div className="quiz-top-subtitle">{nextQuiz.topic}</div>}
-        {timeLeft && <div className="quiz-top-countdown">{timeLeft}</div>}
+    <div className="quiz-countdown-bar">
+      <div className="quiz-countdown-meta">
+        <div className="quiz-countdown-badge"><i className="fas fa-bolt"></i> Update Kuis</div>
+        <div className="quiz-countdown-title">{nextQuiz.title}</div>
+        <div className="quiz-countdown-headline">Quiz level berikutnya segera dimulai.</div>
+        {nextQuiz.topic && <div className="quiz-countdown-note">Topik: {nextQuiz.topic}</div>}
+        {!nextQuiz.topic && <div className="quiz-countdown-note">Persiapkan diri, kuis dimulai sebentar lagi.</div>}
+      </div>
+      {timeLeft && (
+        <div className="quiz-countdown-timer">
+          <i className="fas fa-clock"></i>
+          <span>Kuis mulai dalam: {timeLeft}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuizResult({ summary, onClose }) {
+  if (!summary) return null;
+  return (
+    <div className="quiz-result-card">
+      <div style={{ fontWeight: 700 }}>Ringkasan Hasil</div>
+      <div className="quiz-result-grid">
+        <div className="quiz-result-stat positive">
+          <span>Benar</span>
+          <strong>{summary.correct}</strong>
+        </div>
+        <div className="quiz-result-stat negative">
+          <span>Salah</span>
+          <strong>{summary.wrong}</strong>
+        </div>
+        <div className="quiz-result-stat">
+          <span>Total Soal</span>
+          <strong>{summary.total}</strong>
+        </div>
+        <div className="quiz-result-stat">
+          <span>Skor</span>
+          <strong>{summary.percent}%</strong>
+        </div>
+      </div>
+      <div className="quiz-result-actions">
+        <button className="quiz-result-button primary" onClick={onClose}>Selesai</button>
+        <button className="quiz-result-button" onClick={onClose}>Tutup Ringkasan</button>
       </div>
     </div>
   );
@@ -595,17 +700,67 @@ function App() {
   const settings = useGamificationSettings();
   const [profile, setProfile] = useState(loadProfile('guest'));
   const [activeSet, setActiveSet] = useState(null);
+  const [forcedIndex, setForcedIndex] = useState(null);
   const [pulse, setPulse] = useState({ xp: false, streak: false, quest: false, badge: false });
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ipm_quiz_sound') !== 'off');
   const [xpBurst, setXpBurst] = useState(null);
   const [streakPulse, setStreakPulse] = useState(false);
   const [questPop, setQuestPop] = useState('');
+  const [resultSummary, setResultSummary] = useState(null);
+  const [navFade, setNavFade] = useState(false);
+  const progressCacheRef = useRef({});
+  const navLockRef = useRef(false);
+  const scrollKey = 'ipm_quiz_scroll_y';
 
   useEffect(() => {
     if (!username) return;
     const data = loadProfile(username);
     setProfile(data);
   }, [username]);
+
+  useEffect(() => {
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({ view: 'overview' }, '', window.location.href);
+    }
+    const onPopState = (event) => {
+      if (navLockRef.current) return;
+      navLockRef.current = true;
+      setTimeout(() => { navLockRef.current = false; }, 220);
+      setNavFade(true);
+      setTimeout(() => setNavFade(false), 220);
+      const state = event.state || {};
+      if (state.view === 'question') {
+        setActiveSet(state.set);
+        setForcedIndex(typeof state.index === 'number' ? state.index : 0);
+        return;
+      }
+      setActiveSet(null);
+      setForcedIndex(null);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (activeSet) {
+      try {
+        sessionStorage.setItem(scrollKey, String(window.scrollY || 0));
+      } catch (e) {}
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } else {
+      let y = 0;
+      try {
+        y = Number(sessionStorage.getItem(scrollKey) || 0);
+      } catch (e) {
+        y = 0;
+      }
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: y, behavior: 'auto' });
+        });
+      });
+    }
+  }, [activeSet]);
 
 
   const updateProfile = (updater) => {
@@ -768,15 +923,24 @@ function App() {
       toast('Hasil tersimpan! XP bertambah.', 'success');
       if (completedQuest.length) {
         completedQuest.forEach(q => toast(`Quest selesai: ${q}`, 'success'));
-        setQuestPop(completedQuest[0]);
-        setTimeout(() => setQuestPop(''), 2000);
-        setPulse((p) => ({ ...p, quest: true }));
-        setTimeout(() => setPulse((p) => ({ ...p, quest: false })), 500);
-      }
+      setQuestPop(completedQuest[0]);
+      setTimeout(() => setQuestPop(''), 2000);
+      setPulse((p) => ({ ...p, quest: true }));
+      setTimeout(() => setPulse((p) => ({ ...p, quest: false })), 500);
+    }
       if (unlockedBadges.length) {
         unlockedBadges.forEach(b => toast(`Badge terbuka: ${b}`, 'success'));
         setPulse((p) => ({ ...p, badge: true }));
         setTimeout(() => setPulse((p) => ({ ...p, badge: false })), 500);
+      }
+      setResultSummary({
+        correct: score,
+        wrong: Math.max(0, totalScore - score),
+        total: totalScore,
+        percent
+      });
+      if (activeSet) {
+        progressCacheRef.current[activeSet] = null;
       }
       setActiveSet(null);
     } catch (e) {
@@ -785,27 +949,43 @@ function App() {
   };
 
   return (
-    <div className="quiz-shell">
+    <div className={`quiz-shell ${navFade ? 'nav-fade' : ''}`}>
       <NextQuizCountdown nextQuiz={nextQuiz} />
       <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
-        <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} />
+        <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} questPulse={pulse.quest} />
       </div>
-      {!activeSet && <QuizList sets={sets} loading={loading} error={error} onSelect={setActiveSet} onReload={reload} />}
-      {activeSet && (
-        <QuizQuestion
-          quizSet={activeSet}
-          onExit={() => setActiveSet(null)}
-          onFinish={finishQuiz}
-          onImmediateReward={handleImmediateReward}
-          timerSeconds={settings.timer_seconds}
-          xpBurst={xpBurst}
-          soundOn={soundOn}
-          onToggleSound={toggleSound}
-          onSound={playSound}
-          streak={profile.streak || 0}
-          streakPulse={streakPulse}
-        />
-      )}
+      <div className="quiz-main">
+        {!activeSet && resultSummary && (
+          <QuizResult summary={resultSummary} onClose={() => setResultSummary(null)} />
+        )}
+        {!activeSet && <QuizList sets={sets} loading={loading} error={error} onSelect={(set) => {
+          setResultSummary(null);
+          setForcedIndex(null);
+          setActiveSet(set);
+        }} onReload={reload} />}
+        {activeSet && (
+          <QuizQuestion
+            quizSet={activeSet}
+            onExit={() => setActiveSet(null)}
+            onFinish={finishQuiz}
+            onImmediateReward={handleImmediateReward}
+            timerSeconds={settings.timer_seconds}
+            xpBurst={xpBurst}
+            soundOn={soundOn}
+            onToggleSound={toggleSound}
+            onSound={playSound}
+            streak={profile.streak || 0}
+            streakPulse={streakPulse}
+            initialProgress={progressCacheRef.current[activeSet] || null}
+            onProgress={(progress) => {
+              if (!activeSet) return;
+              progressCacheRef.current[activeSet] = progress;
+            }}
+            forcedIndex={forcedIndex}
+            onForcedIndexApplied={() => setForcedIndex(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }
