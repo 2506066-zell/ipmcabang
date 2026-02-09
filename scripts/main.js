@@ -55,6 +55,16 @@
         });
     }
 
+    // Open profile modal if redirected from /profile page
+    try {
+        if (sessionStorage.getItem('open_profile_modal') === '1') {
+            sessionStorage.removeItem('open_profile_modal');
+            if (window.ProfilePage && window.ProfilePage.open) {
+                window.ProfilePage.open();
+            }
+        }
+    } catch {}
+
     // --- Notifications (Global) ---
     if (!window.__notifInitialized && headerRight) {
         window.__notifInitialized = true;
@@ -212,7 +222,10 @@
             overlay.hidden = true;
         };
 
-        bell?.addEventListener('click', openPanel);
+        bell?.addEventListener('click', () => {
+            if (panel.hidden) openPanel();
+            else closePanel();
+        });
         overlay?.addEventListener('click', closePanel);
         document.getElementById('notif-close')?.addEventListener('click', closePanel);
         document.getElementById('notif-mark-read')?.addEventListener('click', () => {
@@ -227,6 +240,15 @@
             }
             state.articleUnread = 0;
             closePanel();
+        });
+
+        // Fallback: event delegation to always close
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.closest && e.target.closest('#notif-close')) closePanel();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePanel();
         });
 
         // Update last seen when opening article detail page

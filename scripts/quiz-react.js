@@ -296,7 +296,9 @@ function QuizList({ sets, onSelect }) {
         ))}
       </div>
       {sets.length === 0 && (
-        <div style={{ fontSize: '0.9rem', color: '#64748b' }}>Belum ada kuis tersedia.</div>
+        <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
+          Belum ada kuis aktif. Pastikan soal sudah diaktifkan oleh admin.
+        </div>
       )}
     </div>
   );
@@ -617,3 +619,13 @@ function App() {
 
 const root = ReactDOM.createRoot(document.getElementById('app'));
 root.render(<App />);
+
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('quiz-instructions-toggle');
+  const body = document.getElementById('quiz-instructions-body');
+  if (!toggle || !body) return;
+  toggle.addEventListener('click', () => {
+    body.classList.toggle('collapsed');
+    toggle.classList.toggle('collapsed');
+  });
+});

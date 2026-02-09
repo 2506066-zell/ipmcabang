@@ -470,9 +470,18 @@
             const data = await apiAdminVercel('POST', '/api/admin/questions?action=gamificationSave', payload);
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan');
             setStatus('Pengaturan gamifikasi disimpan.', 'ok');
-            if (els.gmStatus) els.gmStatus.textContent = 'Tersimpan';
+            if (els.gmStatus) {
+                els.gmStatus.textContent = 'Tersimpan';
+                els.gmStatus.className = 'status ok';
+            }
+            await loadGamificationSettings();
         } catch (e) {
+            console.error('Save gamification failed:', e);
             setStatus(e.message || 'Gagal menyimpan', 'error');
+            if (els.gmStatus) {
+                els.gmStatus.textContent = e.message || 'Gagal menyimpan';
+                els.gmStatus.className = 'status error';
+            }
         } finally {
             hideLoader();
         }

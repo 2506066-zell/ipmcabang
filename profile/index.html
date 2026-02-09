@@ -61,5 +61,11 @@
     <script src="/scripts/toast.js" defer></script>
     <script src="/scripts/main.js" defer></script>
     <script src="/scripts/install-header.js" defer></script>
+    <script>
+        try {
+            sessionStorage.setItem('open_profile_modal', '1');
+        } catch {}
+        window.location.href = '/index.html';
+    </script>
     <script src="/scripts/profile.js" defer></script></body>
 </html>

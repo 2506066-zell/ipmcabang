@@ -805,5 +805,14 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchQuestions();
         });
     }
+
+    const toggle = document.getElementById('quiz-instructions-toggle');
+    const body = document.getElementById('quiz-instructions-body');
+    if (toggle && body) {
+        toggle.addEventListener('click', () => {
+            body.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        });
+    }
 });
 

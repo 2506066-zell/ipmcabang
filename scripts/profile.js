@@ -61,18 +61,13 @@
                             <span class="profile-label">Asal Pimpinan</span>
                             <span class="profile-value" id="profile-info-pimpinan">-</span>
                         </div>
-                        <div class="profile-info-row">
-                            <span class="profile-label">Password</span>
-                            <span class="profile-value">••••••••</span>
-                        </div>
                     </div>
                     <div class="profile-actions">
-                        <button type="button" class="profile-btn secondary" id="profile-edit-btn" disabled>Edit Profil</button>
                         <button type="button" class="profile-btn primary" id="profile-logout-btn">Logout</button>
                     </div>
                 </div>
                 <div class="profile-card profile-activity-card">
-                    <div class="profile-activity-header">📊 Aktivitas</div>
+                    <div class="profile-section-header">📊 Aktivitas</div>
                     <div class="profile-activity-list">
                         <div class="profile-activity-row">
                             <span class="profile-label">Status Kuis</span>
@@ -92,13 +87,15 @@
                         </div>
                     </div>
                     <div class="profile-activity-empty" id="profile-activity-empty">Belum ada aktivitas kuis.</div>
-                </div>
-                <div class="profile-card profile-notif-card">
-                    <div class="profile-activity-header">🔔 Notifikasi</div>
-                    <div class="profile-notif-list" id="profile-notif-list">
+                    <div class="profile-section-header profile-notif-header" style="margin-top:12px;">
+                        <span>🔔 Notifikasi</span>
+                        <button type="button" class="profile-notif-toggle" id="profile-notif-toggle">Lihat</button>
+                    </div>
+                    <div class="profile-notif-list collapsed" id="profile-notif-list">
                         <div class="profile-notif-empty">Belum ada notifikasi.</div>
                     </div>
                 </div>
+                <button type="button" class="profile-footer-close" id="profile-footer-close">Tutup</button>
             </div>
         `;
     }
@@ -234,13 +231,42 @@
                 return;
             }
 
-            list.innerHTML = data.notifications.map(n => `
+            const preview = data.notifications.slice(0, 3);
+            const moreCount = data.notifications.length - preview.length;
+            list.innerHTML = preview.map(n => `
                 <div class="profile-notif-item ${n.is_read ? '' : 'unread'}">
-                    <div class="profile-notif-message">${n.message || 'Ada pembaruan.'}</div>
+                    <div class="profile-notif-message">${n.message || 'Ada pembaruan.'}${n.is_read ? '' : '<span class="profile-notif-dot"></span>'}</div>
                     <div class="profile-notif-time">${new Date(n.created_at).toLocaleString('id-ID')}</div>
                 </div>
             `).join('');
+
+            if (moreCount > 0) {
+                const moreBtn = document.createElement('button');
+                moreBtn.type = 'button';
+                moreBtn.className = 'profile-notif-more';
+                moreBtn.textContent = `Lihat semua (${moreCount} lainnya)`;
+                moreBtn.addEventListener('click', () => {
+                    list.innerHTML = data.notifications.map(n => `
+                        <div class="profile-notif-item ${n.is_read ? '' : 'unread'}">
+                            <div class="profile-notif-message">${n.message || 'Ada pembaruan.'}${n.is_read ? '' : '<span class="profile-notif-dot"></span>'}</div>
+                            <div class="profile-notif-time">${new Date(n.created_at).toLocaleString('id-ID')}</div>
+                        </div>
+                    `).join('');
+                    list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+                list.appendChild(moreBtn);
+            }
         } catch {}
+    }
+
+    function bindNotifToggle(container) {
+        const btn = container.querySelector('#profile-notif-toggle');
+        const list = container.querySelector('#profile-notif-list');
+        if (!btn || !list) return;
+        btn.addEventListener('click', () => {
+            const isCollapsed = list.classList.toggle('collapsed');
+            btn.textContent = isCollapsed ? 'Lihat' : 'Sembunyikan';
+        });
     }
 
     function bindLogout(container) {
@@ -274,6 +300,7 @@
             renderProfile(root);
             loadProfileData(root);
             bindLogout(root);
+            bindNotifToggle(root);
             const uname = getStored(USER_USERNAME_KEY);
             loadActivityData(root, uname);
             loadNotifications(root);
@@ -282,6 +309,25 @@
         requestAnimationFrame(() => {
             overlayEl.classList.add('show');
         });
+
+        // Swipe down to close (mobile)
+        let startY = 0;
+        let currentY = 0;
+        const onTouchStart = (e) => {
+            startY = e.touches[0].clientY;
+            currentY = startY;
+        };
+        const onTouchMove = (e) => {
+            currentY = e.touches[0].clientY;
+        };
+        const onTouchEnd = () => {
+            if (currentY - startY > 120) closeOverlay();
+            startY = 0;
+            currentY = 0;
+        };
+        overlayEl.addEventListener('touchstart', onTouchStart, { passive: true });
+        overlayEl.addEventListener('touchmove', onTouchMove, { passive: true });
+        overlayEl.addEventListener('touchend', onTouchEnd);
     }
 
     function closeOverlay() {
@@ -310,6 +356,7 @@
             renderProfile(root);
             loadProfileData(root);
             bindLogout(root);
+            bindNotifToggle(root);
             const uname = getStored(USER_USERNAME_KEY);
             loadActivityData(root, uname);
             loadNotifications(root);
@@ -320,6 +367,7 @@
         if (!overlayEl) return;
         if (e.target === overlayEl) closeOverlay();
         if (e.target && e.target.closest && e.target.closest('#profile-close-btn')) closeOverlay();
+        if (e.target && e.target.closest && e.target.closest('#profile-footer-close')) closeOverlay();
     });
 })();
 
