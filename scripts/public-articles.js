@@ -1,4 +1,5 @@
 const API_BASE = '/api/articles';
+let listInitialized = false;
 
 export function initPublicArticles() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -41,6 +42,7 @@ export function initPublicArticles() {
 
 // --- List Page Logic ---
 function initListPage() {
+    if (listInitialized) return;
     const grid = document.getElementById('articles-grid');
     const searchInput = document.getElementById('search-input');
     const sortSelect = document.getElementById('sort-select');
@@ -183,6 +185,7 @@ function initListPage() {
 
     initSidebar();
     fetchArticles();
+    listInitialized = true;
 }
 
 // --- Sidebar Logic ---
@@ -220,58 +223,6 @@ async function initSidebar() {
 function initDetailPage(id, slug) {
     const container = document.getElementById('article-detail-content');
     const scrollBar = document.getElementById('detail-scroll-bar');
-    const detailView = document.getElementById('article-detail-view');
-
-    function ensureActionBar() {
-        if (!detailView) return;
-        let bar = document.getElementById('article-action-bar');
-        if (!bar) {
-            bar = document.createElement('div');
-            bar.id = 'article-action-bar';
-            bar.className = 'article-action-bar';
-            bar.innerHTML = `
-                <button class="action-btn action-share" id="action-share-btn">
-                    <i class="fas fa-share-alt"></i> Bagikan
-                </button>
-                <button class="action-btn action-save" id="action-save-btn">
-                    <i class="fas fa-link"></i> Simpan
-                </button>
-            `;
-            document.body.appendChild(bar);
-        }
-
-        const shareBtn = bar.querySelector('#action-share-btn');
-        const saveBtn = bar.querySelector('#action-save-btn');
-
-        if (shareBtn) {
-            shareBtn.onclick = () => {
-                if (window.shareArticleNative) window.shareArticleNative();
-                else if (window.shareArticle) window.shareArticle('copy');
-            };
-        }
-        if (saveBtn) {
-            saveBtn.onclick = () => {
-                if (window.shareArticle) window.shareArticle('copy');
-            };
-        }
-    }
-
-    function ensureBackToTop() {
-        let btn = document.getElementById('article-back-top');
-        if (!btn) {
-            btn = document.createElement('button');
-            btn.id = 'article-back-top';
-            btn.className = 'article-back-top';
-            btn.type = 'button';
-            btn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-            document.body.appendChild(btn);
-        }
-        btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 400) btn.classList.add('visible');
-            else btn.classList.remove('visible');
-        }, { passive: true });
-    }
 
     async function loadDetail() {
         try {
@@ -287,6 +238,8 @@ function initDetailPage(id, slug) {
                 updateSEO(data.article);
                 initScrollProgress();
                 initSidebar(); // Show sidebar even in detail mode (for desktop)
+                renderRecommendations(data.article);
+                setupMoreButton();
             } else {
                 container.innerHTML = '<p style="text-align:center; padding:40px;">Artikel tidak ditemukan.</p>';
             }
@@ -298,7 +251,11 @@ function initDetailPage(id, slug) {
 
     function renderDetail(art) {
         const date = new Date(art.publish_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        const heroImage = art.image ? `<img src="${art.image}" alt="${art.title}" class="detail-hero-img">` : '';
+        const heroImage = art.image ? `
+            <figure class="article-hero">
+                <img src="${art.image}" alt="${art.title}" class="hero-img" loading="lazy" decoding="async">
+            </figure>
+        ` : '';
         window.__currentArticle = {
             title: art.title || 'Artikel',
             url: window.location.href
@@ -315,35 +272,70 @@ function initDetailPage(id, slug) {
 
         container.innerHTML = `
             <article class="article-detail fade-in">
-                <div class="article-detail-header">
-                    <span class="detail-badge">${art.category || 'Umum'}</span>
-                    <h1 class="detail-title">${art.title}</h1>
-                    <div class="detail-meta">
-                        <span><i class="fas fa-user-circle"></i> ${art.author}</span>
-                        <span><i class="fas fa-calendar-alt"></i> ${date}</span>
-                        <span><i class="fas fa-eye"></i> ${art.views || 0} views</span>
-                    </div>
-                </div>
                 ${heroImage}
+                <h1 class="detail-title">${art.title}</h1>
+                <div class="detail-meta">
+                    <span><i class="fas fa-calendar-alt"></i> ${date}</span>
+                    <span><i class="fas fa-tag"></i> ${art.category || 'Umum'}</span>
+                </div>
+                <div class="article-divider"></div>
                 <div class="article-content-body">
                     ${content}
                 </div>
                 <div class="article-share-section" id="article-share-section">
                     <div class="share-title">Bagikan artikel ini</div>
-                    <div class="share-actions">
-                        <button class="share-action-btn whatsapp" onclick="window.shareArticle('whatsapp')">
+                    <div class="share-actions" id="share-actions">
+                        <button class="share-action-btn minimal" data-share="native">Bagikan</button>
+                        <button class="share-action-btn whatsapp" data-share="whatsapp">
                             <i class="fab fa-whatsapp"></i> WhatsApp
                         </button>
-                        <button class="share-action-btn twitter" onclick="window.shareArticle('twitter')">
+                        <button class="share-action-btn twitter" data-share="twitter">
                             <i class="fab fa-x-twitter"></i> Twitter
                         </button>
-                        <button class="share-action-btn copy" onclick="window.shareArticle('copy')">
+                        <button class="share-action-btn copy" data-share="copy">
                             <i class="fas fa-link"></i> Salin Tautan
                         </button>
                     </div>
                 </div>
+                <section class="article-recommendations">
+                    <h2 class="rec-title">Artikel Lainnya Untuk Anda</h2>
+                    <div id="article-recommendations" class="rec-grid">
+                        <div class="rec-loading">Memuat rekomendasi...</div>
+                    </div>
+                </section>
+                <div class="more-articles-wrap">
+                    <button id="more-articles-btn" class="more-articles-btn">Baca Artikel Lainnya</button>
+                </div>
+                <div id="more-articles-sentinel" class="more-articles-sentinel" aria-hidden="true"></div>
             </article>
         `;
+
+        const heroImg = container.querySelector('.hero-img');
+        if (heroImg) {
+            if (heroImg.complete) heroImg.classList.add('is-loaded');
+            else heroImg.addEventListener('load', () => heroImg.classList.add('is-loaded'), { once: true });
+        }
+        setupShareButtons();
+    }
+
+    function setupShareButtons() {
+        const wrap = container.querySelector('#share-actions');
+        if (!wrap) return;
+        const nativeBtn = wrap.querySelector('[data-share="native"]');
+        const waBtn = wrap.querySelector('[data-share="whatsapp"]');
+        const twBtn = wrap.querySelector('[data-share="twitter"]');
+        const copyBtn = wrap.querySelector('[data-share="copy"]');
+        const hasNative = !!navigator.share;
+
+        if (nativeBtn) nativeBtn.style.display = hasNative ? 'inline-flex' : 'none';
+        if (waBtn) waBtn.style.display = hasNative ? 'none' : 'inline-flex';
+        if (twBtn) twBtn.style.display = hasNative ? 'none' : 'inline-flex';
+        if (copyBtn) copyBtn.style.display = 'inline-flex';
+
+        if (nativeBtn) nativeBtn.onclick = () => window.shareArticleNative();
+        if (waBtn) waBtn.onclick = () => window.shareArticle('whatsapp');
+        if (twBtn) twBtn.onclick = () => window.shareArticle('twitter');
+        if (copyBtn) copyBtn.onclick = () => window.shareArticle('copy');
     }
 
     function initScrollProgress() {
@@ -360,9 +352,73 @@ function initDetailPage(id, slug) {
         // ... (SEO implementation same as before)
     }
 
+    function stripHtml(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html || '';
+        return (div.textContent || div.innerText || '').trim();
+    }
+
+    async function renderRecommendations(current) {
+        const wrap = document.getElementById('article-recommendations');
+        if (!wrap) return;
+        try {
+            const res = await fetch(`${API_BASE}?page=1&size=6&sort=newest`);
+            const data = await res.json();
+            const items = (data.articles || []).filter(a => String(a.id) !== String(current.id)).slice(0, 3);
+            if (!items.length) {
+                wrap.innerHTML = '<div class="rec-empty">Belum ada rekomendasi untuk saat ini.</div>';
+                return;
+            }
+            wrap.innerHTML = items.map(a => {
+                const thumb = a.image || 'https://via.placeholder.com/320x180?text=Artikel';
+                const snippet = stripHtml(a.content).slice(0, 120);
+                return `
+                    <a class="rec-card" href="articles.html?id=${a.id}">
+                        <div class="rec-thumb">
+                            <img src="${thumb}" alt="${a.title}" loading="lazy" decoding="async">
+                        </div>
+                        <div class="rec-body">
+                            <div class="rec-card-title">${a.title}</div>
+                            <div class="rec-card-snippet">${snippet}${snippet.length ? '...' : ''}</div>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        } catch (e) {
+            wrap.innerHTML = '<div class="rec-empty">Gagal memuat rekomendasi.</div>';
+        }
+    }
+
+    function setupMoreButton() {
+        const btn = document.getElementById('more-articles-btn');
+        const sentinel = document.getElementById('more-articles-sentinel');
+        if (!btn || !sentinel) return;
+
+        const io = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) btn.classList.add('show');
+        }, { threshold: 0.1 });
+        io.observe(sentinel);
+
+        btn.addEventListener('click', () => {
+            const listView = document.getElementById('articles-list-view');
+            const detailView = document.getElementById('article-detail-view');
+            const sidebar = document.getElementById('articles-sidebar');
+            const backBtn = document.getElementById('header-back-btn');
+            if (listView && detailView && window.location.pathname.includes('articles.html')) {
+                listView.style.display = 'block';
+                detailView.style.display = 'none';
+                if (backBtn) backBtn.style.display = 'none';
+                if (sidebar) sidebar.style.display = 'block';
+                window.history.pushState({}, '', 'articles.html');
+                initListPage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.location.href = 'articles.html';
+            }
+        });
+    }
+
     loadDetail();
-    ensureActionBar();
-    ensureBackToTop();
 }
 
 window.shareArticleNative = function () {
