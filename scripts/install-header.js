@@ -4,8 +4,7 @@
     const SESSION_ID_KEY = 'pwa_install_session_id';
 
     let deferredPrompt = null;
-    let headerButton = null;
-    let navButton = null;
+    let button = null;
 
     const safeGet = (key) => {
         try { return localStorage.getItem(key); } catch { return null; }
@@ -43,20 +42,18 @@
         }
     };
 
-    const hideButtons = () => {
-        if (headerButton) headerButton.hidden = true;
-        if (navButton) navButton.hidden = true;
+    const hideButton = () => {
+        if (button) button.hidden = true;
     };
 
-    const showButtons = () => {
-        if (!deferredPrompt) return;
+    const showButton = () => {
+        if (!button || !deferredPrompt) return;
         if (!isEligibleBase() || dismissedThisSession()) return;
-        if (headerButton) headerButton.hidden = false;
-        if (navButton) navButton.hidden = false;
+        button.hidden = false;
     };
 
-    const ensureHeaderButton = () => {
-        if (headerButton) return;
+    const ensureButton = () => {
+        if (button) return;
         const headerRight = document.querySelector('.header-right-icons');
         if (!headerRight) return;
 
@@ -82,46 +79,6 @@
             headerRight.appendChild(btn);
         }
 
-        headerButton = btn;
-    };
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('[PWA] beforeinstallprompt detected');
-        showButtons();
-    });
-
-    window.addEventListener('appinstalled', () => {
-        safeSet(ACCEPTED_KEY, '1')
-        deferredPrompt = null;
-        hideButtons();
-    });
-
-    const ensureNavButton = () => {
-        if (navButton) return;
-        const bottomNav = document.querySelector('.bottom-nav .bottom-nav-inner') || document.querySelector('.bottom-nav');
-        if (!bottomNav) return;
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'install-app-btn bottom-nav-install';
-        btn.setAttribute('aria-label', 'Install aplikasi');
-        btn.title = 'Install aplikasi';
-        btn.hidden = true;
-        btn.innerHTML = `
-            <i class="fas fa-arrow-down-to-bracket"></i>
-            <span>Install</span>
-        `;
-
-        bottomNav.appendChild(btn);
-        navButton = btn;
-    };
-
-    const bindClick = (btn) => {
-        if (!btn) return;
-        if (btn.__pwaBound) return;
-        btn.__pwaBound = true;
         btn.addEventListener('click', async () => {
             if (!deferredPrompt) return;
             btn.disabled = true;
@@ -130,27 +87,39 @@
                 const choice = await deferredPrompt.userChoice;
                 if (choice && choice.outcome === 'accepted') {
                     safeSet(ACCEPTED_KEY, '1')
-                    hideButtons();
+                    hideButton();
                 } else {
                     safeSet(DISMISSED_SESSION_KEY, getSessionId())
-                    hideButtons();
+                    hideButton();
                 }
             } catch {}
             deferredPrompt = null;
             btn.disabled = false;
         });
+
+        button = btn;
     };
 
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('[PWA] beforeinstallprompt detected');
+        showButton();
+    });
+
+    window.addEventListener('appinstalled', () => {
+        safeSet(ACCEPTED_KEY, '1')
+        deferredPrompt = null;
+        hideButton();
+    });
+
     const init = () => {
-        ensureHeaderButton();
-        ensureNavButton();
-        bindClick(headerButton);
-        bindClick(navButton);
+        ensureButton();
         if (!isEligibleBase()) {
-            hideButtons();
+            hideButton();
             return;
         }
-        showButtons();
+        showButton();
     };
 
     if (document.readyState === 'loading') {
