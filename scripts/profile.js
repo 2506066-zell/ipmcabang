@@ -38,20 +38,60 @@
         container.innerHTML = `
             <div class="profile-shell">
                 <div class="profile-card">
-                    <div class="profile-avatar" id="profile-avatar">U</div>
-                    <h1 class="profile-username" id="profile-username">Pengguna</h1>
-                    <div class="profile-subtext" id="profile-subtext">Profil Akun</div>
-                    <div class="profile-divider"></div>
-                    <div class="profile-info">
-                        <div class="profile-row"><span>Username</span><span id="profile-info-username">-</span></div>
-                        <div class="profile-row"><span>Nama Lengkap</span><span id="profile-info-fullname">-</span></div>
-                        <div class="profile-row"><span>Asal Pimpinan</span><span id="profile-info-pimpinan">-</span></div>
-                        <div class="profile-row"><span>Password</span><span>••••••••</span></div>
+                    <button type="button" class="profile-close-btn" id="profile-close-btn" aria-label="Tutup">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profile-avatar">U</div>
+                        <div class="profile-header-text">
+                            <h1 class="profile-username" id="profile-username">Pengguna</h1>
+                            <div class="profile-subtext" id="profile-subtext">Profil Akun</div>
+                        </div>
+                    </div>
+                    <div class="profile-info-grid">
+                        <div class="profile-info-row">
+                            <span class="profile-label">Username</span>
+                            <span class="profile-value" id="profile-info-username">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-label">Nama Lengkap</span>
+                            <span class="profile-value" id="profile-info-fullname">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-label">Asal Pimpinan</span>
+                            <span class="profile-value" id="profile-info-pimpinan">-</span>
+                        </div>
+                        <div class="profile-info-row">
+                            <span class="profile-label">Password</span>
+                            <span class="profile-value">••••••••</span>
+                        </div>
                     </div>
                     <div class="profile-actions">
                         <button type="button" class="profile-btn secondary" id="profile-edit-btn" disabled>Edit Profil</button>
                         <button type="button" class="profile-btn primary" id="profile-logout-btn">Logout</button>
                     </div>
+                </div>
+                <div class="profile-card profile-activity-card">
+                    <div class="profile-activity-header">📊 Aktivitas</div>
+                    <div class="profile-activity-list">
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Status Kuis</span>
+                            <span class="profile-value" id="profile-activity-status">Belum menyelesaikan kuis</span>
+                        </div>
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Skor Terakhir</span>
+                            <span class="profile-value" id="profile-activity-score">-</span>
+                        </div>
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Total Kuis Diselesaikan</span>
+                            <span class="profile-value" id="profile-activity-total">0</span>
+                        </div>
+                        <div class="profile-activity-row">
+                            <span class="profile-label">Ranking Saat Ini</span>
+                            <span class="profile-value" id="profile-activity-rank">-</span>
+                        </div>
+                    </div>
+                    <div class="profile-activity-empty" id="profile-activity-empty">Belum ada aktivitas kuis.</div>
                 </div>
             </div>
         `;
@@ -77,6 +117,31 @@
         if (infoPimpinan) infoPimpinan.textContent = pimpinan;
     }
 
+    function fillActivity(container, activity) {
+        const statusEl = container.querySelector('#profile-activity-status');
+        const scoreEl = container.querySelector('#profile-activity-score');
+        const totalEl = container.querySelector('#profile-activity-total');
+        const rankEl = container.querySelector('#profile-activity-rank');
+        const emptyEl = container.querySelector('#profile-activity-empty');
+
+        if (!statusEl || !scoreEl || !totalEl || !rankEl || !emptyEl) return;
+
+        if (!activity || !activity.hasActivity) {
+            statusEl.textContent = 'Belum menyelesaikan kuis';
+            scoreEl.textContent = '-';
+            totalEl.textContent = '0';
+            rankEl.textContent = '-';
+            emptyEl.style.display = 'block';
+            return;
+        }
+
+        statusEl.textContent = activity.statusText || 'Sudah menyelesaikan kuis';
+        scoreEl.textContent = activity.lastScore !== undefined ? String(activity.lastScore) : '-';
+        totalEl.textContent = activity.totalCompleted !== undefined ? String(activity.totalCompleted) : '1';
+        rankEl.textContent = activity.rank ? `#${activity.rank}` : '-';
+        emptyEl.style.display = 'none';
+    }
+
     async function loadProfileData(container) {
         const session = getSession();
         if (!session) {
@@ -94,6 +159,7 @@
             pimpinan: cachedPimpinan || ''
         };
         fillProfile(container, base);
+        fillActivity(container, { hasActivity: false });
 
         if (!username) return;
 
@@ -112,6 +178,35 @@
                 if (user.nama_panjang) setStored(USER_FULLNAME_KEY, user.nama_panjang, persist);
                 if (user.pimpinan) setStored(USER_PIMPINAN_KEY, user.pimpinan, persist);
             }
+        } catch {}
+    }
+
+    async function loadActivityData(container, username) {
+        if (!username) return;
+        try {
+            const res = await fetch('/api/results');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.status !== 'success' || !Array.isArray(data.results)) return;
+
+            const results = data.results.slice().sort((a, b) => (b.score || 0) - (a.score || 0));
+            const idx = results.findIndex(r => String(r.username || '').toLowerCase() === String(username).toLowerCase());
+
+            if (idx === -1) {
+                fillActivity(container, { hasActivity: false });
+                return;
+            }
+
+            const row = results[idx];
+            const totalCompleted = row.total || row.attempts || 1;
+            const activity = {
+                hasActivity: true,
+                lastScore: row.score || 0,
+                totalCompleted,
+                rank: idx + 1,
+                statusText: `Sudah menyelesaikan ${totalCompleted} kuis`
+            };
+            fillActivity(container, activity);
         } catch {}
     }
 
@@ -146,15 +241,13 @@
             renderProfile(root);
             loadProfileData(root);
             bindLogout(root);
+            const uname = getStored(USER_USERNAME_KEY);
+            loadActivityData(root, uname);
         }
 
         requestAnimationFrame(() => {
             overlayEl.classList.add('show');
         });
-
-        if (!window.location.pathname.startsWith('/profile')) {
-            history.pushState({ profileOverlay: true }, '', '/profile');
-        }
     }
 
     function closeOverlay() {
@@ -177,17 +270,21 @@
         }
     };
 
-    window.addEventListener('popstate', () => {
-        if (overlayEl) closeOverlay();
-    });
-
     document.addEventListener('DOMContentLoaded', () => {
         const root = document.getElementById('profile-root');
         if (root && document.body.classList.contains('page-profile')) {
             renderProfile(root);
             loadProfileData(root);
             bindLogout(root);
+            const uname = getStored(USER_USERNAME_KEY);
+            loadActivityData(root, uname);
         }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!overlayEl) return;
+        if (e.target === overlayEl) closeOverlay();
+        if (e.target && e.target.closest && e.target.closest('#profile-close-btn')) closeOverlay();
     });
 })();
 

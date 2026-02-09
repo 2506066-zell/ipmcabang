@@ -24,81 +24,113 @@
 
 .profile-shell {
     width: 100%;
-    max-width: 560px;
+    max-width: 520px;
     animation: profileFadeIn 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .profile-card {
     background: #ffffff;
-    border-radius: 20px;
-    padding: 28px 24px;
-    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
     border: 1px solid rgba(15, 23, 42, 0.06);
+    position: relative;
+}
+
+.profile-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: #ffffff;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-close-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
 }
 
 .profile-avatar {
-    width: 84px;
-    height: 84px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
-    margin: 0 auto 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #e2e8f0;
     color: #0f172a;
     font-weight: 800;
-    font-size: 1.6rem;
+    font-size: 1.1rem;
     letter-spacing: 0.04em;
 }
 
 .profile-username {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin: 0 0 4px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 2px;
     color: #0f172a;
 }
 
 .profile-subtext {
-    text-align: center;
     color: #64748b;
-    font-size: 0.95rem;
-    margin-bottom: 18px;
+    font-size: 0.85rem;
+    opacity: 0.8;
 }
 
-.profile-divider {
-    height: 1px;
-    background: #e2e8f0;
-    margin: 18px 0;
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 12px;
 }
 
-.profile-info {
-    display: flex;
-    flex-direction: column;
+.profile-info-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
     gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #eef2f7;
 }
 
-.profile-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 0.95rem;
-    color: #334155;
+.profile-info-row:last-child {
+    border-bottom: none;
 }
 
-.profile-row span:first-child {
+.profile-label {
+    font-size: 0.85rem;
     color: #94a3b8;
     font-weight: 600;
 }
 
-.profile-row span:last-child {
+.profile-value {
+    font-size: 0.92rem;
     font-weight: 600;
     color: #0f172a;
     text-align: right;
 }
 
 .profile-actions {
-    margin-top: 22px;
+    margin-top: 14px;
     display: flex;
     gap: 10px;
 }
@@ -135,6 +167,41 @@
     box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
 }
 
+.profile-activity-card {
+    padding: 16px 20px;
+}
+
+.profile-activity-header {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.profile-activity-list {
+    display: grid;
+    gap: 6px;
+}
+
+.profile-activity-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.profile-activity-row:last-child {
+    border-bottom: none;
+}
+
+.profile-activity-empty {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
 @keyframes profileFadeIn {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
@@ -142,15 +209,20 @@
 
 @media (max-width: 480px) {
     .profile-card {
-        padding: 22px 18px;
+        padding: 16px;
     }
 
-    .profile-row {
-        flex-direction: column;
-        align-items: flex-start;
+    .profile-activity-card {
+        padding: 14px 16px;
     }
 
-    .profile-row span:last-child {
+    .profile-info-row,
+    .profile-activity-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .profile-value {
         text-align: left;
     }
 }

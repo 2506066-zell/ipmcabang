@@ -49,7 +49,7 @@
             if (window.ProfilePage && window.ProfilePage.open) {
                 window.ProfilePage.open();
             } else {
-                window.location.href = '/profile';
+                console.warn('[Profile] Modal belum siap');
             }
         });
     }
