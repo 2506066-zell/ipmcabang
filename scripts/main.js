@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     const hamburgerMenu = document.getElementById('hamburger-menu');
     const mobileNav = document.getElementById('mobile-nav');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
@@ -332,3 +332,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+/* PWA Setup */
+(() => {
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
+    const isProd = !isLocalhost && location.protocol === 'https:';
+
+    if (isProd && 'serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then((reg) => {
+                    console.log('SW registered');
+                    reg.update();
+
+                    if (reg.waiting) {
+                        reg.waiting.postMessage('SKIP_WAITING');
+                    }
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (!newWorker) return;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                newWorker.postMessage('SKIP_WAITING');
+                            }
+                        });
+                    });
+                })
+                .catch((err) => console.log('SW failed', err));
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (window.__swReloading) return;
+            window.__swReloading = true;
+            window.location.reload();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('img:not([loading])').forEach((img) => {
+            if (!img.hasAttribute('fetchpriority')) img.loading = 'lazy';
+        });
+    });
+})();
+
+

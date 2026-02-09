@@ -1,10 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#006400">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Peringkat Kuis - IPM Panawuan</title>
     <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/install-banner.css">
     <link rel="stylesheet" href="styles/ranking.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,7 +88,7 @@
         </div>
 
         <div id="empty-state" class="empty-state" style="display:none;">
-            <div class="empty-icon">🙂</div>
+            <div class="empty-icon">ðŸ™‚</div>
             <h3>Belum ada data peringkat</h3>
             <p>Mulai kuis terlebih dahulu atau muat ulang jika data baru tersedia.</p>
             <button id="empty-reload" class="filter-btn">Muat Ulang</button>
@@ -143,5 +148,8 @@
     <script src="ranking.js" defer></script>
     <script src="scripts/toast.js" defer></script>
     <script src="scripts/main.js" defer></script>
+    <script src="scripts/install-banner.js" defer></script>
 </body>
 </html>
+
+

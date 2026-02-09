@@ -1,4 +1,4 @@
-/* ==================== Loading Overlay ==================== */
+﻿/* ==================== Loading Overlay ==================== */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -4361,5 +4361,36 @@ body.quiz-active .premium-fab-container {
     /* Avoid any extra FAB overlap on quiz page */
     body.page-quiz .premium-fab-container {
         display: none !important;
+    }
+}
+
+/* PWA Install Button */
+.pwa-install-btn {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(16px);
+    z-index: 1400;
+    background: #1d8d27;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 20px;
+    font-weight: 700;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.pwa-install-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 768px) {
+    .pwa-install-btn {
+        bottom: calc(78px + env(safe-area-inset-bottom, 0px));
     }
 }

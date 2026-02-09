@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -852,15 +852,49 @@
     </div>
 
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.error('SW Error:', err));
-            });
-        }
+                <script>
+        (() => {
+            const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
+            const isProd = !isLocalhost && location.protocol === 'https:';
+
+            if (isProd && 'serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then((reg) => {
+                            console.log('SW registered');
+                            reg.update();
+
+                            if (reg.waiting) {
+                                reg.waiting.postMessage('SKIP_WAITING');
+                            }
+
+                            reg.addEventListener('updatefound', () => {
+                                const newWorker = reg.installing;
+                                if (!newWorker) return;
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        newWorker.postMessage('SKIP_WAITING');
+                                    }
+                                });
+                            });
+                        })
+                        .catch(err => console.error('SW Error:', err));
+                });
+
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (window.__swReloading) return;
+                    window.__swReloading = true;
+                    window.location.reload();
+                });
+            }
+        })();
     </script>
     <script src="../scripts/toast.js"></script>
     <script src="admin.js?v=5" defer></script>
 </body>
 
 </html>
+
+
+
+

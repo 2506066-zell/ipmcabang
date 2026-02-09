@@ -1,4 +1,4 @@
-/* === SETUP & VARIABLES === */
+﻿/* === SETUP & VARIABLES === */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
 :root {
@@ -2015,4 +2015,108 @@ body.light-mode .writing-mode-content {
 
 #upload-progress-bar {
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+/* === ARTICLE MODAL COMFORT OVERRIDES === */
+#article-modal .modal-content {
+    width: min(920px, 96vw);
+    max-width: 920px;
+    max-height: 90vh;
+    border-radius: 16px;
+}
+
+#article-modal .modal-body-scroll {
+    padding: 18px;
+    background: #f1f5f9;
+}
+
+#article-modal .editor-container {
+    max-width: 860px;
+    min-height: auto;
+    padding: 32px 28px;
+    border-radius: 14px;
+}
+
+#article-modal .editor-title-input {
+    font-size: 2.1rem;
+    line-height: 1.2;
+}
+
+#article-modal .editor-meta-row {
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+}
+
+#article-modal .editor-image-section {
+    margin-bottom: 24px;
+}
+
+#article-modal .image-upload-wrapper {
+    padding: 24px;
+}
+
+#article-modal .editor-writing-area {
+    max-width: 100%;
+}
+
+#article-modal .editor-toolbar {
+    position: sticky;
+    top: 8px;
+    margin-bottom: 16px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#article-modal .editor-content-editable {
+    min-height: 260px;
+    padding-bottom: 80px;
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+    #article-modal .modal-content {
+        max-height: 92vh;
+        border-radius: 18px 18px 0 0;
+    }
+
+    #article-modal .editor-container {
+        padding: 20px 16px;
+    }
+
+    #article-modal .editor-title-input {
+        font-size: 1.5rem;
+    }
+}
+
+/* PWA Install Button (Admin) */
+.pwa-install-btn {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(16px);
+    z-index: 1200;
+    background: var(--accent-primary, #1d8d27);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 20px;
+    font-weight: 700;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.pwa-install-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 768px) {
+    .pwa-install-btn {
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    }
 }

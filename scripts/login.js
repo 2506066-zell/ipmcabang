@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const FORM_ID = 'login-form';
   const USER_SESSION_KEY = 'ipmquiz_user_session';
   const USER_USERNAME_KEY = 'ipmquiz_user_username';
@@ -58,6 +58,9 @@
       const uname = String(data.username || username);
       storeSession(token, uname, remember);
       if (window.Toast) Toast.show('Berhasil masuk', 'success');
+      try {
+        localStorage.setItem('pwa_install_pending', JSON.stringify({ source: 'login', ts: Date.now() }));
+      } catch {}
       window.location.href = 'quiz.html';
     })
     .catch((e) => {
@@ -84,3 +87,4 @@
     }
   });
 })();
+

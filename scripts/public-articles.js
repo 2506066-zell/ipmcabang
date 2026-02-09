@@ -1,4 +1,4 @@
-const API_BASE = '/api/articles';
+﻿const API_BASE = '/api/articles';
 let listInitialized = false;
 
 export function initPublicArticles() {
@@ -224,6 +224,34 @@ function initDetailPage(id, slug) {
     const container = document.getElementById('article-detail-content');
     const scrollBar = document.getElementById('detail-scroll-bar');
 
+    function queueInstallTrigger(source) {
+        try {
+            if (window.PWAInstallPrompt && window.PWAInstallPrompt.trigger) {
+                window.PWAInstallPrompt.trigger(source);
+            } else {
+                localStorage.setItem('pwa_install_pending', JSON.stringify({ source, ts: Date.now() }));
+            }
+        } catch {}
+    }
+
+    function trackArticleRead(articleId) {
+        if (!articleId) return;
+        try {
+            const key = 'pwa_article_reads';
+            const raw = localStorage.getItem(key);
+            const list = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(list)) return;
+            if (!list.includes(articleId)) {
+                list.push(articleId);
+                const trimmed = list.slice(-10);
+                localStorage.setItem(key, JSON.stringify(trimmed));
+                if (trimmed.length >= 2) {
+                    queueInstallTrigger('article-read');
+                }
+            }
+        } catch {}
+    }
+
     function getRecSkeletonMarkup(count = 3) {
         return Array(count).fill(0).map(() => `
             <div class="rec-skeleton">
@@ -329,6 +357,7 @@ function initDetailPage(id, slug) {
             else heroImg.addEventListener('load', () => heroImg.classList.add('is-loaded'), { once: true });
         }
         setupShareButtons();
+        trackArticleRead(String(art.id));
     }
 
     function setupShareButtons() {
@@ -472,3 +501,4 @@ window.shareArticle = function (platform) {
             break;
     }
 };
+

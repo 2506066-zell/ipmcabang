@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#006400">
+  <title>Offline - IPM Panawuan</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background:#f8fafc; color:#0f172a; display:flex; min-height:100vh; align-items:center; justify-content:center; }
+    .offline-card { text-align:center; background:#fff; padding:28px 24px; border-radius:16px; box-shadow: 0 10px 24px rgba(0,0,0,0.08); width:min(420px, 92vw); }
+    .offline-icon { width:64px; height:64px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#e2e8f0; }
+    .offline-icon svg { width:32px; height:32px; color:#334155; }
+    h1 { font-size:1.25rem; margin:0 0 8px; }
+    p { font-size:0.95rem; color:#64748b; margin:0 0 16px; }
+    button { border:none; background:#1d8d27; color:#fff; padding:12px 18px; border-radius:999px; font-weight:600; cursor:pointer; box-shadow: 0 8px 18px rgba(29,141,39,0.25); }
+  </style>
+</head>
+<body>
+  <div class="offline-card">
+    <div class="offline-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 9c4.97-4.97 13.03-4.97 18 0"/>
+        <path d="M5 13c2.76-2.76 7.24-2.76 10 0"/>
+        <path d="M9 17a3 3 0 0 1 6 0"/>
+        <line x1="3" y1="3" x2="21" y2="21"/>
+      </svg>
+    </div>
+    <h1>Kamu sedang offline</h1>
+    <p>Periksa koneksi internet, lalu coba lagi.</p>
+    <button type="button" onclick="window.location.reload()">Coba Lagi</button>
+  </div>
+</body>
+</html>

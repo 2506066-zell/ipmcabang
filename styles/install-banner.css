@@ -1,0 +1,115 @@
+﻿.pwa-install-banner {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(20px);
+    width: min(560px, calc(100vw - 24px));
+    background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(30,41,59,0.98));
+    color: #f8fafc;
+    border-radius: 18px;
+    padding: 16px 18px 14px;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1500;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.pwa-install-banner.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.pwa-banner-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(34,197,94,0.18);
+    color: #bbf7d0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(34,197,94,0.35);
+}
+
+.pwa-banner-content {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.pwa-banner-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.pwa-banner-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.pwa-banner-subtext {
+    font-size: 0.86rem;
+    color: rgba(248,250,252,0.85);
+    margin: 0 0 4px;
+}
+
+.pwa-banner-urgency {
+    font-size: 0.75rem;
+    color: rgba(248,250,252,0.7);
+}
+
+.pwa-banner-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.pwa-btn-primary {
+    flex: 1;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #0f172a;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 18px rgba(34,197,94,0.28);
+    animation: installPulse 8s ease-in-out infinite;
+}
+
+.pwa-btn-primary:hover {
+    box-shadow: 0 14px 26px rgba(34,197,94,0.4);
+}
+
+.pwa-btn-secondary {
+    background: transparent;
+    color: rgba(248,250,252,0.8);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@keyframes installPulse {
+    0%, 88% { transform: translateY(0); box-shadow: 0 10px 18px rgba(34,197,94,0.28); }
+    92% { transform: translateY(-2px); box-shadow: 0 12px 22px rgba(34,197,94,0.36); }
+    100% { transform: translateY(0); box-shadow: 0 10px 18px rgba(34,197,94,0.28); }
+}
+
+@media (max-width: 768px) {
+    .pwa-install-banner {
+        bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    }
+}
