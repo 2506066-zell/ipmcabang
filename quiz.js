@@ -720,14 +720,6 @@ async function finishQuiz() {
             // UX: Scroll to result
             resDiv.scrollIntoView({ behavior: 'smooth' });
 
-            try {
-                if (window.PWAInstallPrompt && window.PWAInstallPrompt.trigger) {
-                    window.PWAInstallPrompt.trigger('quiz-result');
-                } else {
-                    localStorage.setItem('pwa_install_pending', JSON.stringify({ source: 'quiz-result', ts: Date.now() }));
-                }
-            } catch {}
-
             // Restore global FAB
             document.body.classList.remove('quiz-active');
 

@@ -1,4 +1,4 @@
-﻿const STATIC_CACHE = 'static-v7';
+﻿const STATIC_CACHE = 'static-v8';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -28,13 +28,12 @@ const STATIC_ASSETS = [
   '/styles/style.css',
   '/styles/home-dynamic.css',
   '/styles/profile.css',
-  '/styles/install-banner.css',
   '/styles/article-enhancements.css',
   '/styles/quiz-enhancements.css',
   '/styles/ranking.css',
   '/scripts/main.js',
   '/scripts/profile.js',
-  '/scripts/install-banner.js',
+  '/scripts/install-header.js',
   '/scripts/toast.js',
   '/scripts/public-articles.js',
   '/scripts/public-materials.js',
