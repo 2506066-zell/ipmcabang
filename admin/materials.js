@@ -285,6 +285,15 @@ export function initMaterials(state, els, api) {
     form.onsubmit = async (e) => {
         e.preventDefault();
 
+        if (!inpTitle.value.trim()) {
+            alert('Judul materi wajib diisi.');
+            return;
+        }
+        if (!inpFileUrl.value.trim() && !currentFile) {
+            alert('File materi wajib diisi (upload atau URL).');
+            return;
+        }
+
         const btn = document.getElementById('mat-save-btn');
         const oldHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
@@ -292,8 +301,8 @@ export function initMaterials(state, els, api) {
 
         try {
             // Step 1: Handle Uploads if Any
-            let fileUrl = inpFileUrl.value;
-            let thumbUrl = inpThumbnail.value;
+            let fileUrl = inpFileUrl.value.trim();
+            let thumbUrl = inpThumbnail.value.trim();
 
             if (currentFile) {
                 fileUrl = await uploadToCloud(currentFile, 'file');

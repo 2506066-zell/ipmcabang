@@ -212,6 +212,24 @@ document.addEventListener('DOMContentLoaded', () => {
         transitionOverlay.classList.add('fade-out');
     });
 
+    // Fix blank screen on mobile back (bfcache restore)
+    const resetTransitionOverlay = () => {
+        transitionOverlay.classList.add('fade-out');
+        transitionOverlay.style.pointerEvents = 'none';
+    };
+
+    window.addEventListener('pageshow', (e) => {
+        resetTransitionOverlay();
+        if (e.persisted) {
+            // Ensure scroll + nav are usable after bfcache restore
+            document.body.classList.remove('body-no-scroll');
+            const mobileNav = document.getElementById('mobile-nav');
+            const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+            if (mobileNav) mobileNav.classList.remove('open');
+            if (mobileNavOverlay) mobileNavOverlay.classList.remove('open');
+        }
+    });
+
     // Use Event Delegation for all links (handles dynamic content too)
     document.addEventListener('click', (e) => {
         const link = e.target.closest('a');

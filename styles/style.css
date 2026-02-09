@@ -4301,6 +4301,7 @@ body.quiz-active .premium-fab-container {
 
 /* === Mobile Quiz UX Fixes === */
 @media (max-width: 768px) {
+
     /* Hide bottom nav on mobile to prevent overlap and rely on hamburger menu */
     .bottom-nav {
         display: none !important;
@@ -4314,7 +4315,7 @@ body.quiz-active .premium-fab-container {
         padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     }
 
-    /* Ensure quiz actions are always visible */
+    /* eker tranparasn */
     body.page-quiz #next-btn.floating-action-btn {
         width: 56px;
         height: 56px;
@@ -4323,12 +4324,12 @@ body.quiz-active .premium-fab-container {
         z-index: 1302;
     }
 
-    /* Prevent option list from being covered by the floating button */
+    /* opsi soal */
     body.page-quiz #quiz-body {
         padding-bottom: 96px;
     }
 
-    /* Comfortable tap targets and spacing */
+    /* ngameh nyaman */
     body.page-quiz .options-container {
         gap: 14px;
     }

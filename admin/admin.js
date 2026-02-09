@@ -1367,7 +1367,16 @@
 
             if (btn.dataset.action === 'edit' && q) window.openQuestionModal(q);
             else if (btn.dataset.action === 'delete') handleDelete(id);
-            else if (btn.dataset.action === 'toggle-status') handleToggleStatus(id, q.active);
+        });
+        els.questionsList?.addEventListener('change', (e) => {
+            const input = e.target.closest('input[data-action="toggle-status"]');
+            if (!input) return;
+            const item = input.closest('.q-card');
+            if (!item) return;
+            const id = Number(item.dataset.id);
+            const q = state.questions.find(x => x.id === id);
+            if (!q) return;
+            handleToggleStatus(id, q.active);
         });
 
         // Modal
