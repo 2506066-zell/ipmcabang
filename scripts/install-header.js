@@ -46,10 +46,24 @@
         if (button) button.hidden = true;
     };
 
-    const showButton = () => {
-        if (!button || !deferredPrompt) return;
-        if (!isEligibleBase() || dismissedThisSession()) return;
+    const updateButtonState = () => {
+        if (!button) return;
+        if (!isEligibleBase()) {
+            hideButton();
+            return;
+        }
+
         button.hidden = false;
+        if (!deferredPrompt || dismissedThisSession()) {
+            button.disabled = true;
+            button.setAttribute('data-label', 'Belum siap diinstal');
+            button.classList.add('install-disabled');
+            return;
+        }
+
+        button.disabled = false;
+        button.setAttribute('data-label', 'Install aplikasi');
+        button.classList.remove('install-disabled');
     };
 
     const ensureButton = () => {
@@ -64,13 +78,13 @@
         btn.setAttribute('aria-label', 'Install aplikasi');
         btn.title = 'Install aplikasi';
         btn.hidden = true;
-        btn.setAttribute('data-label', 'Install aplikasi');
+        btn.setAttribute('data-label', 'Belum siap diinstal');
         btn.innerHTML = '<i class="fas fa-arrow-down-to-bracket"></i>';
 
         fabOptions.appendChild(btn);
 
         btn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
+            if (!deferredPrompt || btn.disabled) return;
             btn.disabled = true;
             deferredPrompt.prompt();
             try {
@@ -84,7 +98,7 @@
                 }
             } catch {}
             deferredPrompt = null;
-            btn.disabled = false;
+            updateButtonState();
         });
 
         button = btn;
@@ -94,7 +108,7 @@
         e.preventDefault();
         deferredPrompt = e;
         console.log('[PWA] beforeinstallprompt detected');
-        showButton();
+        updateButtonState();
     });
 
     window.addEventListener('appinstalled', () => {
@@ -105,11 +119,7 @@
 
     const init = () => {
         ensureButton();
-        if (!isEligibleBase()) {
-            hideButton();
-            return;
-        }
-        showButton();
+        updateButtonState();
     };
 
     if (document.readyState === 'loading') {

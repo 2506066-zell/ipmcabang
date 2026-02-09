@@ -4269,6 +4269,19 @@ body.light-mode .timer-unit {
     opacity: 1;
 }
 
+.fab-option.install-app-btn.install-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+}
+
+.fab-option.install-app-btn.install-disabled:hover {
+    background: white;
+    transform: none;
+    opacity: 0.55;
+}
+
 /* --- PAGE TRANSITIONS --- */
 .page-transition-overlay {
     position: fixed;
@@ -4358,10 +4371,6 @@ body.quiz-active .premium-fab-container {
         min-height: 48px;
     }
 
-    /* Avoid any extra FAB overlap on quiz page */
-    body.page-quiz .premium-fab-container {
-        display: none !important;
-    }
 }
 
 .header-icon.profile-icon-btn,
