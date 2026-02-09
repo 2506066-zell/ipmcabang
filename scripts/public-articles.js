@@ -17,7 +17,7 @@ export function initPublicArticles() {
         if (listView) listView.style.display = 'none';
         if (detailView) detailView.style.display = 'block';
         if (backBtn) backBtn.style.display = 'flex';
-        if (shareBar) shareBar.style.display = 'flex';
+        if (shareBar) shareBar.style.display = 'none';
         if (progressContainer) progressContainer.style.display = 'block';
 
         // Hide sidebar on small screens in detail mode
@@ -220,6 +220,58 @@ async function initSidebar() {
 function initDetailPage(id, slug) {
     const container = document.getElementById('article-detail-content');
     const scrollBar = document.getElementById('detail-scroll-bar');
+    const detailView = document.getElementById('article-detail-view');
+
+    function ensureActionBar() {
+        if (!detailView) return;
+        let bar = document.getElementById('article-action-bar');
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.id = 'article-action-bar';
+            bar.className = 'article-action-bar';
+            bar.innerHTML = `
+                <button class="action-btn action-share" id="action-share-btn">
+                    <i class="fas fa-share-alt"></i> Bagikan
+                </button>
+                <button class="action-btn action-save" id="action-save-btn">
+                    <i class="fas fa-link"></i> Simpan
+                </button>
+            `;
+            document.body.appendChild(bar);
+        }
+
+        const shareBtn = bar.querySelector('#action-share-btn');
+        const saveBtn = bar.querySelector('#action-save-btn');
+
+        if (shareBtn) {
+            shareBtn.onclick = () => {
+                if (window.shareArticleNative) window.shareArticleNative();
+                else if (window.shareArticle) window.shareArticle('copy');
+            };
+        }
+        if (saveBtn) {
+            saveBtn.onclick = () => {
+                if (window.shareArticle) window.shareArticle('copy');
+            };
+        }
+    }
+
+    function ensureBackToTop() {
+        let btn = document.getElementById('article-back-top');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'article-back-top';
+            btn.className = 'article-back-top';
+            btn.type = 'button';
+            btn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+            document.body.appendChild(btn);
+        }
+        btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 400) btn.classList.add('visible');
+            else btn.classList.remove('visible');
+        }, { passive: true });
+    }
 
     async function loadDetail() {
         try {
@@ -247,6 +299,10 @@ function initDetailPage(id, slug) {
     function renderDetail(art) {
         const date = new Date(art.publish_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         const heroImage = art.image ? `<img src="${art.image}" alt="${art.title}" class="detail-hero-img">` : '';
+        window.__currentArticle = {
+            title: art.title || 'Artikel',
+            url: window.location.href
+        };
 
         // Simple Markdown Parser
         let content = art.content
@@ -258,19 +314,35 @@ function initDetailPage(id, slug) {
             .replace(/\n\n/g, '<br><br>');
 
         container.innerHTML = `
-            <div class="article-detail-header">
-                <span class="detail-badge">${art.category || 'Umum'}</span>
-                <h1 class="detail-title">${art.title}</h1>
-                <div class="detail-meta">
-                    <span><i class="fas fa-user-circle"></i> ${art.author}</span>
-                    <span><i class="fas fa-calendar-alt"></i> ${date}</span>
-                    <span><i class="fas fa-eye"></i> ${art.views || 0} views</span>
+            <article class="article-detail fade-in">
+                <div class="article-detail-header">
+                    <span class="detail-badge">${art.category || 'Umum'}</span>
+                    <h1 class="detail-title">${art.title}</h1>
+                    <div class="detail-meta">
+                        <span><i class="fas fa-user-circle"></i> ${art.author}</span>
+                        <span><i class="fas fa-calendar-alt"></i> ${date}</span>
+                        <span><i class="fas fa-eye"></i> ${art.views || 0} views</span>
+                    </div>
                 </div>
-            </div>
-            ${heroImage}
-            <div class="article-content-body">
-                ${content}
-            </div>
+                ${heroImage}
+                <div class="article-content-body">
+                    ${content}
+                </div>
+                <div class="article-share-section" id="article-share-section">
+                    <div class="share-title">Bagikan artikel ini</div>
+                    <div class="share-actions">
+                        <button class="share-action-btn whatsapp" onclick="window.shareArticle('whatsapp')">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="share-action-btn twitter" onclick="window.shareArticle('twitter')">
+                            <i class="fab fa-x-twitter"></i> Twitter
+                        </button>
+                        <button class="share-action-btn copy" onclick="window.shareArticle('copy')">
+                            <i class="fas fa-link"></i> Salin Tautan
+                        </button>
+                    </div>
+                </div>
+            </article>
         `;
     }
 
@@ -289,7 +361,24 @@ function initDetailPage(id, slug) {
     }
 
     loadDetail();
+    ensureActionBar();
+    ensureBackToTop();
 }
+
+window.shareArticleNative = function () {
+    const data = window.__currentArticle || {};
+    if (navigator.share) {
+        navigator.share({
+            title: data.title || document.title,
+            text: data.title || document.title,
+            url: data.url || window.location.href
+        }).catch(() => {
+            if (window.shareArticle) window.shareArticle('copy');
+        });
+        return;
+    }
+    if (window.shareArticle) window.shareArticle('copy');
+};
 
 window.shareArticle = function (platform) {
     const url = window.location.href;

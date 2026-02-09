@@ -212,6 +212,9 @@ body.body-no-scroll {
 
 .user-dropdown.open {
     display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .user-dropdown button {

@@ -448,7 +448,7 @@
 
 /* --- ARTICLE DETAIL VIEW --- */
 .article-detail-header {
-    margin-bottom: 32px;
+    margin-bottom: 16px;
 }
 
 .detail-badge {
@@ -463,20 +463,21 @@
 }
 
 .detail-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1.2;
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1.25;
     color: #1e293b;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .detail-meta {
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
     color: #64748b;
-    font-size: 0.95rem;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.82rem;
+    opacity: 0.7;
+    margin-bottom: 16px;
 }
 
 .detail-meta i {
@@ -486,25 +487,27 @@
 
 .detail-hero-img {
     width: 100%;
-    max-height: 500px;
+    max-height: 420px;
     object-fit: cover;
-    border-radius: 20px;
-    margin-bottom: 32px;
+    border-radius: 12px;
+    margin: 16px 0;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .article-content-body {
-    font-size: 1.15rem;
+    font-size: 1rem;
     line-height: 1.8;
     color: #334155;
     white-space: pre-wrap;
+    margin-bottom: 16px;
 }
 
 .article-content-body h1,
 .article-content-body h2,
 .article-content-body h3 {
-    margin-top: 32px;
-    margin-bottom: 16px;
+    font-size: 1.15rem;
+    margin-top: 24px;
+    margin-bottom: 12px;
     color: #1e293b;
 }
 
@@ -523,8 +526,173 @@
 
 @media (max-width: 768px) {
     .detail-title {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
     }
+}
+
+/* Mobile-first article detail container */
+#article-detail-content .article-detail {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+/* Content spacing rhythm */
+.article-content-body p {
+    margin: 0 0 16px;
+}
+
+.article-content-body img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+    margin: 16px 0;
+    object-fit: cover;
+}
+
+.article-share-section {
+    margin-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+}
+
+.share-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #1e293b;
+}
+
+.share-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.share-action-btn {
+    min-height: 44px;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.share-action-btn.whatsapp {
+    background: #e9f7ef;
+    color: #0f5132;
+}
+
+.share-action-btn.twitter {
+    background: #eef6ff;
+    color: #0b4ea2;
+}
+
+.share-action-btn.copy {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+/* Sticky action bar on mobile */
+.article-action-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    display: none;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(10px);
+    z-index: 1200;
+}
+
+.article-action-bar .action-btn {
+    min-height: 44px;
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.article-action-bar .action-share {
+    background: #e0f2fe;
+    color: #0c4a6e;
+}
+
+.article-action-bar .action-save {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+@media (max-width: 768px) {
+    .article-action-bar {
+        display: flex;
+    }
+    #article-detail-content .article-detail {
+        padding-bottom: 96px;
+    }
+}
+
+/* Reading progress bar */
+#detail-progress-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: transparent;
+    z-index: 2000;
+}
+
+#detail-scroll-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3b82f6, #22c55e);
+}
+
+/* Back to top */
+.article-back-top {
+    position: fixed;
+    right: 16px;
+    bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: none;
+    background: #111827;
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1201;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.article-back-top.visible {
+    display: flex;
+}
+
+/* Subtle fade-in */
+.fade-in {
+    animation: articleFadeIn 0.4s ease;
+}
+
+@keyframes articleFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* --- RESPONSIVE --- */
