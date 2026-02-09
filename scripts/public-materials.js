@@ -5,10 +5,23 @@ export async function initPublicMaterials() {
     const categorySelect = document.getElementById('mat-category-select');
     const emptyState = document.getElementById('empty-state');
     const loader = document.getElementById('loading-overlay');
+    const scheduleIdle = (fn, timeout = 1500) => {
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            window.requestIdleCallback(fn, { timeout });
+        } else {
+            setTimeout(fn, 0);
+        }
+    };
 
     let materials = [];
+    let activeController = null;
 
     async function fetchData() {
+        if (activeController) {
+            activeController.abort();
+        }
+        activeController = new AbortController();
+        const controller = activeController;
         if (loader) loader.classList.remove('hidden');
         try {
             const q = searchInput.value || '';
@@ -17,7 +30,7 @@ export async function initPublicMaterials() {
             if (q) url += `&search=${encodeURIComponent(q)}`;
             if (cat !== 'all') url += `&category=${encodeURIComponent(cat)}`;
 
-            const res = await fetch(url);
+            const res = await fetch(url, { signal: controller.signal });
             const data = await res.json();
 
             if (data.status === 'success') {
@@ -25,10 +38,11 @@ export async function initPublicMaterials() {
                 render();
             }
         } catch (e) {
+            if (e.name === 'AbortError') return;
             console.error('Fetch error:', e);
             if (window.Toast) Toast.show('Gagal memuat materi', 'error');
         } finally {
-            if (loader) loader.classList.add('hidden');
+            if (loader && activeController === controller) loader.classList.add('hidden');
         }
     }
 
@@ -44,7 +58,7 @@ export async function initPublicMaterials() {
         emptyState.classList.add('hidden');
         grid.innerHTML = materials.map(mat => {
             const icon = mat.file_type === 'pdf' ? 'fa-file-pdf' : (mat.file_type === 'ebook' ? 'fa-book-open' : 'fa-file-alt');
-            const thumb = mat.thumbnail ? `<img src="${mat.thumbnail}" alt="${mat.title}" class="materi-thumb">` : `<div class="materi-thumb"><i class="fas ${icon}"></i></div>`;
+            const thumb = mat.thumbnail ? `<img src="${mat.thumbnail}" alt="${mat.title}" class="materi-thumb" loading="lazy" decoding="async" width="320" height="180">` : `<div class="materi-thumb"><i class="fas ${icon}"></i></div>`;
 
             return `
                 <div class="materi-card">
@@ -83,5 +97,5 @@ export async function initPublicMaterials() {
     }
     if (categorySelect) categorySelect.onchange = fetchData;
 
-    fetchData();
+    scheduleIdle(fetchData, 1200);
 }
