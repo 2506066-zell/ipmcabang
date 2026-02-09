@@ -67,9 +67,9 @@
     };
 
     const ensureButton = () => {
-        if (button) return;
+        if (button) return false;
         const fabOptions = document.querySelector('.premium-fab-container .fab-options');
-        if (!fabOptions) return;
+        if (!fabOptions) return false;
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -102,6 +102,7 @@
         });
 
         button = btn;
+        return true;
     };
 
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -117,8 +118,23 @@
         hideButton();
     });
 
+    const waitForFab = () => {
+        let tries = 0;
+        const maxTries = 40;
+        const tick = () => {
+            if (ensureButton()) {
+                updateButtonState();
+                return;
+            }
+            tries += 1;
+            if (tries >= maxTries) return;
+            setTimeout(tick, 150);
+        };
+        tick();
+    };
+
     const init = () => {
-        ensureButton();
+        waitForFab();
         updateButtonState();
     };
 
