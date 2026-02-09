@@ -54,30 +54,20 @@
 
     const ensureButton = () => {
         if (button) return;
-        const headerRight = document.querySelector('.header-right-icons');
-        if (!headerRight) return;
+        const fabOptions = document.querySelector('.premium-fab-container .fab-options');
+        if (!fabOptions) return;
 
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.id = 'install-app-btn';
-        btn.className = 'header-icon install-app-btn';
+        btn.className = 'fab-option install-app-btn';
         btn.setAttribute('aria-label', 'Install aplikasi');
         btn.title = 'Install aplikasi';
         btn.hidden = true;
+        btn.setAttribute('data-label', 'Install aplikasi');
         btn.innerHTML = '<i class="fas fa-arrow-down-to-bracket"></i>';
 
-        const hamburger = headerRight.querySelector('#hamburger-menu');
-        const profile = headerRight.querySelector('#profile-header-btn');
-
-        if (hamburger) {
-            if (profile && profile.nextSibling) {
-                headerRight.insertBefore(btn, profile.nextSibling);
-            } else {
-                headerRight.insertBefore(btn, hamburger);
-            }
-        } else {
-            headerRight.appendChild(btn);
-        }
+        fabOptions.appendChild(btn);
 
         btn.addEventListener('click', async () => {
             if (!deferredPrompt) return;
