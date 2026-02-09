@@ -25,52 +25,6 @@
     const getSession = () => sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
     const getUsername = () => sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '';
 
-    const sessionCacheGet = (key, ttlMs) => {
-        try {
-            const raw = sessionStorage.getItem(key);
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            if (!parsed || !parsed.ts) return null;
-            if (Date.now() - parsed.ts > ttlMs) return null;
-            return parsed.data;
-        } catch {
-            return null;
-        }
-    };
-
-    const sessionCacheSet = (key, data) => {
-        try {
-            sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
-        } catch {}
-    };
-
-    const fetchThrottle = {};
-    const shouldThrottle = (key, ttlMs) => {
-        const now = Date.now();
-        if (fetchThrottle[key] && now - fetchThrottle[key] < ttlMs) return true;
-        fetchThrottle[key] = now;
-        return false;
-    };
-    const lazyLoadSection = (element, callback) => {
-        if (!element || typeof callback !== 'function') return;
-        if (!('IntersectionObserver' in window)) {
-            callback();
-            return;
-        }
-        let triggered = false;
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting && !triggered) {
-                    triggered = true;
-                    observer.disconnect();
-                    callback();
-                }
-            });
-        }, { rootMargin: '200px 0px' });
-        observer.observe(element);
-    };
-
-
     if (headerRight && !document.getElementById('profile-header-btn')) {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -176,27 +130,21 @@
         };
 
         const fetchArticleNotif = async () => {
-            if (shouldThrottle('articleNotif', 60000)) return;
             try {
-                const cached = sessionCacheGet('ipm_latest_article', 5 * 60 * 1000);
-                let latest = cached;
-                if (!latest) {
-                    const artRes = await fetch('/api/articles?size=1&sort=newest');
-                    if (artRes.ok) {
-                        const artData = await artRes.json();
-                        latest = Array.isArray(artData.articles) ? artData.articles[0] : null;
-                        if (latest) sessionCacheSet('ipm_latest_article', latest);
-                    }
-                }
-                if (latest) {
-                    const published = new Date(latest.publish_date || latest.created_at || Date.now()).getTime();
-                    const lastSeen = Number(localStorage.getItem(ARTICLE_SEEN_KEY) || 0);
-                    if (published > lastSeen) {
-                        state.articleUnread = 1;
-                        state.latestArticle = latest;
-                    } else {
-                        state.articleUnread = 0;
-                        state.latestArticle = null;
+                const artRes = await fetch('/api/articles?size=1&sort=newest');
+                if (artRes.ok) {
+                    const artData = await artRes.json();
+                    const latest = Array.isArray(artData.articles) ? artData.articles[0] : null;
+                    if (latest) {
+                        const published = new Date(latest.publish_date || latest.created_at || Date.now()).getTime();
+                        const lastSeen = Number(localStorage.getItem(ARTICLE_SEEN_KEY) || 0);
+                        if (published > lastSeen) {
+                            state.articleUnread = 1;
+                            state.latestArticle = latest;
+                        } else {
+                            state.articleUnread = 0;
+                            state.latestArticle = null;
+                        }
                     }
                 }
             } catch {}
@@ -204,9 +152,6 @@
 
         const fetchUserNotifications = async () => {
             if (!session || state.authFailed) return;
-            if (state.notifLoading) return;
-            if (shouldThrottle('userNotif', 30000)) return;
-            state.notifLoading = true;
             try {
                 let res = await fetch('/api/users?action=notifications', { headers: { Authorization: `Bearer ${session}` } });
                 if (res.status === 401 || res.status === 403) {
@@ -227,9 +172,7 @@
                         state.unread = data.notifications.filter(n => !n.is_read).length;
                     }
                 }
-            } catch {} finally {
-                state.notifLoading = false;
-            }
+            } catch {}
         };
 
         const fetchNotifications = async () => {
@@ -401,27 +344,15 @@
 
     revealElements.forEach(el => revealObserver.observe(el));
 
-    // Fetch Program Kerja Highlights (lazy)
+    // Fetch Program Kerja Highlights
     const highlightsGrid = document.getElementById('highlights-content');
     if (highlightsGrid) {
-        const loadHighlights = () => {
-            const cachedHighlights = sessionCacheGet('ipm_highlights', 5 * 60 * 1000);
-            if (cachedHighlights) {
-                renderHighlights(cachedHighlights);
-            } else {
-                fetch('/api/articles?page=1&size=3&category=Program Kerja&sort=newest')
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'success' && data.articles) {
-                            sessionCacheSet('ipm_highlights', data.articles);
-                            renderHighlights(data.articles);
-                        }
-                    })
-                    .catch(err => console.error('Error fetching highlights:', err));
-            }
-        };
-        lazyLoadSection(highlightsGrid, loadHighlights);
-    }
+        fetch('/api/articles?page=1&size=3&category=Program Kerja&sort=newest')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.articles) {
+                    renderHighlights(data.articles);
+                }
             })
             .catch(err => console.error('Error fetching highlights:', err));
     }
@@ -451,27 +382,15 @@
         }).join('');
     }
 
-    // Fetch Latest Articles (excluding Program Kerja to avoid duplication) (lazy)
+    // Fetch Latest Articles (excluding Program Kerja to avoid duplication)
     const articlesGrid = document.getElementById('featured-articles-grid');
     if (articlesGrid) {
-        const loadFeatured = () => {
-            const cachedFeatured = sessionCacheGet('ipm_featured_articles', 5 * 60 * 1000);
-            if (cachedFeatured) {
-                renderLatestArticles(cachedFeatured);
-            } else {
-                fetch('/api/articles?page=1&size=3&category=!Program Kerja&sort=newest')
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'success' && data.articles) {
-                            sessionCacheSet('ipm_featured_articles', data.articles);
-                            renderLatestArticles(data.articles);
-                        }
-                    })
-                    .catch(err => console.error('Error fetching latest articles:', err));
-            }
-        };
-        lazyLoadSection(articlesGrid, loadFeatured);
-    }
+        fetch('/api/articles?page=1&size=3&category=!Program Kerja&sort=newest')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.articles) {
+                    renderLatestArticles(data.articles);
+                }
             })
             .catch(err => console.error('Error fetching latest articles:', err));
     }
@@ -488,7 +407,7 @@
             return `
                 <article class="article-card reveal">
                     <div class="article-card-image">
-                        <img src="${art.image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800'}" alt="${art.title}" loading="lazy" decoding="async" width="800" height="450">
+                        <img src="${art.image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800'}" alt="${art.title}" loading="lazy">
                     </div>
                     <div class="article-card-content">
                         <span class="article-badge">${art.category || 'Umum'}</span>
@@ -683,9 +602,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('img:not([loading])').forEach((img) => {
             if (!img.hasAttribute('fetchpriority')) img.loading = 'lazy';
-        });
-        document.querySelectorAll('img:not([decoding])').forEach((img) => {
-            img.decoding = 'async';
         });
     });
 })();

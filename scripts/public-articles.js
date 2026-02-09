@@ -1,16 +1,5 @@
 ﻿const API_BASE = '/api/articles';
 let listInitialized = false;
-let sidebarCache = null;
-let sidebarCacheAt = 0;
-let sidebarPromise = null;
-let listAbortController = null;
-const scheduleIdle = (fn, timeout = 1500) => {
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-        window.requestIdleCallback(fn, { timeout });
-    } else {
-        setTimeout(fn, 0);
-    }
-};
 
 export function initPublicArticles() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -72,12 +61,7 @@ function initListPage() {
     };
 
     async function fetchArticles(append = false) {
-        if (state.loading && append) return;
-        if (!append && listAbortController) {
-            listAbortController.abort();
-        }
-        const controller = new AbortController();
-        listAbortController = controller;
+        if (state.loading) return;
         state.loading = true;
 
         if (!append) {
@@ -105,7 +89,7 @@ function initListPage() {
                 category: state.category
             });
 
-            const res = await fetch(`${API_BASE}?${params}`, { signal: controller.signal });
+            const res = await fetch(`${API_BASE}?${params}`);
             const data = await res.json();
 
             if (data.status === 'success') {
@@ -114,14 +98,11 @@ function initListPage() {
                 loadMoreBtn.style.display = state.hasMore ? 'inline-block' : 'none';
             }
         } catch (e) {
-            if (e.name === 'AbortError') return;
             console.error(e);
             if (!append) grid.innerHTML = '<p style="text-align:center">Gagal memuat artikel.</p>';
         } finally {
-            if (listAbortController === controller) {
-                state.loading = false;
-                loader.style.display = 'none';
-            }
+            state.loading = false;
+            loader.style.display = 'none';
         }
     }
 
@@ -150,7 +131,7 @@ function initListPage() {
             card.style.animationDelay = `${index * 0.1}s`;
             card.innerHTML = `
                 <div class="card-thumbnail">
-                    <img src="${thumbUrl}" alt="${art.title}" loading="lazy" decoding="async" width="400" height="250" onload="this.classList.add('loaded')">
+                    <img src="${thumbUrl}" alt="${art.title}" onload="this.classList.add('loaded')">
                     <span class="card-category-badge">${art.category || 'Umum'}</span>
                 </div>
                 <div class="card-content">
@@ -202,8 +183,8 @@ function initListPage() {
         fetchArticles(true);
     });
 
-    scheduleIdle(initSidebar, 1200);
-    scheduleIdle(() => fetchArticles(), 1200);
+    initSidebar();
+    fetchArticles();
     listInitialized = true;
 }
 
@@ -211,11 +192,12 @@ function initListPage() {
 async function initSidebar() {
     const latestList = document.getElementById('latest-articles-list');
     const categoriesList = document.getElementById('categories-list');
-    const now = Date.now();
 
-    if (sidebarCache && (now - sidebarCacheAt) < 5 * 60 * 1000) {
-        if (latestList) {
-            latestList.innerHTML = sidebarCache.map(art => `
+    try {
+        const res = await fetch(`${API_BASE}?size=5&sort=newest`);
+        const data = await res.json();
+        if (data.status === 'success' && latestList) {
+            latestList.innerHTML = data.articles.map(art => `
                 <a href="articles.html?id=${art.id}" class="sidebar-item">
                     <div class="sidebar-item-thumb" style="background-image: url('${art.image || 'https://via.placeholder.com/100'}')"></div>
                     <div class="sidebar-item-info">
@@ -225,30 +207,8 @@ async function initSidebar() {
                 </a>
             `).join('');
         }
-    } else if (!sidebarPromise) {
-        sidebarPromise = (async () => {
-            try {
-                const res = await fetch(`${API_BASE}?size=5&sort=newest`);
-                const data = await res.json();
-                if (data.status === 'success' && latestList) {
-                    sidebarCache = data.articles || [];
-                    sidebarCacheAt = Date.now();
-                    latestList.innerHTML = data.articles.map(art => `
-                        <a href="articles.html?id=${art.id}" class="sidebar-item">
-                            <div class="sidebar-item-thumb" style="background-image: url('${art.image || 'https://via.placeholder.com/100'}')"></div>
-                            <div class="sidebar-item-info">
-                                <h4 class="sidebar-item-title">${art.title}</h4>
-                                <span class="sidebar-item-date">${new Date(art.publish_date).toLocaleDateString('id-ID')}</span>
-                            </div>
-                        </a>
-                    `).join('');
-                }
-            } catch (e) {
-                console.error('Failed to load latest articles sidebar', e);
-            } finally {
-                sidebarPromise = null;
-            }
-        })();
+    } catch (e) {
+        console.error('Failed to load latest articles sidebar', e);
     }
 
     if (categoriesList) {
@@ -290,8 +250,8 @@ function initDetailPage(id, slug) {
                 renderDetail(data.article);
                 updateSEO(data.article);
                 initScrollProgress();
-                scheduleIdle(initSidebar, 1200); // Show sidebar even in detail mode (for desktop)
-                setupRecommendationsLazy(data.article);
+                initSidebar(); // Show sidebar even in detail mode (for desktop)
+                renderRecommendations(data.article);
                 setupMoreButton();
             } else {
                 container.innerHTML = '<p style="text-align:center; padding:40px;">Artikel tidak ditemukan.</p>';
@@ -306,7 +266,7 @@ function initDetailPage(id, slug) {
         const date = new Date(art.publish_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         const heroImage = art.image ? `
             <figure class="article-hero">
-                <img src="${art.image}" alt="${art.title}" class="hero-img" loading="lazy" decoding="async" width="1200" height="675">
+                <img src="${art.image}" alt="${art.title}" class="hero-img" loading="lazy" decoding="async">
             </figure>
         ` : '';
         window.__currentArticle = {
@@ -411,23 +371,6 @@ function initDetailPage(id, slug) {
         return (div.textContent || div.innerText || '').trim();
     }
 
-    function setupRecommendationsLazy(current) {
-        const wrap = document.getElementById('article-recommendations');
-        if (!wrap) return;
-        const load = () => renderRecommendations(current);
-        if (!('IntersectionObserver' in window)) {
-            load();
-            return;
-        }
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0] && entries[0].isIntersecting) {
-                observer.disconnect();
-                load();
-            }
-        }, { rootMargin: '200px 0px' });
-        observer.observe(wrap);
-    }
-
     async function renderRecommendations(current) {
         const wrap = document.getElementById('article-recommendations');
         if (!wrap) return;
@@ -446,7 +389,7 @@ function initDetailPage(id, slug) {
                 return `
                     <a class="rec-card" href="articles.html?id=${a.id}">
                         <div class="rec-thumb">
-                            <img src="${thumb}" alt="${a.title}" loading="lazy" decoding="async" width="320" height="180">
+                            <img src="${thumb}" alt="${a.title}" loading="lazy" decoding="async">
                         </div>
                         <div class="rec-body">
                             <div class="rec-card-title">${a.title}</div>

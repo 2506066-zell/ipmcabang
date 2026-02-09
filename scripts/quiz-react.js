@@ -1,5 +1,4 @@
 const { useEffect, useMemo, useRef, useState } = React;
-const e = React.createElement;
 
 const API_URL = '/api';
 const SESSION_KEY = 'ipmquiz_user_session';
@@ -262,82 +261,80 @@ function Dashboard({ profile, questPop }) {
       done: completedSets.length >= 2
     }
   ];
-  const allQuestsDone = quests.length ? quests.every(q => q.done) : false;
-  const nextQuest = quests.find(q => !q.done) || (quests.length ? quests[quests.length - 1] : null);
-  const questsToShow = nextQuest ? [nextQuest] : [];
 
-  return e(
-    'div',
-    { className: 'quiz-grid' },
-    e(
-      'div',
-      { className: 'quiz-card xp-card' },
-      e('h3', null, `Level ${level}`),
-      e('div', { className: 'xp-bar' }, e('span', { style: { width: `${progress}%` } })),
-      e('div', { style: { fontSize: '0.85rem', color: '#64748b' } }, `${inLevel} XP / ${next} XP`),
-      e('div', { className: 'streak-badge' }, e('i', { className: 'fas fa-bolt' }), ` Streak: ${profile.streak || 0}`),
-      profile.lastPercent !== null
-        ? e('div', { style: { fontSize: '0.85rem', color: '#0f172a' } }, `Skor terakhir: ${profile.lastPercent}%`)
-        : null,
-      e('a', { className: 'quiz-link', href: '/ranking.html' }, 'Lihat Ranking')
-    ),
-    e(
-      'div',
-      { className: 'quiz-card quest-card' },
-      e('h3', null, 'Quest Aktif'),
-      questPop ? e('div', { className: 'quest-pop', role: 'status' }, questPop) : null,
-      questsToShow.map((q) => e(
-        'div',
-        { key: q.id, className: `quest-item ${q.done ? 'quest-done' : ''}` },
-        e(
-          'div',
-          { className: 'quest-meta' },
-          e('span', null, q.label),
-          e('span', null, `${q.value} / ${q.total}`)
-        ),
-        e('div', { className: 'quest-bar' }, e('span', { style: { width: `${Math.min(100, Math.round((q.value / q.total) * 100))}%` } }))
-      )),
-      (!questsToShow.length && allQuestsDone)
-        ? e('div', { className: 'quest-all-done' }, 'Semua quest selesai hari ini. Mantap!')
-        : null,
-      profile.badges && profile.badges.length > 0
-        ? e(
-          'div',
-          { style: { marginTop: 10 } },
-          profile.badges.map((b) => e('span', { key: b, className: 'badge-chip' }, e('i', { className: 'fas fa-medal' }), ` ${b}`))
-        )
-        : null
-    )
+  return (
+    <div className="quiz-grid">
+      <div className="quiz-card xp-card">
+        <h3>Level {level}</h3>
+        <div className="xp-bar"><span style={{ width: `${progress}%` }} /></div>
+        <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{inLevel} XP / {next} XP</div>
+        <div className="streak-badge"><i className="fas fa-bolt"></i> Streak: {profile.streak || 0}</div>
+        {profile.lastPercent !== null && (
+          <div style={{ fontSize: '0.85rem', color: '#0f172a' }}>Skor terakhir: {profile.lastPercent}%</div>
+        )}
+        <a className="quiz-link" href="/ranking.html">Lihat Ranking</a>
+      </div>
+      <div className="quiz-card quest-card">
+        <h3>Quest Aktif</h3>
+        {questPop && (
+          <div className="quest-pop" role="status">{questPop}</div>
+        )}
+        {quests.map(q => (
+          <div key={q.id} className={`quest-item ${q.done ? 'quest-done' : ''}`}>
+            <div className="quest-meta">
+              <span>{q.label}</span>
+              <span>{q.value} / {q.total}</span>
+            </div>
+            <div className="quest-bar">
+              <span style={{ width: `${Math.min(100, Math.round((q.value / q.total) * 100))}%` }} />
+            </div>
+          </div>
+        ))}
+        {profile.badges && profile.badges.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            {profile.badges.map((b) => (
+              <span key={b} className="badge-chip"><i className="fas fa-medal"></i> {b}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
 function QuizList({ sets, loading, error, onSelect, onReload }) {
-  return e(
-    'div',
-    { className: 'quiz-card' },
-    e('h3', null, 'Daftar Kuis'),
-    loading ? e('div', { style: { fontSize: '0.9rem', color: '#64748b' } }, 'Memuat daftar kuis...') : null,
-    error ? e('div', { style: { fontSize: '0.9rem', color: '#b91c1c', marginBottom: 8 } }, error) : null,
-    e(
-      'div',
-      { className: 'quiz-list' },
-      sets.map((s) => e(
-        'div',
-        { key: s.quiz_set, className: 'quiz-tile', onClick: () => onSelect(s.quiz_set) },
-        e('div', { style: { fontWeight: 700 } }, `Kuis Set ${s.quiz_set}`),
-        e(
-          'div',
-          { style: { fontSize: '0.8rem', color: '#64748b' } },
-          `${s.count || 0} soal${s.attempted ? ' - Sudah dikerjakan' : ''}`
-        )
-      ))
-    ),
-    sets.length === 0
-      ? e('div', { style: { fontSize: '0.9rem', color: '#64748b' } }, 'Belum ada kuis aktif. Pastikan soal sudah diaktifkan oleh admin.')
-      : null,
-    onReload
-      ? e('button', { className: 'quiz-option', style: { marginTop: 10 }, onClick: onReload }, 'Muat Ulang')
-      : null
+  return (
+    <div className="quiz-card">
+      <h3>Daftar Kuis</h3>
+      {loading && (
+        <div style={{ fontSize: '0.9rem', color: '#64748b' }}>Memuat daftar kuis...</div>
+      )}
+      {error && (
+        <div style={{ fontSize: '0.9rem', color: '#b91c1c', marginBottom: 8 }}>
+          {error}
+        </div>
+      )}
+      <div className="quiz-list">
+        {sets.map((s) => (
+          <div key={s.quiz_set} className="quiz-tile" onClick={() => onSelect(s.quiz_set)}>
+            <div style={{ fontWeight: 700 }}>Kuis Set {s.quiz_set}</div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+              {s.count || 0} soal {s.attempted ? '- Sudah dikerjakan' : ''}
+            </div>
+          </div>
+        ))}
+      </div>
+      {sets.length === 0 && (
+        <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
+          Belum ada kuis aktif. Pastikan soal sudah diaktifkan oleh admin.
+        </div>
+      )}
+      {onReload && (
+        <button className="quiz-option" style={{ marginTop: 10 }} onClick={onReload}>
+          Muat Ulang
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -348,8 +345,6 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
   const [timer, setTimer] = useState(timerSeconds || 20);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({});
-  const [correctCount, setCorrectCount] = useState(0);
-  const [wrongCount, setWrongCount] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackTone, setFeedbackTone] = useState('neutral');
@@ -378,8 +373,6 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
         setHasCorrect(normalized.some(q => !!q.correct));
         setIndex(0);
         setAnswers({});
-        setCorrectCount(0);
-        setWrongCount(0);
         setSelected(null);
         startedAt.current = Date.now();
       } catch (e) {
@@ -438,8 +431,6 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
     setAnswers(prev => ({ ...prev, [q.id]: chosenKey }));
 
     let isCorrect = null;
-    let correctInc = 0;
-    let wrongInc = 0;
     if (q.correct) {
       isCorrect = String(chosenKey).toLowerCase() === String(q.correct).toLowerCase();
       setFeedback(isCorrect ? 'correct' : 'wrong');
@@ -448,13 +439,6 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
       onImmediateReward(isCorrect);
       if (onSound) onSound(isCorrect ? 'correct' : 'wrong');
       if (isCorrect) spawnConfetti();
-      if (isCorrect) {
-        correctInc = 1;
-        setCorrectCount(c => c + 1);
-      } else {
-        wrongInc = 1;
-        setWrongCount(c => c + 1);
-      }
     } else {
       setFeedback('saved');
       setFeedbackText('Jawaban tersimpan, penilaian dihitung setelah selesai.');
@@ -470,97 +454,89 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
           finalAnswer: { [q.id]: chosenKey },
           total: questions.length,
           startedAt: startedAt.current,
-          hasCorrect,
-          correctCount: correctCount + correctInc,
-          wrongCount: wrongCount + wrongInc
+          hasCorrect
         });
       }
     }, 700);
   };
 
   if (loading) {
-    return e('div', { className: 'quiz-card quiz-question' }, e('div', null, 'Memuat soal...'));
+    return (
+      <div className="quiz-card quiz-question">
+        <div>Memuat soal...</div>
+      </div>
+    );
   }
 
   const q = questions[index];
   if (!q) {
-    return e(
-      'div',
-      { className: 'quiz-card quiz-question' },
-      e('div', null, 'Soal tidak ditemukan.'),
-      e('button', { className: 'quiz-option', onClick: onExit }, 'Kembali')
+    return (
+      <div className="quiz-card quiz-question">
+        <div>Soal tidak ditemukan.</div>
+        <button className="quiz-option" onClick={onExit}>Kembali</button>
+      </div>
     );
   }
 
   const isUrgent = timer <= 10;
   const progress = questions.length ? Math.round(((index + 1) / questions.length) * 100) : 0;
 
-  return e(
-    'div',
-    { className: `quiz-card quiz-question${animate ? ' animate' : ''}${isUrgent ? ' is-urgent' : ''}` },
-    e(
-      'div',
-      { className: 'quiz-question-header' },
-      e(
-        'div',
-        { className: 'quiz-question-title' },
-        e('span', { className: 'quiz-floating-icon', 'aria-hidden': 'true' }, e('i', { className: 'fas fa-pen-to-square' })),
-        e(
-          'div',
-          { className: 'quiz-question-meta' },
-          e('strong', null, `Soal ${index + 1} / ${questions.length}`),
-          e(
-            'div',
-            { className: `streak-avatar ${streakPulse ? 'pulse' : ''}` },
-            e('i', { className: 'fas fa-fire' }),
-            e('span', null, streak || 0)
-          )
-        )
-      ),
-      e(
-        'div',
-        { className: 'quiz-header-actions' },
-        e(
-          'button',
-          {
-            type: 'button',
-            className: `quiz-sound-toggle ${soundOn ? '' : 'muted'}`,
-            'aria-label': soundOn ? 'Matikan suara' : 'Aktifkan suara',
-            onClick: onToggleSound
-          },
-          e('i', { className: `fas ${soundOn ? 'fa-volume-up' : 'fa-volume-mute'}` })
-        ),
-        e('span', { className: `quiz-timer${isUrgent ? ' is-urgent' : ''}` }, e('i', { className: 'fas fa-clock' }), ` ${timer}s`)
-      )
-    ),
-    e(
-      'div',
-      { className: 'quiz-progress', 'aria-hidden': 'true' },
-      e('span', { style: { width: `${progress}%` } }),
-      e('span', { className: 'quiz-progress-dot', style: { left: `${progress}%` } })
-    ),
-    xpBurst ? e('div', { className: 'xp-burst', key: xpBurst.id }, `+${xpBurst.value} XP`) : null,
-    e('div', { className: 'confetti-layer', ref: confettiRef, 'aria-hidden': 'true' }),
-    e('div', { style: { fontSize: '1.1rem', fontWeight: 600 } }, q.question),
-    e(
-      'div',
-      { className: 'quiz-options' },
-      q.options.map((opt) => {
-        const isCorrect = feedback === 'correct' && opt.key === selected;
-        const isWrong = feedback === 'wrong' && opt.key === selected;
-        return e(
-          'button',
-          {
-            key: opt.key,
-            className: `quiz-option${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}`,
-            onClick: () => handleAnswer(opt.key)
-          },
-          e('strong', { style: { marginRight: 8 } }, opt.key.toUpperCase()),
-          opt.label
-        );
-      })
-    ),
-    feedbackText ? e('div', { className: `quiz-feedback ${feedbackTone}` }, feedbackText) : null
+  return (
+    <div className={`quiz-card quiz-question${animate ? ' animate' : ''}${isUrgent ? ' is-urgent' : ''}`}>
+      <div className="quiz-question-header">
+        <div className="quiz-question-title">
+          <span className="quiz-floating-icon" aria-hidden="true"><i className="fas fa-pen-to-square"></i></span>
+          <div className="quiz-question-meta">
+            <strong>Soal {index + 1} / {questions.length}</strong>
+            <div className={`streak-avatar ${streakPulse ? 'pulse' : ''}`}>
+              <i className="fas fa-fire"></i>
+              <span>{streak || 0}</span>
+            </div>
+          </div>
+        </div>
+        <div className="quiz-header-actions">
+          <button
+            type="button"
+            className={`quiz-sound-toggle ${soundOn ? '' : 'muted'}`}
+            aria-label={soundOn ? 'Matikan suara' : 'Aktifkan suara'}
+            onClick={onToggleSound}
+          >
+            <i className={`fas ${soundOn ? 'fa-volume-up' : 'fa-volume-mute'}`}></i>
+          </button>
+          <span className={`quiz-timer${isUrgent ? ' is-urgent' : ''}`}><i className="fas fa-clock"></i> {timer}s</span>
+        </div>
+      </div>
+      <div className="quiz-progress" aria-hidden="true">
+        <span style={{ width: `${progress}%` }} />
+        <span className="quiz-progress-dot" style={{ left: `${progress}%` }} />
+      </div>
+      {xpBurst && (
+        <div className="xp-burst" key={xpBurst.id}>+{xpBurst.value} XP</div>
+      )}
+      <div className="confetti-layer" ref={confettiRef} aria-hidden="true"></div>
+      <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{q.question}</div>
+      <div className="quiz-options">
+        {q.options.map((opt) => {
+          const isCorrect = feedback === 'correct' && opt.key === selected;
+          const isWrong = feedback === 'wrong' && opt.key === selected;
+          return (
+            <button
+              key={opt.key}
+              className={`quiz-option${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}`}
+              onClick={() => handleAnswer(opt.key)}
+            >
+              <strong style={{ marginRight: 8 }}>{opt.key.toUpperCase()}</strong>
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+      {!!feedbackText && (
+        <div className={`quiz-feedback ${feedbackTone}`}>
+          {feedbackText}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -601,53 +577,15 @@ function NextQuizCountdown({ nextQuiz }) {
 
   if (!nextQuiz || !nextQuiz.title) return null;
 
-  return e(
-    'div',
-    { className: 'quiz-top-grid' },
-    e(
-      'div',
-      { className: 'quiz-top-card' },
-      e('div', { className: 'quiz-top-label' }, 'Kuis Berikutnya'),
-      e('div', { className: 'quiz-top-title' }, nextQuiz.title),
-      nextQuiz.topic ? e('div', { className: 'quiz-top-subtitle' }, nextQuiz.topic) : null,
-      timeLeft ? e('div', { className: 'quiz-top-countdown' }, timeLeft) : null
-    )
-  );
-}
-
-function QuizResultSummary({ summary, onClose }) {
-  if (!summary) return null;
-  return e(
-    'div',
-    { className: 'quiz-card quiz-result-card' },
-    e(
-      'div',
-      { className: 'quiz-result-header' },
-      e(
-        'div',
-        null,
-        e('div', { className: 'quiz-result-title' }, 'Hasil Kuis'),
-        e('div', { className: 'quiz-result-sub' }, `Skor ${summary.score} / ${summary.total} • ${summary.percent}%`)
-      ),
-      e('button', { className: 'quiz-result-close', type: 'button', onClick: onClose, 'aria-label': 'Tutup hasil' }, 'Tutup')
-    ),
-    e(
-      'div',
-      { className: 'quiz-result-metrics' },
-      e('div', { className: 'result-metric correct' },
-        e('span', { className: 'metric-icon' }, e('i', { className: 'fas fa-check' })),
-        e('div', null, e('div', { className: 'metric-label' }, 'Benar'), e('div', { className: 'metric-value' }, summary.correct))
-      ),
-      e('div', { className: 'result-metric wrong' },
-        e('span', { className: 'metric-icon' }, e('i', { className: 'fas fa-xmark' })),
-        e('div', null, e('div', { className: 'metric-label' }, 'Salah'), e('div', { className: 'metric-value' }, summary.wrong))
-      ),
-      e('div', { className: 'result-metric time' },
-        e('span', { className: 'metric-icon' }, e('i', { className: 'fas fa-stopwatch' })),
-        e('div', null, e('div', { className: 'metric-label' }, 'Waktu'), e('div', { className: 'metric-value' }, `${summary.timeSpent}s`))
-      )
-    ),
-    e('div', { className: 'quiz-result-hint' }, 'Mantap! Jawaban sudah dinilai. Kamu bisa pilih set lain atau ulangi.')
+  return (
+    <div className="quiz-top-grid">
+      <div className="quiz-top-card">
+        <div className="quiz-top-label">Kuis Berikutnya</div>
+        <div className="quiz-top-title">{nextQuiz.title}</div>
+        {nextQuiz.topic && <div className="quiz-top-subtitle">{nextQuiz.topic}</div>}
+        {timeLeft && <div className="quiz-top-countdown">{timeLeft}</div>}
+      </div>
+    </div>
   );
 }
 
@@ -657,7 +595,6 @@ function App() {
   const settings = useGamificationSettings();
   const [profile, setProfile] = useState(loadProfile('guest'));
   const [activeSet, setActiveSet] = useState(null);
-  const [resultSummary, setResultSummary] = useState(null);
   const [pulse, setPulse] = useState({ xp: false, streak: false, quest: false, badge: false });
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ipm_quiz_sound') !== 'off');
   const [xpBurst, setXpBurst] = useState(null);
@@ -669,6 +606,7 @@ function App() {
     const data = loadProfile(username);
     setProfile(data);
   }, [username]);
+
 
   const updateProfile = (updater) => {
     setProfile((prev) => {
@@ -754,7 +692,7 @@ function App() {
     }
   };
 
-  const finishQuiz = async ({ answers, finalAnswer, total, startedAt, hasCorrect, correctCount, wrongCount }) => {
+  const finishQuiz = async ({ answers, finalAnswer, total, startedAt, hasCorrect }) => {
     const mergedAnswers = { ...answers, ...finalAnswer };
     const timeSpent = Math.floor((Date.now() - startedAt) / 1000);
     try {
@@ -840,74 +778,49 @@ function App() {
         setPulse((p) => ({ ...p, badge: true }));
         setTimeout(() => setPulse((p) => ({ ...p, badge: false })), 500);
       }
-      setResultSummary({
-        score,
-        total: totalScore,
-        percent,
-        correct: typeof correctCount === 'number' ? correctCount : score,
-        wrong: typeof wrongCount === 'number' ? wrongCount : Math.max(0, totalScore - score),
-        timeSpent
-      });
       setActiveSet(null);
     } catch (e) {
       toast(e.message || 'Gagal menyimpan hasil.', 'error');
     }
   };
 
-  return e(
-    'div',
-    { className: 'quiz-shell' },
-    e(
-      'div',
-      { className: 'quiz-header-area' },
-      e(NextQuizCountdown, { nextQuiz }),
-      e(
-        'div',
-        { className: `quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}` },
-        e(Dashboard, { profile: { ...profile, __settings: settings }, questPop })
-      )
-    ),
-    e(
-      'div',
-      { className: 'quiz-main' },
-      resultSummary ? e(QuizResultSummary, { summary: resultSummary, onClose: () => setResultSummary(null) }) : null,
-      !activeSet ? e(QuizList, {
-        sets,
-        loading,
-        error,
-        onSelect: (setId) => { setActiveSet(setId); setResultSummary(null); },
-        onReload: reload
-      }) : null,
-      activeSet ? e(QuizQuestion, {
-        quizSet: activeSet,
-        onExit: () => setActiveSet(null),
-        onFinish: finishQuiz,
-        onImmediateReward: handleImmediateReward,
-        timerSeconds: settings.timer_seconds,
-        xpBurst,
-        soundOn,
-        onToggleSound: toggleSound,
-        onSound: playSound,
-        streak: profile.streak || 0,
-        streakPulse
-      }) : null
-    )
+  return (
+    <div className="quiz-shell">
+      <NextQuizCountdown nextQuiz={nextQuiz} />
+      <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
+        <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} />
+      </div>
+      {!activeSet && <QuizList sets={sets} loading={loading} error={error} onSelect={setActiveSet} onReload={reload} />}
+      {activeSet && (
+        <QuizQuestion
+          quizSet={activeSet}
+          onExit={() => setActiveSet(null)}
+          onFinish={finishQuiz}
+          onImmediateReward={handleImmediateReward}
+          timerSeconds={settings.timer_seconds}
+          xpBurst={xpBurst}
+          soundOn={soundOn}
+          onToggleSound={toggleSound}
+          onSound={playSound}
+          streak={profile.streak || 0}
+          streakPulse={streakPulse}
+        />
+      )}
+    </div>
   );
 }
 
 const root = ReactDOM.createRoot(document.getElementById('app'));
-root.render(e(App));
+root.render(<App />);
 
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.getElementById('quiz-instructions-toggle');
   const body = document.getElementById('quiz-instructions-body');
   if (!toggle || !body) return;
-  if (window.innerWidth <= 768) {
-    body.classList.add('collapsed');
-    toggle.classList.add('collapsed');
-  }
   toggle.addEventListener('click', () => {
     body.classList.toggle('collapsed');
     toggle.classList.toggle('collapsed');
   });
 });
+
+
