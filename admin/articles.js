@@ -217,6 +217,7 @@ export function initArticles(state, els, api) {
     function closeModal() {
         if (!modal) return;
         modal.classList.remove('active');
+        modal.classList.remove('focus-mode');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
     }
@@ -345,5 +346,29 @@ export function initArticles(state, els, api) {
 
     // Init Editor & Load
     initRichEditor();
+
+    // Focus Mode: reduce distractions while typing
+    function setFocusMode(enabled) {
+        if (!modal) return;
+        modal.classList.toggle('focus-mode', !!enabled);
+    }
+
+    if (editorArea && modal) {
+        editorArea.addEventListener('focus', () => setFocusMode(true));
+        editorArea.addEventListener('blur', () => {
+            setTimeout(() => {
+                const active = document.activeElement;
+                if (!modal.contains(active)) return setFocusMode(false);
+                if (active === editorArea) return;
+                if (toolbar && toolbar.contains(active)) return;
+                setFocusMode(false);
+            }, 0);
+        });
+    }
+
+    if (toolbar && modal) {
+        toolbar.addEventListener('mousedown', () => setFocusMode(true));
+    }
+
     loadArticles();
 }

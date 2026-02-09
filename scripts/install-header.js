@@ -59,8 +59,8 @@
 
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.id = 'install-header-btn';
-        btn.className = 'header-icon install-icon-btn';
+        btn.id = 'install-app-btn';
+        btn.className = 'header-icon install-app-btn';
         btn.setAttribute('aria-label', 'Install aplikasi');
         btn.title = 'Install aplikasi';
         btn.hidden = true;
@@ -103,6 +103,7 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
+        console.log('[PWA] beforeinstallprompt detected');
         showButton();
     });
 

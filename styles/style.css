@@ -4365,19 +4365,19 @@ body.quiz-active .premium-fab-container {
 }
 
 .header-icon.profile-icon-btn,
-.header-icon.install-icon-btn {
+.header-icon.install-app-btn {
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
 }
 
-.header-icon.install-icon-btn {
+.header-icon.install-app-btn {
     font-size: 1.1rem;
     opacity: 0.7;
 }
 
-.header-icon.install-icon-btn:hover {
+.header-icon.install-app-btn:hover {
     opacity: 1;
 }
 

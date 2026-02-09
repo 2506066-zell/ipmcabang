@@ -2018,41 +2018,73 @@ body.light-mode .writing-mode-content {
 }
 /* === ARTICLE MODAL COMFORT OVERRIDES === */
 #article-modal .modal-content {
-    width: min(920px, 96vw);
-    max-width: 920px;
+    width: min(780px, 96vw);
+    max-width: 780px;
     max-height: 90vh;
     border-radius: 16px;
+    overflow: hidden;
 }
 
 #article-modal .modal-body-scroll {
-    padding: 18px;
-    background: #f1f5f9;
+    padding: 28px;
+    background: #eef2f5;
 }
 
 #article-modal .editor-container {
-    max-width: 860px;
+    max-width: 760px;
     min-height: auto;
-    padding: 32px 28px;
-    border-radius: 14px;
+    margin: 0 auto;
+    padding: 32px 34px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e6ee;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+#article-modal .editor-title-container {
+    margin-bottom: 20px;
 }
 
 #article-modal .editor-title-input {
-    font-size: 2.1rem;
-    line-height: 1.2;
+    font-size: 2rem;
+    line-height: 1.18;
+    font-weight: 700;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 6px 0 10px;
+    letter-spacing: -0.01em;
+}
+
+#article-modal .editor-title-input:focus {
+    border-bottom-color: var(--accent-primary, #2563eb);
 }
 
 #article-modal .editor-meta-row {
     gap: 16px;
     margin-bottom: 24px;
-    padding-bottom: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #edf0f5;
 }
 
 #article-modal .editor-image-section {
-    margin-bottom: 24px;
+    margin-bottom: 22px;
 }
 
 #article-modal .image-upload-wrapper {
     padding: 24px;
+}
+
+#article-modal .editor-image-preview {
+    margin: 20px 0;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+#article-modal .editor-image-preview img {
+    width: 100%;
+    height: auto;
+    max-height: 360px;
+    object-fit: cover;
+    display: block;
 }
 
 #article-modal .editor-writing-area {
@@ -2061,31 +2093,97 @@ body.light-mode .writing-mode-content {
 
 #article-modal .editor-toolbar {
     position: sticky;
-    top: 8px;
-    margin-bottom: 16px;
+    top: 12px;
+    margin-bottom: 18px;
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    z-index: 5;
+}
+
+#article-modal .tool-btn {
+    padding: 8px;
+    font-size: 0.95rem;
 }
 
 #article-modal .editor-content-editable {
-    min-height: 260px;
-    padding-bottom: 80px;
-    font-size: 1.05rem;
-    line-height: 1.7;
+    min-height: 380px;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding: 24px;
+    font-size: 1.08rem;
+    line-height: 1.8;
+    color: #1f2937;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+#article-modal .editor-content-editable:focus {
+    outline: 2px solid rgba(37, 99, 235, 0.25);
+    outline-offset: 2px;
+    border-color: var(--accent-primary, #2563eb);
+}
+
+#article-modal .editor-content-editable img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 20px 0;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+    display: block;
+}
+
+/* Focus Mode */
+#article-modal.focus-mode .editor-meta-row,
+#article-modal.focus-mode .editor-image-section {
+    display: none;
+}
+
+#article-modal.focus-mode .editor-title-container {
+    margin-bottom: 14px;
+}
+
+#article-modal.focus-mode .editor-content-editable {
+    max-height: 62vh;
+}
+
+#article-modal.focus-mode .modal-body-scroll {
+    background: #e9eef2;
+}
+
+#article-modal.focus-mode .editor-container {
+    padding-top: 26px;
+    padding-bottom: 34px;
 }
 
 @media (max-width: 768px) {
     #article-modal .modal-content {
-        max-height: 92vh;
+        max-height: 94vh;
         border-radius: 18px 18px 0 0;
     }
 
+    #article-modal .modal-body-scroll {
+        padding: 16px;
+    }
+
     #article-modal .editor-container {
-        padding: 20px 16px;
+        padding: 18px 16px;
     }
 
     #article-modal .editor-title-input {
-        font-size: 1.5rem;
+        font-size: 1.55rem;
+    }
+
+    #article-modal .editor-content-editable {
+        min-height: 300px;
+        max-height: 48vh;
+        font-size: 1rem;
+        padding: 18px;
     }
 }
