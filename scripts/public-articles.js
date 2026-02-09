@@ -224,6 +224,19 @@ function initDetailPage(id, slug) {
     const container = document.getElementById('article-detail-content');
     const scrollBar = document.getElementById('detail-scroll-bar');
 
+    function getRecSkeletonMarkup(count = 3) {
+        return Array(count).fill(0).map(() => `
+            <div class="rec-skeleton">
+                <div class="rec-skeleton-thumb"><div class="shimmer"></div></div>
+                <div class="rec-skeleton-body">
+                    <div class="rec-skeleton-line"><div class="shimmer"></div></div>
+                    <div class="rec-skeleton-line short"><div class="shimmer"></div></div>
+                    <div class="rec-skeleton-line tiny"><div class="shimmer"></div></div>
+                </div>
+            </div>
+        `).join('');
+    }
+
     async function loadDetail() {
         try {
             let url = `${API_BASE}?`;
@@ -300,7 +313,7 @@ function initDetailPage(id, slug) {
                 <section class="article-recommendations">
                     <h2 class="rec-title">Artikel Lainnya Untuk Anda</h2>
                     <div id="article-recommendations" class="rec-grid">
-                        <div class="rec-loading">Memuat rekomendasi...</div>
+                        ${getRecSkeletonMarkup(3)}
                     </div>
                 </section>
                 <div class="more-articles-wrap">
@@ -361,6 +374,7 @@ function initDetailPage(id, slug) {
     async function renderRecommendations(current) {
         const wrap = document.getElementById('article-recommendations');
         if (!wrap) return;
+        wrap.innerHTML = getRecSkeletonMarkup(3);
         try {
             const res = await fetch(`${API_BASE}?page=1&size=6&sort=newest`);
             const data = await res.json();
@@ -421,6 +435,11 @@ function initDetailPage(id, slug) {
     loadDetail();
 }
 
+function notifyShare(message, type = 'info') {
+    if (window.Toast) window.Toast.show(message, type);
+    else if (message) alert(message);
+}
+
 window.shareArticleNative = function () {
     const data = window.__currentArticle || {};
     if (navigator.share) {
@@ -446,8 +465,9 @@ window.shareArticle = function (platform) {
         case 'twitter': window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank'); break;
         case 'copy':
             navigator.clipboard.writeText(url).then(() => {
-                if (window.Toast) window.Toast.show('Tautan disalin!', 'success');
-                else alert('Tautan disalin!');
+                notifyShare('Tautan disalin!', 'success');
+            }).catch(() => {
+                notifyShare('Gagal menyalin tautan.', 'error');
             });
             break;
     }

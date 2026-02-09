@@ -557,7 +557,7 @@
 .share-action-btn {
     min-height: 44px;
     width: 100%;
-    border: none;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 10px 12px;
     font-weight: 600;
@@ -566,28 +566,63 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #f1f5f9;
-    color: #334155;
+    background: #f8fafc;
+    color: #1f2937;
 }
 
 .share-action-btn.minimal {
-    background: #ecfdf3;
-    color: #166534;
+    background: var(--color-accent, #1d8d27);
+    color: #fff;
+    border-color: var(--color-accent, #1d8d27);
 }
 
-.share-action-btn.whatsapp {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.share-action-btn.twitter {
-    background: #e0f2fe;
-    color: #0c4a6e;
-}
-
+.share-action-btn.whatsapp,
+.share-action-btn.twitter,
 .share-action-btn.copy {
-    background: #f1f5f9;
-    color: #334155;
+    background: #f8fafc;
+    color: var(--color-accent, #1d8d27);
+}
+
+.rec-skeleton {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid #eef2f7;
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.rec-skeleton-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #e2e8f0;
+    position: relative;
+}
+
+.rec-skeleton-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rec-skeleton-line {
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.rec-skeleton-line.short {
+    width: 70%;
+}
+
+.rec-skeleton-line.tiny {
+    width: 50%;
 }
 
 .article-recommendations {
@@ -776,3 +811,4 @@
         transform: translateY(-5px) scale(1.1);
     }
 }
+
