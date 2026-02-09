@@ -1,6 +1,7 @@
 (() => {
   const FORM_ID = 'register-form';
   const API_BASE = '/api/auth/register';
+  const PIMPINAN_API = '/api/auth?action=pimpinanOptions';
   function qs(id) { return document.getElementById(id); }
   function togglePassword() {
     const input = qs('password');
@@ -54,7 +55,43 @@
   document.addEventListener('DOMContentLoaded', () => {
     const form = qs(FORM_ID);
     const toggle = qs('toggle-password');
+    const pimpinanSelect = qs('pimpinan');
+    const pimpinanHint = qs('pimpinan-hint');
     if (toggle) toggle.addEventListener('click', togglePassword);
     if (form) form.addEventListener('submit', onSubmit);
+
+    if (pimpinanSelect) {
+      pimpinanSelect.disabled = true;
+      fetch(PIMPINAN_API)
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Gagal memuat pilihan.');
+          const options = Array.isArray(data.options) ? data.options : [];
+          pimpinanSelect.innerHTML = '';
+          if (!options.length) {
+            pimpinanSelect.innerHTML = '<option value="">Belum ada pilihan. Hubungi admin.</option>';
+            pimpinanSelect.disabled = true;
+            if (pimpinanHint) pimpinanHint.textContent = 'Pilihan belum tersedia. Hubungi admin untuk mengatur.';
+            return;
+          }
+          const placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = 'Pilih asal pimpinan';
+          placeholder.disabled = true;
+          placeholder.selected = true;
+          pimpinanSelect.appendChild(placeholder);
+          options.forEach((opt) => {
+            const o = document.createElement('option');
+            o.value = opt;
+            o.textContent = opt;
+            pimpinanSelect.appendChild(o);
+          });
+          pimpinanSelect.disabled = false;
+        })
+        .catch(() => {
+          pimpinanSelect.innerHTML = '<option value="">Gagal memuat pilihan. Coba lagi.</option>';
+          pimpinanSelect.disabled = true;
+        });
+    }
   });
 })();

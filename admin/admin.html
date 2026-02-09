@@ -169,6 +169,7 @@
                                 <option value="1">Kuis 1</option>
                                 <option value="2">Kuis 2</option>
                                 <option value="3">Kuis 3</option>
+                                <option value="4">Kuis 4</option>
                             </select>
                             <select id="category-filter"
                                 style="width:auto; min-width:140px; font-size:14px; padding:8px">
@@ -295,6 +296,7 @@
                                     <option value="1">Kuis 1 (Mingguan)</option>
                                     <option value="2">Kuis 2 (Event)</option>
                                     <option value="3">Kuis 3 (Bidang)</option>
+                                    <option value="4">Kuis 4 (Spesial)</option>
                                 </select>
                                 <button class="btn btn-secondary"
                                     style="background:var(--accent-danger); color:#fff; border:none;"
@@ -362,7 +364,33 @@
                     </div>
                 </div>
 
-                <div id="tab-articles" class="hidden">
+                                    <div class="card" style="margin-top:20px;">
+                        <h3 style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-location-dot" style="color:var(--accent-primary)"></i> Pengaturan Asal Pimpinan
+                        </h3>
+                        <p style="margin:0 0 12px; color:var(--text-muted); font-size:0.9rem;">
+                            Atur daftar pilihan asal pimpinan untuk form pendaftaran user.
+                        </p>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1">
+                                <label>Tambah Asal Pimpinan</label>
+                                <input type="text" id="pimpinan-input" placeholder="Contoh: PR IPM Panawuan">
+                            </div>
+                            <div class="form-group" style="width:160px; align-self:flex-end;">
+                                <button class="btn btn-secondary" id="pimpinan-add-btn" style="width:100%">
+                                    <i class="fas fa-plus"></i> Tambah
+                                </button>
+                            </div>
+                        </div>
+                        <div id="pimpinan-list" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+                        <div style="display:flex; gap:10px; margin-top:12px;">
+                            <button class="btn btn-primary" id="pimpinan-save-btn">
+                                <i class="fas fa-save"></i> Simpan Pilihan
+                            </button>
+                            <span class="status" id="pimpinan-status"></span>
+                        </div>
+                    </div>
+<div id="tab-articles" class="hidden">
                     <div class="toolbar-right" style="margin-bottom:16px">
                         <input type="text" id="article-search" placeholder="Cari artikel..."
                             style="padding:8px; border-radius:8px; border:1px solid #ddd;">
@@ -602,6 +630,7 @@
                                 <option value="1">Kuis 1 (UMUM)</option>
                                 <option value="2">Kuis 2 (EVENT)</option>
                                 <option value="3">Kuis 3 (BIDANG)</option>
+                                <option value="4">Kuis 4 (SPESIAL)</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex:1">
@@ -946,10 +975,14 @@
         })();
     </script>
     <script src="../scripts/toast.js"></script>
-    <script src="admin.js?v=6" defer></script>
+    <script src="admin.js?v=8" defer></script>
 </body>
 
 </html>
+
+
+
+
 
 
 

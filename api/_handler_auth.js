@@ -139,12 +139,28 @@ async function handleSeedAdmins(req, res) {
     return json(res, 200, { status: 'success', accounts: created });
 }
 
+async function handleGetPimpinanOptions(req, res) {
+    if (req.method !== 'GET') return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    const row = (await query`SELECT value FROM system_settings WHERE key='pimpinan_options'`).rows[0];
+    let options = [];
+    if (row && row.value) {
+        try {
+            const parsed = JSON.parse(row.value);
+            if (Array.isArray(parsed)) {
+                options = parsed.map(item => String(item || '').trim()).filter(Boolean);
+            }
+        } catch { }
+    }
+    return json(res, 200, { status: 'success', options });
+}
+
 module.exports = async (req, res) => {
     try {
         const action = req.query.action;
         switch (action) {
             case 'login': return await handleLogin(req, res);
             case 'register': return await handleRegister(req, res);
+            case 'pimpinanOptions': return await handleGetPimpinanOptions(req, res);
             case 'promoteAdmin': return await handlePromoteAdmin(req, res);
             case 'seedAdmins': return await handleSeedAdmins(req, res);
             default: return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });

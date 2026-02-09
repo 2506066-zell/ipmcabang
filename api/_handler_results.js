@@ -30,10 +30,11 @@ async function list(req, res) {
     const offset = Math.max(0, (Math.max(1, page) - 1) * limit);
 
     const queryText = `
-    SELECT id, created_at AS ts, username, score, total, percent, time_spent
-    FROM results
-    WHERE username IS NOT NULL AND username != ''
-    ORDER BY score DESC, time_spent ASC, created_at ASC
+    SELECT r.id, r.created_at AS ts, r.username, u.pimpinan, r.score, r.total, r.percent, r.time_spent
+    FROM results r
+    LEFT JOIN users u ON r.user_id = u.id
+    WHERE r.username IS NOT NULL AND r.username != ''
+    ORDER BY r.score DESC, r.time_spent ASC, r.created_at ASC
     LIMIT $1 OFFSET $2
   `;
 

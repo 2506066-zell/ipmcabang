@@ -361,6 +361,23 @@
     padding: 0 5px;
 }
 
+.podium-pimpinan {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(9, 132, 227, 0.12);
+    color: #0f172a;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 2px auto 4px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .podium-score {
     font-weight: 800;
     font-size: 1.1rem;
@@ -437,6 +454,19 @@
     font-weight: 600;
     color: var(--text-primary);
     font-size: 0.95rem;
+}
+
+.rank-pimpinan {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(9, 132, 227, 0.12);
+    color: #0f172a;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: fit-content;
 }
 
 .rank-meta {

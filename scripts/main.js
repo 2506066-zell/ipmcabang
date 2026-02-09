@@ -118,23 +118,18 @@
         const state = { notifications: [], unread: 0, articleUnread: 0, latestArticle: null };
         const session = getSession();
 
-        const fetchNotifications = async () => {
-            try {
-                if (session) {
-                    let res = await fetch('/api/users?action=notifications', { headers: { Authorization: `Bearer ${session}` } });
-                    if (res.status === 404) {
-                        res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
-                    }
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.status === 'success' && Array.isArray(data.notifications)) {
-                            state.notifications = data.notifications;
-                            state.unread = data.notifications.filter(n => !n.is_read).length;
-                        }
-                    }
-                }
-            } catch {}
+        const updateNotifBadge = () => {
+            const badge = document.getElementById('notif-badge');
+            const bell = document.getElementById('notif-bell');
+            const totalBadge = state.unread + state.articleUnread;
+            if (badge) {
+                badge.textContent = String(totalBadge);
+                badge.hidden = totalBadge === 0;
+            }
+            if (bell) bell.title = `${totalBadge} notifikasi`;
+        };
 
+        const fetchArticleNotif = async () => {
             try {
                 const artRes = await fetch('/api/articles?size=1&sort=newest');
                 if (artRes.ok) {
@@ -153,30 +148,38 @@
                     }
                 }
             } catch {}
+        };
 
-            const badge = document.getElementById('notif-badge');
-            const bell = document.getElementById('notif-bell');
-            const totalBadge = state.unread + state.articleUnread;
-            if (badge) {
-                badge.textContent = String(totalBadge);
-                badge.hidden = totalBadge === 0;
-            }
-            if (bell) bell.title = `${totalBadge} notifikasi`;
+        const fetchUserNotifications = async () => {
+            if (!session || state.authFailed) return;
+            try {
+                let res = await fetch('/api/users?action=notifications', { headers: { Authorization: `Bearer ${session}` } });
+                if (res.status === 401 || res.status === 403) {
+                    state.authFailed = true;
+                    return;
+                }
+                if (res.status === 404) {
+                    res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
+                    if (res.status === 401 || res.status === 403) {
+                        state.authFailed = true;
+                        return;
+                    }
+                }
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'success' && Array.isArray(data.notifications)) {
+                        state.notifications = data.notifications;
+                        state.unread = data.notifications.filter(n => !n.is_read).length;
+                    }
+                }
+            } catch {}
+        };
 
+        const fetchNotifications = async () => {
+            await fetchArticleNotif();
+            updateNotifBadge();
             if (state.articleUnread && window.Toast) {
                 window.Toast.show('Ada artikel terbaru. Lihat di notifikasi.', 'info');
-            }
-            if (state.unread && window.Toast) {
-                state.notifications.filter(n => !n.is_read).forEach(n => {
-                    window.Toast.show(n.message || 'Ada pembaruan pada kuis.', 'info');
-                });
-                if (session) {
-                    fetch('/api/users?action=markNotificationsRead', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session}` },
-                        body: JSON.stringify({})
-                    }).catch(() => {});
-                }
             }
         };
 
@@ -215,8 +218,10 @@
         const { overlay, panel } = ensureNotifPanel();
         const bell = ensureNotifBell();
 
-        const openPanel = () => {
+        const openPanel = async () => {
+            await fetchUserNotifications();
             renderNotifList();
+            updateNotifBadge();
             panel.hidden = false;
             overlay.hidden = false;
         };
@@ -236,12 +241,9 @@
                 const published = new Date(state.latestArticle.publish_date || state.latestArticle.created_at || Date.now()).getTime();
                 localStorage.setItem(ARTICLE_SEEN_KEY, String(published));
             }
-            const badge = document.getElementById('notif-badge');
-            if (badge) {
-                badge.textContent = '0';
-                badge.hidden = true;
-            }
+            state.unread = 0;
             state.articleUnread = 0;
+            updateNotifBadge();
             closePanel();
         });
 

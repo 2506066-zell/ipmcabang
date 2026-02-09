@@ -14,6 +14,8 @@ const DEFAULT_GAMIFICATION = {
     highscore_percent: 80
 };
 
+const DEFAULT_PIMPINAN_OPTIONS = [];
+
 async function getGamificationSettings() {
     const row = (await query`SELECT value FROM system_settings WHERE key='gamification_settings'`).rows[0];
     if (!row || !row.value) return DEFAULT_GAMIFICATION;
@@ -31,6 +33,38 @@ async function saveGamificationSettings(payload) {
     await query`INSERT INTO system_settings (key, value, updated_at) VALUES ('gamification_settings', ${serialized}, NOW())
         ON CONFLICT (key) DO UPDATE SET value=${serialized}, updated_at=NOW()`;
     return merged;
+}
+
+async function getPimpinanOptions() {
+    const row = (await query`SELECT value FROM system_settings WHERE key='pimpinan_options'`).rows[0];
+    if (!row || !row.value) return DEFAULT_PIMPINAN_OPTIONS;
+    try {
+        const parsed = JSON.parse(row.value);
+        if (Array.isArray(parsed)) {
+            return parsed.map(item => String(item || '').trim()).filter(Boolean);
+        }
+        return DEFAULT_PIMPINAN_OPTIONS;
+    } catch {
+        return DEFAULT_PIMPINAN_OPTIONS;
+    }
+}
+
+async function savePimpinanOptions(payload) {
+    const raw = Array.isArray(payload) ? payload : (Array.isArray(payload?.options) ? payload.options : []);
+    const cleaned = [];
+    const seen = new Set();
+    raw.forEach(item => {
+        const val = String(item || '').trim();
+        if (!val) return;
+        const key = val.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        cleaned.push(val);
+    });
+    const serialized = JSON.stringify(cleaned);
+    await query`INSERT INTO system_settings (key, value, updated_at) VALUES ('pimpinan_options', ${serialized}, NOW())
+        ON CONFLICT (key) DO UPDATE SET value=${serialized}, updated_at=NOW()`;
+    return cleaned;
 }
 
 // --- Questions Management ---
@@ -332,6 +366,27 @@ async function handleSaveGamification(req, res) {
     return json(res, 200, { status: 'success', settings });
 }
 
+async function handleGetPimpinan(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+    const options = await getPimpinanOptions();
+    return json(res, 200, { status: 'success', options });
+}
+
+async function handleSavePimpinan(req, res) {
+    let adminId = null;
+    try {
+        const admin = await requireAdminAuth(req);
+        adminId = admin.id;
+    } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+
+    const body = parseJsonBody(req) || {};
+    const options = await savePimpinanOptions(body);
+    try {
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_PIMPINAN_OPTIONS', ${{ count: options.length }})`;
+    } catch {}
+    return json(res, 200, { status: 'success', options });
+}
+
 async function handleResetSet(req, res) {
     let adminId = null;
     try {
@@ -403,6 +458,7 @@ module.exports = async (req, res) => {
             if (req.method === 'GET' && action === 'listQuestions') return await handleListQuestions(req, res);
             if (req.method === 'GET' && action === 'listMaterials') return await handleListMaterials(req, res);
             if (req.method === 'GET' && action === 'gamificationGet') return await handleGetGamification(req, res);
+            if (req.method === 'GET' && action === 'pimpinanGet') return await handleGetPimpinan(req, res);
             return json(res, 405, { status: 'error', message: 'Method not allowed' });
         }
 
@@ -417,6 +473,7 @@ module.exports = async (req, res) => {
             case 'upsertMaterial': return await handleUpsertMaterial(req, res);
             case 'deleteMaterial': return await handleDeleteMaterial(req, res);
             case 'gamificationSave': return await handleSaveGamification(req, res);
+            case 'pimpinanSave': return await handleSavePimpinan(req, res);
             default: return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
         }
     } catch (e) {

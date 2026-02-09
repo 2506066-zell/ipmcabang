@@ -22,6 +22,7 @@
         users: [],
         logs: [],
         schedules: [],
+        pimpinanOptions: [],
         connected: false,
         prefs: { tab: 'dashboard', search: '', status: 'all', set: 'all', category: 'all' },
         backend: 'vercel',
@@ -166,6 +167,13 @@
             gmHighscorePercent: document.getElementById('gm-highscore-percent'),
             gmSaveBtn: document.getElementById('gm-save-btn'),
             gmStatus: document.getElementById('gm-status'),
+
+            // Pimpinan Options
+            pimpinanInput: document.getElementById('pimpinan-input'),
+            pimpinanAddBtn: document.getElementById('pimpinan-add-btn'),
+            pimpinanList: document.getElementById('pimpinan-list'),
+            pimpinanSaveBtn: document.getElementById('pimpinan-save-btn'),
+            pimpinanStatus: document.getElementById('pimpinan-status'),
 
             // Question Modal
             modal: document.getElementById('question-modal'),
@@ -367,6 +375,7 @@
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();
         if (tabName === 'schedules') loadGamificationSettings();
+        if (tabName === 'schedules') loadPimpinanOptions();
 
         // Dynamic Import for Articles
         if (tabName === 'articles') {
@@ -482,6 +491,62 @@
                 els.gmStatus.textContent = e.message || 'Gagal menyimpan';
                 els.gmStatus.className = 'status error';
             }
+    } finally {
+        hideLoader();
+    }
+}
+
+    // --- PIMPINAN OPTIONS ---
+    function renderPimpinanOptions() {
+        if (!els.pimpinanList) return;
+        if (!Array.isArray(state.pimpinanOptions) || state.pimpinanOptions.length === 0) {
+            els.pimpinanList.innerHTML = '<span class="small" style="color:var(--text-muted)">Belum ada pilihan.</span>';
+            return;
+        }
+        els.pimpinanList.innerHTML = state.pimpinanOptions.map((item, idx) => `
+            <span class="pimpinan-chip" data-index="${idx}">
+                ${escapeHtml(item)}
+                <button type="button" class="chip-remove" data-index="${idx}" aria-label="Hapus">×</button>
+            </span>
+        `).join('');
+    }
+
+    async function loadPimpinanOptions() {
+        if (!els.pimpinanList) return;
+        try {
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=pimpinanGet');
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat pilihan');
+            state.pimpinanOptions = Array.isArray(data.options) ? data.options : [];
+            renderPimpinanOptions();
+        } catch (e) {
+            console.error('Failed to load pimpinan options', e);
+            if (els.pimpinanStatus) {
+                els.pimpinanStatus.textContent = e.message || 'Gagal memuat';
+                els.pimpinanStatus.className = 'status error';
+            }
+        }
+    }
+
+    async function savePimpinanOptions() {
+        if (!els.pimpinanSaveBtn) return;
+        showLoader('Menyimpan pilihan...');
+        try {
+            const data = await apiAdminVercel('POST', '/api/admin/questions?action=pimpinanSave', { options: state.pimpinanOptions });
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan');
+            state.pimpinanOptions = Array.isArray(data.options) ? data.options : [];
+            renderPimpinanOptions();
+            if (els.pimpinanStatus) {
+                els.pimpinanStatus.textContent = 'Tersimpan';
+                els.pimpinanStatus.className = 'status ok';
+            }
+            setStatus('Pilihan asal pimpinan disimpan.', 'ok');
+        } catch (e) {
+            console.error('Save pimpinan options failed:', e);
+            if (els.pimpinanStatus) {
+                els.pimpinanStatus.textContent = e.message || 'Gagal menyimpan';
+                els.pimpinanStatus.className = 'status error';
+            }
+            setStatus(e.message || 'Gagal menyimpan', 'error');
         } finally {
             hideLoader();
         }
@@ -512,7 +577,10 @@
         } else {
             els.questionsList.innerHTML = all.map(q => {
                 const setNum = Number(q.quiz_set || 1);
-                const setLabel = setNum === 1 ? 'Kuis 1' : (setNum === 2 ? 'Kuis 2' : 'Kuis 3');
+                let setLabel = 'Kuis 3';
+                if (setNum === 1) setLabel = 'Kuis 1';
+                else if (setNum === 2) setLabel = 'Kuis 2';
+                else if (setNum === 4) setLabel = 'Kuis 4';
                 const isActive = q.active;
                 const statusColor = isActive ? 'var(--accent-success)' : 'var(--text-muted)';
                 const statusText = isActive ? 'AKTIF' : 'NONAKTIF';
@@ -715,6 +783,7 @@
                     <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 1)">Reset Kuis 1</button>
                     <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 2)">Reset Kuis 2</button>
                     <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 3)">Reset Kuis 3</button>
+                    <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 4)">Reset Kuis 4</button>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="openUserModal(${u.id})">
@@ -1594,6 +1663,50 @@
             e.preventDefault();
             saveGamificationSettings();
         });
+
+        const addPimpinan = () => {
+            if (!els.pimpinanInput) return;
+            const value = String(els.pimpinanInput.value || '').trim();
+            if (!value) return;
+            const exists = state.pimpinanOptions.some(item => item.toLowerCase() === value.toLowerCase());
+            if (exists) {
+                if (els.pimpinanStatus) {
+                    els.pimpinanStatus.textContent = 'Pilihan sudah ada.';
+                    els.pimpinanStatus.className = 'status warning';
+                }
+                return;
+            }
+            state.pimpinanOptions.push(value);
+            els.pimpinanInput.value = '';
+            renderPimpinanOptions();
+            if (els.pimpinanStatus) {
+                els.pimpinanStatus.textContent = '';
+                els.pimpinanStatus.className = 'status';
+            }
+        };
+
+        els.pimpinanAddBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            addPimpinan();
+        });
+        els.pimpinanInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addPimpinan();
+            }
+        });
+        els.pimpinanList?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.chip-remove');
+            if (!btn) return;
+            const idx = Number(btn.dataset.index);
+            if (Number.isNaN(idx)) return;
+            state.pimpinanOptions.splice(idx, 1);
+            renderPimpinanOptions();
+        });
+        els.pimpinanSaveBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            savePimpinanOptions();
+        });
     }
 
     // --- INIT ---
@@ -1619,3 +1732,4 @@
         try { init(); } catch (e) { console.error('Init failed', e); }
     }
 })();
+

@@ -1306,7 +1306,23 @@ main {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.input-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
 .input-group input:focus {
+    outline: none;
+    border-color: #4a7c5d;
+    box-shadow: 0 0 0 3px rgba(74, 124, 93, 0.1);
+}
+
+.input-group select:focus {
     outline: none;
     border-color: #4a7c5d;
     box-shadow: 0 0 0 3px rgba(74, 124, 93, 0.1);

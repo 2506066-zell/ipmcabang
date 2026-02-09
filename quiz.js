@@ -1,4 +1,4 @@
-﻿// --- Loader System ---
+// --- Loader System ---
 window.showLoader = function (text) {
     text = text || 'Memuat...';
 
@@ -352,9 +352,9 @@ function updateSetCards(summarySets, schedules, timeOnly = false) {
         const count = counts[set] || 0;
 
         // Find Schedule for this Set (Basic keyword matching)
-        // Keywords: "Mingguan" -> 1, "Event" -> 2, "Bidang" -> 3
+        // Keywords: "Mingguan" -> 1, "Event" -> 2, "Bidang" -> 3, "Spesial" -> 4
         let schedule = null;
-        const keywords = { 1: 'mingguan', 2: 'event', 3: 'bidang' };
+        const keywords = { 1: 'mingguan', 2: 'event', 3: 'bidang', 4: 'spesial' };
 
         // Try to find specific schedule
         schedule = schedules.find(s => s.title.toLowerCase().includes(keywords[set] || 'xyz'));
@@ -815,4 +815,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 

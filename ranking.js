@@ -212,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="podium-base">
                     <div class="podium-rank">Juara ${rank}</div>
                     <div class="podium-name">${p.username}</div>
+                    <div class="podium-pimpinan">${p.pimpinan || '-'}</div>
                     <div class="podium-score">${p.score} <span>pts</span></div>
                 </div>
             `;
@@ -288,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="rank-name">
                         ${p.username} ${activeBadge}
                     </div>
+                    <div class="rank-pimpinan">${p.pimpinan || '-'}</div>
                     <div class="rank-meta">${new Date(p.ts || p.timestamp).toLocaleDateString('id-ID')}</div>
                     ${item.classList.contains('is-me') && index > 0 ? `<div class="rank-motivation-text"><small>Selisih ${(restData[index - 1] || allData[2]).score - p.score} poin ke posisi #${rank - 1}</small> <a href="quiz.html" class="cta-mini">Ejar!</a></div>` : ''}
                 </div>
