@@ -18,7 +18,7 @@
         window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
     ) || window.navigator.standalone === true;
 
-    const isEligibleBase = () => !isStandalone() && !safeGet(ACCEPTED_KEY);
+    const isEligibleBase = () => !isStandalone();
 
     const getSessionId = () => {
         let id = '';
@@ -78,8 +78,8 @@
         btn.setAttribute('aria-label', 'Install aplikasi');
         btn.title = 'Install aplikasi';
         btn.hidden = true;
-        btn.setAttribute('data-label', 'Belum siap diinstal');
-        btn.innerHTML = '<i class="fas fa-arrow-down-to-bracket"></i>';
+        btn.setAttribute('data-label', 'Install aplikasi');
+        btn.innerHTML = '<i class="fas fa-arrow-down-to-bracket"></i><span class="fab-option-text">Install</span>';
 
         fabOptions.appendChild(btn);
 

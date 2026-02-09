@@ -4282,6 +4282,23 @@ body.light-mode .timer-unit {
     opacity: 0.55;
 }
 
+.fab-option.install-app-btn {
+    width: auto;
+    min-width: 92px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    gap: 8px;
+}
+
+.fab-option.install-app-btn i {
+    font-size: 14px;
+}
+
+.fab-option.install-app-btn .fab-option-text {
+    font-size: 12px;
+    font-weight: 600;
+}
+
 /* --- PAGE TRANSITIONS --- */
 .page-transition-overlay {
     position: fixed;
