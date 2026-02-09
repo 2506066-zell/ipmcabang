@@ -146,6 +146,35 @@ function useQuizSets() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const buildSetSummary = (rows) => {
+    const map = {};
+    rows.forEach((row) => {
+      const setId = row.quiz_set;
+      if (setId === null || typeof setId === 'undefined') return;
+      if (!map[setId]) {
+        map[setId] = { quiz_set: setId, count: 0 };
+      }
+      map[setId].count += 1;
+    });
+    return Object.keys(map)
+      .map((key) => map[key])
+      .sort((a, b) => Number(a.quiz_set) - Number(b.quiz_set));
+  };
+
+  const loadFallback = async () => {
+    const res = await fetch(`${API_URL}/questions?size=200`);
+    if (!res.ok) throw new Error('Gagal memuat kuis.');
+    const data = await res.json();
+    if (data && data.status === 'success') {
+      const rows = Array.isArray(data.questions) ? data.questions : [];
+      return buildSetSummary(rows);
+    }
+    if (Array.isArray(data)) {
+      return buildSetSummary(data);
+    }
+    throw new Error((data && data.message) || 'Data kuis tidak valid');
+  };
+
   const load = async () => {
     setLoading(true);
     setError('');
@@ -156,11 +185,22 @@ function useQuizSets() {
       if (data && data.status === 'success') {
         setSets(Array.isArray(data.sets) ? data.sets : []);
       } else {
-        throw new Error(data?.message || 'Data kuis tidak valid');
+        throw new Error((data && data.message) || 'Data kuis tidak valid');
       }
     } catch (e) {
-      setError(e.message || 'Gagal memuat kuis.');
-      toast(e.message || 'Gagal memuat kuis', 'error');
+      try {
+        const fallbackSets = await loadFallback();
+        setSets(fallbackSets);
+        if (fallbackSets.length === 0) {
+          const msg = 'Belum ada kuis aktif. Pastikan soal sudah diaktifkan oleh admin.';
+          setError(msg);
+          toast(msg, 'info');
+        }
+      } catch (fallbackError) {
+        const message = (fallbackError && fallbackError.message) || (e && e.message) || 'Gagal memuat kuis.';
+        setError(message);
+        toast(message, 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -267,7 +307,7 @@ function Dashboard({ profile, username, leaderboard }) {
             </div>
           </div>
         ))}
-        {profile.badges?.length > 0 && (
+        {profile.badges && profile.badges.length > 0 && (
           <div style={{ marginTop: 10 }}>
             {profile.badges.map((b) => (
               <span key={b} className="badge-chip"><i className="fas fa-medal"></i> {b}</span>
@@ -308,7 +348,7 @@ function QuizList({ sets, loading, error, onSelect, onReload }) {
           <div key={s.quiz_set} className="quiz-tile" onClick={() => onSelect(s.quiz_set)}>
             <div style={{ fontWeight: 700 }}>Kuis Set {s.quiz_set}</div>
             <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-              {s.count || 0} soal {s.attempted ? '• Sudah dikerjakan' : ''}
+              {s.count || 0} soal {s.attempted ? '- Sudah dikerjakan' : ''}
             </div>
           </div>
         ))}
@@ -652,3 +692,4 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.classList.toggle('collapsed');
   });
 });
+
