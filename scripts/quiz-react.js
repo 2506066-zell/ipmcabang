@@ -30,7 +30,7 @@ const loadProfile = (username) => {
   let data = null;
   try {
     data = JSON.parse(localStorage.getItem(key) || 'null');
-  } catch {}
+  } catch (e) {}
   if (!data) {
     data = {
       xpTotal: 0,
@@ -59,7 +59,7 @@ const saveProfile = (username, data) => {
   const key = `${STORAGE_PREFIX}_${username || 'guest'}`;
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch {}
+  } catch (e) {}
 };
 
 const calcLevel = (xpTotal) => {
@@ -130,7 +130,7 @@ function useLeaderboard() {
         const results = Array.isArray(data.results) ? data.results.slice() : [];
         results.sort((a, b) => (b.score || 0) - (a.score || 0));
         setItems(results.slice(0, 5));
-      } catch {}
+      } catch (e) {}
       timer = setTimeout(fetchData, 30000);
     };
     fetchData();
@@ -143,23 +143,33 @@ function useLeaderboard() {
 
 function useQuizSets() {
   const [sets, setSets] = useState([]);
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const res = await fetch(`${API_URL}/questions?mode=summary`);
-        if (!res.ok) throw new Error('Gagal memuat kuis.');
-        const data = await res.json();
-        if (!mounted) return;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_URL}/questions?mode=summary`);
+      if (!res.ok) throw new Error('Gagal memuat kuis.');
+      const data = await res.json();
+      if (data && data.status === 'success') {
         setSets(Array.isArray(data.sets) ? data.sets : []);
-      } catch (e) {
-        toast(e.message || 'Gagal memuat kuis', 'error');
+      } else {
+        throw new Error(data?.message || 'Data kuis tidak valid');
       }
-    };
+    } catch (e) {
+      setError(e.message || 'Gagal memuat kuis.');
+      toast(e.message || 'Gagal memuat kuis', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     load();
-    return () => { mounted = false; };
   }, []);
-  return sets;
+  return { sets, loading, error, reload: load };
 }
 
 function useGamificationSettings() {
@@ -175,7 +185,7 @@ function useGamificationSettings() {
         if (data && data.status === 'success' && data.settings) {
           setSettings({ ...DEFAULT_SETTINGS, ...data.settings });
         }
-      } catch {}
+      } catch (e) {}
     };
     load();
     return () => { mounted = false; };
@@ -281,10 +291,18 @@ function Dashboard({ profile, username, leaderboard }) {
   );
 }
 
-function QuizList({ sets, onSelect }) {
+function QuizList({ sets, loading, error, onSelect, onReload }) {
   return (
     <div className="quiz-card">
       <h3>Daftar Kuis</h3>
+      {loading && (
+        <div style={{ fontSize: '0.9rem', color: '#64748b' }}>Memuat daftar kuis...</div>
+      )}
+      {error && (
+        <div style={{ fontSize: '0.9rem', color: '#b91c1c', marginBottom: 8 }}>
+          {error}
+        </div>
+      )}
       <div className="quiz-list">
         {sets.map((s) => (
           <div key={s.quiz_set} className="quiz-tile" onClick={() => onSelect(s.quiz_set)}>
@@ -299,6 +317,11 @@ function QuizList({ sets, onSelect }) {
         <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
           Belum ada kuis aktif. Pastikan soal sudah diaktifkan oleh admin.
         </div>
+      )}
+      {onReload && (
+        <button className="quiz-option" style={{ marginTop: 10 }} onClick={onReload}>
+          Muat Ulang
+        </button>
       )}
     </div>
   );
@@ -456,7 +479,7 @@ function QuizQuestion({ quizSet, onExit, onFinish, onImmediateReward, timerSecon
 function App() {
   const { session, username } = useSession();
   const leaderboard = useLeaderboard();
-  const sets = useQuizSets();
+  const { sets, loading, error, reload } = useQuizSets();
   const settings = useGamificationSettings();
   const [profile, setProfile] = useState(loadProfile('guest'));
   const [activeSet, setActiveSet] = useState(null);
@@ -603,7 +626,7 @@ function App() {
       <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
         <Dashboard profile={{ ...profile, __settings: settings }} username={username} leaderboard={leaderboard} />
       </div>
-      {!activeSet && <QuizList sets={sets} onSelect={setActiveSet} />}
+      {!activeSet && <QuizList sets={sets} loading={loading} error={error} onSelect={setActiveSet} onReload={reload} />}
       {activeSet && (
         <QuizQuestion
           quizSet={activeSet}
