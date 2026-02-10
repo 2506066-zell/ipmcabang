@@ -164,7 +164,7 @@ export function initMaterials(state, els, api) {
 
         try {
             const q = searchInput ? searchInput.value : '';
-            let url = `/api/admin/materials?page=${page}&size=10`;
+            let url = `/api/admin/materials?action=listMaterials&page=${page}&size=10`;
             if (q) url += `&search=${encodeURIComponent(q)}`;
 
             const data = await api.apiAdminVercel('GET', url);
@@ -198,10 +198,10 @@ export function initMaterials(state, els, api) {
                     <i class="fas fa-user"></i> ${escapeHtml(mat.author || 'Tim IPM')} &nbsp;•&nbsp;
                     <i class="fas fa-circle ${mat.active ? 'text-success' : 'text-muted'}" style="font-size:8px"></i> ${mat.active ? 'Aktif' : 'Draft'}
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
                      <button class="btn btn-secondary btn-sm edit-btn" data-id="${mat.id}"><i class="fas fa-edit"></i> Edit</button>
                      <button class="btn btn-secondary btn-sm del-btn" style="color:red; border-color:red" data-id="${mat.id}"><i class="fas fa-trash"></i> Hapus</button>
-                     <a href="${mat.file_url}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Buka File</a>
+                     ${mat.file_url ? `<a href="${mat.file_url}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Buka File</a>` : `<span class="btn btn-secondary btn-sm" style="opacity:0.6; cursor:not-allowed;"><i class="fas fa-file"></i> File belum ada</span>`}
                 </div>
             </div>
         `).join('');
@@ -270,7 +270,7 @@ export function initMaterials(state, els, api) {
     }
 
     async function fetchSingle(id) {
-        const data = await api.apiAdminVercel('GET', `/api/admin/materials`);
+        const data = await api.apiAdminVercel('GET', `/api/admin/materials?action=listMaterials`);
         return data.materials?.find(m => m.id == id);
     }
 
@@ -292,10 +292,7 @@ export function initMaterials(state, els, api) {
             alert('Judul materi wajib diisi.');
             return;
         }
-        if (!inpFileUrl.value.trim() && !currentFile) {
-            alert('File materi wajib diisi (upload atau URL).');
-            return;
-        }
+        // File upload bersifat opsional
 
         const btn = document.getElementById('mat-save-btn');
         const oldHtml = btn.innerHTML;

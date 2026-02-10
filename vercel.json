@@ -51,7 +51,7 @@
     },
     {
       "src": "/api/admin/materials",
-      "dest": "/api/index?segment=admin&action=listMaterials"
+      "dest": "/api/index?segment=admin"
     },
     {
       "src": "/api/articles",

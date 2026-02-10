@@ -297,7 +297,7 @@ async function handleUpsertMaterial(req, res) {
     const author = String(b.author || '').trim();
     const active = b.active !== false;
 
-    if (!title || !file_url) return json(res, 400, { status: 'error', message: 'Judul dan URL file wajib diisi' });
+    if (!title) return json(res, 400, { status: 'error', message: 'Judul materi wajib diisi' });
 
     if (id) {
         const result = await query`UPDATE materials SET title=${title}, description=${description}, file_type=${file_type}, file_url=${file_url}, thumbnail=${thumbnail}, category=${category}, author=${author}, active=${active}, updated_at=NOW() WHERE id=${id} RETURNING *`;
