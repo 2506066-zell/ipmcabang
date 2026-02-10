@@ -106,6 +106,19 @@
   <script src="/scripts/vendor/react-dom.production.min.js"></script>
   <script src="/scripts/vendor/babel.min.js"></script>
   <script type="text/babel" data-presets="react" src="/scripts/quiz-react.js?v=19"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('quiz-instructions-toggle');
+      const body = document.getElementById('quiz-instructions-body');
+      if (!toggle || !body) return;
+      toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        const collapsed = body.classList.toggle('collapsed');
+        toggle.classList.toggle('collapsed', collapsed);
+        toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      });
+    });
+  </script>
 </body>
 </html>
 
