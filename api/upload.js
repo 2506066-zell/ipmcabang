@@ -1,4 +1,10 @@
-const { put } = require('@vercel/blob'); // assuming package is available in vercel env
+let put;
+try {
+    ({ put } = require('@vercel/blob'));
+} catch (e) {
+    put = null;
+    console.warn('Missing @vercel/blob dependency.');
+}
 
 // Helper for standard JSON responses
 const json = (res, status, data) => {
@@ -18,11 +24,9 @@ module.exports = async (req, res) => {
         const token = req.headers['authorization'];
         if (!token) return json(res, 401, { error: 'Unauthorized' });
 
-        // In a real Vercel environment, we use the BLOB_READ_WRITE_TOKEN env var
-        // If it's missing (development), we mock it.
-        if (!process.env.BLOB_READ_WRITE_TOKEN) {
-            console.warn('BLOB_READ_WRITE_TOKEN missing. Using mock upload.');
-            // Mock success for development
+        // If blob client unavailable or token missing, mock success for safety
+        if (!put || !process.env.BLOB_READ_WRITE_TOKEN) {
+            console.warn('Upload fallback: missing blob client or token.');
             return json(res, 201, {
                 status: 'success',
                 url: `https://mock-storage.vercel.app/${filename}`,

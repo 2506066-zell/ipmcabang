@@ -144,9 +144,14 @@ export function initMaterials(state, els, api) {
             };
 
             xhr.onload = () => {
-                const res = JSON.parse(xhr.responseText);
-                if (xhr.status >= 200 && xhr.status < 300) resolve(res.url);
-                else reject(new Error(res.error || 'Upload gagal'));
+                let res = null;
+                try {
+                    res = JSON.parse(xhr.responseText || '{}');
+                } catch (e) {
+                    res = { error: xhr.responseText || 'Upload gagal' };
+                }
+                if (xhr.status >= 200 && xhr.status < 300 && res && res.url) resolve(res.url);
+                else reject(new Error(res?.error || 'Upload gagal'));
             };
             xhr.onerror = () => reject(new Error('Network error'));
             xhr.send(file);
