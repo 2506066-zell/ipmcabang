@@ -365,9 +365,7 @@ function QuizQuestion({
   streak,
   streakPulse,
   initialProgress,
-  onProgress,
-  forcedIndex,
-  onForcedIndexApplied
+  onProgress
 }) {
   const [questions, setQuestions] = useState([]);
   const [index, setIndex] = useState(initialProgress && typeof initialProgress.index === 'number' ? initialProgress.index : 0);
@@ -382,7 +380,6 @@ function QuizQuestion({
   const [animate, setAnimate] = useState(false);
   const startedAt = useRef((initialProgress && initialProgress.startedAt) || Date.now());
   const confettiRef = useRef(null);
-  const popSyncRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -435,29 +432,6 @@ function QuizQuestion({
     const t = setTimeout(() => setAnimate(false), 360);
     return () => clearTimeout(t);
   }, [index, questions, timerSeconds]);
-
-  useEffect(() => {
-    if (typeof forcedIndex !== 'number') return;
-    if (forcedIndex === index) return;
-    popSyncRef.current = true;
-    setIndex(Math.max(0, Math.min(forcedIndex, questions.length ? questions.length - 1 : forcedIndex)));
-    if (typeof onForcedIndexApplied === 'function') {
-      onForcedIndexApplied();
-    }
-  }, [forcedIndex, questions.length, index]);
-
-  useEffect(() => {
-    if (!questions.length) return;
-    if (popSyncRef.current) {
-      popSyncRef.current = false;
-      return;
-    }
-    const state = { view: 'question', set: quizSet, index };
-    const current = window.history.state || {};
-    if (current.view !== 'question' || current.set !== quizSet || current.index !== index) {
-      window.history.pushState(state, '', window.location.href);
-    }
-  }, [index, quizSet, questions.length]);
 
   useEffect(() => {
     if (loading || !questions[index]) return;
@@ -700,17 +674,13 @@ function App() {
   const settings = useGamificationSettings();
   const [profile, setProfile] = useState(loadProfile('guest'));
   const [activeSet, setActiveSet] = useState(null);
-  const [forcedIndex, setForcedIndex] = useState(null);
   const [pulse, setPulse] = useState({ xp: false, streak: false, quest: false, badge: false });
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ipm_quiz_sound') !== 'off');
   const [xpBurst, setXpBurst] = useState(null);
   const [streakPulse, setStreakPulse] = useState(false);
   const [questPop, setQuestPop] = useState('');
   const [resultSummary, setResultSummary] = useState(null);
-  const [navFade, setNavFade] = useState(false);
   const progressCacheRef = useRef({});
-  const navLockRef = useRef(false);
-  const scrollKey = 'ipm_quiz_scroll_y';
 
   useEffect(() => {
     if (!username) return;
@@ -718,49 +688,6 @@ function App() {
     setProfile(data);
   }, [username]);
 
-  useEffect(() => {
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState({ view: 'overview' }, '', window.location.href);
-    }
-    const onPopState = (event) => {
-      if (navLockRef.current) return;
-      navLockRef.current = true;
-      setTimeout(() => { navLockRef.current = false; }, 220);
-      setNavFade(true);
-      setTimeout(() => setNavFade(false), 220);
-      const state = event.state || {};
-      if (state.view === 'question') {
-        setActiveSet(state.set);
-        setForcedIndex(typeof state.index === 'number' ? state.index : 0);
-        return;
-      }
-      setActiveSet(null);
-      setForcedIndex(null);
-    };
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
-
-  useEffect(() => {
-    if (activeSet) {
-      try {
-        sessionStorage.setItem(scrollKey, String(window.scrollY || 0));
-      } catch (e) {}
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    } else {
-      let y = 0;
-      try {
-        y = Number(sessionStorage.getItem(scrollKey) || 0);
-      } catch (e) {
-        y = 0;
-      }
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: y, behavior: 'auto' });
-        });
-      });
-    }
-  }, [activeSet]);
 
 
   const updateProfile = (updater) => {
@@ -949,7 +876,7 @@ function App() {
   };
 
   return (
-    <div className={`quiz-shell ${navFade ? 'nav-fade' : ''}`}>
+    <div className="quiz-shell">
       <NextQuizCountdown nextQuiz={nextQuiz} />
       <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
         <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} questPulse={pulse.quest} />
@@ -960,7 +887,6 @@ function App() {
         )}
         {!activeSet && <QuizList sets={sets} loading={loading} error={error} onSelect={(set) => {
           setResultSummary(null);
-          setForcedIndex(null);
           setActiveSet(set);
         }} onReload={reload} />}
         {activeSet && (
@@ -981,8 +907,6 @@ function App() {
               if (!activeSet) return;
               progressCacheRef.current[activeSet] = progress;
             }}
-            forcedIndex={forcedIndex}
-            onForcedIndexApplied={() => setForcedIndex(null)}
           />
         )}
       </div>
