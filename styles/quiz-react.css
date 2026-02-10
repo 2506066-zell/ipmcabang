@@ -325,11 +325,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+  justify-items: center;
 }
 
 .quiz-side-by-side .quiz-card {
   padding: 12px;
   min-height: 150px;
+  width: 100%;
 }
 
 .quiz-side-by-side .xp-card,
@@ -435,6 +437,19 @@
   border-radius: 12px;
   transition: all 0.25s var(--quiz-ease);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.7));
+  margin: 0 auto;
+}
+
+.quest-card {
+  text-align: center;
+}
+
+.quest-card h3 {
+  text-align: center;
+}
+
+.quest-hint {
+  text-align: center;
 }
 
 .quest-item:hover {

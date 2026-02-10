@@ -1,5 +1,6 @@
 (() => {
     const DEFAULT_API_URL = '/api';
+    const MODULE_VER = '10';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
@@ -382,7 +383,7 @@
         // Dynamic Import for Articles
         if (tabName === 'articles') {
             console.log('[Admin] Loading articles module...');
-            import('./articles.js').then(mod => {
+            import(`./articles.js?v=${MODULE_VER}`).then(mod => {
                 if (!state.articlesInitialized) {
                     mod.initArticles(state, els, { apiGetVercel, apiAdminVercel, fetchJsonWithRetry, debounce });
                     state.articlesInitialized = true;
@@ -393,7 +394,7 @@
         // Dynamic Import for Materials
         if (tabName === 'materials') {
             console.log('[Admin] Loading materials module...');
-            import('./materials.js').then(mod => {
+            import(`./materials.js?v=${MODULE_VER}`).then(mod => {
                 if (!state.materialsInitialized) {
                     mod.initMaterials(state, els, { apiGetVercel, apiAdminVercel, fetchJsonWithRetry, debounce });
                     state.materialsInitialized = true;

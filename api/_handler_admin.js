@@ -455,6 +455,9 @@ module.exports = async (req, res) => {
         const action = req.query.action;
 
         if (req.method !== 'POST') {
+            if (req.method === 'GET' && !action && String(req.url || '').includes('materials')) {
+                return await handleListMaterials(req, res);
+            }
             if (req.method === 'GET' && action === 'activityLogs') return await handleGetActivityLogs(req, res);
             if (req.method === 'GET' && action === 'schedules') return await handleGetSchedules(req, res);
             if (req.method === 'GET' && action === 'listQuestions') return await handleListQuestions(req, res);
