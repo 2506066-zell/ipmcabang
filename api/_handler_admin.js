@@ -199,17 +199,19 @@ async function handleUpdateSchedule(req, res) {
     const description = String(b.description || '');
     const start_time = b.start_time ? String(b.start_time) : null;
     const end_time = b.end_time ? String(b.end_time) : null;
+    const show_in_quiz = b.show_in_quiz === undefined ? true : !!b.show_in_quiz;
+    const show_in_notif = b.show_in_notif === undefined ? false : !!b.show_in_notif;
 
     if (start_time && end_time && new Date(start_time) >= new Date(end_time)) {
         return json(res, 400, { status: 'error', message: 'Waktu selesai harus setelah waktu mulai' });
     }
 
     if (id) {
-        await query`UPDATE quiz_schedules SET title=${title}, description=${description}, start_time=${start_time}, end_time=${end_time}, updated_at=NOW() WHERE id=${id}`;
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_SCHEDULE', ${{ id, title, description, start_time, end_time }})`;
+        await query`UPDATE quiz_schedules SET title=${title}, description=${description}, start_time=${start_time}, end_time=${end_time}, show_in_quiz=${show_in_quiz}, show_in_notif=${show_in_notif}, updated_at=NOW() WHERE id=${id}`;
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_SCHEDULE', ${{ id, title, description, start_time, end_time, show_in_quiz, show_in_notif }})`;
     } else {
-        await query`INSERT INTO quiz_schedules (title, description, start_time, end_time) VALUES (${title}, ${description}, ${start_time}, ${end_time})`;
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_SCHEDULE', ${{ title, description, start_time, end_time }})`;
+        await query`INSERT INTO quiz_schedules (title, description, start_time, end_time, show_in_quiz, show_in_notif) VALUES (${title}, ${description}, ${start_time}, ${end_time}, ${show_in_quiz}, ${show_in_notif})`;
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_SCHEDULE', ${{ title, description, start_time, end_time, show_in_quiz, show_in_notif }})`;
     }
 
     return json(res, 200, { status: 'success' });

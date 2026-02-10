@@ -172,6 +172,12 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
+                    <div class="notif-countdown" id="notif-countdown" hidden>
+                        <div class="notif-countdown-label">Program Kerja Mendatang</div>
+                        <div class="notif-countdown-title" id="notif-countdown-title"></div>
+                        <div class="notif-countdown-timer" id="notif-countdown-timer"></div>
+                        <div class="notif-countdown-sub" id="notif-countdown-sub"></div>
+                    </div>
                     <div class="notif-panel-list" id="notif-panel-list"></div>
                     <button class="notif-mark-read" id="notif-mark-read">Tandai semua dibaca</button>
                 `;
@@ -180,7 +186,7 @@
             return { overlay, panel };
         };
 
-        const state = { notifications: [], unread: 0, articleUnread: 0, latestArticle: null };
+        const state = { notifications: [], unread: 0, articleUnread: 0, latestArticle: null, schedule: null, scheduleMode: '', scheduleTimer: null };
         const session = getSession();
 
         const updateNotifBadge = () => {
@@ -240,8 +246,101 @@
             } catch {}
         };
 
+        const selectScheduleForNotif = (schedules) => {
+            const now = Date.now();
+            const filtered = (schedules || []).filter(s => s && (s.show_in_notif === true || s.show_in_notif === 'true'));
+            if (!filtered.length) return null;
+            const active = filtered.find(s => {
+                const start = s.start_time ? new Date(s.start_time).getTime() : 0;
+                const end = s.end_time ? new Date(s.end_time).getTime() : Infinity;
+                return start <= now && now < end;
+            });
+            if (active) return { schedule: active, mode: 'end' };
+            const upcoming = filtered.filter(s => s.start_time && new Date(s.start_time).getTime() > now)
+                .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
+            if (upcoming) return { schedule: upcoming, mode: 'start' };
+            return null;
+        };
+
+        const renderNotifCountdown = () => {
+            const wrap = document.getElementById('notif-countdown');
+            const titleEl = document.getElementById('notif-countdown-title');
+            const timerEl = document.getElementById('notif-countdown-timer');
+            const subEl = document.getElementById('notif-countdown-sub');
+            if (!wrap || !titleEl || !timerEl || !subEl) return;
+
+            if (!state.schedule) {
+                wrap.hidden = true;
+                return;
+            }
+
+            const { schedule, scheduleMode } = state;
+            const title = schedule.title || 'Agenda Mendatang';
+            titleEl.textContent = title;
+            wrap.hidden = false;
+
+            const update = () => {
+                const now = Date.now();
+                if (scheduleMode === 'end') {
+                    const end = schedule.end_time ? new Date(schedule.end_time).getTime() : 0;
+                    if (!end || end <= now) {
+                        timerEl.textContent = 'Sedang berlangsung';
+                        subEl.textContent = 'Program kerja sedang berjalan.';
+                        return;
+                    }
+                    const diff = Math.max(0, end - now);
+                    const totalSeconds = Math.floor(diff / 1000);
+                    const days = Math.floor(totalSeconds / 86400);
+                    const hours = Math.floor((totalSeconds % 86400) / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+                    timerEl.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+                    subEl.textContent = 'Sedang berlangsung. Sisa waktu berakhir.';
+                    return;
+                }
+
+                const start = schedule.start_time ? new Date(schedule.start_time).getTime() : 0;
+                if (!start || start <= now) {
+                    timerEl.textContent = 'Mulai sekarang';
+                    subEl.textContent = 'Program kerja dimulai sekarang.';
+                    return;
+                }
+                const diff = Math.max(0, start - now);
+                const totalSeconds = Math.floor(diff / 1000);
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                timerEl.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+                subEl.textContent = 'Hitung mundur menuju program kerja berikutnya.';
+            };
+
+            update();
+            if (state.scheduleTimer) clearInterval(state.scheduleTimer);
+            state.scheduleTimer = setInterval(update, 1000);
+        };
+
+        const fetchCountdownSchedule = async () => {
+            try {
+                const res = await fetch('/api/questions?mode=schedules');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.status !== 'success') return;
+                const pick = selectScheduleForNotif(data.schedules || []);
+                if (pick) {
+                    state.schedule = pick.schedule;
+                    state.scheduleMode = pick.mode;
+                } else {
+                    state.schedule = null;
+                    state.scheduleMode = '';
+                }
+                renderNotifCountdown();
+            } catch {}
+        };
+
         const fetchNotifications = async () => {
             await fetchArticleNotif();
+            await fetchCountdownSchedule();
             updateNotifBadge();
             if (state.articleUnread && window.Toast) {
                 window.Toast.show('Ada artikel terbaru. Lihat di notifikasi.', 'info');
@@ -285,7 +384,9 @@
 
         const openPanel = async () => {
             await fetchUserNotifications();
+            await fetchCountdownSchedule();
             renderNotifList();
+            renderNotifCountdown();
             updateNotifBadge();
             panel.hidden = false;
             overlay.hidden = false;
@@ -294,6 +395,10 @@
         const closePanel = (fromPop) => {
             panel.hidden = true;
             overlay.hidden = true;
+            if (state.scheduleTimer) {
+                clearInterval(state.scheduleTimer);
+                state.scheduleTimer = null;
+            }
             if (!fromPop) uiBack.requestClose('notif-panel');
         };
 

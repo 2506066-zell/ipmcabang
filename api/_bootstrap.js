@@ -120,6 +120,8 @@ async function ensureSchema() {
 
   // Ensure description column exists for quiz_schedules
   await query`ALTER TABLE quiz_schedules ADD COLUMN IF NOT EXISTS description TEXT`;
+  await query`ALTER TABLE quiz_schedules ADD COLUMN IF NOT EXISTS show_in_quiz BOOLEAN DEFAULT TRUE`;
+  await query`ALTER TABLE quiz_schedules ADD COLUMN IF NOT EXISTS show_in_notif BOOLEAN DEFAULT FALSE`;
 
   // Create Indexes for Performance
   await query`CREATE INDEX IF NOT EXISTS idx_questions_quiz_set ON questions(quiz_set)`;

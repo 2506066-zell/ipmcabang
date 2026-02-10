@@ -50,6 +50,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function normalizeRankingData(raw) {
+        const byUser = new Map();
+        (raw || []).forEach(entry => {
+            const username = String(entry.username || '').trim();
+            if (!username) return;
+            const key = username.toLowerCase();
+            const score = Number(entry.score || 0);
+            const time = Number(entry.time_spent || 0);
+            const ts = new Date(entry.ts || entry.timestamp || 0).getTime() || 0;
+
+            const current = byUser.get(key);
+            if (!current) {
+                byUser.set(key, { ...entry, _key: key, _score: score, _time: time, _ts: ts });
+                return;
+            }
+
+            const better =
+                score > current._score ||
+                (score === current._score && time < current._time) ||
+                (score === current._score && time === current._time && ts < current._ts);
+
+            if (better) {
+                byUser.set(key, { ...entry, _key: key, _score: score, _time: time, _ts: ts });
+            }
+        });
+
+        return Array.from(byUser.values()).map(item => {
+            const cleaned = { ...item };
+            delete cleaned._key;
+            delete cleaned._score;
+            delete cleaned._time;
+            delete cleaned._ts;
+            return cleaned;
+        });
+    }
+
     async function fetchRankingData() {
         if (allData.length === 0 && window.AppLoader) AppLoader.show('Memuat Peringkat...');
         showLoading(true);
@@ -60,8 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (data.status !== 'success') throw new Error(data.message || 'Kesalahan server.');
 
-            const newData = Array.isArray(data.results) ? data.results.slice() : [];
-            newData.sort((a, b) => (b.score || 0) - (a.score || 0)); // Sort DESC by score
+            const normalized = normalizeRankingData(Array.isArray(data.results) ? data.results.slice() : []);
+            const newData = normalized.sort((a, b) => {
+                const scoreDiff = (b.score || 0) - (a.score || 0);
+                if (scoreDiff !== 0) return scoreDiff;
+                const timeDiff = (a.time_spent || 0) - (b.time_spent || 0);
+                if (timeDiff !== 0) return timeDiff;
+                const tsDiff = (new Date(a.ts || a.timestamp || 0)) - (new Date(b.ts || b.timestamp || 0));
+                if (tsDiff !== 0) return tsDiff;
+                return String(a.username || '').localeCompare(String(b.username || ''), 'id', { sensitivity: 'base' });
+            });
 
             // OPTIMIZATION: Only update if data changed
             const isChanged = JSON.stringify(newData) !== JSON.stringify(allData);
@@ -105,19 +149,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (previousRanks.size === 0) {
             // First load, just map ranks
             newData.forEach((p, index) => {
-                previousRanks.set(p.username, index + 1);
+                previousRanks.set(String(p.username || '').toLowerCase(), index + 1);
             });
             return;
         }
 
         const newRankMap = new Map();
         newData.forEach((p, index) => {
-            newRankMap.set(p.username, index + 1);
+            newRankMap.set(String(p.username || '').toLowerCase(), index + 1);
         });
 
         // Check for "Anda" (User) rank change
-        const userOldRank = previousRanks.get(currentUser);
-        const userNewRank = newRankMap.get(currentUser);
+        const userKey = String(currentUser || '').toLowerCase();
+        const userOldRank = previousRanks.get(userKey);
+        const userNewRank = newRankMap.get(userKey);
 
         if (userOldRank && userNewRank) {
             if (userNewRank < userOldRank) {
@@ -141,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderUserRank(data) {
-        const userIndex = data.findIndex(p => String(p.username || '').toLowerCase() === currentUser.toLowerCase());
+        const userIndex = data.findIndex(p => String(p.username || '').toLowerCase() === String(currentUser || '').toLowerCase());
 
         if (userIndex !== -1) {
             const user = data[userIndex];
@@ -244,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // OR strict comparison if we have previous data.
             // Since we persist previousRanks in memory during session, we can use that.
             let movementIcon = '';
-            const oldRank = previousRanks.get(p.username);
+            const oldRank = previousRanks.get(String(p.username || '').toLowerCase());
             if (oldRank) {
                 if (rank < oldRank) movementIcon = '<span class="rank-up" title="Naik Peringkat"><i class="fas fa-caret-up"></i></span>';
                 else if (rank > oldRank) movementIcon = '<span class="rank-down" title="Turun Peringkat"><i class="fas fa-caret-down"></i></span>';

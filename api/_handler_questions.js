@@ -57,9 +57,9 @@ async function list(req, res) {
         let nextSchedule = null;
         try {
             nextSchedule = (await query`
-          SELECT title, description, start_time 
+          SELECT title, description, start_time, show_in_quiz 
           FROM quiz_schedules 
-          WHERE active = true AND start_time > NOW() 
+          WHERE active = true AND start_time > NOW() AND (show_in_quiz = true OR show_in_quiz IS NULL)
           ORDER BY start_time ASC 
           LIMIT 1
         `).rows[0];
@@ -108,7 +108,7 @@ async function list(req, res) {
 
     if (mode === 'schedules') {
         const schedules = (await query`
-      SELECT title, description, start_time, end_time 
+      SELECT title, description, start_time, end_time, show_in_quiz, show_in_notif 
       FROM quiz_schedules 
       WHERE (end_time IS NULL OR end_time > NOW()) 
       ORDER BY start_time ASC

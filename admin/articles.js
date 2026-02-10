@@ -64,9 +64,17 @@ export function initArticles(state, els, api) {
         };
 
         const applyFontSize = (size) => {
+            restoreSelection();
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
             document.execCommand('fontSize', false, '7');
-            const fonts = editorArea.querySelectorAll('font[size="7"]');
+            const root = range.commonAncestorContainer.nodeType === 1
+                ? range.commonAncestorContainer
+                : range.commonAncestorContainer.parentElement;
+            const fonts = root ? root.querySelectorAll('font[size=\"7\"]') : [];
             fonts.forEach(f => {
+                if (!range.intersectsNode(f)) return;
                 f.removeAttribute('size');
                 f.style.fontSize = size;
             });

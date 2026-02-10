@@ -146,6 +146,8 @@
             schDesc: document.getElementById('sch-desc'),
             schStart: document.getElementById('sch-start'),
             schEnd: document.getElementById('sch-end'),
+            schShowQuiz: document.getElementById('sch-show-quiz'),
+            schShowNotif: document.getElementById('sch-show-notif'),
             addScheduleBtn: document.getElementById('add-schedule-btn'),
             previewSchBtn: document.getElementById('preview-sch-btn'),
             previewPanel: document.getElementById('preview-panel'),
@@ -1020,6 +1022,8 @@
         };
         els.schStart.value = toLocalISO(s.start_time);
         els.schEnd.value = toLocalISO(s.end_time);
+        if (els.schShowQuiz) els.schShowQuiz.checked = s.show_in_quiz !== false;
+        if (els.schShowNotif) els.schShowNotif.checked = !!s.show_in_notif;
 
         // Show Modal
         hideAllModalPanels();
@@ -1543,6 +1547,8 @@
         els.addScheduleBtn?.addEventListener('click', () => {
             els.scheduleForm.reset();
             els.schId.value = '';
+            if (els.schShowQuiz) els.schShowQuiz.checked = true;
+            if (els.schShowNotif) els.schShowNotif.checked = false;
             // Set default dates if needed
             // const now = new Date();
             // const nextHour = new Date(now.getTime() + 60*60*1000);
@@ -1562,6 +1568,8 @@
                 const description = els.schDesc.value;
                 const start = els.schStart.value;
                 const end = els.schEnd.value;
+                const showInQuiz = els.schShowQuiz ? els.schShowQuiz.checked : true;
+                const showInNotif = els.schShowNotif ? els.schShowNotif.checked : false;
 
                 showLoader('Menyimpan...');
                 try {
@@ -1570,7 +1578,9 @@
                         title,
                         description,
                         start_time: start ? new Date(start).toISOString() : null,
-                        end_time: end ? new Date(end).toISOString() : null
+                        end_time: end ? new Date(end).toISOString() : null,
+                        show_in_quiz: showInQuiz,
+                        show_in_notif: showInNotif
                     });
 
                     if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan.');

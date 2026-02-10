@@ -4372,6 +4372,52 @@ body.light-mode .timer-unit {
     color: #0f172a;
 }
 
+.notif-countdown {
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    display: grid;
+    gap: 4px;
+}
+
+.notif-countdown-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0f172a;
+}
+
+.notif-countdown-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-countdown-timer {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.notif-countdown-sub {
+    font-size: 0.75rem;
+    color: #475569;
+}
+
 .notif-close {
     background: transparent;
     border: none;
@@ -4382,7 +4428,7 @@ body.light-mode .timer-unit {
 .notif-panel-list {
     display: grid;
     gap: 8px;
-    max-height: 280px;
+    max-height: 240px;
     overflow: auto;
 }
 
