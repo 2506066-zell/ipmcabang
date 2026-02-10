@@ -509,7 +509,11 @@ function isCronAuthorized(req) {
 
 async function handleRunScheduledNotifications(req, res) {
     if (!isCronAuthorized(req)) {
-        return json(res, 401, { status: 'error', message: 'Unauthorized cron' });
+        try {
+            await requireAdminAuth(req);
+        } catch (e) {
+            return json(res, 401, { status: 'error', message: 'Unauthorized' });
+        }
     }
 
     const due = (await query`

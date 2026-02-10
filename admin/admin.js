@@ -1,6 +1,6 @@
 (() => {
     const DEFAULT_API_URL = '/api';
-    const MODULE_VER = '12';
+    const MODULE_VER = '13';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
@@ -190,6 +190,7 @@
             notifySendBtn: document.getElementById('notify-send-btn'),
             notifyScheduleList: document.getElementById('notify-schedule-list'),
             notifyScheduleReload: document.getElementById('notify-schedule-reload'),
+            notifyScheduleRun: document.getElementById('notify-schedule-run'),
 
             // Question Modal
             modal: document.getElementById('question-modal'),
@@ -1702,6 +1703,24 @@
         els.notifyScheduleReload?.addEventListener('click', (e) => {
             e.preventDefault();
             loadNotifySchedules();
+        });
+
+        els.notifyScheduleRun?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (els.notifyStatus) els.notifyStatus.textContent = 'Menjalankan jadwal...';
+            try {
+                const data = await apiAdminVercel('GET', '/api/admin/questions?action=runScheduledNotifications');
+                if (els.notifyStatus) {
+                    const sent = data?.sent ?? 0;
+                    const failed = data?.failed ?? 0;
+                    els.notifyStatus.textContent = `Jadwal dijalankan. Terkirim: ${sent}, Gagal: ${failed}`;
+                }
+                if (window.Toast) Toast.show('Jadwal dijalankan', 'success');
+                loadNotifySchedules();
+            } catch (err) {
+                if (els.notifyStatus) els.notifyStatus.textContent = `Gagal: ${err.message || 'Error'}`;
+                if (window.Toast) Toast.show('Gagal menjalankan jadwal', 'error');
+            }
         });
 
         els.notifyScheduleList?.addEventListener('click', async (e) => {

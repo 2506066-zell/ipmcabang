@@ -229,7 +229,10 @@
                         </div>
                     </form>
                     <div class="notify-schedule-list" id="notify-schedule-list"></div>
-                    <button class="btn btn-secondary" id="notify-schedule-reload" style="margin-top:10px;">Muat Jadwal Notifikasi</button>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                        <button class="btn btn-secondary" id="notify-schedule-reload">Muat Jadwal Notifikasi</button>
+                        <button class="btn btn-primary" id="notify-schedule-run">Jalankan Jadwal Sekarang</button>
+                    </div>
                 </div>
 
                 <!-- RESULTS TAB -->
@@ -1089,7 +1092,7 @@
         })();
     </script>
     <script src="../scripts/toast.js"></script>
-    <script src="admin.js?v=12" defer></script>
+    <script src="admin.js?v=13" defer></script>
 </body>
 
 </html>
