@@ -12,7 +12,7 @@
   <link rel="icon" href="/ipm%20(2).png" />
   <link rel="stylesheet" href="/styles/style.css" />
   <link rel="stylesheet" href="/styles/profile.css" />
-  <link rel="stylesheet" href="/styles/quiz-react.css?v=14" />
+  <link rel="stylesheet" href="/styles/quiz-react.css?v=15" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body class="page-quiz">
@@ -64,7 +64,7 @@
       <div class="quiz-page-inner">
         <section class="quiz-banner">
           <div class="quiz-instructions">
-            <button class="quiz-instructions-toggle" id="quiz-instructions-toggle" type="button">
+            <button class="quiz-instructions-toggle" id="quiz-instructions-toggle" type="button" onclick="var b=document.getElementById('quiz-instructions-body'); if(b){b.classList.toggle('collapsed');} this.classList.toggle('collapsed');">
               <span class="quiz-instructions-title">Cara Kerja Kuis</span>
               <i class="fas fa-chevron-down"></i>
             </button>
@@ -89,7 +89,9 @@
           </div>
         </section>
         <section class="quiz-content">
-          <div id="app" class="quiz-react-root"></div>
+          <div id="app" class="quiz-react-root">
+            <div class="quiz-fallback">Memuat kuis...</div>
+          </div>
         </section>
       </div>
     </div>

@@ -544,6 +544,21 @@ function startQuiz() {
     nextBtn.style.display = 'flex';
 
     renderQuestion();
+
+    if (window.__uiBack && window.__uiBack.open) {
+        window.__uiBack.open('quiz-legacy');
+    }
+}
+
+function returnToSetPicker(fromPop) {
+    quizHeader.style.display = 'none';
+    quizBody.style.display = 'none';
+    nextBtn.style.display = 'none';
+    if (quizSetPicker) quizSetPicker.style.display = 'block';
+    document.body.classList.remove('quiz-active');
+    if (!fromPop && window.__uiBack && window.__uiBack.requestClose) {
+        window.__uiBack.requestClose('quiz-legacy');
+    }
 }
 
 function renderQuestion() {
@@ -813,6 +828,10 @@ document.addEventListener('DOMContentLoaded', () => {
             body.classList.toggle('collapsed');
             toggle.classList.toggle('collapsed');
         });
+    }
+
+    if (window.__uiBack && window.__uiBack.register) {
+        window.__uiBack.register('quiz-legacy', returnToSetPicker);
     }
 });
 

@@ -124,6 +124,16 @@
   gap: 10px;
 }
 
+.quiz-fallback {
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #e0f2fe, #eef2ff 60%, #ffffff 100%);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: #1e3a8a;
+  font-weight: 600;
+  text-align: center;
+}
+
 .quiz-instructions {
   max-width: 980px;
   margin: 0 auto 8px;
