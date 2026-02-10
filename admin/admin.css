@@ -2362,6 +2362,71 @@ body.light-mode .writing-mode-content {
     gap: 8px;
 }
 
+.notify-preview-panel {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.notify-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.notify-preview-box.hidden {
+    display: none;
+}
+
+.lockscreen-preview {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.75));
+    border-radius: 16px;
+    padding: 12px;
+    color: #e2e8f0;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
+}
+
+.lockscreen-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(226, 232, 240, 0.7);
+    margin-bottom: 10px;
+}
+
+.lockscreen-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.lockscreen-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.lockscreen-body {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: rgba(226, 232, 240, 0.9);
+}
+
+.lockscreen-footer {
+    margin-top: 8px;
+    font-size: 0.7rem;
+    color: rgba(226, 232, 240, 0.6);
+}
+
 .small {
     font-size: 0.85rem;
 }

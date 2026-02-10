@@ -1,6 +1,6 @@
 (() => {
     const DEFAULT_API_URL = '/api';
-    const MODULE_VER = '13';
+    const MODULE_VER = '15';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
@@ -191,6 +191,8 @@
             notifyScheduleList: document.getElementById('notify-schedule-list'),
             notifyScheduleReload: document.getElementById('notify-schedule-reload'),
             notifyScheduleRun: document.getElementById('notify-schedule-run'),
+            notifyPreviewBtn: document.getElementById('notify-preview-btn'),
+            notifyPreviewBox: document.getElementById('notify-preview-box'),
 
             // Question Modal
             modal: document.getElementById('question-modal'),
@@ -387,12 +389,14 @@
         // Load Data
         if (tabName === 'dashboard') {
             loadDashboard();
-            loadNotifySchedules();
-            loadPimpinanOptions();
         }
         if (tabName === 'questions' && state.questions.length === 0) loadQuestions();
         if (tabName === 'results' && state.results.length === 0) loadResults();
         if (tabName === 'users' && state.users.length === 0) loadUsers();
+        if (tabName === 'users') {
+            loadNotifySchedules();
+            loadPimpinanOptions();
+        }
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();
         if (tabName === 'schedules') loadGamificationSettings();
@@ -1703,6 +1707,34 @@
         els.notifyScheduleReload?.addEventListener('click', (e) => {
             e.preventDefault();
             loadNotifySchedules();
+        });
+
+        const renderNotifyPreview = () => {
+            if (!els.notifyPreviewBox) return;
+            const title = String(els.notifyTitle?.value || '').trim() || 'Notifikasi IPM';
+            const message = String(els.notifyMessage?.value || '').trim() || 'Contoh isi notifikasi akan tampil di sini.';
+            const targetLabel = els.notifyTarget?.value?.startsWith('pimpinan:') ? 'Grup Pimpinan' : 'Semua User';
+            const now = new Date();
+            const timeLabel = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            els.notifyPreviewBox.innerHTML = `
+                <div class="lockscreen-preview">
+                    <div class="lockscreen-meta">
+                        <span class="lockscreen-app">PC IPM Panawuan</span>
+                        <span class="lockscreen-time">${timeLabel}</span>
+                    </div>
+                    <div class="lockscreen-card">
+                        <div class="lockscreen-title">${escapeHtml(title)}</div>
+                        <div class="lockscreen-body">${escapeHtml(message)}</div>
+                        <div class="lockscreen-footer">${escapeHtml(targetLabel)}</div>
+                    </div>
+                </div>
+            `;
+        };
+
+        els.notifyPreviewBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderNotifyPreview();
+            els.notifyPreviewBox?.classList.toggle('hidden');
         });
 
         els.notifyScheduleRun?.addEventListener('click', async (e) => {
