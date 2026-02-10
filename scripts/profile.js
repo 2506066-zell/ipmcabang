@@ -312,9 +312,17 @@
         requestAnimationFrame(() => {
             overlayEl.classList.add('show');
         });
+
+        if (window.__uiBack && window.__uiBack.open) {
+            window.__uiBack.open('profile');
+        }
     }
 
-    function closeOverlay() {
+    function closeOverlay(fromPop) {
+        if (!fromPop && window.__uiBack && window.__uiBack.requestClose) {
+            window.__uiBack.requestClose('profile');
+            return;
+        }
         if (!overlayEl) return;
         overlayEl.classList.remove('show');
         document.body.classList.remove('body-no-scroll');
@@ -334,6 +342,13 @@
         }
     };
 
+    const registerUiBack = () => {
+        if (window.__uiBack && window.__uiBack.register) {
+            window.__uiBack.register('profile', closeOverlay);
+        }
+    };
+    registerUiBack();
+
     document.addEventListener('DOMContentLoaded', () => {
         const root = document.getElementById('profile-root');
         if (root && document.body.classList.contains('page-profile')) {
@@ -345,6 +360,7 @@
             loadActivityData(root, uname);
             loadNotifications(root);
         }
+        registerUiBack();
     });
 
     document.addEventListener('click', (e) => {

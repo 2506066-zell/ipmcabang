@@ -4,18 +4,31 @@
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
     const headerRight = document.querySelector('.header-right-icons');
 
+    const openMobileNav = () => {
+        mobileNav.classList.add('open');
+        if (mobileNavOverlay) mobileNavOverlay.classList.add('open');
+        document.body.classList.add('body-no-scroll');
+        uiBack.open('mobile-nav');
+    };
+
+    const closeMobileNav = (fromPop) => {
+        mobileNav.classList.remove('open');
+        if (mobileNavOverlay) mobileNavOverlay.classList.remove('open');
+        document.body.classList.remove('body-no-scroll');
+        if (!fromPop) uiBack.requestClose('mobile-nav');
+    };
+
     if (hamburgerMenu && mobileNav) {
+        uiBack.register('mobile-nav', closeMobileNav);
         hamburgerMenu.addEventListener('click', () => {
-            const isOpen = mobileNav.classList.toggle('open');
-            if (mobileNavOverlay) mobileNavOverlay.classList.toggle('open', isOpen);
-            document.body.classList.toggle('body-no-scroll', isOpen);
+            const isOpen = mobileNav.classList.contains('open');
+            if (isOpen) closeMobileNav();
+            else openMobileNav();
         });
     }
     if (mobileNavOverlay && mobileNav) {
         mobileNavOverlay.addEventListener('click', () => {
-            mobileNav.classList.remove('open');
-            mobileNavOverlay.classList.remove('open');
-            document.body.classList.remove('body-no-scroll');
+            closeMobileNav();
         });
     }
 
@@ -224,10 +237,12 @@
             updateNotifBadge();
             panel.hidden = false;
             overlay.hidden = false;
+            uiBack.open('notif-panel');
         };
-        const closePanel = () => {
+        const closePanel = (fromPop) => {
             panel.hidden = true;
             overlay.hidden = true;
+            if (!fromPop) uiBack.requestClose('notif-panel');
         };
 
         bell?.addEventListener('click', () => {
@@ -256,6 +271,8 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closePanel();
         });
+
+        uiBack.register('notif-panel', closePanel);
 
         // Update last seen when opening article detail page
         try {
@@ -511,7 +528,9 @@
         const backToTopBtn = document.getElementById('back-to-top');
 
         fabMain.addEventListener('click', () => {
-            fabContainer.classList.toggle('open');
+            const isOpen = fabContainer.classList.toggle('open');
+            if (isOpen) uiBack.open('fab-menu');
+            else uiBack.requestClose('fab-menu');
         });
 
         backToTopBtn.addEventListener('click', (e) => {
@@ -532,7 +551,12 @@
         document.addEventListener('click', (e) => {
             if (!fabContainer.contains(e.target)) {
                 fabContainer.classList.remove('open');
+                uiBack.requestClose('fab-menu');
             }
+        });
+
+        uiBack.register('fab-menu', () => {
+            fabContainer.classList.remove('open');
         });
     }
 
@@ -599,7 +623,48 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+    const uiBack = (() => {
+        const state = { current: null, closers: {} };
+
+        const register = (name, closeFn) => {
+            if (!name || typeof closeFn !== 'function') return;
+            state.closers[name] = closeFn;
+        };
+
+        const open = (name) => {
+            if (!name || !window.history || !window.history.pushState) return;
+            if (state.current === name) return;
+            if (state.current && state.closers[state.current]) {
+                state.closers[state.current](true);
+            }
+            state.current = name;
+            window.history.pushState({ __ui: name }, '', window.location.href);
+        };
+
+        const isActive = (name) => state.current === name;
+
+        const requestClose = (name) => {
+            if (!name) return;
+            if (isActive(name) && window.history && window.history.state && window.history.state.__ui === name) {
+                window.history.back();
+                return;
+            }
+            if (state.closers[name]) state.closers[name](true);
+            if (state.current === name) state.current = null;
+        };
+
+        window.addEventListener('popstate', () => {
+            if (!state.current) return;
+            const closeFn = state.closers[state.current];
+            if (closeFn) closeFn(true);
+            state.current = null;
+        });
+
+        return { register, open, requestClose, isActive };
+    })();
+
+    window.__uiBack = uiBack;
         document.querySelectorAll('img:not([loading])').forEach((img) => {
             if (!img.hasAttribute('fetchpriority')) img.loading = 'lazy';
         });

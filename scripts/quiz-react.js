@@ -688,6 +688,32 @@ function App() {
     setProfile(data);
   }, [username]);
 
+  useEffect(() => {
+    document.body.classList.toggle('quiz-focus', !!activeSet);
+  }, [activeSet]);
+
+  useEffect(() => {
+    if (!window.history || !window.history.replaceState) return;
+    if (activeSet) {
+      window.history.pushState({ view: 'quiz-set', set: activeSet }, '', window.location.href);
+    } else {
+      window.history.replaceState({ view: 'overview' }, '', window.location.href);
+    }
+  }, [activeSet]);
+
+  useEffect(() => {
+    const onPopState = (event) => {
+      const state = event.state || {};
+      if (state.view === 'quiz-set' && state.set) {
+        setActiveSet(state.set);
+        return;
+      }
+      setActiveSet(null);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
 
 
   const updateProfile = (updater) => {
@@ -877,10 +903,14 @@ function App() {
 
   return (
     <div className="quiz-shell">
-      <NextQuizCountdown nextQuiz={nextQuiz} />
-      <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
-        <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} questPulse={pulse.quest} />
-      </div>
+      {!activeSet && (
+        <>
+          <NextQuizCountdown nextQuiz={nextQuiz} />
+          <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
+            <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} questPulse={pulse.quest} />
+          </div>
+        </>
+      )}
       <div className="quiz-main">
         {!activeSet && resultSummary && (
           <QuizResult summary={resultSummary} onClose={() => setResultSummary(null)} />
@@ -890,24 +920,37 @@ function App() {
           setActiveSet(set);
         }} onReload={reload} />}
         {activeSet && (
-          <QuizQuestion
-            quizSet={activeSet}
-            onExit={() => setActiveSet(null)}
-            onFinish={finishQuiz}
-            onImmediateReward={handleImmediateReward}
-            timerSeconds={settings.timer_seconds}
-            xpBurst={xpBurst}
-            soundOn={soundOn}
-            onToggleSound={toggleSound}
-            onSound={playSound}
-            streak={profile.streak || 0}
-            streakPulse={streakPulse}
-            initialProgress={progressCacheRef.current[activeSet] || null}
-            onProgress={(progress) => {
-              if (!activeSet) return;
-              progressCacheRef.current[activeSet] = progress;
-            }}
-          />
+          <div className="quiz-modal" role="dialog" aria-modal="true" aria-label="Kuis">
+            <div className="quiz-modal-overlay"></div>
+            <div className="quiz-modal-card">
+              <button
+                type="button"
+                className="quiz-modal-close"
+                onClick={() => setActiveSet(null)}
+                aria-label="Kembali ke set kuis"
+              >
+                <i className="fas fa-arrow-left"></i>
+              </button>
+              <QuizQuestion
+                quizSet={activeSet}
+                onExit={() => setActiveSet(null)}
+                onFinish={finishQuiz}
+                onImmediateReward={handleImmediateReward}
+                timerSeconds={settings.timer_seconds}
+                xpBurst={xpBurst}
+                soundOn={soundOn}
+                onToggleSound={toggleSound}
+                onSound={playSound}
+                streak={profile.streak || 0}
+                streakPulse={streakPulse}
+                initialProgress={progressCacheRef.current[activeSet] || null}
+                onProgress={(progress) => {
+                  if (!activeSet) return;
+                  progressCacheRef.current[activeSet] = progress;
+                }}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>
