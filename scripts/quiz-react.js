@@ -565,9 +565,11 @@ function QuizQuestion({
           <span className={`quiz-timer${isUrgent ? ' is-urgent' : ''}`}><i className="fas fa-clock"></i> {timer}s</span>
         </div>
       </div>
-      <div className="quiz-progress" aria-hidden="true">
-        <span style={{ width: `${progress}%` }} />
-        <span className="quiz-progress-dot" style={{ left: `${progress}%` }} />
+      <div className="quiz-progress-wrap" aria-hidden="true">
+        <div className="quiz-progress">
+          <span style={{ width: `${progress}%` }} />
+          <span className="quiz-progress-dot" style={{ left: `${progress}%` }} />
+        </div>
       </div>
       {xpBurst && (
         <div className="xp-burst" key={xpBurst.id}>+{xpBurst.value} XP</div>
@@ -581,7 +583,7 @@ function QuizQuestion({
           return (
             <button
               key={opt.key}
-              className={`quiz-option${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}`}
+              className={`quiz-option${selected === opt.key && !feedback ? ' is-selected' : ''}${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}`}
               onClick={() => handleAnswer(opt.key)}
             >
               <strong style={{ marginRight: 8 }}>{opt.key.toUpperCase()}</strong>
@@ -640,17 +642,14 @@ function NextQuizCountdown({ nextQuiz }) {
     <div className="quiz-countdown-bar">
       <div className="quiz-countdown-meta">
         <div className="quiz-countdown-badge"><i className="fas fa-bolt"></i> Update Kuis</div>
-        <div className="quiz-countdown-title">{nextQuiz.title}</div>
+        <div className="quiz-countdown-title">
+          <strong>{nextQuiz.title}</strong>
+          {timeLeft && <span className="quiz-timer-pill">{timeLeft}</span>}
+        </div>
         <div className="quiz-countdown-headline">Quiz level berikutnya segera dimulai.</div>
         {nextQuiz.topic && <div className="quiz-countdown-note">Topik: {nextQuiz.topic}</div>}
         {!nextQuiz.topic && <div className="quiz-countdown-note">Persiapkan diri, kuis dimulai sebentar lagi.</div>}
       </div>
-      {timeLeft && (
-        <div className="quiz-countdown-timer">
-          <i className="fas fa-clock"></i>
-          <span>Kuis mulai dalam: {timeLeft}</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -956,6 +955,12 @@ function App() {
             }
             setResultSummary(null);
             setActiveSet(set);
+            const anchor = document.querySelector('.quiz-shell-top');
+            if (anchor && anchor.scrollIntoView) {
+              anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }}
           onReload={reload}
         />}
