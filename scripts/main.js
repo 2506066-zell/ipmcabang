@@ -1,4 +1,46 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
+
+    const uiBack = (() => {
+        const state = { current: null, closers: {} };
+
+        const register = (name, closeFn) => {
+            if (!name || typeof closeFn !== 'function') return;
+            state.closers[name] = closeFn;
+        };
+
+        const open = (name) => {
+            if (!name || !window.history || !window.history.pushState) return;
+            if (state.current === name) return;
+            if (state.current && state.closers[state.current]) {
+                state.closers[state.current](true);
+            }
+            state.current = name;
+            window.history.pushState({ __ui: name }, '', window.location.href);
+        };
+
+        const isActive = (name) => state.current === name;
+
+        const requestClose = (name) => {
+            if (!name) return;
+            if (isActive(name) && window.history && window.history.state && window.history.state.__ui === name) {
+                window.history.back();
+                return;
+            }
+            if (state.closers[name]) state.closers[name](true);
+            if (state.current === name) state.current = null;
+        };
+
+        window.addEventListener('popstate', () => {
+            if (!state.current) return;
+            const closeFn = state.closers[state.current];
+            if (closeFn) closeFn(true);
+            state.current = null;
+        });
+
+        return { register, open, requestClose, isActive };
+    })();
+
+
     const hamburgerMenu = document.getElementById('hamburger-menu');
     const mobileNav = document.getElementById('mobile-nav');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
@@ -623,58 +665,9 @@
         });
     }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const uiBack = (() => {
-        const state = { current: null, closers: {} };
-
-        const register = (name, closeFn) => {
-            if (!name || typeof closeFn !== 'function') return;
-            state.closers[name] = closeFn;
-        };
-
-        const open = (name) => {
-            if (!name || !window.history || !window.history.pushState) return;
-            if (state.current === name) return;
-            if (state.current && state.closers[state.current]) {
-                state.closers[state.current](true);
-            }
-            state.current = name;
-            window.history.pushState({ __ui: name }, '', window.location.href);
-        };
-
-        const isActive = (name) => state.current === name;
-
-        const requestClose = (name) => {
-            if (!name) return;
-            if (isActive(name) && window.history && window.history.state && window.history.state.__ui === name) {
-                window.history.back();
-                return;
-            }
-            if (state.closers[name]) state.closers[name](true);
-            if (state.current === name) state.current = null;
-        };
-
-        window.addEventListener('popstate', () => {
-            if (!state.current) return;
-            const closeFn = state.closers[state.current];
-            if (closeFn) closeFn(true);
-            state.current = null;
-        });
-
-        return { register, open, requestClose, isActive };
-    })();
-
-    window.__uiBack = uiBack;
+    document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('img:not([loading])').forEach((img) => {
             if (!img.hasAttribute('fetchpriority')) img.loading = 'lazy';
         });
     });
 })();
-
-
-
-
-
-
-
-

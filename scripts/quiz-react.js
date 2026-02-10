@@ -904,12 +904,12 @@ function App() {
   return (
     <div className="quiz-shell">
       {!activeSet && (
-        <>
+        <div className="quiz-shell-top">
           <NextQuizCountdown nextQuiz={nextQuiz} />
           <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
             <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} questPulse={pulse.quest} />
           </div>
-        </>
+        </div>
       )}
       <div className="quiz-main">
         {!activeSet && resultSummary && (

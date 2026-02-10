@@ -208,6 +208,11 @@
   gap: 12px;
 }
 
+.quiz-shell-top {
+  display: grid;
+  gap: 12px;
+}
+
 .quiz-countdown-bar {
   border-radius: 16px;
   padding: 12px 14px 12px 16px;
