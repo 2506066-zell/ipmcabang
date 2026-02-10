@@ -531,6 +531,92 @@
             .catch(err => console.error('Error fetching highlights:', err));
     }
 
+    // Countdown Program Kerja (Homepage)
+    const programCountdown = document.getElementById('program-countdown');
+    const programCountdownTitle = document.getElementById('program-countdown-title');
+    const programCountdownTimer = document.getElementById('program-countdown-timer');
+    const programCountdownSub = document.getElementById('program-countdown-sub');
+    let programCountdownInterval = null;
+    let programCountdownSchedule = null;
+
+    const selectScheduleForHome = (schedules) => {
+        const now = Date.now();
+        const filtered = (schedules || []).filter(s => s && (s.show_in_notif === true || s.show_in_notif === 'true' || s.show_in_quiz !== false));
+        if (!filtered.length) return null;
+        const active = filtered.find(s => {
+            const start = s.start_time ? new Date(s.start_time).getTime() : 0;
+            const end = s.end_time ? new Date(s.end_time).getTime() : Infinity;
+            return start <= now && now < end;
+        });
+        if (active) return active;
+        const upcoming = filtered.filter(s => s.start_time && new Date(s.start_time).getTime() > now)
+            .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
+        return upcoming || null;
+    };
+
+    const updateProgramCountdown = () => {
+        if (!programCountdownSchedule || !programCountdown || !programCountdownTitle || !programCountdownTimer || !programCountdownSub) return;
+        const now = Date.now();
+        const start = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).getTime() : 0;
+        const end = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).getTime() : 0;
+        const title = programCountdownSchedule.title || 'Agenda Mendatang';
+        programCountdownTitle.textContent = title;
+
+        if (start && now < start) {
+            const diff = Math.max(0, start - now);
+            const totalSeconds = Math.floor(diff / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+            programCountdownSub.textContent = 'Hitung mundur menuju program kerja berikutnya.';
+            programCountdown.hidden = false;
+            return;
+        }
+
+        if (end && now < end) {
+            const diff = Math.max(0, end - now);
+            const totalSeconds = Math.floor(diff / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+            programCountdownSub.textContent = 'Sedang berlangsung. Sisa waktu berakhir.';
+            programCountdown.hidden = false;
+            return;
+        }
+
+        programCountdownTimer.textContent = 'Selesai';
+        programCountdownSub.textContent = 'Program kerja sudah berakhir.';
+        programCountdown.hidden = false;
+    };
+
+    const fetchProgramCountdown = async () => {
+        if (!programCountdown) return;
+        try {
+            const res = await fetch('/api/questions?mode=schedules');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.status !== 'success') return;
+            const picked = selectScheduleForHome(data.schedules || []);
+            programCountdownSchedule = picked;
+            if (!picked) {
+                programCountdown.hidden = true;
+                if (programCountdownInterval) clearInterval(programCountdownInterval);
+                return;
+            }
+            updateProgramCountdown();
+            if (programCountdownInterval) clearInterval(programCountdownInterval);
+            programCountdownInterval = setInterval(updateProgramCountdown, 1000);
+        } catch {}
+    };
+
+    if (programCountdown) {
+        fetchProgramCountdown();
+    }
+
     function renderHighlights(articles) {
         if (!highlightsGrid) return;
         if (articles.length === 0) {
