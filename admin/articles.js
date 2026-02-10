@@ -40,7 +40,25 @@ export function initArticles(state, els, api) {
 
         try { document.execCommand('styleWithCSS', false, true); } catch (e) { }
 
+        let savedRange = null;
+
+        const saveSelection = () => {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) {
+                savedRange = sel.getRangeAt(0);
+            }
+        };
+
+        const restoreSelection = () => {
+            if (!savedRange) return;
+            const sel = window.getSelection();
+            if (!sel) return;
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+        };
+
         const exec = (command, value = null) => {
+            restoreSelection();
             document.execCommand(command, false, value);
             editorArea.focus();
         };
@@ -76,6 +94,7 @@ export function initArticles(state, els, api) {
         };
 
         toolbar.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.onmousedown = saveSelection;
             btn.onclick = (e) => {
                 e.preventDefault();
                 const command = btn.dataset.command;
@@ -88,13 +107,22 @@ export function initArticles(state, els, api) {
 
         // Color Picker
         const colorPicker = document.getElementById('editor-color-picker');
-        if (colorPicker) colorPicker.oninput = (e) => exec('foreColor', e.target.value);
+        if (colorPicker) {
+            colorPicker.oninput = (e) => exec('foreColor', e.target.value);
+            colorPicker.onmousedown = saveSelection;
+        }
 
         const fontFamily = document.getElementById('editor-font-family');
-        if (fontFamily) fontFamily.onchange = (e) => exec('fontName', e.target.value);
+        if (fontFamily) {
+            fontFamily.onchange = (e) => exec('fontName', e.target.value);
+            fontFamily.onmousedown = saveSelection;
+        }
 
         const fontSize = document.getElementById('editor-font-size');
-        if (fontSize) fontSize.onchange = (e) => applyFontSize(e.target.value);
+        if (fontSize) {
+            fontSize.onchange = (e) => applyFontSize(e.target.value);
+            fontSize.onmousedown = saveSelection;
+        }
 
         // Line Spacing
         const lineSpacingSelector = document.getElementById('editor-line-spacing');
@@ -104,6 +132,7 @@ export function initArticles(state, els, api) {
                 editorArea.focus();
             };
             editorArea.style.lineHeight = lineSpacingSelector.value;
+            lineSpacingSelector.onmousedown = saveSelection;
         }
 
         const inlineImage = document.getElementById('editor-inline-image');
@@ -120,6 +149,16 @@ export function initArticles(state, els, api) {
                 inlineImage.value = '';
             };
         }
+
+        ['keyup', 'mouseup', 'focus', 'blur'].forEach(evt => {
+            editorArea.addEventListener(evt, saveSelection);
+        });
+
+        document.addEventListener('selectionchange', () => {
+            if (document.activeElement === editorArea) {
+                saveSelection();
+            }
+        });
 
         // Sync content to hidden textarea on change
         editorArea.oninput = () => {
@@ -278,25 +317,11 @@ export function initArticles(state, els, api) {
     // Create/Edit
     if (addBtn) {
         addBtn.onclick = () => {
-            if (modal && form && editorArea) {
-                resetForm();
-                openModal();
-                return;
-            }
             window.location.href = 'editor.html';
         };
     }
 
     async function openEdit(id) {
-        if (modal && form && editorArea) {
-            try {
-                await loadArticleIntoForm(id);
-                openModal();
-                return;
-            } catch (e) {
-                alert('Gagal memuat artikel: ' + e.message);
-            }
-        }
         window.location.href = `editor.html?id=${id}`;
     }
 

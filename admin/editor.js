@@ -103,7 +103,25 @@
 
         try { document.execCommand('styleWithCSS', false, true); } catch (e) { }
 
+        let savedRange = null;
+
+        const saveSelection = () => {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) {
+                savedRange = sel.getRangeAt(0);
+            }
+        };
+
+        const restoreSelection = () => {
+            if (!savedRange) return;
+            const sel = window.getSelection();
+            if (!sel) return;
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+        };
+
         const exec = (command, value = null) => {
+            restoreSelection();
             document.execCommand(command, false, value);
             els.editorArea.focus();
         };
@@ -139,6 +157,7 @@
         };
 
         els.toolbar.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.onmousedown = saveSelection;
             btn.onclick = (e) => {
                 e.preventDefault();
                 const command = btn.dataset.command;
@@ -152,16 +171,19 @@
         const colorPicker = document.getElementById('editor-color-picker');
         if (colorPicker) {
             colorPicker.oninput = (e) => exec('foreColor', e.target.value);
+            colorPicker.onmousedown = saveSelection;
         }
 
         const fontFamily = document.getElementById('editor-font-family');
         if (fontFamily) {
             fontFamily.onchange = (e) => exec('fontName', e.target.value);
+            fontFamily.onmousedown = saveSelection;
         }
 
         const fontSize = document.getElementById('editor-font-size');
         if (fontSize) {
             fontSize.onchange = (e) => applyFontSize(e.target.value);
+            fontSize.onmousedown = saveSelection;
         }
 
         const lineSpacing = document.getElementById('editor-line-spacing');
@@ -171,6 +193,7 @@
                 els.editorArea.focus();
             };
             els.editorArea.style.lineHeight = lineSpacing.value;
+            lineSpacing.onmousedown = saveSelection;
         }
 
         const inlineImage = document.getElementById('editor-inline-image');
@@ -187,6 +210,16 @@
                 inlineImage.value = '';
             };
         }
+
+        ['keyup', 'mouseup', 'focus', 'blur'].forEach(evt => {
+            els.editorArea.addEventListener(evt, saveSelection);
+        });
+
+        document.addEventListener('selectionchange', () => {
+            if (document.activeElement === els.editorArea) {
+                saveSelection();
+            }
+        });
 
         els.editorArea.oninput = updateWordCount;
         els.inpTitle.oninput = saveDraft;
