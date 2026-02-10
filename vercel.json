@@ -82,12 +82,22 @@
       "dest": "/api/upload"
     },
     {
+      "src": "/api/cron/notifications",
+      "dest": "/api/index?segment=admin&action=runScheduledNotifications"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index"
     },
     {
       "src": "/(.*)",
       "dest": "/$1"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/notifications",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

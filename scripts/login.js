@@ -63,6 +63,9 @@
         if (data.pimpinan) storage.setItem('ipmquiz_user_pimpinan', data.pimpinan);
       } catch {}
       if (window.Toast) Toast.show('Berhasil masuk', 'success');
+      try {
+        await autoSubscribePush(token);
+      } catch {}
       window.location.href = 'quiz.html';
     })
     .catch((e) => {
@@ -88,6 +91,47 @@
       if (window.Toast) Toast.show(flash, 'info');
     }
   });
+
+  async function autoSubscribePush(token) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (Notification.permission === 'denied') return;
+
+    const getPublicKey = async () => {
+      const res = await fetch('/api/push?action=publicKey');
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.publicKey || null;
+    };
+
+    const urlBase64ToUint8Array = (base64String) => {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = atob(base64);
+      return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+    };
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const publicKey = await getPublicKey();
+      if (!publicKey) return;
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+    }
+
+    await fetch('/api/push?action=subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ subscription })
+    });
+  }
 })();
 
 

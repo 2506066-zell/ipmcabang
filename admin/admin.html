@@ -189,6 +189,49 @@
                     </div>
                 </div>
 
+                <div class="card" id="admin-notify-card" style="margin-top:20px;">
+                    <h3 style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-bell"></i> Kirim Notifikasi
+                    </h3>
+                    <p class="small" style="margin-bottom:12px; color:#64748b;">Kirim atau jadwalkan notifikasi ke semua user atau grup tertentu (in-app + lock screen).</p>
+                    <form id="notify-form" style="display:grid; gap:10px; max-width:620px;">
+                        <div class="form-group">
+                            <label>Judul</label>
+                            <input type="text" id="notify-title" placeholder="Judul notifikasi">
+                        </div>
+                        <div class="form-group">
+                            <label>Pesan</label>
+                            <textarea id="notify-message" rows="3" placeholder="Isi notifikasi" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:rgba(0,0,0,0.02);"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Tautan (opsional)</label>
+                            <input type="text" id="notify-url" placeholder="/quiz.html">
+                        </div>
+                        <div class="form-group">
+                            <label>Target Notifikasi</label>
+                            <select id="notify-target" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:rgba(0,0,0,0.02);">
+                                <option value="all">Semua User</option>
+                            </select>
+                            <small class="form-hint">Pilih grup/asal pimpinan.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Jadwal Kirim (opsional)</label>
+                            <input type="datetime-local" id="notify-schedule">
+                            <small class="form-hint">Kosongkan untuk kirim sekarang.</small>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="notify-save" checked>
+                            <label for="notify-save">Simpan ke notifikasi aplikasi</label>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button type="submit" class="btn btn-primary" id="notify-send-btn"><i class="fas fa-paper-plane"></i> Kirim</button>
+                            <span id="notify-status" class="small" style="color:#64748b;"></span>
+                        </div>
+                    </form>
+                    <div class="notify-schedule-list" id="notify-schedule-list"></div>
+                    <button class="btn btn-secondary" id="notify-schedule-reload" style="margin-top:10px;">Muat Jadwal Notifikasi</button>
+                </div>
+
                 <!-- RESULTS TAB -->
                 <div id="tab-results" class="hidden">
                     <div class="toolbar-right" style="margin-bottom:16px">
@@ -759,7 +802,7 @@
                         <!-- Title -->
                         <div class="editor-title-container">
                             <input type="text" id="art-title" class="editor-title-input" required
-                                placeholder="Judul artikel…">
+                                placeholder="Judul artikel">
                         </div>
 
                         <!-- Meta -->
@@ -1046,7 +1089,7 @@
         })();
     </script>
     <script src="../scripts/toast.js"></script>
-    <script src="admin.js?v=10" defer></script>
+    <script src="admin.js?v=12" defer></script>
 </body>
 
 </html>

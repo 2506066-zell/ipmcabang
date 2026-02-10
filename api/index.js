@@ -13,7 +13,8 @@ const routes = {
   'materials': require('./_handler_materials'),
   'questions': require('./_handler_questions'),
   'results': require('./_handler_results'),
-  'users': require('./_handler_users')
+  'users': require('./_handler_users'),
+  'push': require('./_handler_push')
 };
 
 module.exports = async (req, res) => {

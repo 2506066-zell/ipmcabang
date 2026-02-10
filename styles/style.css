@@ -4372,6 +4372,35 @@ body.light-mode .timer-unit {
     color: #0f172a;
 }
 
+.notif-push {
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: rgba(15, 23, 42, 0.04);
+    border: 1px dashed rgba(15, 23, 42, 0.12);
+    display: grid;
+    gap: 8px;
+}
+
+.notif-push-text {
+    font-size: 0.8rem;
+    color: #475569;
+}
+
+.notif-push-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-weight: 700;
+    background: #0f172a;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.notif-push-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .notif-countdown {
     border-radius: 14px;
     padding: 10px 12px;

@@ -1,6 +1,6 @@
 (() => {
     const DEFAULT_API_URL = '/api';
-    const MODULE_VER = '10';
+    const MODULE_VER = '12';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
@@ -177,6 +177,19 @@
             pimpinanList: document.getElementById('pimpinan-list'),
             pimpinanSaveBtn: document.getElementById('pimpinan-save-btn'),
             pimpinanStatus: document.getElementById('pimpinan-status'),
+
+            // Admin Notify
+            notifyForm: document.getElementById('notify-form'),
+            notifyTitle: document.getElementById('notify-title'),
+            notifyMessage: document.getElementById('notify-message'),
+            notifyUrl: document.getElementById('notify-url'),
+            notifyTarget: document.getElementById('notify-target'),
+            notifySchedule: document.getElementById('notify-schedule'),
+            notifySave: document.getElementById('notify-save'),
+            notifyStatus: document.getElementById('notify-status'),
+            notifySendBtn: document.getElementById('notify-send-btn'),
+            notifyScheduleList: document.getElementById('notify-schedule-list'),
+            notifyScheduleReload: document.getElementById('notify-schedule-reload'),
 
             // Question Modal
             modal: document.getElementById('question-modal'),
@@ -371,7 +384,11 @@
         savePrefs();
 
         // Load Data
-        if (tabName === 'dashboard') loadDashboard();
+        if (tabName === 'dashboard') {
+            loadDashboard();
+            loadNotifySchedules();
+            loadPimpinanOptions();
+        }
         if (tabName === 'questions' && state.questions.length === 0) loadQuestions();
         if (tabName === 'results' && state.results.length === 0) loadResults();
         if (tabName === 'users' && state.users.length === 0) loadUsers();
@@ -514,13 +531,88 @@
         `).join('');
     }
 
+
+    function renderNotifyTargets() {
+        if (!els.notifyTarget) return;
+        const options = Array.isArray(state.pimpinanOptions) ? state.pimpinanOptions : [];
+        const current = els.notifyTarget.value;
+        const items = [
+            { value: 'all', label: 'Semua User' },
+            ...options.map(opt => ({ value: `pimpinan:${opt}`, label: opt }))
+        ];
+        els.notifyTarget.innerHTML = items.map(item => `
+            <option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>
+        `).join('');
+        if (current) {
+            els.notifyTarget.value = current;
+        }
+    }
+
+
+    function formatScheduleDate(value) {
+        if (!value) return '-';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return value;
+        return d.toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function renderNotifyScheduleList(items) {
+        if (!els.notifyScheduleList) return;
+        if (!Array.isArray(items) || items.length === 0) {
+            els.notifyScheduleList.innerHTML = '<div class="small muted">Belum ada jadwal notifikasi.</div>';
+            return;
+        }
+        els.notifyScheduleList.innerHTML = items.map(item => {
+            const status = String(item.status || 'pending');
+            const statusLabel = status === 'sent' ? 'Terkirim' : (status === 'failed' ? 'Gagal' : 'Menunggu');
+            const targetLabel = item.target_type === 'pimpinan'
+                ? `Pimpinan: ${escapeHtml(item.target_value || '-')}`
+                : 'Semua User';
+            const timeLabel = formatScheduleDate(item.send_at);
+            const deleteBtn = status === 'pending'
+                ? `<button type="button" class="btn btn-xs btn-secondary notify-schedule-delete" data-id="${item.id}">Hapus</button>`
+                : '';
+            return `
+                <div class="notify-schedule-item">
+                    <div class="notify-schedule-main">
+                        <div class="notify-schedule-title">${escapeHtml(item.title || 'Notifikasi')}</div>
+                        <div class="notify-schedule-meta">${targetLabel} - ${timeLabel}</div>
+                    </div>
+                    <div class="notify-schedule-actions">
+                        <span class="notify-status ${status}">${statusLabel}</span>
+                        ${deleteBtn}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function loadNotifySchedules() {
+        if (!els.notifyScheduleList) return;
+        try {
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=listScheduledNotifications');
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat jadwal');
+            renderNotifyScheduleList(data.items || []);
+        } catch (e) {
+            console.error('Load scheduled notifications failed:', e);
+            els.notifyScheduleList.innerHTML = '<div class="small muted">Gagal memuat jadwal notifikasi.</div>';
+        }
+    }
+
     async function loadPimpinanOptions() {
-        if (!els.pimpinanList) return;
+        if (!els.pimpinanList && !els.notifyTarget) return;
         try {
             const data = await apiAdminVercel('GET', '/api/admin/questions?action=pimpinanGet');
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat pilihan');
             state.pimpinanOptions = Array.isArray(data.options) ? data.options : [];
             renderPimpinanOptions();
+            renderNotifyTargets();
         } catch (e) {
             console.error('Failed to load pimpinan options', e);
             if (els.pimpinanStatus) {
@@ -538,6 +630,7 @@
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan');
             state.pimpinanOptions = Array.isArray(data.options) ? data.options : [];
             renderPimpinanOptions();
+            renderNotifyTargets();
             if (els.pimpinanStatus) {
                 els.pimpinanStatus.textContent = 'Tersimpan';
                 els.pimpinanStatus.className = 'status ok';
@@ -1544,6 +1637,87 @@
         els.userStatusFilter?.addEventListener('change', () => renderUsers());
         els.refreshLogsBtn?.addEventListener('click', loadLogs);
 
+
+        // Admin Broadcast Notification
+        if (els.notifyForm) {
+            els.notifyForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = String(els.notifyTitle?.value || '').trim();
+                const message = String(els.notifyMessage?.value || '').trim();
+                const url = String(els.notifyUrl?.value || '').trim() || '/';
+                const save = !!(els.notifySave && els.notifySave.checked);
+                const target = String(els.notifyTarget?.value || 'all');
+                const scheduleAtRaw = String(els.notifySchedule?.value || '').trim();
+
+                if (!title && !message) {
+                    if (els.notifyStatus) els.notifyStatus.textContent = 'Judul atau pesan wajib diisi.';
+                    return;
+                }
+
+                let scheduleIso = '';
+                if (scheduleAtRaw) {
+                    const dt = new Date(scheduleAtRaw);
+                    if (Number.isNaN(dt.getTime())) {
+                        if (els.notifyStatus) els.notifyStatus.textContent = 'Waktu jadwal tidak valid.';
+                        return;
+                    }
+                    scheduleIso = dt.toISOString();
+                }
+
+                if (els.notifySendBtn) {
+                    els.notifySendBtn.disabled = true;
+                    els.notifySendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${scheduleIso ? 'Menjadwalkan...' : 'Mengirim...'}`;
+                }
+                if (els.notifyStatus) els.notifyStatus.textContent = scheduleIso ? 'Menyimpan jadwal notifikasi...' : 'Mengirim notifikasi...';
+
+                try {
+                    const payload = { title, message, url, save, target };
+                    if (scheduleIso) {
+                        payload.schedule_at = scheduleIso;
+                        await apiAdminVercel('POST', '/api/admin/questions?action=scheduleNotification', payload);
+                        if (els.notifyStatus) els.notifyStatus.textContent = 'Jadwal notifikasi tersimpan.';
+                        if (window.Toast) Toast.show('Notifikasi dijadwalkan', 'success');
+                        loadNotifySchedules();
+                    } else {
+                        await apiAdminVercel('POST', '/api/admin/questions?action=broadcastNotification', payload);
+                        if (els.notifyStatus) els.notifyStatus.textContent = 'Notifikasi berhasil dikirim.';
+                        if (window.Toast) Toast.show('Notifikasi terkirim', 'success');
+                    }
+                    if (els.notifyTitle) els.notifyTitle.value = '';
+                    if (els.notifyMessage) els.notifyMessage.value = '';
+                    if (els.notifyUrl) els.notifyUrl.value = '';
+                    if (els.notifySchedule) els.notifySchedule.value = '';
+                } catch (e) {
+                    if (els.notifyStatus) els.notifyStatus.textContent = `Gagal: ${e.message || 'Error'}`;
+                    if (window.Toast) Toast.show('Gagal mengirim notifikasi', 'error');
+                } finally {
+                    if (els.notifySendBtn) {
+                        els.notifySendBtn.disabled = false;
+                        els.notifySendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim';
+                    }
+                }
+            });
+        }
+
+        els.notifyScheduleReload?.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadNotifySchedules();
+        });
+
+        els.notifyScheduleList?.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.notify-schedule-delete');
+            if (!btn) return;
+            const id = Number(btn.dataset.id || 0);
+            if (!id) return;
+            try {
+                await apiAdminVercel('POST', '/api/admin/questions?action=deleteScheduledNotification', { id });
+                if (window.Toast) Toast.show('Jadwal dihapus', 'success');
+                loadNotifySchedules();
+            } catch (err) {
+                if (window.Toast) Toast.show('Gagal menghapus jadwal', 'error');
+            }
+        });
+
         // Schedules
         els.addScheduleBtn?.addEventListener('click', () => {
             els.scheduleForm.reset();
@@ -1690,6 +1864,7 @@
             state.pimpinanOptions.push(value);
             els.pimpinanInput.value = '';
             renderPimpinanOptions();
+            renderNotifyTargets();
             if (els.pimpinanStatus) {
                 els.pimpinanStatus.textContent = '';
                 els.pimpinanStatus.className = 'status';
@@ -1713,6 +1888,7 @@
             if (Number.isNaN(idx)) return;
             state.pimpinanOptions.splice(idx, 1);
             renderPimpinanOptions();
+            renderNotifyTargets();
         });
         els.pimpinanSaveBtn?.addEventListener('click', (e) => {
             e.preventDefault();

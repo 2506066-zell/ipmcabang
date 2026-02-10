@@ -56,7 +56,16 @@ async function handleResetAttempt(req, res) {
     const quizSet = Number(b.quiz_set);
     if (!userId || !quizSet) return json(res, 400, { status: 'error', message: 'User ID dan Quiz Set wajib diisi' });
     try { await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'RESET_ATTEMPT', ${{ target_user_id: userId, quiz_set: quizSet }})`; } catch (e) { }
-    try { await query`INSERT INTO notifications (user_id, message) VALUES (${userId}, ${`Admin telah mereset status pengerjaan Kuis Set ${quizSet} Anda. Anda dapat mengerjakannya kembali.`})`; } catch (e) { }
+    try {
+        const msg = `Admin telah mereset status pengerjaan Kuis Set ${quizSet} Anda. Anda dapat mengerjakannya kembali.`;
+        await query`INSERT INTO notifications (user_id, message) VALUES (${userId}, ${msg})`;
+        const { sendToUser } = require('./_push');
+        sendToUser(userId, {
+            title: 'Kuis Di-reset',
+            body: msg,
+            url: '/quiz.html'
+        }).catch(() => {});
+    } catch (e) { }
     await query`DELETE FROM results WHERE user_id=${userId} AND quiz_set=${quizSet}`;
     return json(res, 200, { status: 'success', message: 'Attempt berhasil direset.' });
 }

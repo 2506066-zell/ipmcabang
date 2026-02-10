@@ -2354,3 +2354,91 @@ body.light-mode .writing-mode-content {
         padding: 18px;
     }
 }
+
+.notify-schedule-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.small {
+    font-size: 0.85rem;
+}
+
+.muted {
+    color: var(--text-muted);
+}
+
+.notify-schedule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.notify-schedule-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.notify-schedule-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.notify-schedule-meta {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.notify-schedule-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notify-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.notify-status.pending {
+    background: rgba(234, 179, 8, 0.15);
+    color: #a16207;
+}
+
+.notify-status.sent {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+}
+
+.notify-status.failed {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+
+.btn.btn-xs {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .notify-schedule-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .notify-schedule-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}

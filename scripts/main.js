@@ -172,6 +172,12 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
+                    <div class="notif-push" id="notif-push" hidden>
+                        <div class="notif-push-text">
+                            Aktifkan notifikasi agar update muncul di lock screen.
+                        </div>
+                        <button class="notif-push-btn" id="notif-push-btn">Aktifkan Notifikasi</button>
+                    </div>
                     <div class="notif-countdown" id="notif-countdown" hidden>
                         <div class="notif-countdown-label">Program Kerja Mendatang</div>
                         <div class="notif-countdown-title" id="notif-countdown-title"></div>
@@ -387,6 +393,7 @@
             await fetchCountdownSchedule();
             renderNotifList();
             renderNotifCountdown();
+            await updatePushUI();
             updateNotifBadge();
             panel.hidden = false;
             overlay.hidden = false;
@@ -452,6 +459,109 @@
 
         fetchNotifications();
     }
+
+    // --- PUSH SUBSCRIPTION (PWA) ---
+    const pushState = { subscribed: false, inFlight: false };
+
+    const urlBase64ToUint8Array = (base64String) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+    };
+
+    const getVapidKey = async () => {
+        try {
+            const res = await fetch('/api/push?action=publicKey');
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data.publicKey || null;
+        } catch {
+            return null;
+        }
+    };
+
+    async function ensurePushSubscription() {
+        if (pushState.inFlight || pushState.subscribed) return;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        if (Notification.permission === 'denied') return;
+
+        pushState.inFlight = true;
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            let subscription = await registration.pushManager.getSubscription();
+
+            if (!subscription) {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    pushState.inFlight = false;
+                    return;
+                }
+                const publicKey = await getVapidKey();
+                if (!publicKey) {
+                    pushState.inFlight = false;
+                    return;
+                }
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+            }
+
+            await fetch('/api/push?action=subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(getSession() ? { Authorization: `Bearer ${getSession()}` } : {})
+                },
+                body: JSON.stringify({ subscription })
+            });
+            pushState.subscribed = true;
+            await updatePushUI();
+        } catch {}
+        finally {
+            pushState.inFlight = false;
+        }
+    }
+
+    async function detectPushSubscription() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            pushState.subscribed = !!subscription;
+            return pushState.subscribed;
+        } catch {
+            return false;
+        }
+    }
+
+    async function updatePushUI() {
+        const wrap = document.getElementById('notif-push');
+        const btn = document.getElementById('notif-push-btn');
+        if (!wrap || !btn) return;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            wrap.hidden = true;
+            return;
+        }
+        if (Notification.permission === 'denied') {
+            wrap.hidden = true;
+            return;
+        }
+        await detectPushSubscription();
+        if (pushState.subscribed) {
+            wrap.hidden = true;
+            return;
+        }
+        wrap.hidden = false;
+        btn.disabled = pushState.inFlight;
+    }
+
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.closest && e.target.closest('#notif-push-btn')) {
+            ensurePushSubscription();
+        }
+    });
 
     // --- DYNAMIC FEATURES (Phase 4) ---
 

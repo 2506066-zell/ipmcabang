@@ -110,6 +110,32 @@ async function ensureSchema() {
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    endpoint TEXT UNIQUE NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS scheduled_notifications (
+    id SERIAL PRIMARY KEY,
+    title TEXT,
+    message TEXT,
+    url TEXT,
+    target_type TEXT DEFAULT 'all',
+    target_value TEXT,
+    save_in_app BOOLEAN DEFAULT TRUE,
+    send_at TIMESTAMP NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_by INT REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    sent_at TIMESTAMP,
+    error TEXT
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -123,6 +149,19 @@ async function ensureSchema() {
   await query`ALTER TABLE quiz_schedules ADD COLUMN IF NOT EXISTS show_in_quiz BOOLEAN DEFAULT TRUE`;
   await query`ALTER TABLE quiz_schedules ADD COLUMN IF NOT EXISTS show_in_notif BOOLEAN DEFAULT FALSE`;
 
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS title TEXT`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS message TEXT`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS url TEXT`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS target_type TEXT DEFAULT 'all'`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS target_value TEXT`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS save_in_app BOOLEAN DEFAULT TRUE`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS send_at TIMESTAMP`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS created_by INT`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS sent_at TIMESTAMP`;
+  await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS error TEXT`;
+
   // Create Indexes for Performance
   await query`CREATE INDEX IF NOT EXISTS idx_questions_quiz_set ON questions(quiz_set)`;
   await query`CREATE INDEX IF NOT EXISTS idx_questions_category ON questions(category)`;
@@ -133,6 +172,8 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_materials_active ON materials(active)`;
   await query`CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_status ON scheduled_notifications(status)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_send_at ON scheduled_notifications(send_at)`;
 }
 
 module.exports = { ensureSchema };
