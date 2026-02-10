@@ -74,6 +74,16 @@
         });
     }
 
+    const quizInstrToggle = document.getElementById('quiz-instructions-toggle');
+    const quizInstrBody = document.getElementById('quiz-instructions-body');
+    if (quizInstrToggle && quizInstrBody) {
+        quizInstrToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const collapsed = quizInstrBody.classList.toggle('collapsed');
+            quizInstrToggle.classList.toggle('collapsed', collapsed);
+        });
+    }
+
     const USER_SESSION_KEY = 'ipmquiz_user_session';
     const USER_USERNAME_KEY = 'ipmquiz_user_username';
     const ARTICLE_SEEN_KEY = 'ipm_last_seen_article_ts';

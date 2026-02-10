@@ -283,17 +283,17 @@ function Dashboard({ profile, questPop, questPulse }) {
         {questPop && (
           <div className="quest-pop" role="status">{questPop}</div>
         )}
-        {activeQuest ? (
-          <div key={activeQuest.id} className={`quest-item is-single ${activeQuest.done ? 'quest-done' : ''}`}>
-            <div className="quest-meta">
-              <span>{activeQuest.label}</span>
-              <span>{activeQuest.value} / {activeQuest.total}</span>
-            </div>
-            <div className="quest-bar">
-              <span style={{ width: `${Math.min(100, Math.round((activeQuest.value / activeQuest.total) * 100))}%` }} />
-            </div>
+      {activeQuest ? (
+        <div key={activeQuest.id} className={`quest-item is-single ${activeQuest.done ? 'quest-done' : ''}`}>
+          <div className="quest-meta">
+            <span>{activeQuest.label}</span>
+            <span>{activeQuest.value} / {activeQuest.total}</span>
           </div>
-        ) : (
+          <div className="quest-bar">
+            <span style={{ width: `${Math.min(100, Math.round((activeQuest.value / activeQuest.total) * 100))}%` }} />
+          </div>
+        </div>
+      ) : (
           <div className="quest-item is-single">
             <div className="quest-meta">
               <span>Semua quest selesai hari ini</span>
@@ -301,13 +301,14 @@ function Dashboard({ profile, questPop, questPulse }) {
             </div>
             <div className="quest-bar">
               <span style={{ width: '100%' }} />
-            </div>
           </div>
-        )}
-        {profile.badges && profile.badges.length > 0 && (
-          <div style={{ marginTop: 10 }}>
-            {profile.badges.map((b) => (
-              <span key={b} className="badge-chip"><i className="fas fa-medal"></i> {b}</span>
+        </div>
+      )}
+      <div className="quest-hint">Tip: pilih set kuis untuk menyelesaikan quest hari ini.</div>
+      {profile.badges && profile.badges.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          {profile.badges.map((b) => (
+            <span key={b} className="badge-chip"><i className="fas fa-medal"></i> {b}</span>
             ))}
           </div>
         )}
@@ -316,7 +317,8 @@ function Dashboard({ profile, questPop, questPulse }) {
   );
 }
 
-function QuizList({ sets, loading, error, onSelect, onReload }) {
+function QuizList({ sets, loading, error, onSelect, onReload, completedSets }) {
+  const completed = new Set(Array.isArray(completedSets) ? completedSets : []);
   return (
     <div className="quiz-card">
       <h3>Daftar Kuis</h3>
@@ -329,18 +331,34 @@ function QuizList({ sets, loading, error, onSelect, onReload }) {
         </div>
       )}
       <div className="quiz-list">
-        {sets.map((s) => (
-          <div key={s.quiz_set} className="quiz-tile" onClick={() => onSelect(s.quiz_set)}>
-            <div style={{ fontWeight: 700 }}>Kuis Set {s.quiz_set}</div>
-            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-              {s.count || 0} soal {s.attempted ? '- Sudah dikerjakan' : ''}
-            </div>
-          </div>
-        ))}
+        {sets.map((s) => {
+          const isDone = completed.has(s.quiz_set);
+          return (
+            <button
+              key={s.quiz_set}
+              type="button"
+              className={`quiz-tile ${isDone ? 'is-locked' : ''}`}
+              onClick={() => onSelect(s.quiz_set)}
+              disabled={isDone}
+              aria-disabled={isDone}
+            >
+              <div style={{ fontWeight: 700 }}>Kuis Set {s.quiz_set}</div>
+              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                {s.count || 0} soal {isDone ? '- Sudah dikerjakan' : ''}
+              </div>
+              {isDone && <span className="quiz-tile-badge">Selesai</span>}
+            </button>
+          );
+        })}
       </div>
       {sets.length === 0 && (
         <div style={{ fontSize: '0.9rem', color: '#64748b' }}>
           Belum ada kuis aktif. Pastikan soal sudah diaktifkan oleh admin.
+        </div>
+      )}
+      {completed.size > 0 && (
+        <div className="quiz-info-note">
+          Set yang sudah selesai tidak bisa diulang. Pilih set lain untuk lanjut.
         </div>
       )}
       {onReload && (
@@ -681,12 +699,17 @@ function App() {
   const [questPop, setQuestPop] = useState('');
   const [resultSummary, setResultSummary] = useState(null);
   const progressCacheRef = useRef({});
+  const completedSetsRef = useRef([]);
 
   useEffect(() => {
     if (!username) return;
     const data = loadProfile(username);
     setProfile(data);
   }, [username]);
+
+  useEffect(() => {
+    completedSetsRef.current = Array.isArray(profile.completedSets) ? profile.completedSets : [];
+  }, [profile.completedSets]);
 
   useEffect(() => {
     document.body.classList.toggle('quiz-focus', !!activeSet);
@@ -705,6 +728,11 @@ function App() {
     const onPopState = (event) => {
       const state = event.state || {};
       if (state.view === 'quiz-set' && state.set) {
+        if (completedSetsRef.current.includes(state.set)) {
+          toast('Set kuis ini sudah selesai. Pilih set lain.', 'info');
+          setActiveSet(null);
+          return;
+        }
         setActiveSet(state.set);
         return;
       }
@@ -892,6 +920,7 @@ function App() {
         total: totalScore,
         percent
       });
+      toast('Set kuis selesai. Kamu tidak bisa mengulang set ini.', 'success');
       if (activeSet) {
         progressCacheRef.current[activeSet] = null;
       }
@@ -915,10 +944,21 @@ function App() {
         {!activeSet && resultSummary && (
           <QuizResult summary={resultSummary} onClose={() => setResultSummary(null)} />
         )}
-        {!activeSet && <QuizList sets={sets} loading={loading} error={error} onSelect={(set) => {
-          setResultSummary(null);
-          setActiveSet(set);
-        }} onReload={reload} />}
+        {!activeSet && <QuizList
+          sets={sets}
+          loading={loading}
+          error={error}
+          completedSets={profile.completedSets}
+          onSelect={(set) => {
+            if (profile.completedSets && profile.completedSets.includes(set)) {
+              toast('Set kuis ini sudah selesai. Pilih set lain.', 'info');
+              return;
+            }
+            setResultSummary(null);
+            setActiveSet(set);
+          }}
+          onReload={reload}
+        />}
         {activeSet && (
           <div className="quiz-modal" role="dialog" aria-modal="true" aria-label="Kuis">
             <div className="quiz-modal-overlay"></div>
