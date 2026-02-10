@@ -24,8 +24,10 @@
         toolbar: document.getElementById('editor-toolbar'),
         statusText: document.getElementById('editor-status'),
         saveBtn: document.getElementById('art-save-btn'),
+        saveBtnBottom: document.getElementById('art-save-btn-bottom'),
         overlay: document.getElementById('loading-overlay'),
-        removeImgBtn: document.getElementById('remove-art-image')
+        removeImgBtn: document.getElementById('remove-art-image'),
+        cancelBtn: document.getElementById('art-cancel-btn')
     };
 
     // --- UTILS ---
@@ -97,22 +99,69 @@
 
     // --- EDITOR ---
     function initRichEditor() {
+        if (!els.toolbar || !els.editorArea) return;
+
+        try { document.execCommand('styleWithCSS', false, true); } catch (e) { }
+
+        const exec = (command, value = null) => {
+            document.execCommand(command, false, value);
+            els.editorArea.focus();
+        };
+
+        const applyFontSize = (size) => {
+            document.execCommand('fontSize', false, '7');
+            const fonts = els.editorArea.querySelectorAll('font[size="7"]');
+            fonts.forEach(f => {
+                f.removeAttribute('size');
+                f.style.fontSize = size;
+            });
+            els.editorArea.focus();
+        };
+
+        const applyLink = () => {
+            let url = prompt('Masukkan URL tautan:');
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) exec('createLink', url);
+            else exec('insertHTML', `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+        };
+
+        const applyImageUrl = () => {
+            let url = prompt('URL gambar (kosongkan untuk upload):');
+            if (url) {
+                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                exec('insertImage', url);
+                return;
+            }
+            const fileInput = document.getElementById('editor-inline-image');
+            if (fileInput) fileInput.click();
+        };
+
         els.toolbar.querySelectorAll('.tool-btn').forEach(btn => {
             btn.onclick = (e) => {
                 e.preventDefault();
                 const command = btn.dataset.command;
-                const value = btn.dataset.value || null;
-                document.execCommand(command, false, value);
-                els.editorArea.focus();
+                const action = btn.dataset.action;
+                if (action === 'link') return applyLink();
+                if (action === 'image') return applyImageUrl();
+                if (command) exec(command, btn.dataset.value || null);
             };
         });
 
         const colorPicker = document.getElementById('editor-color-picker');
         if (colorPicker) {
-            colorPicker.oninput = (e) => {
-                document.execCommand('foreColor', false, e.target.value);
-                els.editorArea.focus();
-            };
+            colorPicker.oninput = (e) => exec('foreColor', e.target.value);
+        }
+
+        const fontFamily = document.getElementById('editor-font-family');
+        if (fontFamily) {
+            fontFamily.onchange = (e) => exec('fontName', e.target.value);
+        }
+
+        const fontSize = document.getElementById('editor-font-size');
+        if (fontSize) {
+            fontSize.onchange = (e) => applyFontSize(e.target.value);
         }
 
         const lineSpacing = document.getElementById('editor-line-spacing');
@@ -120,6 +169,22 @@
             lineSpacing.onchange = (e) => {
                 els.editorArea.style.lineHeight = e.target.value;
                 els.editorArea.focus();
+            };
+            els.editorArea.style.lineHeight = lineSpacing.value;
+        }
+
+        const inlineImage = document.getElementById('editor-inline-image');
+        if (inlineImage) {
+            inlineImage.onchange = () => {
+                const file = inlineImage.files && inlineImage.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const src = evt.target && evt.target.result ? evt.target.result : '';
+                    if (src) exec('insertImage', src);
+                };
+                reader.readAsDataURL(file);
+                inlineImage.value = '';
             };
         }
 
@@ -213,9 +278,14 @@
             publish_date: els.inpDate.value ? new Date(els.inpDate.value).toISOString() : new Date().toISOString()
         };
 
-        const oldHtml = els.saveBtn.innerHTML;
+        const oldHtml = els.saveBtn ? els.saveBtn.innerHTML : '';
+        const oldHtmlBottom = els.saveBtnBottom ? els.saveBtnBottom.innerHTML : '';
         els.saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
         els.saveBtn.disabled = true;
+        if (els.saveBtnBottom) {
+            els.saveBtnBottom.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            els.saveBtnBottom.disabled = true;
+        }
 
         try {
             const method = payload.id ? 'PUT' : 'POST';
@@ -227,10 +297,22 @@
             }, 1000);
         } catch (err) {
             alert('Gagal simpan: ' + err.message);
-            els.saveBtn.innerHTML = oldHtml;
-            els.saveBtn.disabled = false;
+            if (els.saveBtn) {
+                els.saveBtn.innerHTML = oldHtml;
+                els.saveBtn.disabled = false;
+            }
+            if (els.saveBtnBottom) {
+                els.saveBtnBottom.innerHTML = oldHtmlBottom;
+                els.saveBtnBottom.disabled = false;
+            }
         }
     };
+
+    if (els.cancelBtn) {
+        els.cancelBtn.addEventListener('click', () => {
+            window.location.href = 'admin.html#articles';
+        });
+    }
 
     // Initialize
     initRichEditor();

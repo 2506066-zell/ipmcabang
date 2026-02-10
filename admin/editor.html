@@ -118,23 +118,46 @@
                     <div class="editor-writing-area">
                         <!-- Minimal Toolbar -->
                         <div class="editor-toolbar" id="editor-toolbar">
-                            <button type="button" class="tool-btn" data-command="bold" title="Bold">
-                                <i class="fas fa-bold"></i>
-                            </button>
-                            <button type="button" class="tool-btn" data-command="italic" title="Italic">
-                                <i class="fas fa-italic"></i>
-                            </button>
-                            <button type="button" class="tool-btn" data-command="underline" title="Underline">
-                                <i class="fas fa-underline"></i>
-                            </button>
+                            <div class="tool-group">
+                                <button type="button" class="tool-btn" data-command="bold" title="Bold">
+                                    <i class="fas fa-bold"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="italic" title="Italic">
+                                    <i class="fas fa-italic"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="underline" title="Underline">
+                                    <i class="fas fa-underline"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="strikeThrough" title="Strikethrough">
+                                    <i class="fas fa-strikethrough"></i>
+                                </button>
+                            </div>
                             <div class="tool-divider"></div>
-                            <button type="button" class="tool-btn" data-command="insertUnorderedList"
-                                title="Bulleted List">
-                                <i class="fas fa-list-ul"></i>
-                            </button>
-                            <div class="tool-divider"></div>
-                            <div class="tool-select-wrapper">
-                                <select id="editor-line-spacing" title="Jarak Spasi">
+                            <div class="tool-group">
+                                <label class="tool-label" for="editor-font-family">Font</label>
+                                <select id="editor-font-family" class="tool-select" title="Font">
+                                    <option value="Poppins, sans-serif" selected>Poppins</option>
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="'Times New Roman', serif">Times</option>
+                                    <option value="Georgia, serif">Georgia</option>
+                                    <option value="'Courier New', monospace">Courier</option>
+                                </select>
+                            </div>
+                            <div class="tool-group">
+                                <label class="tool-label" for="editor-font-size">Ukuran</label>
+                                <select id="editor-font-size" class="tool-select" title="Ukuran Font">
+                                    <option value="12px">12</option>
+                                    <option value="14px">14</option>
+                                    <option value="16px" selected>16</option>
+                                    <option value="18px">18</option>
+                                    <option value="20px">20</option>
+                                    <option value="24px">24</option>
+                                    <option value="28px">28</option>
+                                </select>
+                            </div>
+                            <div class="tool-group">
+                                <label class="tool-label" for="editor-line-spacing">Spasi</label>
+                                <select id="editor-line-spacing" class="tool-select" title="Jarak Spasi">
                                     <option value="1.0">1.0</option>
                                     <option value="1.2" selected>1.2</option>
                                     <option value="1.5">1.5</option>
@@ -143,8 +166,42 @@
                                 </select>
                             </div>
                             <div class="tool-divider"></div>
-                            <div class="tool-color-wrapper">
-                                <input type="color" id="editor-color-picker" title="Warna Teks" value="#000000">
+                            <div class="tool-group">
+                                <input type="color" id="editor-color-picker" class="tool-color" title="Warna Teks" value="#111827">
+                            </div>
+                            <div class="tool-divider"></div>
+                            <div class="tool-group">
+                                <button type="button" class="tool-btn" data-command="justifyLeft" title="Align Left">
+                                    <i class="fas fa-align-left"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="justifyCenter" title="Align Center">
+                                    <i class="fas fa-align-center"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="justifyRight" title="Align Right">
+                                    <i class="fas fa-align-right"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="justifyFull" title="Justify">
+                                    <i class="fas fa-align-justify"></i>
+                                </button>
+                            </div>
+                            <div class="tool-divider"></div>
+                            <div class="tool-group">
+                                <button type="button" class="tool-btn" data-command="insertOrderedList" title="Ordered List">
+                                    <i class="fas fa-list-ol"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="insertUnorderedList" title="Unordered List">
+                                    <i class="fas fa-list-ul"></i>
+                                </button>
+                            </div>
+                            <div class="tool-divider"></div>
+                            <div class="tool-group">
+                                <button type="button" class="tool-btn" data-action="link" title="Insert Link">
+                                    <i class="fas fa-link"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-action="image" title="Insert Image">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                                <input type="file" id="editor-inline-image" accept="image/*" style="display:none">
                             </div>
                         </div>
 
@@ -154,6 +211,13 @@
 
                         <!-- Hidden textarea for backward compatibility/sync -->
                         <textarea id="art-content" style="display:none"></textarea>
+                    </div>
+
+                    <div class="editor-footer-actions">
+                        <button type="button" class="btn btn-secondary" id="art-cancel-btn">Batal</button>
+                        <button type="submit" form="article-form" class="btn btn-primary" id="art-save-btn-bottom">
+                            <i class="fas fa-paper-plane"></i> Publikasikan
+                        </button>
                     </div>
                 </div>
             </div>

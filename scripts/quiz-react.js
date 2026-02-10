@@ -162,8 +162,10 @@ function useQuizSets() {
       if (!res.ok) throw new Error('Gagal memuat kuis.');
       const data = await res.json();
       if (data && data.status === 'success') {
-        setSets(Array.isArray(data.sets) ? data.sets : []);
+        const nextSets = Array.isArray(data.sets) ? data.sets : [];
+        setSets(nextSets);
         setNextQuiz(data.next_quiz || null);
+        return nextSets;
       } else {
         throw new Error((data && data.message) || 'Data kuis tidak valid');
       }
@@ -177,10 +179,12 @@ function useQuizSets() {
           setError(msg);
           toast(msg, 'info');
         }
+        return fallbackSets;
       } catch (fallbackError) {
         const message = (fallbackError && fallbackError.message) || (e && e.message) || 'Gagal memuat kuis.';
         setError(message);
         toast(message, 'error');
+        return [];
       }
     } finally {
       setLoading(false);
@@ -317,8 +321,9 @@ function Dashboard({ profile, questPop, questPulse }) {
   );
 }
 
-function QuizList({ sets, loading, error, onSelect, onReload, completedSets }) {
+function QuizList({ sets, loading, error, onSelect, onReload, completedSets, resetMap }) {
   const completed = new Set(Array.isArray(completedSets) ? completedSets : []);
+  const resetKeys = resetMap ? Object.keys(resetMap) : [];
   return (
     <div className="quiz-card">
       <h3>Daftar Kuis</h3>
@@ -332,7 +337,8 @@ function QuizList({ sets, loading, error, onSelect, onReload, completedSets }) {
       )}
       <div className="quiz-list">
         {sets.map((s) => {
-          const isDone = completed.has(s.quiz_set);
+          const isDone = typeof s.attempted === 'boolean' ? s.attempted : completed.has(s.quiz_set);
+          const isReset = !isDone && resetMap && resetMap[s.quiz_set];
           return (
             <button
               key={s.quiz_set}
@@ -347,6 +353,7 @@ function QuizList({ sets, loading, error, onSelect, onReload, completedSets }) {
                 {s.count || 0} soal {isDone ? '- Sudah dikerjakan' : ''}
               </div>
               {isDone && <span className="quiz-tile-badge">Selesai</span>}
+              {isReset && <span className="quiz-tile-badge reset">Reset</span>}
             </button>
           );
         })}
@@ -359,6 +366,11 @@ function QuizList({ sets, loading, error, onSelect, onReload, completedSets }) {
       {completed.size > 0 && (
         <div className="quiz-info-note">
           Set yang sudah selesai tidak bisa diulang. Pilih set lain untuk lanjut.
+        </div>
+      )}
+      {!!resetKeys.length && (
+        <div className="quiz-info-note reset">
+          Ada set yang baru direset admin. Kamu bisa mengerjakannya lagi.
         </div>
       )}
       {onReload && (
@@ -699,6 +711,14 @@ function App() {
   const [resultSummary, setResultSummary] = useState(null);
   const progressCacheRef = useRef({});
   const completedSetsRef = useRef([]);
+  const [resetMap, setResetMap] = useState({});
+  const attemptedMap = useMemo(() => {
+    const map = new Map();
+    sets.forEach((s) => {
+      if (typeof s.attempted === 'boolean') map.set(s.quiz_set, s.attempted);
+    });
+    return map;
+  }, [sets]);
 
   useEffect(() => {
     if (!username) return;
@@ -709,6 +729,52 @@ function App() {
   useEffect(() => {
     completedSetsRef.current = Array.isArray(profile.completedSets) ? profile.completedSets : [];
   }, [profile.completedSets]);
+
+  const markReset = (setId) => {
+    setResetMap((prev) => {
+      if (prev && prev[setId]) return prev;
+      return { ...prev, [setId]: Date.now() };
+    });
+  };
+
+  const clearReset = (setId) => {
+    setResetMap((prev) => {
+      if (!prev || !prev[setId]) return prev;
+      const next = { ...prev };
+      delete next[setId];
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const hasAttemptFlag = sets.some((s) => typeof s.attempted === 'boolean');
+    if (!hasAttemptFlag) return;
+    const serverCompleted = sets.filter((s) => s.attempted).map((s) => s.quiz_set);
+    const current = Array.isArray(profile.completedSets) ? profile.completedSets : [];
+    const serverSet = new Set(serverCompleted);
+    current.forEach((setId) => {
+      if (!serverSet.has(setId)) markReset(setId);
+    });
+    setResetMap((prev) => {
+      if (!prev) return prev;
+      let changed = false;
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (serverSet.has(Number(key))) {
+          delete next[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    const sortNum = (a, b) => Number(a) - Number(b);
+    const nextSorted = [...serverCompleted].sort(sortNum);
+    const currSorted = [...current].sort(sortNum);
+    const same = nextSorted.length === currSorted.length && nextSorted.every((v, i) => v === currSorted[i]);
+    if (!same) {
+      updateProfile((prev) => ({ ...prev, completedSets: serverCompleted }));
+    }
+  }, [sets, profile.completedSets]);
 
   useEffect(() => {
     document.body.classList.toggle('quiz-focus', !!activeSet);
@@ -749,6 +815,13 @@ function App() {
       next.__settings = settings;
       saveProfile(username, next);
       return next;
+    });
+  };
+
+  const clearCompletedSet = (setId) => {
+    updateProfile((prev) => {
+      const current = Array.isArray(prev.completedSets) ? prev.completedSets : [];
+      return { ...prev, completedSets: current.filter((s) => s !== setId) };
     });
   };
 
@@ -948,13 +1021,29 @@ function App() {
           loading={loading}
           error={error}
           completedSets={profile.completedSets}
-          onSelect={(set) => {
-            if (profile.completedSets && profile.completedSets.includes(set)) {
-              toast('Set kuis ini sudah selesai. Pilih set lain.', 'info');
-              return;
+          resetMap={resetMap}
+          onSelect={async (set) => {
+            const attempted = attemptedMap.has(set) ? attemptedMap.get(set) : undefined;
+            const localDone = profile.completedSets && profile.completedSets.includes(set);
+            if (attempted === true || (attempted === undefined && localDone)) {
+              const refreshed = await reload();
+              const after = Array.isArray(refreshed)
+                ? refreshed.find((s) => s.quiz_set === set)
+                : null;
+              const stillAttempted = after && typeof after.attempted === 'boolean' ? after.attempted : attempted;
+              if (!stillAttempted) {
+                clearCompletedSet(set);
+                clearReset(set);
+                markReset(set);
+                toast('Reset terdeteksi. Set dibuka kembali.', 'success');
+              } else {
+                toast('Set kuis ini sudah selesai. Hubungi admin untuk reset.', 'info');
+                return;
+              }
             }
             setResultSummary(null);
             setActiveSet(set);
+            clearReset(set);
             const anchor = document.querySelector('.quiz-shell-top');
             if (anchor && anchor.scrollIntoView) {
               anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });

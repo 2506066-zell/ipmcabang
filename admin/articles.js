@@ -38,24 +38,63 @@ export function initArticles(state, els, api) {
     function initRichEditor() {
         if (!toolbar || !editorArea) return;
 
+        try { document.execCommand('styleWithCSS', false, true); } catch (e) { }
+
+        const exec = (command, value = null) => {
+            document.execCommand(command, false, value);
+            editorArea.focus();
+        };
+
+        const applyFontSize = (size) => {
+            document.execCommand('fontSize', false, '7');
+            const fonts = editorArea.querySelectorAll('font[size="7"]');
+            fonts.forEach(f => {
+                f.removeAttribute('size');
+                f.style.fontSize = size;
+            });
+            editorArea.focus();
+        };
+
+        const applyLink = () => {
+            let url = prompt('Masukkan URL tautan:');
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) exec('createLink', url);
+            else exec('insertHTML', `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+        };
+
+        const applyImageUrl = () => {
+            let url = prompt('URL gambar (kosongkan untuk upload):');
+            if (url) {
+                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                exec('insertImage', url);
+                return;
+            }
+            const fileInput = document.getElementById('editor-inline-image');
+            if (fileInput) fileInput.click();
+        };
+
         toolbar.querySelectorAll('.tool-btn').forEach(btn => {
             btn.onclick = (e) => {
                 e.preventDefault();
                 const command = btn.dataset.command;
-                const value = btn.dataset.value || null;
-                document.execCommand(command, false, value);
-                editorArea.focus();
+                const action = btn.dataset.action;
+                if (action === 'link') return applyLink();
+                if (action === 'image') return applyImageUrl();
+                if (command) exec(command, btn.dataset.value || null);
             };
         });
 
         // Color Picker
         const colorPicker = document.getElementById('editor-color-picker');
-        if (colorPicker) {
-            colorPicker.oninput = (e) => {
-                document.execCommand('foreColor', false, e.target.value);
-                editorArea.focus();
-            };
-        }
+        if (colorPicker) colorPicker.oninput = (e) => exec('foreColor', e.target.value);
+
+        const fontFamily = document.getElementById('editor-font-family');
+        if (fontFamily) fontFamily.onchange = (e) => exec('fontName', e.target.value);
+
+        const fontSize = document.getElementById('editor-font-size');
+        if (fontSize) fontSize.onchange = (e) => applyFontSize(e.target.value);
 
         // Line Spacing
         const lineSpacingSelector = document.getElementById('editor-line-spacing');
@@ -64,8 +103,22 @@ export function initArticles(state, els, api) {
                 editorArea.style.lineHeight = e.target.value;
                 editorArea.focus();
             };
-            // Set initial
             editorArea.style.lineHeight = lineSpacingSelector.value;
+        }
+
+        const inlineImage = document.getElementById('editor-inline-image');
+        if (inlineImage) {
+            inlineImage.onchange = () => {
+                const file = inlineImage.files && inlineImage.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const src = evt.target && evt.target.result ? evt.target.result : '';
+                    if (src) exec('insertImage', src);
+                };
+                reader.readAsDataURL(file);
+                inlineImage.value = '';
+            };
         }
 
         // Sync content to hidden textarea on change
