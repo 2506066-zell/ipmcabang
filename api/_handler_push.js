@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET' && action === 'publicKey') {
       const vapid = getVapid();
-      if (!vapid) return json(res, 500, { status: 'error', message: 'VAPID not configured' });
+      if (!vapid) return json(res, 200, { status: 'disabled', publicKey: null, message: 'VAPID not configured' });
       return json(res, 200, { status: 'success', publicKey: vapid.publicKey });
     }
 

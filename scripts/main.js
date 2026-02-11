@@ -491,6 +491,7 @@
     };
 
     const getVapidKey = async () => {
+        if (pushState.vapidMissing) return null;
         try {
             const res = await fetch('/api/push?action=publicKey');
             if (!res.ok) {
