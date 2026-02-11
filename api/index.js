@@ -19,6 +19,16 @@ const routes = {
 
 module.exports = async (req, res) => {
   try {
+    const action = req.query.action || '';
+    if (req.method === 'GET' && action === 'health') {
+      return json(res, 200, { status: 'success', ok: true, time: new Date().toISOString() });
+    }
+    if (req.method === 'GET' && action === 'dbHealth') {
+      const { query } = require('./_db');
+      const now = (await query`SELECT NOW() AS now`).rows[0]?.now;
+      return json(res, 200, { status: 'success', db: 'ok', now });
+    }
+
     // Parse the path to find the segment after /api/
     // Example: /api/articles -> articles
     // Example: /api/auth/login -> auth
@@ -56,13 +66,7 @@ module.exports = async (req, res) => {
 
     // Fallback for root /api calls (Old Logic)
     if (!segment) {
-      const { query, getConnHost } = require('./_db');
-      const action = req.query.action || '';
-      if (req.method === 'GET' && action === 'health') return json(res, 200, { status: 'success', ok: true });
-      if (req.method === 'GET' && action === 'dbHealth') {
-        const now = (await query`SELECT NOW() AS now`).rows[0]?.now;
-        return json(res, 200, { status: 'success', db: 'ok', now });
-      }
+      // No segment, already handled by action checks above.
     }
 
     return json(res, 404, { status: 'error', message: `Route /api/${segment || ''} not found` });
