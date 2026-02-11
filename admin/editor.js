@@ -120,10 +120,64 @@
             sel.addRange(savedRange);
         };
 
+        const rgbToHex = (rgb) => {
+            const m = rgb && rgb.match && rgb.match(/\d+/g);
+            if (!m) return null;
+            const [r, g, b] = m.map(Number);
+            if ([r, g, b].some(n => Number.isNaN(n))) return null;
+            return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+        };
+
+        const getSelectionElement = () => {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return null;
+            const node = sel.anchorNode;
+            if (!node) return null;
+            return node.nodeType === 1 ? node : node.parentElement;
+        };
+
+        const updateToolbarState = () => {
+            if (!els.toolbar) return;
+            const buttons = els.toolbar.querySelectorAll('.tool-btn[data-command]');
+            buttons.forEach(btn => {
+                const cmd = btn.dataset.command;
+                if (!cmd) return;
+                let active = false;
+                try { active = document.queryCommandState(cmd); } catch (e) {}
+                btn.classList.toggle('active', !!active);
+            });
+
+            const target = getSelectionElement();
+            if (target) {
+                const styles = window.getComputedStyle(target);
+
+                const fontFamily = document.getElementById('editor-font-family');
+                if (fontFamily && styles.fontFamily) {
+                    const clean = styles.fontFamily.replace(/['"]/g, '').toLowerCase();
+                    const match = Array.from(fontFamily.options).find(opt => clean.includes(opt.value.split(',')[0].replace(/['"]/g, '').toLowerCase()));
+                    if (match) fontFamily.value = match.value;
+                }
+
+                const fontSize = document.getElementById('editor-font-size');
+                if (fontSize && styles.fontSize) {
+                    const size = styles.fontSize;
+                    const match = Array.from(fontSize.options).find(opt => opt.value === size);
+                    if (match) fontSize.value = match.value;
+                }
+
+                const colorPicker = document.getElementById('editor-color-picker');
+                if (colorPicker && styles.color) {
+                    const hex = rgbToHex(styles.color);
+                    if (hex) colorPicker.value = hex;
+                }
+            }
+        };
+
         const exec = (command, value = null) => {
             restoreSelection();
             document.execCommand(command, false, value);
             els.editorArea.focus();
+            updateToolbarState();
         };
 
         const applyFontSize = (size) => {
@@ -142,6 +196,7 @@
                 f.style.fontSize = size;
             });
             els.editorArea.focus();
+            updateToolbarState();
         };
 
         const applyLink = () => {
@@ -177,32 +232,33 @@
         });
 
         const colorPicker = document.getElementById('editor-color-picker');
-        if (colorPicker) {
+            if (colorPicker) {
             colorPicker.oninput = (e) => exec('foreColor', e.target.value);
             colorPicker.onmousedown = saveSelection;
         }
 
         const fontFamily = document.getElementById('editor-font-family');
-        if (fontFamily) {
+            if (fontFamily) {
             fontFamily.onchange = (e) => exec('fontName', e.target.value);
             fontFamily.onmousedown = saveSelection;
         }
 
         const fontSize = document.getElementById('editor-font-size');
-        if (fontSize) {
+            if (fontSize) {
             fontSize.onchange = (e) => applyFontSize(e.target.value);
             fontSize.onmousedown = saveSelection;
         }
 
         const lineSpacing = document.getElementById('editor-line-spacing');
-        if (lineSpacing) {
-            lineSpacing.onchange = (e) => {
-                els.editorArea.style.lineHeight = e.target.value;
-                els.editorArea.focus();
-            };
-            els.editorArea.style.lineHeight = lineSpacing.value;
-            lineSpacing.onmousedown = saveSelection;
-        }
+            if (lineSpacing) {
+                lineSpacing.onchange = (e) => {
+                    els.editorArea.style.lineHeight = e.target.value;
+                    els.editorArea.focus();
+                    updateToolbarState();
+                };
+                els.editorArea.style.lineHeight = lineSpacing.value;
+                lineSpacing.onmousedown = saveSelection;
+            }
 
         const inlineImage = document.getElementById('editor-inline-image');
         if (inlineImage) {
@@ -220,17 +276,23 @@
         }
 
         ['keyup', 'mouseup', 'focus', 'blur'].forEach(evt => {
-            els.editorArea.addEventListener(evt, saveSelection);
+            els.editorArea.addEventListener(evt, () => {
+                saveSelection();
+                updateToolbarState();
+            });
         });
 
         document.addEventListener('selectionchange', () => {
             if (document.activeElement === els.editorArea) {
                 saveSelection();
+                updateToolbarState();
             }
         });
 
         els.editorArea.oninput = updateWordCount;
         els.inpTitle.oninput = saveDraft;
+
+        updateToolbarState();
     }
 
     // --- IMAGE HANDLING ---
