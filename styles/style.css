@@ -4386,6 +4386,15 @@ body.light-mode .timer-unit {
     color: #475569;
 }
 
+.notif-push-warning {
+    font-size: 0.75rem;
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 6px 10px;
+    border-radius: 10px;
+}
+
 .notif-push-btn {
     border: none;
     border-radius: 10px;

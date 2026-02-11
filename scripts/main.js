@@ -176,6 +176,9 @@
                         <div class="notif-push-text">
                             Aktifkan notifikasi agar update muncul di lock screen.
                         </div>
+                        <div class="notif-push-warning" id="notif-push-warning" hidden>
+                            Notifikasi belum aktif di server. Hubungi admin.
+                        </div>
                         <button class="notif-push-btn" id="notif-push-btn">Aktifkan Notifikasi</button>
                     </div>
                     <div class="notif-countdown" id="notif-countdown" hidden>
@@ -461,7 +464,7 @@
     }
 
     // --- PUSH SUBSCRIPTION (PWA) ---
-    const pushState = { subscribed: false, inFlight: false };
+    const pushState = { subscribed: false, inFlight: false, vapidMissing: false };
 
     const urlBase64ToUint8Array = (base64String) => {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -473,10 +476,16 @@
     const getVapidKey = async () => {
         try {
             const res = await fetch('/api/push?action=publicKey');
-            if (!res.ok) return null;
+            if (!res.ok) {
+                pushState.vapidMissing = true;
+                return null;
+            }
             const data = await res.json();
-            return data.publicKey || null;
+            const key = data.publicKey || null;
+            pushState.vapidMissing = !key;
+            return key;
         } catch {
+            pushState.vapidMissing = true;
             return null;
         }
     };
@@ -498,7 +507,9 @@
                     return;
                 }
                 const publicKey = await getVapidKey();
+                await updatePushUI();
                 if (!publicKey) {
+                    if (window.Toast) Toast.show('Notifikasi belum aktif di server.', 'error');
                     pushState.inFlight = false;
                     return;
                 }
@@ -539,6 +550,7 @@
     async function updatePushUI() {
         const wrap = document.getElementById('notif-push');
         const btn = document.getElementById('notif-push-btn');
+        const warn = document.getElementById('notif-push-warning');
         if (!wrap || !btn) return;
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
             wrap.hidden = true;
@@ -553,6 +565,7 @@
             wrap.hidden = true;
             return;
         }
+        if (warn) warn.hidden = !pushState.vapidMissing;
         wrap.hidden = false;
         btn.disabled = pushState.inFlight;
     }
