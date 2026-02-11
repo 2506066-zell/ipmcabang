@@ -31,6 +31,48 @@
     };
     let modalDirty = false;
 
+    const uiBack = (() => {
+        const state = { current: null, closers: {} };
+
+        const register = (name, closeFn) => {
+            if (!name || typeof closeFn !== 'function') return;
+            state.closers[name] = closeFn;
+        };
+
+        const open = (name) => {
+            if (!name || !window.history || !window.history.pushState) return;
+            if (state.current === name) return;
+            if (state.current && state.closers[state.current]) {
+                state.closers[state.current](true);
+            }
+            state.current = name;
+            window.history.pushState({ __ui: name }, '', window.location.href);
+        };
+
+        const isActive = (name) => state.current === name;
+
+        const requestClose = (name) => {
+            if (!name) return;
+            if (isActive(name) && window.history && window.history.state && window.history.state.__ui === name) {
+                window.history.back();
+                return;
+            }
+            if (state.closers[name]) state.closers[name](true);
+            if (state.current === name) state.current = null;
+        };
+
+        window.addEventListener('popstate', () => {
+            if (!state.current) return;
+            const closeFn = state.closers[state.current];
+            if (closeFn) closeFn(true);
+            state.current = null;
+        });
+
+        return { register, open, requestClose, isActive };
+    })();
+
+    window.__uiBack = uiBack;
+
     // --- HELPER ---
     function debounce(func, wait) {
         let timeout;
@@ -927,6 +969,7 @@
         hideAllModalPanels();
         els.userModalPanel.classList.remove('hidden');
         showModalContainer();
+        uiBack.open('admin-user');
 
         if (id) {
             const u = state.users.find(x => x.id === id);
@@ -944,8 +987,13 @@
         }
     };
 
-    window.closeUserModal = () => {
-        els.userModalPanel.classList.add('hidden');
+    window.closeUserModal = (fromPop) => {
+        hideAllModalPanels();
+        if (els.modal) {
+            els.modal.classList.remove('active');
+            els.modal.setAttribute('aria-hidden', 'true');
+        }
+        if (!fromPop) uiBack.requestClose('admin-user');
     };
 
     els.userForm?.addEventListener('submit', async (e) => {
@@ -1129,6 +1177,7 @@
         if (els.scheduleModalPanel) els.scheduleModalPanel.classList.remove('hidden');
         if (els.modalTitle) els.modalTitle.textContent = 'Edit Jadwal';
         showModalContainer();
+        uiBack.open('admin-schedule');
     };
 
     window.deleteSchedule = async (id) => {
@@ -1345,15 +1394,21 @@
         });
     }
 
-    window.closeScheduleModal = () => {
-        const modal = document.getElementById('question-modal');
-        if (modal) modal.classList.add('hidden');
-        document.querySelector('.modal-tabs').classList.remove('hidden'); // Restore tabs
+    window.closeScheduleModal = (fromPop) => {
+        hideAllModalPanels();
+        if (els.modal) {
+            els.modal.classList.remove('active');
+            els.modal.setAttribute('aria-hidden', 'true');
+        }
+        const tabs = document.querySelector('.modal-tabs');
+        if (tabs) tabs.classList.remove('hidden'); // Restore tabs
+        if (!fromPop) uiBack.requestClose('admin-schedule');
     };
 
     // --- HELPER: Modal Panel Switcher ---
     function showModalContainer() {
         if (els.modal) {
+            els.modal.classList.remove('hidden');
             els.modal.classList.add('active');
             els.modal.setAttribute('aria-hidden', 'false');
         }
@@ -1424,14 +1479,20 @@
             } catch { }
         }
         showModalContainer();
+        uiBack.open('admin-question');
     };
 
-    function closeModal() {
-        els.modal.classList.remove('active');
-        els.modal.setAttribute('aria-hidden', 'true');
+    function closeModal(fromPop) {
+        hideAllModalPanels();
+        if (els.modal) {
+            els.modal.classList.remove('active');
+            els.modal.setAttribute('aria-hidden', 'true');
+        }
         els.questionForm.reset();
         els.qId.value = '';
+        if (!fromPop) uiBack.requestClose('admin-question');
     }
+    window.closeQuestionModal = closeModal;
 
     async function handleSave(addMore = false) {
         if (!els.questionForm.checkValidity()) { els.questionForm.reportValidity(); return; }
@@ -1589,8 +1650,20 @@
         els.menuThemeToggle?.addEventListener('click', () => { toggleTheme(); closeMenuModal(); });
 
         // Mobile Menu
-        window.openMenuModal = () => els.menuModal.classList.remove('hidden');
-        window.closeMenuModal = () => els.menuModal.classList.add('hidden');
+        window.openMenuModal = () => {
+            if (!els.menuModal) return;
+            els.menuModal.classList.remove('hidden');
+            els.menuModal.classList.add('active');
+            els.menuModal.setAttribute('aria-hidden', 'false');
+            uiBack.open('admin-menu');
+        };
+        window.closeMenuModal = (fromPop) => {
+            if (!els.menuModal) return;
+            els.menuModal.classList.remove('active');
+            els.menuModal.setAttribute('aria-hidden', 'true');
+            if (!fromPop) uiBack.requestClose('admin-menu');
+        };
+        uiBack.register('admin-menu', window.closeMenuModal);
 
         // FAB
         els.fabAdd?.addEventListener('click', () => window.openQuestionModal(null));
@@ -1622,6 +1695,9 @@
         els.modalCloseBtn?.addEventListener('click', closeModal);
         els.saveBtn?.addEventListener('click', (e) => { e.preventDefault(); handleSave(false); });
         els.saveAddBtn?.addEventListener('click', (e) => { e.preventDefault(); handleSave(true); });
+        uiBack.register('admin-question', closeModal);
+        uiBack.register('admin-user', window.closeUserModal);
+        uiBack.register('admin-schedule', window.closeScheduleModal);
 
         // Filters
         els.searchInput?.addEventListener('input', debounce(() => loadQuestions(1), 500));
@@ -1784,6 +1860,7 @@
             hideAllModalPanels();
             if (els.scheduleModalPanel) els.scheduleModalPanel.classList.remove('hidden');
             showModalContainer();
+            uiBack.open('admin-schedule');
         });
 
         if (els.scheduleForm) {

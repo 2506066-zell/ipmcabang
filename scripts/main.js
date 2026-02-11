@@ -40,6 +40,8 @@
         return { register, open, requestClose, isActive };
     })();
 
+    window.__uiBack = uiBack;
+
 
     const hamburgerMenu = document.getElementById('hamburger-menu');
     const mobileNav = document.getElementById('mobile-nav');
@@ -271,6 +273,19 @@
             return null;
         };
 
+        const formatScheduleDateTime = (value) => {
+            if (!value) return '';
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return '';
+            return d.toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
         const renderNotifCountdown = () => {
             const wrap = document.getElementById('notif-countdown');
             const titleEl = document.getElementById('notif-countdown-title');
@@ -284,7 +299,9 @@
             }
 
             const { schedule, scheduleMode } = state;
-            const title = schedule.title || 'Agenda Mendatang';
+            const title = schedule.title || schedule.description || 'Program Kerja Mendatang';
+            const startLabel = formatScheduleDateTime(schedule.start_time);
+            const endLabel = formatScheduleDateTime(schedule.end_time);
             titleEl.textContent = title;
             wrap.hidden = false;
 
@@ -292,11 +309,11 @@
                 const now = Date.now();
                 if (scheduleMode === 'end') {
                     const end = schedule.end_time ? new Date(schedule.end_time).getTime() : 0;
-                    if (!end || end <= now) {
-                        timerEl.textContent = 'Sedang berlangsung';
-                        subEl.textContent = 'Program kerja sedang berjalan.';
-                        return;
-                    }
+                if (!end || end <= now) {
+                    timerEl.textContent = 'Sedang berlangsung';
+                    subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+                    return;
+                }
                     const diff = Math.max(0, end - now);
                     const totalSeconds = Math.floor(diff / 1000);
                     const days = Math.floor(totalSeconds / 86400);
@@ -304,14 +321,14 @@
                     const minutes = Math.floor((totalSeconds % 3600) / 60);
                     const seconds = totalSeconds % 60;
                     timerEl.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-                    subEl.textContent = 'Sedang berlangsung. Sisa waktu berakhir.';
+                    subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
                     return;
                 }
 
                 const start = schedule.start_time ? new Date(schedule.start_time).getTime() : 0;
                 if (!start || start <= now) {
                     timerEl.textContent = 'Mulai sekarang';
-                    subEl.textContent = 'Program kerja dimulai sekarang.';
+                    subEl.textContent = startLabel ? `Status: Mulai sekarang • Mulai: ${startLabel}` : 'Status: Mulai sekarang';
                     return;
                 }
                 const diff = Math.max(0, start - now);
@@ -321,7 +338,7 @@
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 timerEl.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-                subEl.textContent = 'Hitung mundur menuju program kerja berikutnya.';
+                subEl.textContent = startLabel ? `Status: Akan dimulai • Mulai: ${startLabel}` : 'Status: Akan dimulai';
             };
 
             update();
@@ -664,7 +681,8 @@
 
     const selectScheduleForHome = (schedules) => {
         const now = Date.now();
-        const filtered = (schedules || []).filter(s => s && (s.show_in_notif === true || s.show_in_notif === 'true' || s.show_in_quiz !== false));
+        // Ikuti aturan yang sama dengan countdown notifikasi (show_in_notif)
+        const filtered = (schedules || []).filter(s => s && (s.show_in_notif === true || s.show_in_notif === 'true'));
         if (!filtered.length) return null;
         const active = filtered.find(s => {
             const start = s.start_time ? new Date(s.start_time).getTime() : 0;
@@ -677,13 +695,27 @@
         return upcoming || null;
     };
 
-    const updateProgramCountdown = () => {
-        if (!programCountdownSchedule || !programCountdown || !programCountdownTitle || !programCountdownTimer || !programCountdownSub) return;
-        const now = Date.now();
-        const start = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).getTime() : 0;
-        const end = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).getTime() : 0;
-        const title = programCountdownSchedule.title || 'Agenda Mendatang';
-        programCountdownTitle.textContent = title;
+        const updateProgramCountdown = () => {
+            if (!programCountdownSchedule || !programCountdown || !programCountdownTitle || !programCountdownTimer || !programCountdownSub) return;
+            const now = Date.now();
+            const start = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).getTime() : 0;
+            const end = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).getTime() : 0;
+            const title = programCountdownSchedule.title || programCountdownSchedule.description || 'Program Kerja Mendatang';
+            programCountdownTitle.textContent = title;
+        const startLabel = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : '';
+        const endLabel = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : '';
 
         if (start && now < start) {
             const diff = Math.max(0, start - now);
@@ -693,7 +725,7 @@
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = 'Hitung mundur menuju program kerja berikutnya.';
+            programCountdownSub.textContent = startLabel ? `Status: Akan dimulai • Mulai: ${startLabel}` : 'Status: Akan dimulai';
             programCountdown.hidden = false;
             return;
         }
@@ -706,13 +738,13 @@
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = 'Sedang berlangsung. Sisa waktu berakhir.';
+            programCountdownSub.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
             programCountdown.hidden = false;
             return;
         }
 
         programCountdownTimer.textContent = 'Selesai';
-        programCountdownSub.textContent = 'Program kerja sudah berakhir.';
+        programCountdownSub.textContent = endLabel ? `Status: Selesai • Berakhir: ${endLabel}` : 'Status: Selesai';
         programCountdown.hidden = false;
     };
 

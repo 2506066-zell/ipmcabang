@@ -1,4 +1,4 @@
-const { useEffect, useMemo, useRef, useState } = React;
+const { useEffect, useMemo, useRef, useState, useCallback } = React;
 
 const API_URL = '/api';
 const SESSION_KEY = 'ipmquiz_user_session';
@@ -730,6 +730,26 @@ function App() {
     completedSetsRef.current = Array.isArray(profile.completedSets) ? profile.completedSets : [];
   }, [profile.completedSets]);
 
+  const closeActiveSet = useCallback(() => {
+    setActiveSet(null);
+  }, []);
+
+  useEffect(() => {
+    if (!window.__uiBack || !window.__uiBack.register) return;
+    window.__uiBack.register('quiz-set', closeActiveSet);
+  }, [closeActiveSet]);
+
+  useEffect(() => {
+    if (!window.__uiBack || !window.__uiBack.open) return;
+    if (activeSet) {
+      window.__uiBack.open('quiz-set');
+      return;
+    }
+    if (window.__uiBack.isActive && window.__uiBack.isActive('quiz-set')) {
+      window.__uiBack.requestClose('quiz-set');
+    }
+  }, [activeSet]);
+
   const markReset = (setId) => {
     setResetMap((prev) => {
       if (prev && prev[setId]) return prev;
@@ -781,6 +801,7 @@ function App() {
   }, [activeSet]);
 
   useEffect(() => {
+    if (window.__uiBack && window.__uiBack.open) return;
     if (!window.history || !window.history.replaceState) return;
     if (activeSet) {
       window.history.pushState({ view: 'quiz-set', set: activeSet }, '', window.location.href);
@@ -790,6 +811,7 @@ function App() {
   }, [activeSet]);
 
   useEffect(() => {
+    if (window.__uiBack && window.__uiBack.open) return;
     const onPopState = (event) => {
       const state = event.state || {};
       if (state.view === 'quiz-set' && state.set) {
@@ -1060,14 +1082,14 @@ function App() {
               <button
                 type="button"
                 className="quiz-modal-close"
-                onClick={() => setActiveSet(null)}
+                onClick={() => closeActiveSet()}
                 aria-label="Kembali ke set kuis"
               >
                 <i className="fas fa-arrow-left"></i>
               </button>
               <QuizQuestion
                 quizSet={activeSet}
-                onExit={() => setActiveSet(null)}
+                onExit={() => closeActiveSet()}
                 onFinish={finishQuiz}
                 onImmediateReward={handleImmediateReward}
                 timerSeconds={settings.timer_seconds}

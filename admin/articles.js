@@ -300,6 +300,7 @@ export function initArticles(state, els, api) {
         modal.classList.remove('hidden');
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+        if (window.__uiBack) window.__uiBack.open('admin-article');
 
         // Focus title with instant feel
         requestAnimationFrame(() => {
@@ -314,12 +315,13 @@ export function initArticles(state, els, api) {
         updateWordCount();
     }
 
-    function closeModal() {
+    function closeModal(fromPop) {
         if (!modal) return;
         modal.classList.remove('active');
         modal.classList.remove('focus-mode');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
+        if (!fromPop && window.__uiBack) window.__uiBack.requestClose('admin-article');
     }
 
     // Create/Edit
@@ -419,6 +421,7 @@ export function initArticles(state, els, api) {
     // Close Actions
     if (closeBtn) closeBtn.onclick = closeModal;
     if (cancelBtn) cancelBtn.onclick = closeModal;
+    if (window.__uiBack) window.__uiBack.register('admin-article', closeModal);
 
     // Search & Paging
     if (searchInput) searchInput.oninput = api.debounce(() => loadArticles(1), 500);

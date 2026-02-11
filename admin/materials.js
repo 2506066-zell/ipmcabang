@@ -221,9 +221,10 @@ export function initMaterials(state, els, api) {
         modal.classList.remove('hidden');
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+        if (window.__uiBack) window.__uiBack.open('admin-material');
     }
 
-    function closeModal() {
+    function closeModal(fromPop) {
         modal.classList.remove('active');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
@@ -239,6 +240,7 @@ export function initMaterials(state, els, api) {
         thumbPlaceholder.classList.remove('hidden');
         progressContainer.classList.add('hidden');
         progressBar.style.width = '0%';
+        if (!fromPop && window.__uiBack) window.__uiBack.requestClose('admin-material');
     }
 
     addBtn.onclick = () => openModal();
@@ -337,6 +339,7 @@ export function initMaterials(state, els, api) {
 
     closeBtn.onclick = closeModal;
     cancelBtn.onclick = closeModal;
+    if (window.__uiBack) window.__uiBack.register('admin-material', closeModal);
     if (searchInput) searchInput.oninput = api.debounce(() => loadMaterials(1), 500);
     if (prevBtn) prevBtn.onclick = () => loadMaterials(currentPage - 1);
     if (nextBtn) nextBtn.onclick = () => loadMaterials(currentPage + 1);
