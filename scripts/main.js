@@ -232,6 +232,15 @@
             } catch {}
         };
 
+        const filterRecentNotifications = (items) => {
+            const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            return (items || []).filter(n => {
+                const ts = new Date(n.created_at || n.createdAt || n.time || n.date || 0).getTime();
+                if (!ts) return true;
+                return ts >= cutoff;
+            });
+        };
+
         const fetchUserNotifications = async () => {
             if (!session || state.authFailed) return;
             try {
@@ -250,8 +259,9 @@
                 if (res.ok) {
                     const data = await res.json();
                     if (data.status === 'success' && Array.isArray(data.notifications)) {
-                        state.notifications = data.notifications;
-                        state.unread = data.notifications.filter(n => !n.is_read).length;
+                        const recent = filterRecentNotifications(data.notifications);
+                        state.notifications = recent;
+                        state.unread = recent.filter(n => !n.is_read).length;
                     }
                 }
             } catch {}
@@ -305,29 +315,48 @@
             titleEl.textContent = title;
             wrap.hidden = false;
 
+            const renderSegments = (days, hours, minutes, seconds) => {
+                const makeSeg = (value, label) => `
+                    <span class="notif-countdown-seg">
+                        <span class="notif-countdown-val">${value}</span>
+                        <span class="notif-countdown-unit">${label}</span>
+                    </span>
+                `;
+                return [
+                    makeSeg(String(days).padStart(2, '0'), 'Hari'),
+                    makeSeg(String(hours).padStart(2, '0'), 'Jam'),
+                    makeSeg(String(minutes).padStart(2, '0'), 'Menit'),
+                    makeSeg(String(seconds).padStart(2, '0'), 'Detik')
+                ].join('');
+            };
+
+            const setStateText = (text) => {
+                timerEl.innerHTML = `<span class="notif-countdown-state">${text}</span>`;
+            };
+
             const update = () => {
                 const now = Date.now();
                 if (scheduleMode === 'end') {
                     const end = schedule.end_time ? new Date(schedule.end_time).getTime() : 0;
-                if (!end || end <= now) {
-                    timerEl.textContent = 'Sedang berlangsung';
-                    subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
-                    return;
-                }
+                    if (!end || end <= now) {
+                        setStateText('Sedang berlangsung');
+                        subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+                        return;
+                    }
                     const diff = Math.max(0, end - now);
                     const totalSeconds = Math.floor(diff / 1000);
                     const days = Math.floor(totalSeconds / 86400);
                     const hours = Math.floor((totalSeconds % 86400) / 3600);
                     const minutes = Math.floor((totalSeconds % 3600) / 60);
                     const seconds = totalSeconds % 60;
-                    timerEl.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+                    timerEl.innerHTML = renderSegments(days, hours, minutes, seconds);
                     subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
                     return;
                 }
 
                 const start = schedule.start_time ? new Date(schedule.start_time).getTime() : 0;
                 if (!start || start <= now) {
-                    timerEl.textContent = 'Mulai sekarang';
+                    setStateText('Mulai sekarang');
                     subEl.textContent = startLabel ? `Status: Mulai sekarang • Mulai: ${startLabel}` : 'Status: Mulai sekarang';
                     return;
                 }
@@ -337,7 +366,7 @@
                 const hours = Math.floor((totalSeconds % 86400) / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
-                timerEl.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+                timerEl.innerHTML = renderSegments(days, hours, minutes, seconds);
                 subEl.textContent = startLabel ? `Status: Akan dimulai • Mulai: ${startLabel}` : 'Status: Akan dimulai';
             };
 

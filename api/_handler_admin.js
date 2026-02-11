@@ -544,7 +544,18 @@ async function handleRunScheduledNotifications(req, res) {
         }
     }
 
-    return json(res, 200, { status: 'success', due: due.length, sent: sentCount, failed: failedCount });
+    const cleanup = await query`
+        DELETE FROM notifications
+        WHERE created_at < NOW() - INTERVAL '7 days'
+    `;
+
+    return json(res, 200, {
+        status: 'success',
+        due: due.length,
+        sent: sentCount,
+        failed: failedCount,
+        removedOldNotifications: cleanup?.rowCount || 0
+    });
 }
 
 // --- System & Logs ---
