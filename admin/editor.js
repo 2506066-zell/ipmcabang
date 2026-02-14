@@ -143,33 +143,13 @@
                 const cmd = btn.dataset.command;
                 if (!cmd) return;
                 let active = false;
-                try { active = document.queryCommandState(cmd); } catch (e) {}
+                try { active = document.queryCommandState(cmd); } catch (e) { }
                 btn.classList.toggle('active', !!active);
             });
 
             const target = getSelectionElement();
             if (target) {
                 const styles = window.getComputedStyle(target);
-
-                const fontFamily = document.getElementById('editor-font-family');
-                if (fontFamily && styles.fontFamily) {
-                    const clean = styles.fontFamily.replace(/['"]/g, '').toLowerCase();
-                    const match = Array.from(fontFamily.options).find(opt => clean.includes(opt.value.split(',')[0].replace(/['"]/g, '').toLowerCase()));
-                    if (match) fontFamily.value = match.value;
-                }
-
-                const fontSize = document.getElementById('editor-font-size');
-                if (fontSize && styles.fontSize) {
-                    const size = styles.fontSize;
-                    const match = Array.from(fontSize.options).find(opt => opt.value === size);
-                    if (match) fontSize.value = match.value;
-                }
-
-                const colorPicker = document.getElementById('editor-color-picker');
-                if (colorPicker && styles.color) {
-                    const hex = rgbToHex(styles.color);
-                    if (hex) colorPicker.value = hex;
-                }
             }
         };
 
@@ -231,35 +211,6 @@
             };
         });
 
-        const colorPicker = document.getElementById('editor-color-picker');
-            if (colorPicker) {
-            colorPicker.oninput = (e) => exec('foreColor', e.target.value);
-            colorPicker.onmousedown = saveSelection;
-        }
-
-        const fontFamily = document.getElementById('editor-font-family');
-            if (fontFamily) {
-            fontFamily.onchange = (e) => exec('fontName', e.target.value);
-            fontFamily.onmousedown = saveSelection;
-        }
-
-        const fontSize = document.getElementById('editor-font-size');
-            if (fontSize) {
-            fontSize.onchange = (e) => applyFontSize(e.target.value);
-            fontSize.onmousedown = saveSelection;
-        }
-
-        const lineSpacing = document.getElementById('editor-line-spacing');
-            if (lineSpacing) {
-                lineSpacing.onchange = (e) => {
-                    els.editorArea.style.lineHeight = e.target.value;
-                    els.editorArea.focus();
-                    updateToolbarState();
-                };
-                els.editorArea.style.lineHeight = lineSpacing.value;
-                lineSpacing.onmousedown = saveSelection;
-            }
-
         const inlineImage = document.getElementById('editor-inline-image');
         if (inlineImage) {
             inlineImage.onchange = () => {
@@ -292,7 +243,74 @@
         els.editorArea.oninput = updateWordCount;
         els.inpTitle.oninput = saveDraft;
 
+        // --- WORD PASTE SANITIZATION ---
+        els.editorArea.addEventListener("paste", function (e) {
+            e.preventDefault();
+
+            const html = e.clipboardData.getData("text/html");
+            const text = e.clipboardData.getData("text/plain");
+
+            let clean = "";
+
+            if (html) {
+                // Keep only structural tags
+                clean = html
+                    .replace(/<o:p>.*?<\/o:p>/g, "") // Word artifacts
+                    .replace(/style="[^"]*"/g, "")  // Inline styles
+                    .replace(/class="[^"]*"/g, "")  // Classes
+                    .replace(/<span[^>]*>/g, "")    // Inline spans
+                    .replace(/<\/span>/g, "")
+                    .replace(/<!--[\s\S]*?-->/g, ""); // Comments
+            } else {
+                // Plain text to paragraphs
+                clean = text
+                    .split(/\n{2,}/)
+                    .map(p => `<p>${p.trim()}</p>`)
+                    .join("");
+            }
+
+            document.execCommand("insertHTML", false, clean);
+            updateWordCount();
+        });
+
+        // --- PREVIEW SYSTEM ---
+        const previewBtn = document.getElementById('previewBtn');
+        const previewModal = document.getElementById('previewModal');
+        const previewContent = document.getElementById('previewContent');
+        const closePreviewBtn = document.getElementById('closePreviewBtn');
+
+        if (previewBtn && previewModal && previewContent) {
+            previewBtn.onclick = () => {
+                // Clone content and ensure it is sanitized
+                previewContent.innerHTML = sanitizeArticle(els.editorArea.innerHTML);
+                previewModal.classList.add("show");
+                document.body.style.overflow = 'hidden'; // Prevent background scroll
+            };
+        }
+
+        if (closePreviewBtn && previewModal) {
+            closePreviewBtn.onclick = () => {
+                previewModal.classList.remove("show");
+                document.body.style.overflow = '';
+            };
+            // Close on background click
+            previewModal.onclick = (e) => {
+                if (e.target === previewModal) closePreviewBtn.onclick();
+            };
+        }
+
         updateToolbarState();
+    }
+
+    function sanitizeArticle(html) {
+        if (!html) return "";
+        return html
+            .replace(/style="[^"]*"/g, "")
+            .replace(/class="[^"]*"/g, "")
+            .replace(/<span[^>]*>/g, "")
+            .replace(/<\/span>/g, "")
+            .replace(/<font[^>]*>/g, "")
+            .replace(/<\/font>/g, "");
     }
 
     // --- IMAGE HANDLING ---
@@ -376,7 +394,7 @@
             title: els.inpTitle.value,
             author: els.inpAuthor.value,
             category: els.inpCategory.value,
-            content: els.editorArea.innerHTML,
+            content: sanitizeArticle(els.editorArea.innerHTML),
             image: els.inpBase64.value,
             publish_date: els.inpDate.value ? new Date(els.inpDate.value).toISOString() : new Date().toISOString()
         };

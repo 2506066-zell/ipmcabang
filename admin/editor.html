@@ -2,43 +2,50 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
-    <title>Editor Artikel - Admin IPM</title>
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    <link rel="stylesheet" href="admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Specific overrides for standalone editor page */
-        body {
-            padding-top: 0 !important;
-            background: #f1f5f9;
-        }
+    <!DOCTYPE html>
+    <html lang="id">
 
-        .editor-page-wrapper {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            height: auto;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+        <meta name="theme-color" content="#ffffff">
+        <title>Editor Artikel - Admin IPM</title>
+        <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+        <link rel="stylesheet" href="admin.css">
+        <link rel="stylesheet" href="../styles/editorial.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+            /* Specific overrides for standalone editor page */
+            body {
+                padding-top: 0 !important;
+                background: #f1f5f9;
+            }
 
-        .editor-header {
-            position: sticky;
-            top: 0;
-            background: #ffffff;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
+            .editor-page-wrapper {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                height: auto;
+            }
 
-        .editor-scroll-area {
-            flex: 1;
-            padding: 32px 20px;
-            overflow: visible;
-        }
-    </style>
-</head>
+            .editor-header {
+                position: sticky;
+                top: 0;
+                background: #ffffff;
+                z-index: 1000;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            }
+
+            .editor-scroll-area {
+                flex: 1;
+                padding: 0;
+                /* Reset for better control */
+                overflow: visible;
+            }
+        </style>
+    </head>
 
 <body class="page-editor">
     <div class="loading-overlay hidden" id="loading-overlay">
@@ -47,6 +54,16 @@
                 <div class="scanner"></div>
             </div>
             <p id="loading-text">Menyambungkan...</p>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal">
+        <button class="close-preview" id="closePreviewBtn">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="preview-container">
+            <article id="previewContent" class="pro-article"></article>
         </div>
     </div>
 
@@ -59,6 +76,9 @@
                 <span class="editor-status" id="editor-status">Siap menulis...</span>
             </div>
             <div class="editor-header-right">
+                <button type="button" class="btn btn-secondary" id="previewBtn" style="margin-right: 8px;">
+                    <i class="fas fa-eye"></i> Pratinjau
+                </button>
                 <button type="submit" form="article-form" class="btn btn-primary" id="art-save-btn">
                     <i class="fas fa-paper-plane"></i> Publikasikan
                 </button>
@@ -71,13 +91,13 @@
             <div class="editor-scroll-area">
                 <div class="editor-container">
                     <!-- Main Title Section -->
-                    <div class="editor-title-container">
+                    <div class="editor-title-container" style="max-width: 800px; margin: 0 auto; padding: 20px 24px 0;">
                         <input type="text" id="art-title" class="editor-title-input" required
                             placeholder="Tulis judul artikel di sini..." autofocus>
                     </div>
 
                     <!-- Meta Info Row -->
-                    <div class="editor-meta-row">
+                    <div class="editor-meta-row" style="max-width: 800px; margin: 0 auto; padding: 0 24px 20px;">
                         <div class="editor-meta-item">
                             <i class="fas fa-user-edit"></i>
                             <input type="text" id="art-author" placeholder="Nama Penulis" required>
@@ -99,7 +119,7 @@
                     </div>
 
                     <!-- Image Upload Section -->
-                    <div class="editor-image-section">
+                    <div class="editor-image-section" style="max-width: 800px; margin: 0 auto; padding: 0 24px 20px;">
                         <div class="image-upload-wrapper">
                             <label for="art-image-file" class="image-upload-label">
                                 <i class="fas fa-image"></i>
@@ -117,9 +137,10 @@
                     </div>
 
                     <!-- Unified Content Editor -->
-                    <div class="editor-writing-area">
+                    <div class="editor-writing-area" style="padding: 0;">
                         <!-- Minimal Toolbar -->
-                        <div class="editor-toolbar" id="editor-toolbar">
+                        <div class="editor-toolbar" id="editor-toolbar"
+                            style="position: sticky; top: 64px; border-radius: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: #fff; z-index: 999; justify-content: center; padding: 10px;">
                             <div class="tool-group">
                                 <button type="button" class="tool-btn" data-command="bold" title="Bold">
                                     <i class="fas fa-bold"></i>
@@ -130,53 +151,18 @@
                                 <button type="button" class="tool-btn" data-command="underline" title="Underline">
                                     <i class="fas fa-underline"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-command="strikeThrough" title="Strikethrough">
+                                <button type="button" class="tool-btn" data-command="strikeThrough"
+                                    title="Strikethrough">
                                     <i class="fas fa-strikethrough"></i>
                                 </button>
-                            </div>
-                            <div class="tool-divider"></div>
-                            <div class="tool-group">
-                                <label class="tool-label" for="editor-font-family">Font</label>
-                                <select id="editor-font-family" class="tool-select" title="Font">
-                                    <option value="Poppins, sans-serif" selected>Poppins</option>
-                                    <option value="Arial, sans-serif">Arial</option>
-                                    <option value="'Times New Roman', serif">Times</option>
-                                    <option value="Georgia, serif">Georgia</option>
-                                    <option value="'Courier New', monospace">Courier</option>
-                                </select>
-                            </div>
-                            <div class="tool-group">
-                                <label class="tool-label" for="editor-font-size">Ukuran</label>
-                                <select id="editor-font-size" class="tool-select" title="Ukuran Font">
-                                    <option value="12px">12</option>
-                                    <option value="14px">14</option>
-                                    <option value="16px" selected>16</option>
-                                    <option value="18px">18</option>
-                                    <option value="20px">20</option>
-                                    <option value="24px">24</option>
-                                    <option value="28px">28</option>
-                                </select>
-                            </div>
-                            <div class="tool-group">
-                                <label class="tool-label" for="editor-line-spacing">Spasi</label>
-                                <select id="editor-line-spacing" class="tool-select" title="Jarak Spasi">
-                                    <option value="1.0">1.0</option>
-                                    <option value="1.2" selected>1.2</option>
-                                    <option value="1.5">1.5</option>
-                                    <option value="1.8">1.8</option>
-                                    <option value="2.0">2.0</option>
-                                </select>
-                            </div>
-                            <div class="tool-divider"></div>
-                            <div class="tool-group">
-                                <input type="color" id="editor-color-picker" class="tool-color" title="Warna Teks" value="#111827">
                             </div>
                             <div class="tool-divider"></div>
                             <div class="tool-group">
                                 <button type="button" class="tool-btn" data-command="justifyLeft" title="Align Left">
                                     <i class="fas fa-align-left"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-command="justifyCenter" title="Align Center">
+                                <button type="button" class="tool-btn" data-command="justifyCenter"
+                                    title="Align Center">
                                     <i class="fas fa-align-center"></i>
                                 </button>
                                 <button type="button" class="tool-btn" data-command="justifyRight" title="Align Right">
@@ -188,11 +174,17 @@
                             </div>
                             <div class="tool-divider"></div>
                             <div class="tool-group">
-                                <button type="button" class="tool-btn" data-command="insertOrderedList" title="Ordered List">
+                                <button type="button" class="tool-btn" data-command="insertOrderedList"
+                                    title="Ordered List">
                                     <i class="fas fa-list-ol"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-command="insertUnorderedList" title="Unordered List">
+                                <button type="button" class="tool-btn" data-command="insertUnorderedList"
+                                    title="Unordered List">
                                     <i class="fas fa-list-ul"></i>
+                                </button>
+                                <button type="button" class="tool-btn" data-command="formatBlock"
+                                    data-value="blockquote" title="Blockquote">
+                                    <i class="fas fa-quote-left"></i>
                                 </button>
                             </div>
                             <div class="tool-divider"></div>
@@ -207,15 +199,18 @@
                             </div>
                         </div>
 
-                        <!-- Scrollable Contentable Area -->
-                        <div id="art-editor" class="editor-content-editable" contenteditable="true"
-                            placeholder="Mulai menulis artikel di sini..."></div>
+                        <!-- Writing Canvas -->
+                        <div class="editor-wrapper">
+                            <div id="art-editor" class="pro-article editor-surface" contenteditable="true"
+                                placeholder="Mulai menulis artikel di sini..."></div>
+                        </div>
 
                         <!-- Hidden textarea for backward compatibility/sync -->
                         <textarea id="art-content" style="display:none"></textarea>
                     </div>
 
-                    <div class="editor-footer-actions">
+                    <div class="editor-footer-actions"
+                        style="max-width: 800px; margin: 0 auto; padding: 20px 24px 40px;">
                         <button type="button" class="btn btn-secondary" id="art-cancel-btn">Batal</button>
                         <button type="submit" form="article-form" class="btn btn-primary" id="art-save-btn-bottom">
                             <i class="fas fa-paper-plane"></i> Publikasikan

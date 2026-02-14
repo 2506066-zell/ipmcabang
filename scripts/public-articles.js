@@ -247,6 +247,8 @@ function initDetailPage(id, slug) {
             const data = await res.json();
 
             if (data.status === 'success' && data.article) {
+                // Sanitize article content before rendering
+                data.article.content = sanitizeArticle(data.article.content);
                 renderDetail(data.article);
                 updateSEO(data.article);
                 initScrollProgress();
@@ -262,6 +264,17 @@ function initDetailPage(id, slug) {
         }
     }
 
+    function sanitizeArticle(html) {
+        if (!html) return "";
+        return html
+            .replace(/style="[^"]*"/g, "")
+            .replace(/class="[^"]*"/g, "")
+            .replace(/<span[^>]*>/g, "")
+            .replace(/<\/span>/g, "")
+            .replace(/<font[^>]*>/g, "")
+            .replace(/<\/font>/g, "");
+    }
+
     function renderDetail(art) {
         const date = new Date(art.publish_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         const heroImage = art.image ? `
@@ -274,15 +287,6 @@ function initDetailPage(id, slug) {
             url: window.location.href
         };
 
-        // Simple Markdown Parser
-        let content = art.content
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
-            .replace(/\*(.*)\*/gim, '<i>$1</i>')
-            .replace(/\n\n/g, '<br><br>');
-
         container.innerHTML = `
             <article class="article-detail fade-in">
                 ${heroImage}
@@ -292,8 +296,8 @@ function initDetailPage(id, slug) {
                     <span><i class="fas fa-tag"></i> ${art.category || 'Umum'}</span>
                 </div>
                 <div class="article-divider"></div>
-                <div class="article-content-body">
-                    ${content}
+                <div class="article-content-body pro-article">
+                    ${art.content}
                 </div>
                 <div class="article-share-section" id="article-share-section">
                     <div class="share-title">Bagikan artikel ini</div>
