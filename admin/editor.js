@@ -243,6 +243,24 @@
         els.editorArea.oninput = updateWordCount;
         els.inpTitle.oninput = saveDraft;
 
+        const cleanClipboardHtml = (rawHtml) => {
+            if (!rawHtml) return "";
+            return rawHtml
+                .replace(/<o:p>.*?<\/o:p>/gi, "")
+                .replace(/<!--[\s\S]*?-->/g, "")
+                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+                .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+                .replace(/<meta[^>]*>/gi, "")
+                .replace(/<link[^>]*>/gi, "")
+                .replace(/<\/?(?:xml|w:[^>]+|o:[^>]+|v:[^>]+|st1:[^>]+)[^>]*>/gi, "")
+                .replace(/style="[^"]*"/gi, "")
+                .replace(/class="[^"]*"/gi, "")
+                .replace(/<span[^>]*>/gi, "")
+                .replace(/<\/span>/gi, "")
+                .replace(/<font[^>]*>/gi, "")
+                .replace(/<\/font>/gi, "");
+        };
+
         // --- WORD PASTE SANITIZATION ---
         els.editorArea.addEventListener("paste", function (e) {
             e.preventDefault();
@@ -253,16 +271,8 @@
             let clean = "";
 
             if (html) {
-                // Keep only structural tags
-                clean = html
-                    .replace(/<o:p>.*?<\/o:p>/g, "") // Word artifacts
-                    .replace(/style="[^"]*"/g, "")  // Inline styles
-                    .replace(/class="[^"]*"/g, "")  // Classes
-                    .replace(/<span[^>]*>/g, "")    // Inline spans
-                    .replace(/<\/span>/g, "")
-                    .replace(/<!--[\s\S]*?-->/g, ""); // Comments
+                clean = cleanClipboardHtml(html);
             } else {
-                // Plain text to paragraphs
                 clean = text
                     .split(/\n{2,}/)
                     .map(p => `<p>${p.trim()}</p>`)
@@ -305,12 +315,19 @@
     function sanitizeArticle(html) {
         if (!html) return "";
         return html
-            .replace(/style="[^"]*"/g, "")
-            .replace(/class="[^"]*"/g, "")
-            .replace(/<span[^>]*>/g, "")
-            .replace(/<\/span>/g, "")
-            .replace(/<font[^>]*>/g, "")
-            .replace(/<\/font>/g, "");
+            .replace(/<o:p>.*?<\/o:p>/gi, "")
+            .replace(/<!--[\s\S]*?-->/g, "")
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+            .replace(/<meta[^>]*>/gi, "")
+            .replace(/<link[^>]*>/gi, "")
+            .replace(/<\/?(?:xml|w:[^>]+|o:[^>]+|v:[^>]+|st1:[^>]+)[^>]*>/gi, "")
+            .replace(/style="[^"]*"/gi, "")
+            .replace(/class="[^"]*"/gi, "")
+            .replace(/<span[^>]*>/gi, "")
+            .replace(/<\/span>/gi, "")
+            .replace(/<font[^>]*>/gi, "")
+            .replace(/<\/font>/gi, "");
     }
 
     // --- IMAGE HANDLING ---

@@ -96,10 +96,9 @@
 }
 
 .editor-surface {
-  /* Surface specifics - width and padding are now mostly inherited from .pro-article */
+  width: 720px;
   min-height: 70vh;
-  padding: 60px 40px;
-  /* Slightly more padding for the paper canvas */
+  padding: 40px 24px;
   background: white;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   outline: none;
