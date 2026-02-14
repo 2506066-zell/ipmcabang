@@ -18,7 +18,41 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let allData = [];
     let previousRanks = new Map();
-    const currentUser = "Anda"; // Placeholder for auth user
+    const currentUser = "Anda";
+    const numberFormatter = new Intl.NumberFormat('id-ID');
+
+    const nameKey = (value) => String(value || '').trim().toLowerCase();
+    const safeText = (value, fallback) => {
+        const text = String(value ?? '').trim();
+        return text ? text : fallback;
+    };
+    const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    const toNumber = (value) => {
+        const num = Number(value);
+        return Number.isFinite(num) ? num : 0;
+    };
+    const formatScore = (value) => numberFormatter.format(Math.max(0, Math.round(toNumber(value))));
+    const formatTime = (value) => numberFormatter.format(Math.max(0, Math.round(toNumber(value))));
+    const formatName = (value) => safeText(value, 'Anonim');
+    const formatPimpinan = (value) => safeText(value, '-');
+    const getInitial = (name) => formatName(name).charAt(0).toUpperCase();
+    const getAvatarUrl = (entry) => {
+        const raw = safeText(entry.avatar || entry.avatar_url || entry.photo || '', '');
+        if (!raw) return '';
+        if (/^https?:\/\//i.test(raw)) return raw;
+        if (/^data:image\//i.test(raw)) return raw;
+        return '';
+    };
+    const formatDate = (value) => {
+        const date = new Date(value || 0);
+        if (Number.isNaN(date.getTime())) return '-';
+        return date.toLocaleDateString('id-ID');
+    };
 
     function showLoading(isLoading) {
         loadingIndicator.style.display = isLoading ? 'flex' : 'none';
@@ -52,17 +86,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function normalizeRankingData(raw) {
         const byUser = new Map();
-        (raw || []).forEach(entry => {
-            const username = String(entry.username || '').trim();
-            if (!username) return;
-            const key = username.toLowerCase();
-            const score = Number(entry.score || 0);
-            const time = Number(entry.time_spent || 0);
+        (raw || []).forEach((entry, index) => {
+            const rawName = String(entry.username || '').trim();
+            const username = rawName || 'Anonim';
             const ts = new Date(entry.ts || entry.timestamp || 0).getTime() || 0;
+            const key = rawName ? rawName.toLowerCase() : `anonim-${index}-${ts}`;
+            const score = toNumber(entry.score || 0);
+            const time = toNumber(entry.time_spent || 0);
+            const cleanedEntry = {
+                ...entry,
+                username,
+                score,
+                time_spent: time
+            };
 
             const current = byUser.get(key);
             if (!current) {
-                byUser.set(key, { ...entry, _key: key, _score: score, _time: time, _ts: ts });
+                byUser.set(key, { ...cleanedEntry, _key: key, _score: score, _time: time, _ts: ts });
                 return;
             }
 
@@ -72,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 (score === current._score && time === current._time && ts < current._ts);
 
             if (better) {
-                byUser.set(key, { ...entry, _key: key, _score: score, _time: time, _ts: ts });
+                byUser.set(key, { ...cleanedEntry, _key: key, _score: score, _time: time, _ts: ts });
             }
         });
 
@@ -149,18 +189,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (previousRanks.size === 0) {
             // First load, just map ranks
             newData.forEach((p, index) => {
-                previousRanks.set(String(p.username || '').toLowerCase(), index + 1);
+                previousRanks.set(nameKey(p.username), index + 1);
             });
             return;
         }
 
         const newRankMap = new Map();
         newData.forEach((p, index) => {
-            newRankMap.set(String(p.username || '').toLowerCase(), index + 1);
+            newRankMap.set(nameKey(p.username), index + 1);
         });
 
         // Check for "Anda" (User) rank change
-        const userKey = String(currentUser || '').toLowerCase();
+        const userKey = nameKey(currentUser);
         const userOldRank = previousRanks.get(userKey);
         const userNewRank = newRankMap.get(userKey);
 
@@ -186,21 +226,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderUserRank(data) {
-        const userIndex = data.findIndex(p => String(p.username || '').toLowerCase() === String(currentUser || '').toLowerCase());
+        const userIndex = data.findIndex(p => nameKey(p.username) === nameKey(currentUser));
 
         if (userIndex !== -1) {
             const user = data[userIndex];
             const rank = userIndex + 1;
+            const displayName = formatName(user.username);
+            const safeName = escapeHtml(displayName);
 
             userRankCard.innerHTML = `
                 <div class="user-rank-content">
                     <div class="user-rank-info">
+                        <span class="user-rank-name" title="${safeName}">${safeName}</span>
                         <span class="user-rank-label">Peringkat Anda</span>
                         <span class="user-rank-value">#${rank}</span>
                     </div>
                     <div class="user-stats">
-                        <span class="user-score">${user.score} Poin</span>
-                        <span class="user-time">${user.time_spent || 0} detik</span>
+                        <span class="user-score">${formatScore(user.score)} Poin</span>
+                        <span class="user-time">${formatTime(user.time_spent)} detik</span>
                     </div>
                 </div>
             `;
@@ -241,9 +284,17 @@ document.addEventListener('DOMContentLoaded', () => {
             podiumItem.className = `podium-item rank-${rank}`;
 
             // UX: Active Indicator for Top 3
-            const lastActive = new Date(p.ts || p.timestamp);
-            const isToday = lastActive.setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0);
+            const lastActive = new Date(p.ts || p.timestamp || 0);
+            const isToday = Number.isFinite(lastActive.getTime()) && lastActive.setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0);
             const activeBadge = isToday ? '<span class="active-dot" title="Aktif Hari Ini"></span>' : '';
+            const displayName = formatName(p.username);
+            const safeName = escapeHtml(displayName);
+            const displayPimpinan = escapeHtml(formatPimpinan(p.pimpinan));
+            const displayScore = formatScore(p.score);
+            const avatarUrl = getAvatarUrl(p);
+            const avatarMarkup = avatarUrl
+                ? `<img src="${avatarUrl}" alt="${safeName}">`
+                : `<span class="avatar-char">${getInitial(displayName)}</span>`;
 
             podiumItem.innerHTML = `
                 <div class="avatar-container ring-${rank}">
@@ -251,14 +302,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${rank === 1 ? '<div class="badge-box gold">1</div>' : ''}
                     ${rank === 2 ? '<div class="badge-box silver">2</div>' : ''}
                     ${rank === 3 ? '<div class="badge-box bronze">3</div>' : ''}
-                    <div class="avatar-char">${(p.username || '?').charAt(0).toUpperCase()}</div>
+                    ${avatarMarkup}
                     ${activeBadge}
                 </div>
                 <div class="podium-base">
                     <div class="podium-rank">Juara ${rank}</div>
-                    <div class="podium-name">${p.username}</div>
-                    <div class="podium-pimpinan">${p.pimpinan || '-'}</div>
-                    <div class="podium-score">${p.score} <span>pts</span></div>
+                    <div class="podium-name" title="${safeName}">${safeName}</div>
+                    <div class="podium-pimpinan" title="${displayPimpinan}">${displayPimpinan}</div>
+                    <div class="podium-score">${displayScore} <span>pts</span></div>
                 </div>
             `;
 
@@ -289,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // OR strict comparison if we have previous data.
             // Since we persist previousRanks in memory during session, we can use that.
             let movementIcon = '';
-            const oldRank = previousRanks.get(String(p.username || '').toLowerCase());
+            const oldRank = previousRanks.get(nameKey(p.username));
             if (oldRank) {
                 if (rank < oldRank) movementIcon = '<span class="rank-up" title="Naik Peringkat"><i class="fas fa-caret-up"></i></span>';
                 else if (rank > oldRank) movementIcon = '<span class="rank-down" title="Turun Peringkat"><i class="fas fa-caret-down"></i></span>';
@@ -299,26 +350,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // UX: Active Today Indicator
-            const lastActive = new Date(p.ts || p.timestamp);
-            const isToday = lastActive.setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0);
+            const lastActive = new Date(p.ts || p.timestamp || 0);
+            const isToday = Number.isFinite(lastActive.getTime()) && lastActive.setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0);
             const activeBadge = isToday ? '<span class="active-badge" title="Aktif Hari Ini">🔥</span>' : '';
+            const displayName = formatName(p.username);
+            const safeName = escapeHtml(displayName);
+            const displayPimpinan = escapeHtml(formatPimpinan(p.pimpinan));
+            const displayScore = formatScore(p.score);
+            const displayTime = formatTime(p.time_spent);
+            const avatarUrl = getAvatarUrl(p);
+            const avatarMarkup = avatarUrl
+                ? `<img src="${avatarUrl}" alt="${safeName}">`
+                : `<span class="avatar-char">${getInitial(displayName)}</span>`;
 
             const item = document.createElement('div');
             item.className = 'rank-item';
-            if (p.username.toLowerCase() === currentUser.toLowerCase()) {
+            if (nameKey(p.username) === nameKey(currentUser)) {
                 item.classList.add('is-me');
 
-                // Add motivational copy for YOU
                 const nextUser = restData[index - 1] || (index === 0 ? allData[2] : null); // the guy above you
                 let copy = '';
                 if (nextUser) {
-                    const diff = nextUser.score - p.score;
-                    if (diff > 0) copy = `<div class="rank-motivation">Kejar <b>${diff} poin</b> lagi untuk salip ${nextUser.username}! 🚀</div>`;
+                    const diff = toNumber(nextUser.score) - toNumber(p.score);
+                    if (diff > 0) copy = `<div class="rank-motivation">Kejar <b>${formatScore(diff)} poin</b> lagi untuk salip ${escapeHtml(formatName(nextUser.username))}! 🚀</div>`;
                     else copy = `<div class="rank-motivation">Skor sama! Ayo main lagi untuk menyalip! 🔥</div>`;
                 }
 
-                // Append copy to item later or handle structure
-                // Let's modify structure slightly for 'is-me'
                 item.dataset.motivation = copy ? "true" : "false"; // Hook for CSS
             }
 
@@ -330,17 +387,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${rank}
                     <div class="rank-move">${movementIcon}</div>
                 </div>
+                <div class="rank-avatar" title="${safeName}">
+                    ${avatarMarkup}
+                </div>
                 <div class="rank-info">
                     <div class="rank-name">
-                        ${p.username} ${activeBadge}
+                        <span title="${safeName}">${safeName}</span> ${activeBadge}
                     </div>
-                    <div class="rank-pimpinan">${p.pimpinan || '-'}</div>
-                    <div class="rank-meta">${new Date(p.ts || p.timestamp).toLocaleDateString('id-ID')}</div>
-                    ${item.classList.contains('is-me') && index > 0 ? `<div class="rank-motivation-text"><small>Selisih ${(restData[index - 1] || allData[2]).score - p.score} poin ke posisi #${rank - 1}</small> <a href="quiz.html" class="cta-mini">Ejar!</a></div>` : ''}
+                    <div class="rank-pimpinan" title="${displayPimpinan}">${displayPimpinan}</div>
+                    <div class="rank-meta">${formatDate(p.ts || p.timestamp)}</div>
+                    ${item.classList.contains('is-me') && index > 0 ? `<div class="rank-motivation-text"><small>Selisih ${formatScore((restData[index - 1] || allData[2]).score - p.score)} poin ke posisi #${rank - 1}</small> <a href="quiz.html" class="cta-mini">Ejar!</a></div>` : ''}
                 </div>
                 <div class="rank-score-box">
-                    <div class="rank-score">${p.score}</div>
-                    <span class="rank-time">${p.time_spent || 0}s</span>
+                    <div class="rank-score">${displayScore}</div>
+                    <span class="rank-time">${displayTime}s</span>
                 </div>
             `;
 
@@ -358,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchTerm = searchInput.value.toLowerCase();
         const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
 
-        let filteredData = allData.filter(p => (p.username || '').toLowerCase().includes(searchTerm));
+        let filteredData = allData.filter(p => nameKey(p.username).includes(searchTerm));
 
         const now = new Date();
         if (activeFilter === 'weekly') {
