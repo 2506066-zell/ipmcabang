@@ -95,6 +95,11 @@
     const ARTICLE_SEEN_KEY = 'ipm_last_seen_article_ts';
     const getSession = () => sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
     const getUsername = () => sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '';
+    function getArticleHref(article) {
+        const slug = String(article?.slug || '').trim();
+        if (slug) return `articles.html?slug=${encodeURIComponent(slug)}`;
+        return `articles.html?id=${encodeURIComponent(article?.id || '')}`;
+    }
 
     if (headerRight && !document.getElementById('profile-header-btn')) {
         const btn = document.createElement('button');
@@ -415,7 +420,7 @@
                     title: `Artikel baru: ${state.latestArticle.title}`,
                     time: state.latestArticle.publish_date || state.latestArticle.created_at,
                     unread: true,
-                    link: `articles.html?id=${state.latestArticle.id}`
+                    link: getArticleHref(state.latestArticle)
                 });
             }
             state.notifications.forEach(n => {
@@ -838,7 +843,7 @@
             const safeTitle = escapeHtml(art.title || 'Tanpa Judul');
 
             return `
-                <a href="articles.html?id=${art.id}" class="highlight-item">
+                <a href="${getArticleHref(art)}" class="highlight-item">
                     <div class="highlight-date">
                         <i class="fas fa-calendar-alt"></i> ${date}
                     </div>
@@ -887,7 +892,7 @@
                             <span><i class="fas fa-user-edit"></i> ${safeAuthor}</span>
                             <span><i class="fas fa-calendar-day"></i> ${date}</span>
                         </div>
-                        <a href="articles.html?id=${art.id}" class="stretched-link" style="position:absolute; inset:0; z-index:1;"></a>
+                        <a href="${getArticleHref(art)}" class="stretched-link" style="position:absolute; inset:0; z-index:1;"></a>
                     </div>
                 </article>
             `;
