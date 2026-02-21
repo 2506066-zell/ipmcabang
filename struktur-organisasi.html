@@ -71,32 +71,39 @@
             <div class="bidang-grid" id="bidangGrid"></div>
         </div>
 
-        <!-- VIEW 2: ANGGOTA -->
-        <div id="viewAnggota">
-            <div class="anggota-header">
-                <button class="back-btn" id="backFromAnggotaBtn" type="button">
+        <!-- VIEW 2: DETAIL BIDANG -->
+        <div id="viewDetail">
+            <div class="detail-header">
+                <button class="back-btn" id="backToGridBtn" type="button" aria-label="Kembali ke daftar bidang">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <div class="header-info">
-                    <div class="header-title" id="anggotaTitle"></div>
-                    <div class="header-count" id="anggotaCount"></div>
+                <div class="detail-header-info">
+                    <div class="detail-title" id="detailBidangTitle"></div>
+                    <div class="detail-meta">
+                        <span id="detailMemberCount"></span>
+                        <span id="detailProgramCount"></span>
+                    </div>
                 </div>
             </div>
-            <div class="anggota-grid" id="anggotaGrid"></div>
-        </div>
-
-        <!-- VIEW 3: PROGRAM KERJA -->
-        <div id="viewProgram">
-            <div class="program-header">
-                <button class="back-btn" id="backFromProgramBtn" type="button">
-                    <i class="fas fa-arrow-left"></i>
+            <div class="detail-segment" role="tablist" aria-label="Konten detail bidang">
+                <button class="segment-btn active" id="detailSegmentAnggota" type="button" role="tab"
+                    aria-selected="true" data-segment="anggota">
+                    Susunan Anggota
                 </button>
-                <div class="program-header-info">
-                    <div class="program-title" id="programBidangTitle"></div>
-                    <div class="program-subtitle">Program Kerja Bidang</div>
-                </div>
+                <button class="segment-btn" id="detailSegmentProgram" type="button" role="tab" aria-selected="false"
+                    data-segment="program">
+                    Program Kerja
+                </button>
             </div>
-            <div class="program-list" id="programList"></div>
+            <section class="detail-panel active" id="detailPanelAnggota" role="tabpanel"
+                aria-labelledby="detailSegmentAnggota">
+                <div id="leadershipSection"></div>
+                <div id="membersSection"></div>
+            </section>
+            <section class="detail-panel" id="detailPanelProgram" role="tabpanel" aria-labelledby="detailSegmentProgram"
+                hidden>
+                <div class="program-list" id="programList"></div>
+            </section>
         </div>
     </main>
 

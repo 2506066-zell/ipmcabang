@@ -13,7 +13,8 @@
 
   const state = {
     bidang: [],
-    currentBidangCode: ''
+    currentBidangCode: '',
+    currentSegment: 'anggota'
   };
 
   const els = {};
@@ -39,6 +40,51 @@
       .replace(/'/g, '&#39;');
   }
 
+  function normalizeRole(value) {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function isLeadershipRole(roleTitle) {
+    const role = normalizeRole(roleTitle);
+    if (!role) return false;
+    return [
+      'ketua umum',
+      'ketua bidang',
+      'ketua',
+      'sekretaris bidang',
+      'sekretaris',
+      'bendahara umum',
+      'bendahara i',
+      'bendahara',
+      'koordinator',
+      'wakil ketua'
+    ].some((keyword) => role.includes(keyword));
+  }
+
+  function leadershipPriority(roleTitle) {
+    const role = normalizeRole(roleTitle);
+    const rankMap = [
+      ['ketua umum', 10],
+      ['ketua bidang', 20],
+      ['ketua', 30],
+      ['sekretaris bidang', 40],
+      ['sekretaris', 50],
+      ['bendahara umum', 60],
+      ['bendahara i', 70],
+      ['bendahara', 80],
+      ['koordinator', 90],
+      ['wakil ketua', 100]
+    ];
+    for (let i = 0; i < rankMap.length; i += 1) {
+      const [keyword, rank] = rankMap[i];
+      if (role.includes(keyword)) return rank;
+    }
+    return isLeadershipRole(roleTitle) ? 500 : 1000;
+  }
+
   function normalizeMember(raw, idx) {
     return {
       id: Number(raw?.id || 0) || idx + 1,
@@ -47,7 +93,7 @@
       quote: String(raw?.quote || '').trim(),
       photo_url: normalizePath(raw?.photo_url || raw?.photo || ''),
       instagram_url: String(raw?.instagram_url || raw?.instagram || '').trim(),
-      sort_order: Number(raw?.sort_order || idx + 1) || (idx + 1)
+      sort_order: Number(raw?.sort_order || idx + 1) || idx + 1
     };
   }
 
@@ -59,7 +105,7 @@
       title: String(raw?.title || raw?.name || '').trim(),
       description: String(raw?.description || raw?.desc || '').trim(),
       status,
-      sort_order: Number(raw?.sort_order || idx + 1) || (idx + 1)
+      sort_order: Number(raw?.sort_order || idx + 1) || idx + 1
     };
   }
 
@@ -72,7 +118,7 @@
       name: String(raw?.name || 'Bidang').trim(),
       image_url: normalizePath(raw?.image_url || raw?.image || ''),
       color: String(raw?.color || '#4A7C5D').trim(),
-      sort_order: Number(raw?.sort_order || idx + 1) || (idx + 1),
+      sort_order: Number(raw?.sort_order || idx + 1) || idx + 1,
       members: members.map(normalizeMember).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id),
       programs: programs.map(normalizeProgram).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
     };
@@ -80,7 +126,7 @@
 
   async function fetchOrganizationData() {
     try {
-      const res = await fetch('/api/organization', { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const res = await fetch('/api/organization', { method: 'GET', headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data?.status !== 'success' || !Array.isArray(data?.bidang)) {
@@ -88,14 +134,14 @@
       }
       if (!data.bidang.length) throw new Error('Empty organization');
       return data.bidang.map(normalizeBidang);
-    } catch (e) {
-      console.warn('[Struktur] fallback data used:', e.message || e);
-      return FALLBACK_BIDANG.map((b, idx) => normalizeBidang({ ...b, members: [], programs: [] }, idx));
+    } catch (err) {
+      console.warn('[Struktur] fallback data used:', err?.message || err);
+      return FALLBACK_BIDANG.map((item, idx) => normalizeBidang({ ...item, members: [], programs: [] }, idx));
     }
   }
 
   function getCurrentBidang() {
-    return state.bidang.find(b => b.code === state.currentBidangCode) || null;
+    return state.bidang.find((item) => item.code === state.currentBidangCode) || null;
   }
 
   function hideLoadingOverlay() {
@@ -104,23 +150,187 @@
     els.loadingOverlay.style.display = 'none';
   }
 
+  function setupLazyLoading() {
+    const lazyImages = document.querySelectorAll('.lazy-load');
+    if (!lazyImages.length || !('IntersectionObserver' in window)) {
+      lazyImages.forEach((img) => {
+        const target = img;
+        if (target.dataset.src) target.src = target.dataset.src;
+      });
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const image = entry.target;
+        if (image.dataset.src) image.src = image.dataset.src;
+        image.classList.remove('lazy-load');
+        observer.unobserve(image);
+      });
+    });
+    lazyImages.forEach((image) => observer.observe(image));
+  }
+
+  function createMemberCard(member, isLeadership) {
+    const initials = member.full_name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((name) => name[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 3);
+
+    return `
+      <article class="anggota-card${isLeadership ? ' is-leadership' : ''}" data-member-id="${member.id}">
+        <div class="anggota-card-photo${member.photo_url ? '' : ' no-image'}">
+          <img data-src="${escapeHtml(member.photo_url)}" alt="${escapeHtml(member.full_name)}" class="lazy-load">
+          <div class="anggota-card-avatar">${escapeHtml(initials || '?')}</div>
+        </div>
+        <div class="anggota-card-info">
+          <div class="anggota-card-name">${escapeHtml(member.full_name)}</div>
+          <div class="anggota-card-role">${escapeHtml(member.role_title || 'Anggota')}</div>
+          <div class="anggota-card-quote">${escapeHtml(member.quote || 'Siap berkontribusi untuk bidang ini.')}</div>
+          <div class="anggota-card-indicator"><i class="fas fa-chevron-right"></i></div>
+        </div>
+      </article>
+    `;
+  }
+
+  function splitMembersByHierarchy(members) {
+    const sortedMembers = [...members].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    const leadership = sortedMembers
+      .filter((member) => isLeadershipRole(member.role_title))
+      .sort((a, b) => leadershipPriority(a.role_title) - leadershipPriority(b.role_title) || a.sort_order - b.sort_order || a.id - b.id);
+    const regular = sortedMembers.filter((member) => !isLeadershipRole(member.role_title));
+    return { leadership, regular, sortedMembers };
+  }
+
+  function renderMemberSection(container, title, subtitle, members, options) {
+    if (!container) return;
+    const sectionClass = options?.sectionClass || '';
+    const leadership = Boolean(options?.leadership);
+    container.innerHTML = `
+      <section class="hierarchy-section ${sectionClass}">
+        <header class="hierarchy-heading">
+          <div class="hierarchy-title">${escapeHtml(title)}</div>
+          <div class="hierarchy-meta">${escapeHtml(subtitle)}</div>
+        </header>
+        <div class="anggota-grid">
+          ${members.map((member) => createMemberCard(member, leadership)).join('')}
+        </div>
+      </section>
+    `;
+  }
+
+  function bindMemberCardEvents(currentBidang) {
+    const cards = document.querySelectorAll('.anggota-card[data-member-id]');
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const memberId = Number(card.getAttribute('data-member-id') || 0);
+        if (!memberId) return;
+        const selectedMember = currentBidang.members.find((item) => Number(item.id) === memberId);
+        if (!selectedMember) return;
+        openAnggotaDetail(selectedMember, currentBidang);
+      });
+    });
+
+    const images = document.querySelectorAll('.anggota-card-photo img');
+    images.forEach((img) => {
+      img.addEventListener('error', () => {
+        if (img.parentElement) img.parentElement.classList.add('no-image');
+      });
+    });
+  }
+
+  function renderDetailMembers(selected) {
+    if (!els.leadershipSection || !els.membersSection) return;
+    if (!selected.members.length) {
+      els.leadershipSection.innerHTML = '<div class="org-empty-state">Belum ada anggota di bidang ini.</div>';
+      els.membersSection.innerHTML = '';
+      return;
+    }
+
+    const { leadership, regular, sortedMembers } = splitMembersByHierarchy(selected.members);
+    if (!leadership.length) {
+      renderMemberSection(
+        els.leadershipSection,
+        'Tim Bidang',
+        `${sortedMembers.length} anggota`,
+        sortedMembers,
+        { sectionClass: 'is-team', leadership: false }
+      );
+      els.membersSection.innerHTML = '';
+      bindMemberCardEvents(selected);
+      setupLazyLoading();
+      return;
+    }
+
+    renderMemberSection(
+      els.leadershipSection,
+      'Pimpinan Inti',
+      `${leadership.length} posisi`,
+      leadership,
+      { sectionClass: 'is-leadership', leadership: true }
+    );
+
+    if (regular.length) {
+      renderMemberSection(
+        els.membersSection,
+        'Anggota Bidang',
+        `${regular.length} anggota`,
+        regular,
+        { sectionClass: 'is-regular', leadership: false }
+      );
+    } else {
+      els.membersSection.innerHTML = '<div class="org-empty-state">Belum ada anggota tambahan pada bidang ini.</div>';
+    }
+
+    bindMemberCardEvents(selected);
+    setupLazyLoading();
+  }
+
+  function renderPrograms(selected) {
+    if (!els.programList) return;
+    els.programList.innerHTML = '';
+    if (!selected.programs.length) {
+      els.programList.innerHTML = '<div class="org-empty-state">Program kerja belum diisi.</div>';
+      return;
+    }
+
+    selected.programs.forEach((program) => {
+      const card = document.createElement('article');
+      const statusText = program.status === 'terlaksana' ? 'Terlaksana' : (program.status === 'rencana' ? 'Rencana' : 'Draft');
+      card.className = 'program-card';
+      card.style.setProperty('--color-bidang', selected.color || '#4A7C5D');
+      card.innerHTML = `
+        <div class="program-card-head">
+          <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
+          <span class="program-card-status status-${escapeHtml(program.status)}">${statusText}</span>
+        </div>
+        <div class="program-card-desc">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
+      `;
+      els.programList.appendChild(card);
+    });
+  }
+
   function renderBidangGrid() {
     if (!els.bidangGrid) return;
     els.bidangGrid.innerHTML = '';
-    state.bidang.forEach((b) => {
-      const card = document.createElement('div');
+    state.bidang.forEach((bidang) => {
+      const card = document.createElement('article');
       card.className = 'bidang-card';
       card.innerHTML = `
         <div class="bidang-card-header">
-          <img src="${escapeHtml(b.image_url)}" alt="${escapeHtml(b.name)}" loading="lazy">
+          <img src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" loading="lazy">
         </div>
         <div class="bidang-card-content">
-          <div class="bidang-card-name">${escapeHtml(b.name)}</div>
+          <div class="bidang-card-name">${escapeHtml(bidang.name)}</div>
+          <div class="bidang-card-meta">${bidang.members.length} anggota • ${bidang.programs.length} program</div>
           <div class="bidang-card-actions">
-            <button class="btn-card btn-card-anggota" type="button" data-action="anggota" data-bidang="${escapeHtml(b.code)}">
-              <i class="fas fa-users"></i> Anggota
+            <button class="btn-card btn-card-anggota" type="button" data-action="anggota" data-bidang="${escapeHtml(bidang.code)}">
+              <i class="fas fa-users"></i> Susunan
             </button>
-            <button class="btn-card btn-card-program" type="button" data-action="program" data-bidang="${escapeHtml(b.code)}">
+            <button class="btn-card btn-card-program" type="button" data-action="program" data-bidang="${escapeHtml(bidang.code)}">
               <i class="fas fa-tasks"></i> Program
             </button>
           </div>
@@ -130,115 +340,65 @@
     });
   }
 
-  function setupLazyLoading() {
-    const lazyImages = document.querySelectorAll('.lazy-load');
-    if (!lazyImages.length || !('IntersectionObserver' in window)) {
-      lazyImages.forEach((img) => {
-        img.src = img.dataset.src || '';
-      });
-      return;
+  function setDetailSegment(segment) {
+    const target = segment === 'program' ? 'program' : 'anggota';
+    state.currentSegment = target;
+
+    const onAnggota = target === 'anggota';
+    if (els.detailSegmentAnggota) {
+      els.detailSegmentAnggota.classList.toggle('active', onAnggota);
+      els.detailSegmentAnggota.setAttribute('aria-selected', onAnggota ? 'true' : 'false');
     }
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const image = entry.target;
-        image.src = image.dataset.src || '';
-        image.classList.remove('lazy-load');
-        observer.unobserve(image);
-      });
-    });
-    lazyImages.forEach((image) => observer.observe(image));
+    if (els.detailSegmentProgram) {
+      els.detailSegmentProgram.classList.toggle('active', !onAnggota);
+      els.detailSegmentProgram.setAttribute('aria-selected', onAnggota ? 'false' : 'true');
+    }
+
+    if (els.detailPanelAnggota) {
+      els.detailPanelAnggota.classList.toggle('active', onAnggota);
+      els.detailPanelAnggota.hidden = !onAnggota;
+    }
+    if (els.detailPanelProgram) {
+      els.detailPanelProgram.classList.toggle('active', !onAnggota);
+      els.detailPanelProgram.hidden = onAnggota;
+    }
   }
 
-  function showAnggota(bidangCode) {
+  function showDetail(bidangCode, segment) {
     state.currentBidangCode = bidangCode;
     const selected = getCurrentBidang();
-    if (!selected || !els.viewBidangGrid || !els.viewAnggota || !els.anggotaGrid) return;
+    if (!selected) return;
 
-    els.viewBidangGrid.classList.add('hidden');
-    els.viewProgram.classList.remove('active');
-    els.viewAnggota.classList.add('active');
-    els.anggotaTitle.textContent = selected.name;
-    els.anggotaCount.textContent = `${selected.members.length} Anggota`;
-    els.anggotaGrid.innerHTML = '';
+    if (els.viewBidangGrid) els.viewBidangGrid.classList.add('hidden');
+    if (els.viewDetail) els.viewDetail.classList.add('active');
 
-    if (!selected.members.length) {
-      els.anggotaGrid.innerHTML = '<div class="org-empty-state">Belum ada anggota di bidang ini.</div>';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    if (els.detailBidangTitle) els.detailBidangTitle.textContent = selected.name;
+    if (els.detailMemberCount) els.detailMemberCount.textContent = `${selected.members.length} anggota`;
+    if (els.detailProgramCount) els.detailProgramCount.textContent = `${selected.programs.length} program`;
 
-    selected.members.forEach((member) => {
-      const card = document.createElement('div');
-      card.className = 'anggota-card';
-      const initials = member.full_name.split(/\s+/).filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 3);
-      card.innerHTML = `
-        <div class="anggota-card-photo">
-          <img data-src="${escapeHtml(member.photo_url)}" alt="${escapeHtml(member.full_name)}" class="lazy-load" onerror="this.parentElement.classList.add('no-image');">
-          <div class="anggota-card-avatar">${escapeHtml(initials || '?')}</div>
-        </div>
-        <div class="anggota-card-info">
-          <div class="anggota-card-name">${escapeHtml(member.full_name)}</div>
-          <div class="anggota-card-role">${escapeHtml(member.role_title)}</div>
-          <div class="anggota-card-quote">${escapeHtml(member.quote || '')}</div>
-          <div class="anggota-card-indicator"><i class="fas fa-chevron-right"></i></div>
-        </div>
-      `;
-      card.addEventListener('click', () => openAnggotaDetail(member, selected));
-      els.anggotaGrid.appendChild(card);
-    });
-
-    setupLazyLoading();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function showProgram(bidangCode) {
-    state.currentBidangCode = bidangCode;
-    const selected = getCurrentBidang();
-    if (!selected || !els.viewBidangGrid || !els.viewProgram || !els.programList) return;
-
-    els.viewBidangGrid.classList.add('hidden');
-    els.viewAnggota.classList.remove('active');
-    els.viewProgram.classList.add('active');
-    els.programBidangTitle.textContent = selected.name;
-    els.programList.innerHTML = '';
-
-    if (!selected.programs.length) {
-      els.programList.innerHTML = '<div class="org-empty-state">Program kerja belum diisi.</div>';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    selected.programs.forEach((program) => {
-      const card = document.createElement('div');
-      card.className = 'program-card';
-      card.style.setProperty('--color-bidang', selected.color || '#4A7C5D');
-
-      const statusClass = program.status === 'terlaksana' ? 'status-terlaksana' : 'status-rencana';
-      const statusText = program.status === 'terlaksana'
-        ? 'Terlaksana'
-        : (program.status === 'rencana' ? 'Rencana' : 'Draft');
-      card.innerHTML = `
-        <div class="program-card-name">${escapeHtml(program.title)}</div>
-        <div class="program-card-desc">${escapeHtml(program.description || '-')}</div>
-        <div class="program-card-status ${statusClass}">${statusText}</div>
-      `;
-      els.programList.appendChild(card);
-    });
-
+    renderDetailMembers(selected);
+    renderPrograms(selected);
+    setDetailSegment(segment || 'anggota');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function backToBidang() {
-    els.viewAnggota.classList.remove('active');
-    els.viewProgram.classList.remove('active');
-    els.viewBidangGrid.classList.remove('hidden');
+    if (els.viewDetail) els.viewDetail.classList.remove('active');
+    if (els.viewBidangGrid) els.viewBidangGrid.classList.remove('hidden');
+    state.currentBidangCode = '';
+    state.currentSegment = 'anggota';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function openAnggotaDetail(member, bidang) {
     if (!els.anggotaDetailOverlay) return;
-    const initials = member.full_name.split(/\s+/).filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 3);
+    const initials = member.full_name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((item) => item[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 3);
 
     els.anggotaDetailHeader.innerHTML = '';
     els.anggotaDetailHeader.classList.remove('no-image');
@@ -293,39 +453,47 @@
   }
 
   function bindEvents() {
-    if (els.backFromAnggotaBtn) {
-      els.backFromAnggotaBtn.addEventListener('click', backToBidang);
+    if (els.backToGridBtn) {
+      els.backToGridBtn.addEventListener('click', backToBidang);
     }
-    if (els.backFromProgramBtn) {
-      els.backFromProgramBtn.addEventListener('click', backToBidang);
+
+    if (els.detailSegmentAnggota) {
+      els.detailSegmentAnggota.addEventListener('click', () => setDetailSegment('anggota'));
     }
+    if (els.detailSegmentProgram) {
+      els.detailSegmentProgram.addEventListener('click', () => setDetailSegment('program'));
+    }
+
     if (els.bidangGrid) {
       els.bidangGrid.addEventListener('click', (event) => {
         const btn = event.target.closest('button[data-action]');
         if (!btn) return;
         const bidangCode = String(btn.getAttribute('data-bidang') || '').trim();
-        const action = String(btn.getAttribute('data-action') || '');
+        const action = String(btn.getAttribute('data-action') || '').trim();
         if (!bidangCode) return;
-        if (action === 'anggota') showAnggota(bidangCode);
-        if (action === 'program') showProgram(bidangCode);
+        showDetail(bidangCode, action === 'program' ? 'program' : 'anggota');
       });
     }
 
     if (els.anggotaDetailOverlay) {
-      els.anggotaDetailOverlay.addEventListener('click', (e) => {
-        if (e.target === els.anggotaDetailOverlay) closeAnggotaDetail();
+      els.anggotaDetailOverlay.addEventListener('click', (event) => {
+        if (event.target === els.anggotaDetailOverlay) closeAnggotaDetail();
       });
     }
     if (els.anggotaDetailCard) {
-      els.anggotaDetailCard.addEventListener('click', (e) => e.stopPropagation());
+      els.anggotaDetailCard.addEventListener('click', (event) => event.stopPropagation());
     }
     if (els.closeAnggotaDetailBtn) {
       els.closeAnggotaDetailBtn.addEventListener('click', closeAnggotaDetail);
     }
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) {
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) {
         closeAnggotaDetail();
+        return;
+      }
+      if (event.key === 'Escape' && els.viewDetail?.classList.contains('active')) {
+        backToBidang();
       }
     });
   }
@@ -334,15 +502,19 @@
     els.loadingOverlay = byId('loading-overlay');
     els.bidangGrid = byId('bidangGrid');
     els.viewBidangGrid = byId('viewBidangGrid');
-    els.viewAnggota = byId('viewAnggota');
-    els.viewProgram = byId('viewProgram');
-    els.anggotaGrid = byId('anggotaGrid');
-    els.anggotaTitle = byId('anggotaTitle');
-    els.anggotaCount = byId('anggotaCount');
+    els.viewDetail = byId('viewDetail');
+    els.backToGridBtn = byId('backToGridBtn');
+    els.detailBidangTitle = byId('detailBidangTitle');
+    els.detailMemberCount = byId('detailMemberCount');
+    els.detailProgramCount = byId('detailProgramCount');
+    els.detailSegmentAnggota = byId('detailSegmentAnggota');
+    els.detailSegmentProgram = byId('detailSegmentProgram');
+    els.detailPanelAnggota = byId('detailPanelAnggota');
+    els.detailPanelProgram = byId('detailPanelProgram');
+    els.leadershipSection = byId('leadershipSection');
+    els.membersSection = byId('membersSection');
     els.programList = byId('programList');
-    els.programBidangTitle = byId('programBidangTitle');
-    els.backFromAnggotaBtn = byId('backFromAnggotaBtn');
-    els.backFromProgramBtn = byId('backFromProgramBtn');
+
     els.anggotaDetailOverlay = byId('anggotaDetailOverlay');
     els.anggotaDetailCard = byId('anggotaDetailCard');
     els.closeAnggotaDetailBtn = byId('closeAnggotaDetailBtn');

@@ -4742,4 +4742,527 @@ body.quiz-active .premium-fab-container {
     opacity: 1;
 }
 
+/* ==================== Struktur Organisasi Redesign v2 ==================== */
+.page-struktur .page-subtitle {
+    color: #5f6763;
+    font-size: 15px;
+    margin-bottom: 28px;
+    font-weight: 500;
+}
+
+.page-struktur #viewBidangGrid {
+    display: block;
+}
+
+.page-struktur #viewBidangGrid.hidden {
+    display: none;
+}
+
+.page-struktur #viewDetail {
+    display: none;
+    background: #ffffff;
+    border: 1px solid rgba(39, 70, 52, 0.12);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 12px 30px rgba(21, 42, 31, 0.08);
+    margin-bottom: 36px;
+}
+
+.page-struktur #viewDetail.active {
+    display: block;
+}
+
+.page-struktur .bidang-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-bottom: 36px;
+}
+
+.page-struktur .bidang-card {
+    background: #ffffff;
+    border: 1px solid rgba(39, 70, 52, 0.12);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 8px 24px rgba(26, 52, 39, 0.08);
+}
+
+.page-struktur .bidang-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(39, 70, 52, 0.2);
+    box-shadow: 0 14px 32px rgba(26, 52, 39, 0.12);
+}
+
+.page-struktur .bidang-card:active {
+    transform: translateY(-1px);
+}
+
+.page-struktur .bidang-card-header {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #eef3ef;
+}
+
+.page-struktur .bidang-card-header img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.page-struktur .bidang-card-content {
+    padding: 14px 14px 12px;
+}
+
+.page-struktur .bidang-card-name {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #172019;
+}
+
+.page-struktur .bidang-card-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #5f6763;
+}
+
+.page-struktur .bidang-card-actions {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.page-struktur .btn-card {
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-struktur .btn-card-anggota {
+    background: #f3f7f4;
+    color: #214d37;
+    border-color: rgba(33, 77, 55, 0.18);
+}
+
+.page-struktur .btn-card-anggota:hover {
+    background: #eaf2ed;
+}
+
+.page-struktur .btn-card-program {
+    background: #214d37;
+    color: #ffffff;
+    border-color: #214d37;
+}
+
+.page-struktur .btn-card-program:hover {
+    background: #1b402e;
+}
+
+.page-struktur .detail-header {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.page-struktur .back-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(33, 77, 55, 0.18);
+    background: #f2f6f3;
+    color: #214d37;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.page-struktur .detail-header-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.page-struktur .detail-title {
+    font-size: 26px;
+    line-height: 1.2;
+    color: #142018;
+    font-weight: 750;
+    letter-spacing: -0.3px;
+}
+
+.page-struktur .detail-meta {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.page-struktur .detail-meta span {
+    font-size: 12px;
+    color: #4e5a53;
+    background: #f2f6f3;
+    border: 1px solid rgba(33, 77, 55, 0.14);
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.page-struktur .detail-segment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: #eef3ef;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(33, 77, 55, 0.1);
+    margin-bottom: 18px;
+}
+
+.page-struktur .segment-btn {
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #3e5347;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-struktur .segment-btn.active {
+    background: #ffffff;
+    color: #1d4a34;
+    border-color: rgba(29, 74, 52, 0.16);
+    box-shadow: 0 3px 8px rgba(27, 53, 40, 0.08);
+}
+
+.page-struktur .detail-panel {
+    display: none;
+}
+
+.page-struktur .detail-panel.active {
+    display: block;
+}
+
+.page-struktur .hierarchy-section {
+    margin-bottom: 18px;
+}
+
+.page-struktur .hierarchy-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.page-struktur .hierarchy-title {
+    font-size: 18px;
+    color: #142018;
+    font-weight: 700;
+}
+
+.page-struktur .hierarchy-meta {
+    font-size: 12px;
+    color: #6b726e;
+    font-weight: 600;
+}
+
+.page-struktur .anggota-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.page-struktur .anggota-card {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(30, 62, 45, 0.13);
+    background: #ffffff;
+    box-shadow: 0 5px 16px rgba(22, 45, 34, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.page-struktur .anggota-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 9px 22px rgba(22, 45, 34, 0.12);
+    border-color: rgba(30, 62, 45, 0.2);
+}
+
+.page-struktur .anggota-card.is-leadership {
+    border-color: rgba(30, 93, 63, 0.24);
+    box-shadow: 0 9px 22px rgba(19, 59, 41, 0.14);
+}
+
+.page-struktur .anggota-card-photo {
+    width: 96px;
+    height: 116px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(140deg, #2f6a4b 0%, #1f4f38 100%);
+    position: relative;
+}
+
+.page-struktur .anggota-card-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.page-struktur .anggota-card-photo.no-image img {
+    display: none;
+}
+
+.page-struktur .anggota-card-avatar {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 30px;
+    font-weight: 700;
+    opacity: 0;
+}
+
+.page-struktur .anggota-card-photo.no-image .anggota-card-avatar {
+    opacity: 1;
+}
+
+.page-struktur .anggota-card-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.page-struktur .anggota-card-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #15221a;
+    line-height: 1.25;
+}
+
+.page-struktur .anggota-card-role {
+    margin-top: 6px;
+    width: fit-content;
+    max-width: 100%;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1f5b3f;
+    background: #edf5f0;
+    border: 1px solid rgba(31, 91, 63, 0.16);
+    border-radius: 8px;
+    padding: 4px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.page-struktur .anggota-card.is-leadership .anggota-card-role {
+    background: #e6f2eb;
+    border-color: rgba(24, 92, 60, 0.26);
+}
+
+.page-struktur .anggota-card-quote {
+    margin-top: 8px;
+    color: #57625c;
+    font-size: 13px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.page-struktur .anggota-card-indicator {
+    margin-top: auto;
+    align-self: flex-end;
+    color: #24543c;
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+.page-struktur .program-list {
+    display: grid;
+    gap: 12px;
+}
+
+.page-struktur .program-card {
+    border: 1px solid rgba(30, 62, 45, 0.13);
+    border-left: 4px solid var(--color-bidang, #1f5b3f);
+    border-radius: 12px;
+    padding: 14px;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(21, 40, 31, 0.08);
+}
+
+.page-struktur .program-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.page-struktur .program-card-name {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #17241b;
+}
+
+.page-struktur .program-card-desc {
+    margin-top: 8px;
+    color: #596660;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.page-struktur .program-card-status {
+    flex-shrink: 0;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.page-struktur .program-card-status.status-draft {
+    color: #55615d;
+    background: #eff3f2;
+    border-color: #d5dfdc;
+}
+
+.page-struktur .program-card-status.status-rencana {
+    color: #8f6210;
+    background: #fff7e7;
+    border-color: #efd59b;
+}
+
+.page-struktur .program-card-status.status-terlaksana {
+    color: #1e744c;
+    background: #eaf7f1;
+    border-color: #b8dfcb;
+}
+
+.page-struktur .org-empty-state {
+    border: 1px dashed rgba(31, 91, 63, 0.32);
+    border-radius: 12px;
+    background: #fbfcfb;
+    padding: 16px;
+    color: #58655f;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.page-struktur .anggota-detail-card {
+    max-width: 420px;
+}
+
+.page-struktur .anggota-detail-content {
+    padding: 24px 20px 20px;
+}
+
+.page-struktur .btn-instagram {
+    min-height: 44px;
+}
+
+@media (min-width: 760px) {
+    .page-struktur .bidang-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .page-struktur .hierarchy-section.is-regular .anggota-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1140px) {
+    .page-struktur .bidang-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .page-struktur .main-container {
+        padding: 18px 14px;
+    }
+
+    .page-struktur #viewDetail {
+        border-radius: 16px;
+        padding: 14px;
+    }
+
+    .page-struktur .detail-title {
+        font-size: 22px;
+    }
+
+    .page-struktur .hierarchy-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-struktur .detail-title {
+        font-size: 20px;
+    }
+
+    .page-struktur .segment-btn {
+        font-size: 12px;
+        padding: 0 8px;
+    }
+
+    .page-struktur .anggota-card {
+        grid-template-columns: 88px minmax(0, 1fr);
+        padding: 9px;
+    }
+
+    .page-struktur .anggota-card-photo {
+        width: 88px;
+        height: 108px;
+    }
+
+    .page-struktur .anggota-card-name {
+        font-size: 15px;
+    }
+
+    .page-struktur .anggota-card-quote {
+        font-size: 12px;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+    }
+
+    .page-struktur .program-card {
+        padding: 12px;
+    }
+
+    .page-struktur .program-card-name {
+        font-size: 15px;
+    }
+
+    .page-struktur .program-card-desc {
+        font-size: 13px;
+    }
+}
+
 
