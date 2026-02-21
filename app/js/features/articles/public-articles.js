@@ -10,6 +10,10 @@ let activeRefs = null;
 let resizeHandlerBound = false;
 let currentMode = 'list';
 
+function getSharedRenderer() {
+    return window.ArticleRenderer || null;
+}
+
 function escapeHtml(value) {
     return String(value || '')
         .replace(/&/g, '&amp;')
@@ -58,8 +62,8 @@ function toAbsoluteUrl(raw) {
 
 function getArticlePath(article) {
     const slug = String(article?.slug || '').trim();
-    if (slug) return `articles.html?slug=${encodeURIComponent(slug)}`;
-    return `articles.html?id=${encodeURIComponent(article?.id || '')}`;
+    if (slug) return `/articles/${encodeURIComponent(slug)}`;
+    return `/articles?id=${encodeURIComponent(article?.id || '')}`;
 }
 
 function getArticleUrl(article) {
@@ -74,6 +78,10 @@ function getExcerptFromContent(content, maxChars = 180, fallback = '') {
 }
 
 function estimateReadMinutes(content) {
+    const renderer = getSharedRenderer();
+    if (renderer && typeof renderer.estimateReadMinutes === 'function') {
+        return renderer.estimateReadMinutes(content);
+    }
     const plain = stripHtml(content);
     const words = plain ? plain.split(/\s+/).filter(Boolean).length : 0;
     return Math.max(1, Math.ceil(words / 200));
@@ -160,7 +168,8 @@ function shouldRestoreListState() {
         const nav = performance.getEntriesByType('navigation')[0];
         const isBackForward = nav && nav.type === 'back_forward';
         const hasSavedState = sessionStorage.getItem(LIST_SCROLL_KEY) || sessionStorage.getItem(LIST_FOCUS_KEY);
-        const fromDetail = /articles\.html(\?|$)/.test(document.referrer || '') && (document.referrer || '').includes('?');
+        const referrer = document.referrer || '';
+        const fromDetail = /\/articles(\.html)?(\/|\?|$)/.test(referrer) && (referrer.includes('?') || /\/articles\/[^/?#]+/.test(referrer));
         return Boolean(hasSavedState) && (isBackForward || fromDetail);
     } catch {
         return false;
@@ -190,9 +199,9 @@ function restoreListStateIfAvailable(grid) {
 
 export function initPublicArticles() {
     activeRefs = collectRefs();
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    const slug = params.get('slug');
+    const route = getDetailRouteParams();
+    const id = route.id;
+    const slug = route.slug;
     const detailHost = activeRefs.detailContent || activeRefs.legacyDetailContent;
 
     if (!resizeHandlerBound) {
@@ -203,7 +212,7 @@ export function initPublicArticles() {
 
     if (activeRefs.backBtn && !activeRefs.backBtn.dataset.bound) {
         activeRefs.backBtn.dataset.bound = 'true';
-        activeRefs.backBtn.setAttribute('href', 'articles.html');
+        activeRefs.backBtn.setAttribute('href', '/articles');
         activeRefs.backBtn.addEventListener('click', () => cleanupDetailLifecycle());
     }
 
@@ -223,6 +232,20 @@ export function initPublicArticles() {
     if (detailHost) {
         setMode('detail');
         initDetailPage(id, slug);
+    }
+}
+
+function getDetailRouteParams() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const byQuery = params.get('slug');
+    if (id || byQuery) return { id, slug: byQuery };
+    const match = String(window.location.pathname || '').match(/^\/articles\/([^/?#]+)/i);
+    if (!match || !match[1]) return { id: '', slug: '' };
+    try {
+        return { id: '', slug: decodeURIComponent(match[1]) };
+    } catch {
+        return { id: '', slug: match[1] };
     }
 }
 
@@ -441,7 +464,7 @@ function initDetailPage(id, slug) {
             <p style="text-align:center; padding:40px;">
                 Artikel tidak ditemukan.
                 <br><br>
-                <a href="articles.html" class="more-articles-btn no-transition">Kembali ke daftar artikel</a>
+                <a href="/articles" class="more-articles-btn no-transition">Kembali ke daftar artikel</a>
             </p>
         `;
         return;
@@ -486,6 +509,11 @@ function initDetailPage(id, slug) {
 }
 
 function sanitizeArticle(html) {
+    const renderer = getSharedRenderer();
+    if (renderer && typeof renderer.sanitizeArticleHTML === 'function') {
+        return renderer.sanitizeArticleHTML(html, { removeHeadingOne: true });
+    }
+
     if (!html) return '';
     const input = String(html);
     if (typeof DOMParser === 'undefined') {
@@ -523,7 +551,7 @@ function syncPreferredArticleUrl(article) {
     const preferredPath = getArticlePath(article);
     const preferred = new URL(preferredPath, window.location.origin);
     const current = new URL(window.location.href);
-    if (preferred.search === current.search) return;
+    if (preferred.pathname === current.pathname && preferred.search === current.search) return;
     window.history.replaceState(window.history.state || {}, '', preferred.toString());
 }
 
@@ -534,68 +562,21 @@ function buildDetailDek(article) {
 }
 
 function renderDetail(container, article) {
-    const safeTitle = escapeHtml(article.title || 'Artikel');
-    const safeCategory = escapeHtml(article.category || 'Umum');
-    const safeAuthor = escapeHtml(article.author || 'Redaksi IPM Panawuan');
-    const dek = escapeHtml(buildDetailDek(article));
-    const publishedLong = formatDate(article.publish_date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const publishedShort = formatDate(article.publish_date, { day: 'numeric', month: 'short', year: 'numeric' });
-    const readMinutes = estimateReadMinutes(article.content);
-    const safeImage = sanitizeUrl(article.image, '');
-    const heroImage = safeImage ? `
-        <figure class="article-hero">
-            <img src="${escapeHtml(safeImage)}" alt="${safeTitle}" class="hero-img" loading="lazy" decoding="async">
-        </figure>
-    ` : '';
-
     const articleUrl = getArticleUrl(article);
-    window.__currentArticle = {
-        title: article.title || 'Artikel',
-        url: articleUrl
-    };
+    const renderer = getSharedRenderer();
+    let detailHtml = '';
 
-    container.innerHTML = `
-        <article class="article-detail fade-in" aria-labelledby="article-headline">
-            <header class="reading-hero">
-                <a href="articles.html" class="reading-back-link no-transition" id="reading-back-link" aria-label="Kembali ke daftar artikel">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Kembali ke daftar</span>
-                </a>
-                <p class="reading-kicker">${safeCategory}</p>
-                <h1 id="article-headline" class="detail-title" tabindex="-1">${safeTitle}</h1>
-                ${dek ? `<p class="detail-dek">${dek}</p>` : ''}
-                <div class="reading-byline" role="list" aria-label="Informasi artikel">
-                    <span class="byline-item" role="listitem"><i class="fas fa-user-edit" aria-hidden="true"></i>${safeAuthor}</span>
-                    <span class="byline-item" role="listitem"><i class="fas fa-calendar-alt" aria-hidden="true"></i><time datetime="${escapeHtml(toIsoDate(article.publish_date))}">${publishedLong}</time></span>
-                    <span class="byline-item" role="listitem"><i class="fas fa-clock" aria-hidden="true"></i>${readMinutes} menit baca</span>
-                </div>
-                ${heroImage}
-                <div class="reading-summary-meta">
-                    <span>${publishedShort}</span>
-                    <span>${readMinutes} menit</span>
-                </div>
-            </header>
-
-            <section class="reading-tools" id="reading-tools" role="region" aria-label="Alat bantu membaca">
-                <div class="reading-tools-status">
-                    <span id="reading-progress-label" aria-live="polite">0% dibaca</span>
-                    <span id="reading-remaining-label" aria-live="polite">Sisa ${readMinutes} menit</span>
-                </div>
-                <div class="reading-tools-actions">
-                    <button type="button" class="reading-tool-btn primary" data-share="native" aria-label="Bagikan artikel">Bagikan</button>
-                    <button type="button" class="reading-tool-btn" data-share="copy" aria-label="Salin tautan artikel">Salin link</button>
-                    <button type="button" class="reading-tool-btn" data-share="whatsapp" aria-label="Bagikan ke WhatsApp">WhatsApp</button>
-                </div>
-            </section>
-
-            <nav class="article-toc" id="article-toc" aria-label="Daftar isi artikel" hidden></nav>
-
-            <div class="article-divider"></div>
-
-            <div class="article-content-body pro-article" id="article-content-body">
-                ${article.content}
-            </div>
-
+    if (renderer && typeof renderer.buildArticleViewModel === 'function' && typeof renderer.renderArticleDetailHTML === 'function') {
+        const vm = renderer.buildArticleViewModel({ ...article, content: article.content }, { url: articleUrl });
+        const core = renderer.renderArticleDetailHTML(vm, {
+            includeBackLink: true,
+            backHref: '/articles',
+            showReadingTools: true,
+            showToc: true,
+            idPrefix: '',
+            articleClassName: 'article-detail fade-in'
+        });
+        const recommendationSection = `
             <section class="article-recommendations" aria-labelledby="rec-title">
                 <h2 class="rec-title" id="rec-title">Bacaan Berikutnya</h2>
                 <div id="article-recommendations" class="rec-grid">
@@ -604,10 +585,79 @@ function renderDetail(container, article) {
             </section>
 
             <div class="more-articles-wrap">
-                <a href="articles.html" id="more-articles-btn" class="more-articles-btn no-transition" aria-label="Kembali ke daftar artikel">Kembali ke daftar artikel</a>
+                <a href="/articles" id="more-articles-btn" class="more-articles-btn no-transition" aria-label="Kembali ke daftar artikel">Kembali ke daftar artikel</a>
             </div>
-        </article>
-    `;
+        `;
+        detailHtml = core.replace('</article>', `${recommendationSection}</article>`);
+    } else {
+        const safeTitle = escapeHtml(article.title || 'Artikel');
+        const safeCategory = escapeHtml(article.category || 'Umum');
+        const safeAuthor = escapeHtml(article.author || 'Redaksi IPM Panawuan');
+        const dek = escapeHtml(buildDetailDek(article));
+        const publishedLong = formatDate(article.publish_date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const publishedShort = formatDate(article.publish_date, { day: 'numeric', month: 'short', year: 'numeric' });
+        const readMinutes = estimateReadMinutes(article.content);
+        const safeImage = sanitizeUrl(article.image, '');
+        const heroImage = safeImage ? `
+            <figure class="article-hero">
+                <img src="${escapeHtml(safeImage)}" alt="${safeTitle}" class="hero-img" loading="lazy" decoding="async">
+            </figure>
+        ` : '';
+        detailHtml = `
+            <article class="article-detail fade-in" aria-labelledby="article-headline">
+                <header class="reading-hero">
+                    <a href="/articles" class="reading-back-link no-transition" id="reading-back-link" aria-label="Kembali ke daftar artikel">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Kembali ke daftar</span>
+                    </a>
+                    <p class="reading-kicker">${safeCategory}</p>
+                    <h1 id="article-headline" class="detail-title" tabindex="-1">${safeTitle}</h1>
+                    ${dek ? `<p class="detail-dek">${dek}</p>` : ''}
+                    <div class="reading-byline" role="list" aria-label="Informasi artikel">
+                        <span class="byline-item" role="listitem"><i class="fas fa-user-edit" aria-hidden="true"></i>${safeAuthor}</span>
+                        <span class="byline-item" role="listitem"><i class="fas fa-calendar-alt" aria-hidden="true"></i><time datetime="${escapeHtml(toIsoDate(article.publish_date))}">${publishedLong}</time></span>
+                        <span class="byline-item" role="listitem"><i class="fas fa-clock" aria-hidden="true"></i>${readMinutes} menit baca</span>
+                    </div>
+                    ${heroImage}
+                    <div class="reading-summary-meta">
+                        <span>${publishedShort}</span>
+                        <span>${readMinutes} menit</span>
+                    </div>
+                </header>
+                <section class="reading-tools" id="reading-tools" role="region" aria-label="Alat bantu membaca">
+                    <div class="reading-tools-status">
+                        <span id="reading-progress-label" aria-live="polite">0% dibaca</span>
+                        <span id="reading-remaining-label" aria-live="polite">Sisa ${readMinutes} menit</span>
+                    </div>
+                    <div class="reading-tools-actions">
+                        <button type="button" class="reading-tool-btn primary" data-share="native" aria-label="Bagikan artikel">Bagikan</button>
+                        <button type="button" class="reading-tool-btn" data-share="copy" aria-label="Salin tautan artikel">Salin link</button>
+                        <button type="button" class="reading-tool-btn" data-share="whatsapp" aria-label="Bagikan ke WhatsApp">WhatsApp</button>
+                    </div>
+                </section>
+                <nav class="article-toc" id="article-toc" aria-label="Daftar isi artikel" hidden></nav>
+                <div class="article-divider"></div>
+                <div class="article-content-body pro-article" id="article-content-body">
+                    ${article.content}
+                </div>
+                <section class="article-recommendations" aria-labelledby="rec-title">
+                    <h2 class="rec-title" id="rec-title">Bacaan Berikutnya</h2>
+                    <div id="article-recommendations" class="rec-grid">
+                        ${getRecommendationSkeletonMarkup(3)}
+                    </div>
+                </section>
+                <div class="more-articles-wrap">
+                    <a href="/articles" id="more-articles-btn" class="more-articles-btn no-transition" aria-label="Kembali ke daftar artikel">Kembali ke daftar artikel</a>
+                </div>
+            </article>
+        `;
+    }
+
+    container.innerHTML = detailHtml;
+    window.__currentArticle = {
+        title: article.title || 'Artikel',
+        url: articleUrl
+    };
 
     const heroImg = container.querySelector('.hero-img');
     if (heroImg) {

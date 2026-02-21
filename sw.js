@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v15';
+const STATIC_CACHE = 'static-v18';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -12,6 +12,7 @@ const CDN_META_SUFFIX = '::meta';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/articles',
   '/articles.html',
   '/profile/',
   '/profile/index.html',
@@ -53,6 +54,7 @@ const STATIC_ASSETS = [
   '/app/js/core/install-header.js',
   '/app/js/core/toast.js',
   '/app/js/features/articles/public-articles.js',
+  '/app/js/features/articles/article-renderer-shared.js',
   '/app/js/features/materials/public-materials.js',
   '/app/js/features/quiz/quiz-react.js',
   '/app/js/features/quiz/quiz-react.js?v=22',
@@ -64,6 +66,7 @@ const STATIC_ASSETS = [
   '/scripts/login.js',
   '/scripts/register.js',
   '/manifest.json',
+  '/admin/editor.css',
   '/ipm%20(2).png',
   '/icons/icon-192.png',
   '/icons/icon-512.png'

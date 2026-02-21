@@ -44,7 +44,7 @@
             </a>
         </div>
         <div class="header-right-icons">
-            <a href="articles.html" class="header-icon" aria-label="Kembali ke Artikel">
+            <a href="/articles" class="header-icon" aria-label="Kembali ke Artikel">
                 <i class="fas fa-arrow-left"></i>
             </a>
             <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false"
@@ -61,7 +61,7 @@
             <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
             <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur
                     Organisasi</a></li>
-            <li><a href="articles.html" class="mobile-nav-link active"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="/articles" class="mobile-nav-link active"><i class="fas fa-newspaper"></i> Artikel</a></li>
             <li><a href="materi.html" class="mobile-nav-link"><i class="fas fa-book"></i> Materi</a></li>
             <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
             <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
@@ -111,7 +111,7 @@
     <nav class="bottom-nav">
         <div class="bottom-nav-inner">
             <a href="index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
-            <a href="articles.html" class="active"><i class="fas fa-newspaper"></i><span>Artikel</span></a>
+            <a href="/articles" class="active"><i class="fas fa-newspaper"></i><span>Artikel</span></a>
             <a href="quiz.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
             <a href="help.html"><i class="fas fa-circle-question"></i><span>Bantuan</span></a>
         </div>
@@ -121,6 +121,7 @@
     <script src="/app/js/core/main.js?v=12" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>
+    <script src="/app/js/features/articles/article-renderer-shared.js" defer></script>
     <script type="module">
         import { initPublicArticles } from '/app/js/features/articles/public-articles.js';
         document.addEventListener('DOMContentLoaded', () => {

@@ -95,10 +95,26 @@
     const ARTICLE_SEEN_KEY = 'ipm_last_seen_article_ts';
     const getSession = () => sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
     const getUsername = () => sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '';
+    function isArticlesPagePath(pathname) {
+        const path = String(pathname || '');
+        return path.includes('articles.html') || path === '/articles' || path.startsWith('/articles/');
+    }
+
     function getArticleHref(article) {
         const slug = String(article?.slug || '').trim();
-        if (slug) return `articles.html?slug=${encodeURIComponent(slug)}`;
-        return `articles.html?id=${encodeURIComponent(article?.id || '')}`;
+        if (slug) return `/articles/${encodeURIComponent(slug)}`;
+        return `/articles?id=${encodeURIComponent(article?.id || '')}`;
+    }
+
+    function getArticleSlugFromPath(pathname) {
+        const path = String(pathname || '');
+        const match = path.match(/^\/articles\/([^/?#]+)/i);
+        if (!match || !match[1]) return '';
+        try {
+            return decodeURIComponent(match[1]);
+        } catch {
+            return match[1];
+        }
     }
 
     if (headerRight && !document.getElementById('profile-header-btn')) {
@@ -499,10 +515,11 @@
         // Update last seen when opening article detail page
         try {
             const url = new URL(window.location.href);
-            const isArticleDetail = window.location.pathname.includes('articles.html') && (url.searchParams.get('id') || url.searchParams.get('slug'));
+            const slugFromPath = getArticleSlugFromPath(window.location.pathname);
+            const isArticleDetail = isArticlesPagePath(window.location.pathname) && (url.searchParams.get('id') || url.searchParams.get('slug') || slugFromPath);
             if (isArticleDetail) {
                 const id = url.searchParams.get('id');
-                const slug = url.searchParams.get('slug');
+                const slug = url.searchParams.get('slug') || slugFromPath;
                 fetch(`/api/articles?${id ? `id=${encodeURIComponent(id)}` : `slug=${encodeURIComponent(slug)}`}`)
                     .then(r => r.json())
                     .then(data => {
@@ -964,7 +981,7 @@
     // 2. Premium Floating Action Button (FAB)
     const activeDoc = window.location.pathname;
     const isPublicPage = activeDoc.includes('index.html') ||
-        activeDoc.includes('articles.html') ||
+        isArticlesPagePath(activeDoc) ||
         activeDoc.includes('quiz.html') ||
         activeDoc.includes('ranking.html') ||
         activeDoc.endsWith('/');

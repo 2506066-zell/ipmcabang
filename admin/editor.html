@@ -1,52 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-    <!DOCTYPE html>
-    <html lang="id">
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport"
-            content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <meta name="theme-color" content="#ffffff">
-        <title>Editor Artikel - Admin IPM</title>
-        <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-        <link rel="stylesheet" href="admin.css">
-        <link rel="stylesheet" href="/app/css/editorial.css">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
-        <style>
-            /* Specific overrides for standalone editor page */
-            body {
-                padding-top: 0 !important;
-                background: #f1f5f9;
-            }
-
-            .editor-page-wrapper {
-                display: flex;
-                flex-direction: column;
-                min-height: 100vh;
-                height: auto;
-            }
-
-            .editor-header {
-                position: sticky;
-                top: 0;
-                background: #ffffff;
-                z-index: 1000;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            }
-
-            .editor-scroll-area {
-                flex: 1;
-                padding: 0;
-                /* Reset for better control */
-                overflow: visible;
-            }
-        </style>
-    </head>
-
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <title>Editor Artikel - Admin IPM</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="/app/css/editorial.css">
+    <link rel="stylesheet" href="/app/css/article-enhancements.css">
+    <link rel="stylesheet" href="editor.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 <body class="page-editor">
     <div class="loading-overlay hidden" id="loading-overlay">
         <div class="loading-content">
@@ -57,53 +23,52 @@
         </div>
     </div>
 
-    <!-- Preview Modal -->
-    <div id="previewModal">
-        <button class="close-preview" id="closePreviewBtn">
-            <i class="fas fa-times"></i>
-        </button>
-        <div class="preview-container">
-            <article id="previewContent" class="pro-article"></article>
-        </div>
-    </div>
-
     <div class="editor-page-wrapper">
-        <div class="editor-header">
+        <header class="editor-header">
             <div class="editor-header-left">
                 <a href="admin.html#articles" class="btn btn-ghost" title="Kembali">
                     <i class="fas fa-arrow-left"></i>
                 </a>
-                <span class="editor-status" id="editor-status">Siap menulis...</span>
+                <div class="editor-status-stack">
+                    <span class="editor-status" id="editor-status">Siap menulis...</span>
+                    <small id="editor-autosave" class="editor-autosave">Belum ada draft</small>
+                </div>
             </div>
             <div class="editor-header-right">
-                <button type="button" class="btn btn-secondary" id="previewBtn" style="margin-right: 8px;">
-                    <i class="fas fa-eye"></i> Pratinjau
+                <button type="button" class="btn btn-secondary" id="previewBtn">
+                    <i class="fas fa-eye"></i> Preview
                 </button>
                 <button type="submit" form="article-form" class="btn btn-primary" id="art-save-btn">
                     <i class="fas fa-paper-plane"></i> Publikasikan
                 </button>
             </div>
-        </div>
+        </header>
 
         <form id="article-form" class="editor-form">
             <input type="hidden" id="art-id">
+            <input type="hidden" id="art-image-base64">
+            <textarea id="art-content" style="display:none"></textarea>
 
-            <div class="editor-scroll-area">
-                <div class="editor-container">
-                    <!-- Main Title Section -->
-                    <div class="editor-title-container" style="max-width: 800px; margin: 0 auto; padding: 20px 24px 0;">
+            <div id="editor-mobile-tabs" class="editor-mobile-tabs" role="tablist" aria-label="Mode editor">
+                <button type="button" class="editor-tab-btn active" data-pane="write" role="tab" aria-selected="true">Tulis</button>
+                <button type="button" class="editor-tab-btn" data-pane="preview" role="tab" aria-selected="false">Preview</button>
+            </div>
+
+            <div id="editor-split-layout" class="editor-split-layout">
+                <section id="editor-write-pane" class="editor-pane editor-pane-write">
+                    <div class="editor-block">
+                        <label for="art-title" class="editor-label">Judul</label>
                         <input type="text" id="art-title" class="editor-title-input" required
                             placeholder="Tulis judul artikel di sini..." autofocus>
                     </div>
 
-                    <!-- Meta Info Row -->
-                    <div class="editor-meta-row" style="max-width: 800px; margin: 0 auto; padding: 0 24px 20px;">
+                    <div class="editor-meta-row">
                         <div class="editor-meta-item">
-                            <i class="fas fa-user-edit"></i>
+                            <label for="art-author" class="editor-label">Penulis</label>
                             <input type="text" id="art-author" placeholder="Nama Penulis" required>
                         </div>
                         <div class="editor-meta-item">
-                            <i class="fas fa-tag"></i>
+                            <label for="art-category" class="editor-label">Kategori</label>
                             <select id="art-category">
                                 <option value="Umum">Umum</option>
                                 <option value="Kader">Kader</option>
@@ -113,116 +78,121 @@
                             </select>
                         </div>
                         <div class="editor-meta-item">
-                            <i class="fas fa-calendar-alt"></i>
+                            <label for="art-date" class="editor-label">Tanggal Publish</label>
                             <input type="datetime-local" id="art-date">
                         </div>
                     </div>
 
-                    <!-- Image Upload Section -->
-                    <div class="editor-image-section" style="max-width: 800px; margin: 0 auto; padding: 0 24px 20px;">
+                    <div class="editor-image-section">
+                        <label for="art-image-file" class="editor-label">Gambar Sampul</label>
                         <div class="image-upload-wrapper">
                             <label for="art-image-file" class="image-upload-label">
                                 <i class="fas fa-image"></i>
-                                <span>Tambahkan Gambar Sampul</span>
+                                <span>Tambah gambar sampul</span>
                             </label>
                             <input type="file" id="art-image-file" accept="image/png, image/jpeg" style="display:none">
-                            <input type="hidden" id="art-image-base64">
                         </div>
                         <div id="art-image-preview" class="editor-image-preview" style="display:none">
                             <img src="" alt="Preview">
-                            <button type="button" class="remove-image-btn" id="remove-art-image">
+                            <button type="button" class="remove-image-btn" id="remove-art-image" aria-label="Hapus gambar sampul">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Unified Content Editor -->
-                    <div class="editor-writing-area" style="padding: 0;">
-                        <!-- Minimal Toolbar -->
-                        <div class="editor-toolbar" id="editor-toolbar"
-                            style="position: sticky; top: 64px; border-radius: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: #fff; z-index: 999; justify-content: center; padding: 10px;">
+                    <div class="editor-writing-area">
+                        <div id="editor-toolbar" class="editor-toolbar" aria-label="Toolbar format artikel">
                             <div class="tool-group">
-                                <button type="button" class="tool-btn" data-command="bold" title="Bold">
+                                <label for="editor-block-style" class="tool-label">Style</label>
+                                <select id="editor-block-style" class="tool-select">
+                                    <option value="p">Paragraf</option>
+                                    <option value="h2">Heading 2</option>
+                                    <option value="h3">Heading 3</option>
+                                </select>
+                            </div>
+                            <div class="tool-divider"></div>
+                            <div class="tool-group">
+                                <button type="button" class="tool-btn" data-command="bold" title="Bold (Ctrl/Cmd+B)">
                                     <i class="fas fa-bold"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-command="italic" title="Italic">
+                                <button type="button" class="tool-btn" data-command="italic" title="Italic (Ctrl/Cmd+I)">
                                     <i class="fas fa-italic"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-command="underline" title="Underline">
-                                    <i class="fas fa-underline"></i>
-                                </button>
-                                <button type="button" class="tool-btn" data-command="strikeThrough"
-                                    title="Strikethrough">
-                                    <i class="fas fa-strikethrough"></i>
-                                </button>
                             </div>
                             <div class="tool-divider"></div>
                             <div class="tool-group">
-                                <button type="button" class="tool-btn" data-command="justifyLeft" title="Align Left">
-                                    <i class="fas fa-align-left"></i>
-                                </button>
-                                <button type="button" class="tool-btn" data-command="justifyCenter"
-                                    title="Align Center">
-                                    <i class="fas fa-align-center"></i>
-                                </button>
-                                <button type="button" class="tool-btn" data-command="justifyRight" title="Align Right">
-                                    <i class="fas fa-align-right"></i>
-                                </button>
-                                <button type="button" class="tool-btn" data-command="justifyFull" title="Justify">
-                                    <i class="fas fa-align-justify"></i>
-                                </button>
-                            </div>
-                            <div class="tool-divider"></div>
-                            <div class="tool-group">
-                                <button type="button" class="tool-btn" data-command="insertOrderedList"
-                                    title="Ordered List">
+                                <button type="button" class="tool-btn" data-command="insertOrderedList" title="Ordered List">
                                     <i class="fas fa-list-ol"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-command="insertUnorderedList"
-                                    title="Unordered List">
+                                <button type="button" class="tool-btn" data-command="insertUnorderedList" title="Unordered List">
                                     <i class="fas fa-list-ul"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-command="formatBlock"
-                                    data-value="blockquote" title="Blockquote">
+                                <button type="button" class="tool-btn" data-command="formatBlock" data-value="blockquote" title="Blockquote">
                                     <i class="fas fa-quote-left"></i>
                                 </button>
                             </div>
                             <div class="tool-divider"></div>
                             <div class="tool-group">
-                                <button type="button" class="tool-btn" data-action="link" title="Insert Link">
+                                <button type="button" class="tool-btn" data-action="link" title="Insert Link (Ctrl/Cmd+K)">
                                     <i class="fas fa-link"></i>
                                 </button>
-                                <button type="button" class="tool-btn" data-action="image" title="Insert Image">
+                                <button type="button" class="tool-btn" data-action="image" title="Insert Inline Image">
                                     <i class="fas fa-image"></i>
                                 </button>
                                 <input type="file" id="editor-inline-image" accept="image/*" style="display:none">
                             </div>
                         </div>
 
-                        <!-- Writing Canvas -->
-                        <div class="editor-wrapper">
-                            <div id="art-editor" class="pro-article editor-surface" contenteditable="true"
-                                placeholder="Mulai menulis artikel di sini..."></div>
+                        <div id="editor-link-popover" class="editor-popover" hidden>
+                            <label for="editor-link-input" class="editor-popover-label">Tautan</label>
+                            <input type="url" id="editor-link-input" placeholder="https://contoh.com">
+                            <div class="editor-popover-actions">
+                                <button type="button" class="btn btn-secondary btn-sm" id="editor-link-cancel">Batal</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="editor-link-apply">Terapkan</button>
+                            </div>
                         </div>
 
-                        <!-- Hidden textarea for backward compatibility/sync -->
-                        <textarea id="art-content" style="display:none"></textarea>
+                        <div id="editor-image-popover" class="editor-popover" hidden>
+                            <label for="editor-image-input" class="editor-popover-label">URL Gambar</label>
+                            <input type="url" id="editor-image-input" placeholder="https://contoh.com/gambar.jpg">
+                            <div class="editor-popover-actions">
+                                <button type="button" class="btn btn-secondary btn-sm" id="editor-image-upload">Upload File</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="editor-image-apply">Sisipkan</button>
+                            </div>
+                        </div>
+
+                        <div class="editor-wrapper">
+                            <div id="art-editor" class="pro-article editor-surface" contenteditable="true"
+                                placeholder="Mulai menulis artikel di sini..." aria-label="Editor konten artikel"></div>
+                        </div>
+
+                        <section id="article-lint-panel" class="article-lint-panel" aria-live="polite">
+                            <h3 class="article-lint-title">Kualitas Artikel</h3>
+                            <ul id="article-lint-list" class="article-lint-list"></ul>
+                        </section>
                     </div>
 
-                    <div class="editor-footer-actions"
-                        style="max-width: 800px; margin: 0 auto; padding: 20px 24px 40px;">
+                    <div class="editor-footer-actions">
                         <button type="button" class="btn btn-secondary" id="art-cancel-btn">Batal</button>
                         <button type="submit" form="article-form" class="btn btn-primary" id="art-save-btn-bottom">
                             <i class="fas fa-paper-plane"></i> Publikasikan
                         </button>
                     </div>
-                </div>
+                </section>
+
+                <aside id="editor-preview-pane" class="editor-pane editor-pane-preview">
+                    <div class="preview-pane-header">
+                        <h2>Preview Publish</h2>
+                        <p>Tampilan ini sama dengan halaman artikel publik.</p>
+                    </div>
+                    <div id="editor-live-preview" class="editor-live-preview" aria-live="polite"></div>
+                </aside>
             </div>
         </form>
     </div>
 
     <script src="../scripts/toast.js"></script>
+    <script src="/app/js/features/articles/article-renderer-shared.js"></script>
     <script src="editor.js" defer></script>
 </body>
-
 </html>
