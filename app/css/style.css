@@ -3560,6 +3560,16 @@ body.page-quiz {
     margin-bottom: 40px;
 }
 
+.page-struktur .org-empty-state {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px dashed rgba(74, 124, 93, 0.35);
+    padding: 16px;
+    color: #3f4d46;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .page-struktur .program-card {
     background: white;
     border-radius: 14px;

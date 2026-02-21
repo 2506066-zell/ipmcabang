@@ -443,6 +443,11 @@
             label: 'Content Ops',
             title: 'Manajemen Materi',
             desc: 'Kelola materi belajar agar rapi dan mudah ditemukan.'
+        },
+        organization: {
+            label: 'Content Ops',
+            title: 'Struktur Organisasi',
+            desc: 'Kelola anggota dan program kerja tiap bidang dari satu panel admin.'
         }
     };
 
@@ -479,7 +484,7 @@
         });
 
         // Hide all tabs
-        ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules', 'articles', 'materials'].forEach(t => {
+        ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
@@ -534,6 +539,25 @@
                     state.materialsInitialized = true;
                 }
             }).catch(err => console.error('[Admin] Failed to load materials module:', err));
+        }
+
+        if (tabName === 'organization') {
+            console.log('[Admin] Loading organization module...');
+            import(`./organization.js?v=${MODULE_VER}`).then(mod => {
+                if (!state.organizationInitialized) {
+                    mod.initOrganization(state, els, {
+                        apiGetVercel,
+                        apiAdminVercel,
+                        fetchJsonWithRetry,
+                        debounce,
+                        escapeHtml,
+                        showLoader,
+                        hideLoader,
+                        setStatus
+                    });
+                    state.organizationInitialized = true;
+                }
+            }).catch(err => console.error('[Admin] Failed to load organization module:', err));
         }
     };
 

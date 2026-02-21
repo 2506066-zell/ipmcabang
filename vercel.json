@@ -119,6 +119,14 @@
       "destination": "/api/index?segment=admin"
     },
     {
+      "source": "/api/admin/organization",
+      "destination": "/api/index?segment=admin/organization"
+    },
+    {
+      "source": "/api/organization",
+      "destination": "/api/index?segment=organization"
+    },
+    {
       "source": "/api/articles",
       "destination": "/api/index?segment=articles"
     },

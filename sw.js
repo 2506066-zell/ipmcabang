@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v23';
+const STATIC_CACHE = 'static-v24';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -61,6 +61,7 @@ const STATIC_ASSETS = [
   '/app/js/pages/quiz.js',
   '/app/js/pages/quiz.js?v=5',
   '/app/js/pages/ranking.js',
+  '/app/js/pages/struktur-organisasi.js',
   '/quiz.js',
   '/ranking.js',
   '/scripts/login.js',
@@ -110,7 +111,7 @@ function shouldCacheApi(url, response) {
   if (!response || !response.ok) return false;
   if (url.pathname.startsWith('/api/auth')) return false;
   if (url.pathname.startsWith('/api/admin')) return false;
-  const allow = ['/api/articles', '/api/materials', '/api/events'];
+  const allow = ['/api/articles', '/api/materials', '/api/events', '/api/organization'];
   return allow.some((path) => url.pathname.startsWith(path));
 }
 

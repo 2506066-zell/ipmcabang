@@ -1,6 +1,6 @@
 # Panduan Admin Sistem Kuis IPM
 
-Dokumen ini menjelaskan cara menggunakan fitur administrasi untuk mengelola kuis, user, jadwal, dan melihat log aktivitas.
+Dokumen ini menjelaskan cara menggunakan fitur administrasi untuk mengelola kuis, konten, struktur organisasi, user, jadwal, dan log aktivitas.
 
 ## 1. Akses Admin
 1. Buka halaman `/admin/admin.html` (atau klik ikon gear di header kuis).
@@ -14,6 +14,7 @@ Setelah login, Anda akan melihat Sidebar navigasi di sebelah kiri (desktop) atau
 - **Hasil Kuis**: Melihat riwayat pengerjaan kuis oleh user.
 - **Manajemen User**: Pengelolaan data pengguna lengkap.
 - **Jadwal & Setting**: Pengaturan jadwal kuis dan reset data.
+- **Struktur Organisasi**: Kelola anggota dan program kerja per bidang.
 - **Activity Logs**: Catatan audit trail sistem.
 
 Fitur tambahan:
@@ -53,7 +54,20 @@ Fitur tambahan:
   - Reset global set
 - Gunakan tab ini untuk audit trail jika terjadi perubahan data yang tidak diinginkan.
 
-## 7. Troubleshooting
+## 7. Struktur Organisasi (Tab Struktur Organisasi)
+- **Filter Bidang**: Pilih bidang untuk melihat data operasional yang akan diedit.
+- **CRUD Anggota**:
+  - Isi form anggota, lalu klik `Simpan Anggota`.
+  - Klik `Edit` untuk memuat data anggota ke form.
+  - Klik `Hapus` untuk menghapus anggota dari bidang.
+- **Foto Anggota**:
+  - Bisa isi URL gambar manual, atau upload file langsung (endpoint `/api/upload`).
+  - Jika upload dipilih, URL hasil upload otomatis dipakai saat simpan.
+- **CRUD Program Kerja**:
+  - Isi judul, deskripsi, status (`draft/rencana/terlaksana`), dan urutan.
+  - Klik `Edit`/`Hapus` pada list program untuk perubahan cepat.
+
+## 8. Troubleshooting
 - Jika data tidak muncul, klik tombol "Refresh" di pojok kanan atas tab masing-masing.
 - Jika terjadi error "Unauthorized", coba logout dan login kembali.
 - Pastikan koneksi internet stabil karena sistem menggunakan database cloud.

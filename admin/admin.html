@@ -52,6 +52,9 @@
                 <button class="nav-item" data-tab="materials">
                     <i class="fas fa-book"></i> <span>Manajemen Materi</span>
                 </button>
+                <button class="nav-item" data-tab="organization">
+                    <i class="fas fa-sitemap"></i> <span>Struktur Organisasi</span>
+                </button>
 
                 <p class="nav-group-title">User &amp; System</p>
                 <button class="nav-item" data-tab="users">
@@ -514,6 +517,105 @@
                         <button class="btn btn-secondary" id="mat-next">Next</button>
                     </div>
                 </div>
+
+                <div id="tab-organization" class="hidden">
+                    <section class="section-intro">
+                        <h3>Content Ops: Struktur Organisasi</h3>
+                        <p>Halaman ini untuk mengatur anggota dan program kerja per bidang secara terpusat tanpa edit manual HTML.</p>
+                    </section>
+                    <section class="card section-card">
+                        <div class="toolbar-row toolbar-spread">
+                            <div class="toolbar-row toolbar-grow">
+                                <select id="org-bidang-filter" class="toolbar-select"></select>
+                                <button class="btn btn-secondary" id="org-refresh-btn">
+                                    <i class="fas fa-rotate"></i> Muat Ulang
+                                </button>
+                            </div>
+                            <span id="org-status" class="small muted"></span>
+                        </div>
+                    </section>
+                    <div class="organization-grid mt-20">
+                        <section class="card section-card">
+                            <h3 class="section-card-title">Anggota Bidang</h3>
+                            <form id="org-member-form" class="org-form-grid">
+                                <input type="hidden" id="org-member-id">
+                                <div class="field">
+                                    <label for="org-member-name">Nama Anggota</label>
+                                    <input type="text" id="org-member-name" placeholder="Nama lengkap" required>
+                                </div>
+                                <div class="field">
+                                    <label for="org-member-role">Role/Posisi</label>
+                                    <input type="text" id="org-member-role" placeholder="Ketua Bidang / Anggota" required>
+                                </div>
+                                <div class="field">
+                                    <label for="org-member-quote">Quote (Opsional)</label>
+                                    <input type="text" id="org-member-quote" placeholder="Quote singkat">
+                                </div>
+                                <div class="field">
+                                    <label for="org-member-instagram">Instagram URL (Opsional)</label>
+                                    <input type="url" id="org-member-instagram" placeholder="https://www.instagram.com/...">
+                                </div>
+                                <div class="field">
+                                    <label for="org-member-photo-url">Foto URL (Opsional)</label>
+                                    <input type="url" id="org-member-photo-url" placeholder="https://... atau /images/...">
+                                </div>
+                                <div class="field">
+                                    <label for="org-member-photo-file">Upload Foto (Opsional)</label>
+                                    <input type="file" id="org-member-photo-file" accept="image/*">
+                                </div>
+                                <div class="field">
+                                    <label for="org-member-sort">Urutan</label>
+                                    <input type="number" id="org-member-sort" min="1" placeholder="1">
+                                </div>
+                                <div class="toolbar-row">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-floppy-disk"></i> Simpan Anggota
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="org-member-cancel-btn">
+                                        Reset
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="org-members-list" class="list-container mt-16"></div>
+                        </section>
+
+                        <section class="card section-card">
+                            <h3 class="section-card-title">Program Kerja Bidang</h3>
+                            <form id="org-program-form" class="org-form-grid">
+                                <input type="hidden" id="org-program-id">
+                                <div class="field">
+                                    <label for="org-program-title">Judul Program</label>
+                                    <input type="text" id="org-program-title" placeholder="Judul program kerja" required>
+                                </div>
+                                <div class="field">
+                                    <label for="org-program-status">Status</label>
+                                    <select id="org-program-status">
+                                        <option value="draft">Draft</option>
+                                        <option value="rencana">Rencana</option>
+                                        <option value="terlaksana">Terlaksana</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="org-program-description">Deskripsi</label>
+                                    <textarea id="org-program-description" rows="3" placeholder="Deskripsi program"></textarea>
+                                </div>
+                                <div class="field">
+                                    <label for="org-program-sort">Urutan</label>
+                                    <input type="number" id="org-program-sort" min="1" placeholder="1">
+                                </div>
+                                <div class="toolbar-row">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-floppy-disk"></i> Simpan Program
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="org-program-cancel-btn">
+                                        Reset
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="org-programs-list" class="list-container mt-16"></div>
+                        </section>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
@@ -543,6 +645,10 @@
             <i class="fas fa-book"></i>
             <span>Materi</span>
         </button>
+        <button class="nav-item" data-tab="organization">
+            <i class="fas fa-sitemap"></i>
+            <span>Struktur</span>
+        </button>
         <button class="nav-item" data-tab="users">
             <i class="fas fa-users"></i>
             <span>Comms</span>
@@ -570,6 +676,10 @@
                 <button class="btn btn-secondary menu-grid-btn"
                     onclick="activateTab('results'); closeMenuModal();">
                     <i class="fas fa-chart-bar menu-grid-icon"></i> Hasil Kuis
+                </button>
+                <button class="btn btn-secondary menu-grid-btn"
+                    onclick="activateTab('organization'); closeMenuModal();">
+                    <i class="fas fa-sitemap menu-grid-icon"></i> Struktur Organisasi
                 </button>
                 <button class="btn btn-secondary menu-grid-btn"
                     onclick="activateTab('logs'); closeMenuModal();">

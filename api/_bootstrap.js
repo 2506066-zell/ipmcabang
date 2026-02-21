@@ -1,4 +1,104 @@
 const { query } = require('./_db');
+const {
+  DEFAULT_ORG_BIDANG,
+  DEFAULT_ORG_MEMBERS,
+  DEFAULT_ORG_PROGRAMS
+} = require('./_organization_seed');
+
+function normalizeMediaPath(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.endsWith('/')) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('/')) return raw;
+  return `/${raw.replace(/^\.?\//, '')}`;
+}
+
+function normalizeStatus(value) {
+  const s = String(value || '').trim().toLowerCase();
+  if (s === 'rencana' || s === 'terlaksana' || s === 'draft') return s;
+  return 'draft';
+}
+
+async function seedOrganizationData() {
+  for (let i = 0; i < DEFAULT_ORG_BIDANG.length; i++) {
+    const b = DEFAULT_ORG_BIDANG[i] || {};
+    await query`
+      INSERT INTO org_bidang (code, name, color, image_url, sort_order, is_core, is_active)
+      VALUES (${String(b.id || '').trim()}, ${String(b.name || '').trim()}, ${String(b.color || '#4A7C5D').trim()}, ${normalizeMediaPath(b.image)}, ${i + 1}, ${true}, ${true})
+      ON CONFLICT (code)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        color = EXCLUDED.color,
+        image_url = EXCLUDED.image_url,
+        sort_order = EXCLUDED.sort_order,
+        is_core = true,
+        is_active = true,
+        updated_at = NOW()
+    `;
+  }
+
+  const bidangRows = (await query`SELECT id, code FROM org_bidang`).rows;
+  const bidangMap = new Map(bidangRows.map(r => [String(r.code), Number(r.id)]));
+
+  const membersCount = Number((await query`SELECT COUNT(*)::int AS c FROM org_members`).rows[0]?.c || 0);
+  if (membersCount === 0) {
+    const memberSort = new Map();
+    for (const item of DEFAULT_ORG_MEMBERS) {
+      const bidangCode = String(item?.bidangId || '').trim();
+      const bidangId = bidangMap.get(bidangCode);
+      if (!bidangId) continue;
+
+      const sortOrder = (memberSort.get(bidangCode) || 0) + 1;
+      memberSort.set(bidangCode, sortOrder);
+
+      await query`
+        INSERT INTO org_members (
+          bidang_id, full_name, role_title, quote, photo_url, instagram_url, sort_order, is_active
+        ) VALUES (
+          ${bidangId},
+          ${String(item?.name || '').trim()},
+          ${String(item?.role || '').trim()},
+          ${String(item?.quote || '').trim()},
+          ${normalizeMediaPath(item?.photo)},
+          ${String(item?.instagram || '').trim()},
+          ${sortOrder},
+          ${true}
+        )
+      `;
+    }
+  }
+
+  const programCount = Number((await query`SELECT COUNT(*)::int AS c FROM org_programs`).rows[0]?.c || 0);
+  if (programCount === 0) {
+    const programSort = new Map();
+    for (const item of DEFAULT_ORG_PROGRAMS) {
+      const bidangCode = String(item?.bidangId || '').trim();
+      const bidangId = bidangMap.get(bidangCode);
+      if (!bidangId) continue;
+
+      const sortOrder = (programSort.get(bidangCode) || 0) + 1;
+      programSort.set(bidangCode, sortOrder);
+
+      const title = String(item?.name || '').trim() || `Program Kerja Draft ${sortOrder}`;
+      const description = String(item?.desc || '').trim();
+      const status = normalizeStatus(item?.status);
+
+      await query`
+        INSERT INTO org_programs (
+          bidang_id, title, description, status, sort_order, is_active
+        ) VALUES (
+          ${bidangId},
+          ${title},
+          ${description},
+          ${status},
+          ${sortOrder},
+          ${true}
+        )
+      `;
+    }
+  }
+}
 
 async function ensureSchema() {
   await query`CREATE TABLE IF NOT EXISTS users (
@@ -136,6 +236,45 @@ async function ensureSchema() {
     error TEXT
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS org_bidang (
+    id SERIAL PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    color TEXT DEFAULT '#4A7C5D',
+    image_url TEXT,
+    sort_order INT DEFAULT 1,
+    is_core BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS org_members (
+    id SERIAL PRIMARY KEY,
+    bidang_id INT NOT NULL REFERENCES org_bidang(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    role_title TEXT NOT NULL,
+    quote TEXT,
+    photo_url TEXT,
+    instagram_url TEXT,
+    sort_order INT DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS org_programs (
+    id SERIAL PRIMARY KEY,
+    bidang_id INT NOT NULL REFERENCES org_bidang(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'draft',
+    sort_order INT DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -161,6 +300,25 @@ async function ensureSchema() {
   await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS sent_at TIMESTAMP`;
   await query`ALTER TABLE scheduled_notifications ADD COLUMN IF NOT EXISTS error TEXT`;
+  await query`ALTER TABLE org_bidang ADD COLUMN IF NOT EXISTS image_url TEXT`;
+  await query`ALTER TABLE org_bidang ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#4A7C5D'`;
+  await query`ALTER TABLE org_bidang ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 1`;
+  await query`ALTER TABLE org_bidang ADD COLUMN IF NOT EXISTS is_core BOOLEAN DEFAULT FALSE`;
+  await query`ALTER TABLE org_bidang ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+  await query`ALTER TABLE org_bidang ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE org_members ADD COLUMN IF NOT EXISTS quote TEXT`;
+  await query`ALTER TABLE org_members ADD COLUMN IF NOT EXISTS photo_url TEXT`;
+  await query`ALTER TABLE org_members ADD COLUMN IF NOT EXISTS instagram_url TEXT`;
+  await query`ALTER TABLE org_members ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 1`;
+  await query`ALTER TABLE org_members ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+  await query`ALTER TABLE org_members ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS description TEXT`;
+  await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`;
+  await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 1`;
+  await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+  await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+
+  await seedOrganizationData();
 
   // Create Indexes for Performance
   await query`CREATE INDEX IF NOT EXISTS idx_questions_quiz_set ON questions(quiz_set)`;
@@ -174,6 +332,9 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category)`;
   await query`CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_status ON scheduled_notifications(status)`;
   await query`CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_send_at ON scheduled_notifications(send_at)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_org_bidang_sort ON org_bidang(sort_order, id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_org_members_bidang_sort ON org_members(bidang_id, sort_order, id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_org_programs_bidang_sort ON org_programs(bidang_id, sort_order, id)`;
 }
 
 module.exports = { ensureSchema };
