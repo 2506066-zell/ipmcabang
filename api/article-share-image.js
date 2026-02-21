@@ -31,7 +31,14 @@ function parseDataImage(raw) {
 
 function getSlug(req) {
   const querySlug = String((req.query && req.query.slug) || '').trim();
-  if (querySlug) return querySlug;
+  if (querySlug) {
+    const normalized = querySlug.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+    try {
+      return decodeURIComponent(normalized);
+    } catch {
+      return normalized;
+    }
+  }
   const path = String(req.url || '');
   const match = path.match(/\/api\/article-share-image\/([^/?#]+)/i);
   if (!match || !match[1]) return '';

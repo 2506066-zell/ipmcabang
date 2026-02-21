@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
     const finalDetailPath = `/articles/${encodeURIComponent(articleSlug)}`;
     const title = `${article.title || 'Artikel Organisasi'} - PC IPM Panawuan`;
     const description = buildDescription(article);
-    const imageUrl = new URL(`/api/article-share-image/${encodeURIComponent(articleSlug)}.jpg`, origin).toString();
+    const imageUrl = new URL(`/api/article-share-image?slug=${encodeURIComponent(articleSlug)}&v=3`, origin).toString();
     const canonicalUrl = new URL(finalDetailPath, origin).toString();
     const publishedIso = toIsoDate(article.publish_date || article.created_at || Date.now());
 
