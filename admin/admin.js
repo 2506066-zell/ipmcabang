@@ -108,6 +108,9 @@
             sidebarNav: document.querySelector('.sidebar-nav'),
             sidebarLogout: document.getElementById('sidebar-logout'),
             pageTitle: document.getElementById('page-title'),
+            pageContextLabel: document.getElementById('page-context-label'),
+            pageContextDesc: document.getElementById('page-context-desc'),
+            sectionLastUpdated: document.getElementById('section-last-updated'),
 
             // Login
             loginCard: document.getElementById('login-card'),
@@ -193,9 +196,9 @@
             schShowNotif: document.getElementById('sch-show-notif'),
             addScheduleBtn: document.getElementById('add-schedule-btn'),
             previewSchBtn: document.getElementById('preview-sch-btn'),
-            previewPanel: document.getElementById('preview-panel'),
+            previewPanel: document.getElementById('schedule-preview-panel'),
 
-            previewBox: document.getElementById('preview-box'),
+            previewBox: document.getElementById('schedule-preview-box'),
 
             // Global Reset
             resetSetSelect: document.getElementById('reset-set-select'),
@@ -400,6 +403,72 @@
         try { localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(state.prefs)); } catch { }
     }
 
+    const TAB_META = {
+        dashboard: {
+            label: 'Overview',
+            title: 'Dashboard Operasional',
+            desc: 'Pantau metrik utama, aktivitas terbaru, dan akses cepat ke operasi inti.'
+        },
+        questions: {
+            label: 'Assessment Ops',
+            title: 'Bank Soal',
+            desc: 'Kelola kualitas soal, kategori, dan set kuis yang dipublikasikan.'
+        },
+        results: {
+            label: 'Assessment Ops',
+            title: 'Hasil Assessment',
+            desc: 'Evaluasi performa user dan validasi hasil kuis.'
+        },
+        users: {
+            label: 'User & Comms',
+            title: 'User & Komunikasi',
+            desc: 'Atur data user dan kirim broadcast notifikasi secara terkontrol.'
+        },
+        logs: {
+            label: 'System',
+            title: 'Audit Log',
+            desc: 'Lacak aktivitas admin untuk kebutuhan jejak audit.'
+        },
+        schedules: {
+            label: 'System',
+            title: 'Konfigurasi Sistem',
+            desc: 'Atur jadwal kuis, gamifikasi, konfigurasi form, dan aksi berisiko.'
+        },
+        articles: {
+            label: 'Content Ops',
+            title: 'Manajemen Artikel',
+            desc: 'Kelola publikasi artikel dan workflow konten utama.'
+        },
+        materials: {
+            label: 'Content Ops',
+            title: 'Manajemen Materi',
+            desc: 'Kelola materi belajar agar rapi dan mudah ditemukan.'
+        }
+    };
+
+    function updateHeaderContext(tabName) {
+        const meta = TAB_META[tabName] || {
+            label: 'Admin',
+            title: tabName,
+            desc: 'Kelola operasional admin.'
+        };
+        if (els.pageContextLabel) els.pageContextLabel.textContent = meta.label;
+        if (els.pageTitle) els.pageTitle.textContent = meta.title;
+        if (els.pageContextDesc) els.pageContextDesc.textContent = meta.desc;
+    }
+
+    function markSectionUpdated() {
+        if (!els.sectionLastUpdated) return;
+        const stamp = new Date().toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        els.sectionLastUpdated.textContent = `Diperbarui: ${stamp}`;
+    }
+
     // --- NAVIGATION ---
     window.activateTab = function (tabName) {
         // Handle Sidebar & Bottom Nav active state
@@ -419,8 +488,9 @@
         const activeEl = document.getElementById(`tab-${tabName}`);
         if (activeEl) activeEl.classList.remove('hidden');
 
-        // Update Title
-        if (els.pageTitle) els.pageTitle.textContent = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+        // Update header context
+        updateHeaderContext(tabName);
+        markSectionUpdated();
 
         // Toggle FAB
         if (els.fabAdd) els.fabAdd.classList.toggle('hidden', tabName !== 'questions');
@@ -1926,8 +1996,8 @@
                 // Actually admin.html has a specific #preview-panel inside #schedule-modal-panel!
                 // Let's use that.
 
-                const panel = document.querySelector('#schedule-modal-panel #preview-panel');
-                const box = document.querySelector('#schedule-modal-panel #preview-box');
+                const panel = document.querySelector('#schedule-modal-panel #schedule-preview-panel');
+                const box = document.querySelector('#schedule-modal-panel #schedule-preview-box');
                 if (panel && box) {
                     panel.classList.remove('hidden');
 

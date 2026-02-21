@@ -6,25 +6,36 @@
   <title>Import Pertanyaan - Admin</title>
     <link rel="icon" href="/ipm%20(2).png">
   <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="page-admin">
-  <main class="admin-container">
-    <section class="card">
-      <h1 class="card-title">Import Pertanyaan (CSV)</h1>
-      <p class="card-subtitle">Pilih file CSV lalu kirim ke database. Token admin diperlukan.</p>
+<body class="admin-standalone">
+  <main class="admin-standalone-main">
+    <section class="admin-page-head">
+      <h1><i class="fas fa-file-import"></i> Import Pertanyaan</h1>
+      <p>Wizard 3 langkah: pilih file, validasi parameter, lalu kirim data ke database.</p>
+      <p class="small"><a href="admin.html">Kembali ke Portal Admin</a></p>
+    </section>
+
+    <section class="admin-card">
+      <h2 class="section-card-title">Langkah 1-3</h2>
+      <p class="small muted mb-12">Halaman ini untuk import massal bank soal tanpa perlu input satu per satu.</p>
+      <div class="state-box mb-16">
+        <strong>Urutan:</strong> 1) Pilih CSV, 2) Isi parameter default, 3) Jalankan import.
+      </div>
+
       <div class="grid-2">
         <div class="field">
-          <label>File CSV</label>
+          <label for="csv-file">File CSV</label>
           <input id="csv-file" type="file" accept=".csv">
         </div>
         <div class="field">
-          <label>Token Admin</label>
+          <label for="admin-token">Token Admin</label>
           <input id="admin-token" type="password" placeholder="Masukkan ADMIN_TOKEN">
         </div>
       </div>
       <div class="grid-2">
         <div class="field">
-          <label>Set Kuis default</label>
+          <label for="default-set">Set Kuis default</label>
           <select id="default-set">
             <option value="1">1</option>
             <option value="2">2</option>
@@ -32,7 +43,7 @@
           </select>
         </div>
         <div class="field">
-          <label>Kategori default (opsional)</label>
+          <label for="default-category">Kategori default (opsional)</label>
           <input id="default-category" type="text" placeholder="Kategori">
         </div>
       </div>
@@ -41,9 +52,10 @@
         <span class="status" id="status"></span>
       </div>
     </section>
-    <section class="card">
-      <h2 class="card-title">Format CSV</h2>
-      <p class="small">Header: question,a,b,c,d,correct,category,quiz_set,active</p>
+
+    <section class="admin-card">
+      <h2 class="section-card-title">Format CSV</h2>
+      <p class="small">Header wajib: <code>question,a,b,c,d,correct,category,quiz_set,active</code></p>
     </section>
   </main>
   <script src="../scripts/api-client.js" defer></script>

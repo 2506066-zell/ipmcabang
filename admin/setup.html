@@ -8,36 +8,41 @@
     <link rel="stylesheet" href="admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="login-screen">
-    <div class="login-card">
-        <div class="login-header">
-            <i class="fas fa-shield-alt" style="font-size: 48px; color: var(--primary-color); margin-bottom: 16px;"></i>
-            <h1>Setup Admin Pertama</h1>
-            <p>Gunakan halaman ini untuk mempromosikan akun menjadi Admin (hanya jika belum ada admin).</p>
-        </div>
+<body class="admin-standalone">
+    <main class="admin-standalone-main">
+        <section class="admin-page-head">
+            <h1><i class="fas fa-shield-halved"></i> Setup Admin Pertama</h1>
+            <p>Promosikan akun menjadi admin utama. Fitur ini hanya diperlukan saat admin belum tersedia.</p>
+        </section>
 
-        <form id="setup-form">
-            <div class="input-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" required placeholder="Username akun yang sudah ada">
-            </div>
-            <div class="input-group">
-                <label for="password">Password</label>
-                <div style="position:relative">
-                    <input type="password" id="password" required placeholder="Password akun tersebut">
-                    <button type="button" id="toggle-password" class="btn-ghost" style="position:absolute;right:0;top:0;height:100%;width:40px;">
-                        <i class="fas fa-eye"></i>
-                    </button>
+        <section class="admin-card">
+            <form id="setup-form">
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" required placeholder="Username akun yang sudah ada">
+                    </div>
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <div class="input-affix">
+                            <input type="password" id="password" required placeholder="Password akun tersebut">
+                            <button type="button" id="toggle-password" class="btn-ghost input-affix-btn" aria-label="Toggle password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <button type="submit" class="btn-login">Jadikan Admin</button>
-            <p id="message" class="message" style="margin-top:16px; text-align:center;"></p>
-        </form>
+                <div class="actions">
+                    <button type="submit" class="btn-login">Jadikan Admin</button>
+                </div>
+                <p id="message" class="message"></p>
+            </form>
 
-        <div class="register-link">
-            <p><a href="admin.html">Kembali ke Login Admin</a></p>
-        </div>
-    </div>
+            <div class="register-link">
+                <p><a href="admin.html">Kembali ke Login Admin</a></p>
+            </div>
+        </section>
+    </main>
 
     <script>
         document.getElementById('toggle-password').addEventListener('click', () => {

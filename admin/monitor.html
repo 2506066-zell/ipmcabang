@@ -5,63 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Serverless Monitor Dashboard</title>
     <link rel="icon" href="/ipm%20(2).png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #3b82f6; --success: #22c55e; --error: #ef4444; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #334155; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .status-ok { background: rgba(34, 197, 94, 0.2); color: var(--success); }
-        .status-err { background: rgba(239, 68, 68, 0.2); color: var(--error); }
-        .metric { font-size: 2rem; font-weight: bold; margin: 10px 0; }
-        .metric-label { font-size: 0.9rem; color: #94a3b8; }
-        button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:hover { opacity: 0.9; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #334155; }
-        th { color: #94a3b8; font-size: 0.85rem; }
-    </style>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <div class="header">
-        <div>
-            <h1><i class="fas fa-server"></i> Serverless Monitor</h1>
-            <p>Vercel Hobby Plan Optimization Check</p>
-        </div>
-        <button onclick="runChecks()"><i class="fas fa-sync"></i> Refresh Data</button>
-    </div>
-
-    <div class="dashboard">
-        <!-- System Health Card -->
-        <div class="card">
-            <h3><i class="fas fa-heartbeat"></i> System Health</h3>
-            <div id="health-status" class="metric">...</div>
-            <div class="metric-label">API Response Time</div>
-            <div id="health-details" style="margin-top: 15px; font-size: 0.9rem;"></div>
-        </div>
-
-        <!-- Auth Service Card -->
-        <div class="card">
-            <h3><i class="fas fa-lock"></i> Auth Handler</h3>
-            <div class="metric-label">Consolidated Endpoint</div>
-            <table id="auth-table">
-                <thead><tr><th>Action</th><th>Status</th><th>Time</th></tr></thead>
-                <tbody><tr><td colspan="3">Waiting...</td></tr></tbody>
-            </table>
-        </div>
-
-        <!-- Function Usage Card -->
-        <div class="card">
-            <h3><i class="fas fa-cubes"></i> Function Count</h3>
-            <div class="metric">6 / 12</div>
-            <div class="metric-label">Active Serverless Functions</div>
-            <div style="margin-top: 10px; font-size: 0.85rem; color: #94a3b8;">
-                Consolidated: 2<br>Standalone: 4<br>Status: <span style="color: var(--success)">OPTIMAL</span>
+<body class="admin-standalone">
+    <main class="admin-standalone-main">
+        <section class="admin-page-head monitor-header-row">
+            <div>
+                <h1><i class="fas fa-server"></i> Serverless Monitor</h1>
+                <p>Pantau health check endpoint dan status routing untuk operasional harian.</p>
+                <p class="small"><a href="admin.html">Kembali ke Portal Admin</a></p>
             </div>
-        </div>
-    </div>
+            <button class="btn btn-primary" onclick="runChecks()"><i class="fas fa-sync"></i> Refresh Data</button>
+        </section>
+
+        <section class="monitor-grid">
+            <article class="admin-card">
+                <h3 class="section-card-title section-title-icon"><i class="fas fa-heartbeat"></i> System Health</h3>
+                <div id="health-status" class="monitor-metric">...</div>
+                <div class="small muted">API Response Time</div>
+                <div id="health-details" class="state-box mt-12"></div>
+            </article>
+
+            <article class="admin-card">
+                <h3 class="section-card-title section-title-icon"><i class="fas fa-lock"></i> Auth Handler</h3>
+                <div class="small muted mb-12">Consolidated endpoint health check</div>
+                <table id="auth-table" class="monitor-table">
+                    <thead><tr><th>Action</th><th>Status</th><th>Time</th></tr></thead>
+                    <tbody><tr><td colspan="3">Waiting...</td></tr></tbody>
+                </table>
+            </article>
+
+            <article class="admin-card">
+                <h3 class="section-card-title section-title-icon"><i class="fas fa-cubes"></i> Function Count</h3>
+                <div class="monitor-metric">6 / 12</div>
+                <div class="small muted">Active Serverless Functions</div>
+                <div class="state-box mt-12">
+                    Consolidated: 2<br>Standalone: 4<br>Status: <strong>OPTIMAL</strong>
+                </div>
+            </article>
+        </section>
+    </main>
 
     <script>
         const ENDPOINTS = [
@@ -97,10 +81,10 @@
             const health = await check('/api/health');
             const hEl = document.getElementById('health-status');
             hEl.textContent = health.ok ? `${health.time}ms` : 'ERROR';
-            hEl.style.color = health.ok ? 'var(--success)' : 'var(--error)';
+            hEl.style.color = health.ok ? 'var(--accent-success)' : 'var(--accent-danger)';
             
             document.getElementById('health-details').innerHTML = `
-                DB Check: ${(await check('/api/dbHealth')).ok ? '<span style="color:var(--success)">CONNECTED</span>' : '<span style="color:var(--error)">FAILED</span>'}
+                DB Check: ${(await check('/api/dbHealth')).ok ? '<span style="color:var(--accent-success)">CONNECTED</span>' : '<span style="color:var(--accent-danger)">FAILED</span>'}
             `;
 
             // Auth Checks
