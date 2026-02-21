@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v18';
+const STATIC_CACHE = 'static-v19';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [

@@ -139,15 +139,18 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(fallback, 'text/html');
         doc.querySelectorAll('script,style,iframe,object,embed,link,meta,base,form,input,button,textarea,select').forEach((el) => el.remove());
-        normalizeNode(doc, doc.body);
+        const body = doc.body;
+        if (!body) return '';
+        [...body.children].forEach((child) => normalizeNode(doc, child));
 
-        const html = doc.body.innerHTML
+        const html = body.innerHTML
             .replace(/<p>\s*<\/p>/gi, '')
             .replace(/\n{3,}/g, '\n\n')
             .trim();
 
         if (options.removeHeadingOne) {
             const postDoc = parser.parseFromString(html, 'text/html');
+            if (!postDoc.body) return html;
             postDoc.querySelectorAll('h1').forEach((h1) => {
                 const h2 = postDoc.createElement('h2');
                 h2.innerHTML = h1.innerHTML;
