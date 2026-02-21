@@ -10,9 +10,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Kuis Gamified - PC IPM Panawuan</title>
   <link rel="icon" href="/ipm%20(2).png" />
-  <link rel="stylesheet" href="/styles/style.css" />
-  <link rel="stylesheet" href="/styles/profile.css" />
-  <link rel="stylesheet" href="/styles/quiz-react.css?v=20" />
+  <link rel="stylesheet" href="/app/css/style.css" />
+  <link rel="stylesheet" href="/app/css/profile.css" />
+  <link rel="stylesheet" href="/app/css/quiz-react.css?v=20" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body class="page-quiz">
@@ -97,15 +97,15 @@
     </div>
   </main>
 
-  <script src="/scripts/main.js?v=12" defer></script>
-  <script src="/scripts/install-header.js" defer></script>
-  <script src="/scripts/profile.js" defer></script>
-  <script src="/scripts/toast.js" defer></script>
+  <script src="/app/js/core/main.js?v=12" defer></script>
+  <script src="/app/js/core/install-header.js" defer></script>
+  <script src="/app/js/core/profile.js" defer></script>
+  <script src="/app/js/core/toast.js" defer></script>
 
   <script src="/scripts/vendor/react.production.min.js"></script>
   <script src="/scripts/vendor/react-dom.production.min.js"></script>
   <script src="/scripts/vendor/babel.min.js"></script>
-  <script type="text/babel" data-presets="react" src="/scripts/quiz-react.js?v=22"></script>
+  <script type="text/babel" data-presets="react" src="/app/js/features/quiz/quiz-react.js?v=22"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const toggle = document.getElementById('quiz-instructions-toggle');
@@ -121,5 +121,6 @@
   </script>
 </body>
 </html>
+
 
 

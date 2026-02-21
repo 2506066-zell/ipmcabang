@@ -16,9 +16,9 @@
     <meta property="og:type" content="article">
     <meta property="og:title" content="Artikel IPM Panawuan">
     <meta property="og:description" content="Baca artikel terbaru dari IPM Panawuan.">
-    <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="styles/profile.css">
-    <link rel="stylesheet" href="styles/editorial.css">
+    <link rel="stylesheet" href="/app/css/style.css">
+    <link rel="stylesheet" href="/app/css/profile.css">
+    <link rel="stylesheet" href="/app/css/editorial.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -117,12 +117,12 @@
         </div>
     </nav>
 
-    <script src="scripts/toast.js" defer></script>
-    <script src="scripts/main.js?v=12" defer></script>
-    <script src="scripts/install-header.js" defer></script>
-    <script src="scripts/profile.js" defer></script>
+    <script src="/app/js/core/toast.js" defer></script>
+    <script src="/app/js/core/main.js?v=12" defer></script>
+    <script src="/app/js/core/install-header.js" defer></script>
+    <script src="/app/js/core/profile.js" defer></script>
     <script type="module">
-        import { initPublicArticles } from './scripts/public-articles.js';
+        import { initPublicArticles } from '/app/js/features/articles/public-articles.js';
         document.addEventListener('DOMContentLoaded', () => {
             initPublicArticles();
         });
@@ -130,3 +130,4 @@
 </body>
 
 </html>
+

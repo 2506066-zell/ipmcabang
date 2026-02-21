@@ -1,0 +1,125 @@
+/* Flip Clock / Split Flap Styles */
+.hero-countdown-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: transparent;
+    animation: fadeIn 0.8s ease;
+}
+
+.hero-countdown-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #4a7c5d;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+.flip-clock {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.flip-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.flip-card {
+    position: relative;
+    width: 80px;
+    height: 100px;
+    background: #e0e0e0;
+    /* Fallback */
+    border-radius: 8px;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 100px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    perspective: 400px;
+    background-image: linear-gradient(to bottom, #f8f8f8 50%, #e8e8e8 50%);
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
+
+/* Simulated Split Line */
+.flip-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.15);
+    z-index: 10;
+}
+
+/* Optional: Slight 3D effect on numbers can be added here */
+.flip-card span {
+    display: block;
+    transform-style: preserve-3d;
+}
+
+.flip-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Urgent Mode */
+.hero-countdown-container.urgent .flip-card {
+    color: #d32f2f;
+    background-image: linear-gradient(to bottom, #ffebee 50%, #ffcdd2 50%);
+    border-color: #ef9a9a;
+}
+
+.hero-countdown-container.urgent .flip-label {
+    color: #c62828;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+    .flip-card {
+        width: 50px;
+        height: 70px;
+        font-size: 2.2rem;
+        line-height: 70px;
+    }
+
+    .flip-clock {
+        gap: 8px;
+    }
+
+    .flip-label {
+        font-size: 0.6rem;
+    }
+
+    .hero-countdown-title {
+        font-size: 1rem;
+    }
+}
+
+/* Admin Preview Adjustment */
+.admin-preview .flip-card {
+    width: 40px;
+    height: 50px;
+    font-size: 1.5rem;
+    line-height: 50px;
+}
+
+.admin-preview .hero-countdown-title {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}

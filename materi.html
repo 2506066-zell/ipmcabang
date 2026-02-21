@@ -15,9 +15,9 @@
     <link rel="icon" href="/ipm%20(2).png">
 
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="styles/profile.css">    <link rel="stylesheet" href="styles/quiz-enhancements.css">
-    <link rel="stylesheet" href="styles/article-enhancements.css">
+    <link rel="stylesheet" href="/app/css/style.css">
+    <link rel="stylesheet" href="/app/css/profile.css">    <link rel="stylesheet" href="/app/css/quiz-enhancements.css">
+    <link rel="stylesheet" href="/app/css/article-enhancements.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .materi-card {
@@ -226,16 +226,17 @@
         </div>
     </nav>
 
-    <script src="scripts/toast.js"></script>
-    <script src="scripts/main.js?v=12"></script>
-    <script src="scripts/install-header.js" defer></script>
-    <script src="scripts/profile.js" defer></script>    <script type="module">
-        import { initPublicMaterials } from './scripts/public-materials.js';
+    <script src="/app/js/core/toast.js"></script>
+    <script src="/app/js/core/main.js?v=12"></script>
+    <script src="/app/js/core/install-header.js" defer></script>
+    <script src="/app/js/core/profile.js" defer></script>    <script type="module">
+        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js';
         document.addEventListener('DOMContentLoaded', initPublicMaterials);
     </script>
 </body>
 
 </html>
+
 
 
 
