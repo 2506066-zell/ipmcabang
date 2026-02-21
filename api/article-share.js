@@ -39,6 +39,18 @@ function toIsoDate(value) {
   return date.toISOString();
 }
 
+function detectImageMime(articleImage) {
+  const raw = String(articleImage || '').trim();
+  if (/^data:image\/png/i.test(raw)) return 'image/png';
+  if (/^data:image\/webp/i.test(raw)) return 'image/webp';
+  if (/^data:image\/gif/i.test(raw)) return 'image/gif';
+  if (/^data:image\/jpeg/i.test(raw) || /^data:image\/jpg/i.test(raw)) return 'image/jpeg';
+  if (/\.png(\?|$)/i.test(raw)) return 'image/png';
+  if (/\.webp(\?|$)/i.test(raw)) return 'image/webp';
+  if (/\.gif(\?|$)/i.test(raw)) return 'image/gif';
+  return 'image/jpeg';
+}
+
 function sendHtml(res, status, html) {
   applySecurityHeaders(res);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -110,7 +122,8 @@ module.exports = async (req, res) => {
     const finalDetailPath = `/articles/${encodeURIComponent(articleSlug)}`;
     const title = `${article.title || 'Artikel Organisasi'} - PC IPM Panawuan`;
     const description = buildDescription(article);
-    const imageUrl = new URL(`/api/article-share-image?slug=${encodeURIComponent(articleSlug)}&v=3`, origin).toString();
+    const imageUrl = new URL(`/api/article-share-image/${encodeURIComponent(articleSlug)}.jpg`, origin).toString();
+    const imageMime = detectImageMime(article.image);
     const canonicalUrl = new URL(finalDetailPath, origin).toString();
     const publishedIso = toIsoDate(article.publish_date || article.created_at || Date.now());
 
@@ -124,9 +137,11 @@ module.exports = async (req, res) => {
   <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
   <meta property="og:type" content="article">
   <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:site_name" content="PC IPM Panawuan">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:type" content="${escapeHtml(imageMime)}">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
   <meta property="article:published_time" content="${escapeHtml(publishedIso)}">
   <meta name="twitter:card" content="summary_large_image">

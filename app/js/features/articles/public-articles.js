@@ -1006,10 +1006,12 @@ window.shareArticle = function (platform) {
     const url = data.url || window.location.href;
     const title = data.title || document.title;
     const text = encodeURIComponent(`Baca artikel ini: ${title}\n\n`);
+    const waPayload = encodeURIComponent(url);
 
     switch (platform) {
         case 'whatsapp':
-            window.open(`https://wa.me/?text=${text}${encodeURIComponent(url)}`, '_blank', 'noopener');
+            // WhatsApp preview lebih stabil jika message berisi URL murni.
+            window.open(`https://wa.me/?text=${waPayload}`, '_blank', 'noopener');
             break;
         case 'twitter':
             window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank', 'noopener');
