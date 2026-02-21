@@ -1,19 +1,36 @@
 const { query } = require('./_db');
 const { json, cacheHeaders, parseJsonBody } = require('./_util');
 const { requireAdminAuth, getSessionUser } = require('./_auth');
+const { hashPassword } = require('./_password');
 
 async function list(req, res) {
-    if (req.query.action === 'notifications') {
+    if (req.query?.action === 'notifications') {
         const user = await getSessionUser(req);
         if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
         const notifs = (await query`SELECT id, message, is_read, created_at FROM notifications WHERE user_id=${user.id} ORDER BY created_at DESC LIMIT 20`).rows;
         return json(res, 200, { status: 'success', notifications: notifs }, cacheHeaders(0));
     }
 
-    const uname = req.query.username ? String(req.query.username).trim().toLowerCase() : '';
-    const rows = uname
-        ? (await query`SELECT id, username, nama_panjang, pimpinan, created_at FROM users WHERE LOWER(username)=${uname} ORDER BY id DESC`).rows
-        : (await query`SELECT id, username, nama_panjang, pimpinan, created_at FROM users ORDER BY id DESC`).rows;
+    const viewer = await getSessionUser(req);
+    if (!viewer) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+
+    const uname = req.query?.username ? String(req.query.username).trim().toLowerCase() : '';
+    let rows = [];
+
+    if (uname) {
+        const isOwner = String(viewer.username || '').toLowerCase() === uname;
+        const isAdmin = String(viewer.role || '') === 'admin';
+        if (!isOwner && !isAdmin) {
+            return json(res, 403, { status: 'error', message: 'Forbidden' });
+        }
+        rows = (await query`SELECT id, username, nama_panjang, pimpinan, created_at FROM users WHERE LOWER(username)=${uname} ORDER BY id DESC`).rows;
+    } else {
+        if (String(viewer.role || '') !== 'admin') {
+            return json(res, 403, { status: 'error', message: 'Forbidden' });
+        }
+        rows = (await query`SELECT id, username, nama_panjang, pimpinan, created_at FROM users ORDER BY id DESC`).rows;
+    }
+
     json(res, 200, { status: 'success', users: rows }, cacheHeaders(60));
 }
 
@@ -80,14 +97,12 @@ async function create(req, res) {
     const role = b.role === 'admin' ? 'admin' : 'user';
     const nama = String(b.nama_panjang || '').trim();
     if (!username) return json(res, 400, { status: 'error', message: 'Username required' });
-    let salt = null, hash = null;
+    let pwd = null;
     if (password) {
-        const crypto = require('crypto');
-        salt = crypto.randomBytes(16).toString('hex');
-        hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+        pwd = await hashPassword(password);
     } else return json(res, 400, { status: 'error', message: 'Password wajib diisi' });
     try {
-        const ins = await query`INSERT INTO users (username, password_salt, password_hash, email, role, nama_panjang) VALUES (${username}, ${salt}, ${hash}, ${email}, ${role}, ${nama}) RETURNING id, username`;
+        const ins = await query`INSERT INTO users (username, password_salt, password_hash, email, role, nama_panjang) VALUES (${username}, ${pwd.salt}, ${pwd.hash}, ${email}, ${role}, ${nama}) RETURNING id, username`;
         await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_USER', ${{ username, role }})`;
         return json(res, 201, { status: 'success', user: ins.rows[0] });
     } catch (e) {
@@ -108,11 +123,9 @@ async function update(req, res) {
     if (b.role) { updates.push(`role = $${idx++}`); params.push(b.role === 'admin' ? 'admin' : 'user'); }
     if (b.nama_panjang !== undefined) { updates.push(`nama_panjang = $${idx++}`); params.push(String(b.nama_panjang).trim()); }
     if (b.password) {
-        const crypto = require('crypto');
-        const salt = crypto.randomBytes(16).toString('hex');
-        const hash = crypto.pbkdf2Sync(String(b.password), salt, 1000, 64, 'sha512').toString('hex');
-        updates.push(`password_salt = $${idx++}`); params.push(salt);
-        updates.push(`password_hash = $${idx++}`); params.push(hash);
+        const pwd = await hashPassword(String(b.password));
+        updates.push(`password_salt = $${idx++}`); params.push(pwd.salt);
+        updates.push(`password_hash = $${idx++}`); params.push(pwd.hash);
     }
     if (updates.length === 0) return json(res, 400, { status: 'error', message: 'No fields' });
     params.push(id);
@@ -140,7 +153,7 @@ async function remove(req, res) {
 
 module.exports = async (req, res) => {
     try {
-        const action = req.query.action;
+        const action = req.query?.action;
         if (req.method === 'GET') {
             if (action === 'extended') return await handleGetUsersExtended(req, res);
             if (action === 'status') return await handleGetUsersStatus(req, res);

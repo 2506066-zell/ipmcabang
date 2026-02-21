@@ -101,6 +101,7 @@ async function purge(req, res) {
 
 module.exports = async (req, res) => {
     try {
+        req.query = req.query || {};
         if (req.method === 'GET') return await list(req, res);
         if (req.method === 'POST') return await create(req, res);
         if (req.method === 'DELETE') return await purge(req, res);

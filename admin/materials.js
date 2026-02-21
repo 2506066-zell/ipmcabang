@@ -132,7 +132,8 @@ export function initMaterials(state, els, api) {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/upload');
-            xhr.setRequestHeader('Authorization', localStorage.getItem('adminToken') || 'dummy');
+            const token = localStorage.getItem('adminToken');
+            if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
             xhr.setRequestHeader('x-filename', file.name || `upload-${Date.now()}.${type === 'thumb' ? 'jpg' : 'pdf'}`);
 
             xhr.upload.onprogress = (e) => {

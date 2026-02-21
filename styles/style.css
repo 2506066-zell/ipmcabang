@@ -289,7 +289,7 @@ body.body-no-scroll {
 
 .mobile-nav.open {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
     visibility: visible;
 }
 

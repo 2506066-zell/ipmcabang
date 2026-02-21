@@ -13,7 +13,6 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/articles.html',
-  '/article.html',
   '/profile/',
   '/profile/index.html',
   '/quiz.html',

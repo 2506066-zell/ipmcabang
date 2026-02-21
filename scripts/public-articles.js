@@ -1,6 +1,24 @@
 ﻿const API_BASE = '/api/articles';
 let listInitialized = false;
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function sanitizeUrl(raw, fallback = '#') {
+    const val = String(raw || '').trim();
+    if (!val) return fallback;
+    if (/^javascript:/i.test(val)) return fallback;
+    if (/^data:(?!image\/)/i.test(val)) return fallback;
+    if (/^(https?:)?\/\//i.test(val) || val.startsWith('/')) return val;
+    return fallback;
+}
+
 export function initPublicArticles() {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -119,11 +137,15 @@ function initListPage() {
         }
 
         const cards = articles.map((art, index) => {
-            const thumbUrl = art.image || 'https://via.placeholder.com/400x250?text=No+Thumbnail';
+            const thumbUrl = sanitizeUrl(art.image, 'https://via.placeholder.com/400x250?text=No+Thumbnail');
             const div = document.createElement('div');
             div.innerHTML = (art.content || '').substring(0, 120) + '...';
-            const excerpt = div.textContent || div.innerText || '';
+            const excerpt = escapeHtml(div.textContent || div.innerText || '');
             const publishDate = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            const safeTitle = escapeHtml(art.title || 'Tanpa Judul');
+            const safeCategory = escapeHtml(art.category || 'Umum');
+            const safeAuthor = escapeHtml(art.author || 'Admin');
+            const safeThumb = escapeHtml(thumbUrl);
 
             const card = document.createElement('a');
             card.href = `articles.html?id=${art.id}`;
@@ -131,16 +153,16 @@ function initListPage() {
             card.style.animationDelay = `${index * 0.1}s`;
             card.innerHTML = `
                 <div class="card-thumbnail">
-                    <img src="${thumbUrl}" alt="${art.title}" onload="this.classList.add('loaded')">
-                    <span class="card-category-badge">${art.category || 'Umum'}</span>
+                    <img src="${safeThumb}" alt="${safeTitle}" onload="this.classList.add('loaded')">
+                    <span class="card-category-badge">${safeCategory}</span>
                 </div>
                 <div class="card-content">
-                    <h3 class="card-title">${art.title}</h3>
+                    <h3 class="card-title">${safeTitle}</h3>
                     <p class="card-snippet">${excerpt}</p>
                     <div class="card-meta">
                         <div class="author-info">
                             <i class="fas fa-user-circle"></i>
-                            <span class="author-name">${art.author}</span>
+                            <span class="author-name">${safeAuthor}</span>
                         </div>
                         <span class="publish-date">${publishDate}</span>
                     </div>
@@ -199,9 +221,9 @@ async function initSidebar() {
         if (data.status === 'success' && latestList) {
             latestList.innerHTML = data.articles.map(art => `
                 <a href="articles.html?id=${art.id}" class="sidebar-item">
-                    <div class="sidebar-item-thumb" style="background-image: url('${art.image || 'https://via.placeholder.com/100'}')"></div>
+                    <div class="sidebar-item-thumb" style="background-image: url('${escapeHtml(sanitizeUrl(art.image, 'https://via.placeholder.com/100'))}')"></div>
                     <div class="sidebar-item-info">
-                        <h4 class="sidebar-item-title">${art.title}</h4>
+                        <h4 class="sidebar-item-title">${escapeHtml(art.title || 'Tanpa Judul')}</h4>
                         <span class="sidebar-item-date">${new Date(art.publish_date).toLocaleDateString('id-ID')}</span>
                     </div>
                 </a>
@@ -266,20 +288,48 @@ function initDetailPage(id, slug) {
 
     function sanitizeArticle(html) {
         if (!html) return "";
-        return html
-            .replace(/style="[^"]*"/g, "")
-            .replace(/class="[^"]*"/g, "")
-            .replace(/<span[^>]*>/g, "")
-            .replace(/<\/span>/g, "")
-            .replace(/<font[^>]*>/g, "")
-            .replace(/<\/font>/g, "");
+        const input = String(html);
+        if (typeof DOMParser === 'undefined') {
+            return input
+                .replace(/<\s*(script|style|iframe|object|embed|link|meta)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+                .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+                .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
+                .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, '')
+                .replace(/\s(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi, ' $1="#"');
+        }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(input, 'text/html');
+        const blocked = doc.querySelectorAll('script,style,iframe,object,embed,link,meta,base,form,input,button,textarea,select');
+        blocked.forEach(el => el.remove());
+
+        doc.querySelectorAll('*').forEach((el) => {
+            [...el.attributes].forEach((attr) => {
+                const name = attr.name.toLowerCase();
+                const value = String(attr.value || '').trim();
+                if (name.startsWith('on')) {
+                    el.removeAttribute(attr.name);
+                    return;
+                }
+                if ((name === 'href' || name === 'src')) {
+                    if (/^javascript:/i.test(value) || /^data:(?!image\/)/i.test(value)) {
+                        el.removeAttribute(attr.name);
+                    }
+                }
+            });
+        });
+
+        return doc.body.innerHTML;
     }
 
     function renderDetail(art) {
         const date = new Date(art.publish_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        const heroImage = art.image ? `
+        const safeTitle = escapeHtml(art.title || 'Artikel');
+        const safeCategory = escapeHtml(art.category || 'Umum');
+        const safeImage = sanitizeUrl(art.image, '');
+        const heroImage = safeImage ? `
             <figure class="article-hero">
-                <img src="${art.image}" alt="${art.title}" class="hero-img" loading="lazy" decoding="async">
+                <img src="${escapeHtml(safeImage)}" alt="${safeTitle}" class="hero-img" loading="lazy" decoding="async">
             </figure>
         ` : '';
         window.__currentArticle = {
@@ -290,10 +340,10 @@ function initDetailPage(id, slug) {
         container.innerHTML = `
             <article class="article-detail fade-in">
                 ${heroImage}
-                <h1 class="detail-title">${art.title}</h1>
+                <h1 class="detail-title">${safeTitle}</h1>
                 <div class="detail-meta">
                     <span><i class="fas fa-calendar-alt"></i> ${date}</span>
-                    <span><i class="fas fa-tag"></i> ${art.category || 'Umum'}</span>
+                    <span><i class="fas fa-tag"></i> ${safeCategory}</span>
                 </div>
                 <div class="article-divider"></div>
                 <div class="article-content-body pro-article">
@@ -388,15 +438,16 @@ function initDetailPage(id, slug) {
                 return;
             }
             wrap.innerHTML = items.map(a => {
-                const thumb = a.image || 'https://via.placeholder.com/320x180?text=Artikel';
-                const snippet = stripHtml(a.content).slice(0, 120);
+                const thumb = sanitizeUrl(a.image, 'https://via.placeholder.com/320x180?text=Artikel');
+                const snippet = escapeHtml(stripHtml(a.content).slice(0, 120));
+                const safeTitle = escapeHtml(a.title || 'Tanpa Judul');
                 return `
                     <a class="rec-card" href="articles.html?id=${a.id}">
                         <div class="rec-thumb">
-                            <img src="${thumb}" alt="${a.title}" loading="lazy" decoding="async">
+                            <img src="${escapeHtml(thumb)}" alt="${safeTitle}" loading="lazy" decoding="async">
                         </div>
                         <div class="rec-body">
-                            <div class="rec-card-title">${a.title}</div>
+                            <div class="rec-card-title">${safeTitle}</div>
                             <div class="rec-card-snippet">${snippet}${snippet.length ? '...' : ''}</div>
                         </div>
                     </a>

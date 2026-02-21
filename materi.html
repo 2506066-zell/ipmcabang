@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#006400">
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -149,8 +149,14 @@
             <span class="header-title">PC IPM Panawuan</span>
         </div>
         <div class="header-right-icons">
-            <a href="index.html" class="header-icon"><i class="fas fa-home"></i></a>
-            <button class="hamburger-menu" id="hamburger-menu">
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="admin/admin.html" class="header-icon" aria-label="Admin">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false"
+                aria-controls="mobile-nav">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
@@ -158,16 +164,18 @@
         </div>
     </header>
 
-    <nav class="mobile-nav" id="mobile-nav">
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
         <ul class="mobile-nav-links">
             <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
-            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur</a>
-            </li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur
+                    Organisasi</a></li>
             <li><a href="articles.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
             <li><a href="materi.html" class="mobile-nav-link active"><i class="fas fa-book"></i> Materi</a></li>
             <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+            <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
         </ul>
     </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <main class="main-content" style="padding-top:80px; padding-bottom:100px;">
         <div class="container">
@@ -228,6 +236,7 @@
 </body>
 
 </html>
+
 
 
 

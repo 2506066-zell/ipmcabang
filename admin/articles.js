@@ -230,7 +230,7 @@ export function initArticles(state, els, api) {
                 <div style="display:flex; gap:8px;">
                      <button class="btn btn-secondary btn-sm edit-btn" data-id="${art.id}"><i class="fas fa-edit"></i> Edit</button>
                      <button class="btn btn-secondary btn-sm del-btn" style="color:red; border-color:red" data-id="${art.id}"><i class="fas fa-trash"></i> Hapus</button>
-                     <a href="/article.html?slug=${art.slug}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Lihat</a>
+                     <a href="/articles.html?slug=${art.slug}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Lihat</a>
                 </div>
             </div>
         `).join('');

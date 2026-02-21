@@ -2,6 +2,37 @@ const ArticleModel = require('../models/ArticleModel');
 const { json, parseJsonBody, cacheHeaders } = require('../api/_util');
 const { requireAdminAuth } = require('../api/_auth');
 
+function sanitizePlainText(value, max = 255) {
+    return String(value || '')
+        .replace(/[\u0000-\u001F\u007F]/g, ' ')
+        .trim()
+        .slice(0, max);
+}
+
+function sanitizeImageUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (/^data:image\//i.test(raw)) return raw;
+    if (/^(https?:)?\/\//i.test(raw)) return raw;
+    if (raw.startsWith('/')) return raw;
+    return '';
+}
+
+function sanitizeArticleHtml(value) {
+    const input = String(value || '');
+    if (!input) return '';
+
+    return input
+        .replace(/<\s*(script|style|iframe|object|embed|link|meta|base|form|input|button|textarea|select)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+        .replace(/<\s*(script|style|iframe|object|embed|link|meta|base|form|input|button|textarea|select)[^>]*\/?\s*>/gi, '')
+        .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+        .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
+        .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, '')
+        .replace(/\s(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi, ' $1="#"')
+        .replace(/\s(href|src)\s*=\s*(['"])\s*data:(?!image\/)[\s\S]*?\2/gi, ' $1="#"')
+        .trim();
+}
+
 class ArticleController {
 
     // --- PUBLIC ---
@@ -67,12 +98,12 @@ class ArticleController {
 
         try {
             const article = await ArticleModel.create({
-                title: body.title,
-                content: body.content,
-                author: body.author || 'Admin',
-                image: body.image,
+                title: sanitizePlainText(body.title, 180),
+                content: sanitizeArticleHtml(body.content),
+                author: sanitizePlainText(body.author || 'Admin', 120),
+                image: sanitizeImageUrl(body.image),
                 publish_date: body.publish_date || new Date(),
-                category: body.category || 'Umum'
+                category: sanitizePlainText(body.category || 'Umum', 80)
             });
             return json(res, 201, { status: 'success', article });
         } catch (e) {
@@ -93,7 +124,15 @@ class ArticleController {
         }
 
         try {
-            const article = await ArticleModel.update(id, body);
+            const patch = {};
+            if (body.title !== undefined) patch.title = sanitizePlainText(body.title, 180);
+            if (body.content !== undefined) patch.content = sanitizeArticleHtml(body.content);
+            if (body.author !== undefined) patch.author = sanitizePlainText(body.author, 120);
+            if (body.image !== undefined) patch.image = sanitizeImageUrl(body.image);
+            if (body.publish_date !== undefined) patch.publish_date = body.publish_date;
+            if (body.category !== undefined) patch.category = sanitizePlainText(body.category, 80);
+
+            const article = await ArticleModel.update(id, patch);
             if (!article) return json(res, 404, { status: 'error', message: 'Article not found' });
             return json(res, 200, { status: 'success', article });
         } catch (e) {

@@ -73,7 +73,7 @@ async function query(strings, ...values) {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const result = await pool.query(text, values);
-      return { rows: result.rows };
+      return { rows: result.rows, rowCount: result.rowCount };
     } catch (err) {
       lastError = err;
       const msg = (err && err.message) ? err.message : String(err);
@@ -100,7 +100,7 @@ async function query(strings, ...values) {
            
            // Retry query once after schema creation
            const result2 = await pool.query(text, values);
-           return { rows: result2.rows };
+           return { rows: result2.rows, rowCount: result2.rowCount };
          } catch (e2) {
            throw new Error(`Database schema error: ${e2.message || e2}`);
          }
@@ -126,7 +126,7 @@ async function rawQuery(text, params = []) {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const result = await pool.query(text, params);
-      return { rows: result.rows };
+      return { rows: result.rows, rowCount: result.rowCount };
     } catch (err) {
       lastError = err;
       const msg = (err && err.message) ? err.message : String(err);
@@ -143,7 +143,7 @@ async function rawQuery(text, params = []) {
           const { ensureSchema } = require('./_bootstrap');
           await ensureSchema();
           const result2 = await pool.query(text, params);
-          return { rows: result2.rows };
+          return { rows: result2.rows, rowCount: result2.rowCount };
         } catch (e2) {
           throw new Error(`Database schema error: ${e2.message || e2}`);
         }

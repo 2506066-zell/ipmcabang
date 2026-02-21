@@ -6,7 +6,7 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Peringkat Kuis - IPM Panawuan</title>
     <link rel="icon" href="/ipm%20(2).png">
     <link rel="stylesheet" href="styles/style.css">
@@ -50,7 +50,8 @@
         <ul class="mobile-nav-links">
             <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
             <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
-            <li><a href="article.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="articles.html" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="materi.html" class="mobile-nav-link"><i class="fas fa-book"></i> Materi</a></li>
             <li><a href="quiz.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
             <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
         </ul>
@@ -84,7 +85,7 @@
         </div>
 
         <div id="empty-state" class="empty-state" style="display:none;">
-            <div class="empty-icon">🙂</div>
+            <div class="empty-icon"><i class="fas fa-ranking-star"></i></div>
             <h3>Belum ada data peringkat</h3>
             <p>Mulai kuis terlebih dahulu atau muat ulang jika data baru tersedia.</p>
             <button id="empty-reload" class="filter-btn">Muat Ulang</button>
@@ -138,15 +139,13 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js" defer></script>
     <script src="scripts/loader.js" defer></script>
-    <script>
-      document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
-    </script>
     <script src="ranking.js" defer></script>
     <script src="scripts/toast.js" defer></script>
     <script src="scripts/main.js?v=12" defer></script>
     <script src="scripts/install-header.js" defer></script>
     <script src="scripts/profile.js" defer></script></body>
 </html>
+
 
 
 

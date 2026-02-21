@@ -58,8 +58,8 @@ async function testScoreCalculation() {
     const restore = await mockDb(questions, user, []);
 
     try {
-        delete require.cache[require.resolve('../api/results.js')];
-        const handler = require('../api/results.js');
+        delete require.cache[require.resolve('../api/_handler_results.js')];
+        const handler = require('../api/_handler_results.js');
 
         // Scenario 1: perfect score
         {
@@ -123,8 +123,8 @@ async function testRankingListReturnsAll() {
     const restore = await mockDb([], {}, mockResults);
 
     try {
-        delete require.cache[require.resolve('../api/results.js')];
-        const handler = require('../api/results.js');
+        delete require.cache[require.resolve('../api/_handler_results.js')];
+        const handler = require('../api/_handler_results.js');
 
         const res = fakeRes();
         const req = { method: 'GET', query: {} };

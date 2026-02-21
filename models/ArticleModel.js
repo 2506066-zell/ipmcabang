@@ -50,9 +50,16 @@ class ArticleModel {
         }
 
         if (category && category !== 'all') {
-            whereClauses.push(`LOWER(category) = $${idx}`);
-            params.push(category.toLowerCase());
-            idx++;
+            const rawCategory = String(category).trim().toLowerCase();
+            if (rawCategory.startsWith('!') && rawCategory.length > 1) {
+                whereClauses.push(`LOWER(category) <> $${idx}`);
+                params.push(rawCategory.slice(1).trim());
+                idx++;
+            } else {
+                whereClauses.push(`LOWER(category) = $${idx}`);
+                params.push(rawCategory);
+                idx++;
+            }
         }
 
         const whereSQL = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';

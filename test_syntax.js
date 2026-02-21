@@ -1,4 +1,4 @@
-const { list } = require('./api/questions');
+require('./api/_handler_questions');
 // Mock request/response objects
 const req = { query: { mode: 'summary' } };
 const res = {

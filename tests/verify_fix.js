@@ -43,14 +43,15 @@ async function testListQuestionsIncludeInactive() {
 
     try {
         // Clear cache to usage mocked DB
-        delete require.cache[require.resolve('../api/admin_handler.js')];
-        const handler = require('../api/admin_handler.js');
+        delete require.cache[require.resolve('../api/_handler_admin.js')];
+        const handler = require('../api/_handler_admin.js');
 
         const res = fakeRes();
         // Action: listQuestions
         const req = {
-            method: 'POST',
+            method: 'GET',
             query: { action: 'listQuestions' }, // In switch(action) using req.query.action
+            headers: { host: 'localhost' },
             body: '{}'
         };
 

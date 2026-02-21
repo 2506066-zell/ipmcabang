@@ -3,6 +3,7 @@ const { json } = require('./_util');
 
 module.exports = async (req, res) => {
     try {
+        req.query = req.query || {};
         if (req.method !== 'GET') return json(res, 405, { status: 'error', message: 'Method not allowed' });
 
         const category = req.query.category ? String(req.query.category).trim() : '';

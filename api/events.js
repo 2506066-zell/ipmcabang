@@ -1,7 +1,9 @@
 const { query } = require('./_db');
 const { cacheHeaders } = require('./_util');
+const { applySecurityHeaders } = require('./_util');
 
 module.exports = async (req, res) => {
+  applySecurityHeaders(res);
   // SSE Setup
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');

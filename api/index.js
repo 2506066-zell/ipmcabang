@@ -19,7 +19,8 @@ const routes = {
 
 module.exports = async (req, res) => {
   try {
-    const action = req.query.action || '';
+    const q = req.query || {};
+    const action = q.action || '';
     if (req.method === 'GET' && action === 'health') {
       return json(res, 200, { status: 'success', ok: true, time: new Date().toISOString() });
     }
@@ -32,13 +33,19 @@ module.exports = async (req, res) => {
     // Parse the path to find the segment after /api/
     // Example: /api/articles -> articles
     // Example: /api/auth/login -> auth
-    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const url = new URL(req.url || '/api', `http://${req.headers?.host || 'localhost'}`);
     const pathParts = url.pathname.split('/').filter(p => p);
 
     // Find segment after 'api'
     const apiIdx = pathParts.indexOf('api');
-    const segment = (apiIdx !== -1 && pathParts[apiIdx + 1]) ? pathParts[apiIdx + 1] : null;
+    let segment = (apiIdx !== -1 && pathParts[apiIdx + 1]) ? pathParts[apiIdx + 1] : null;
     const subSegment = (apiIdx !== -1 && pathParts[apiIdx + 2]) ? pathParts[apiIdx + 2] : null;
+    const querySegment = q.segment ? String(q.segment) : '';
+
+    // Vercel rewrite compatibility: /api/index?segment=auth
+    if ((!segment || segment === 'index') && querySegment) {
+      segment = querySegment;
+    }
 
     // Direct match or nested match
     let handler = routes[segment];

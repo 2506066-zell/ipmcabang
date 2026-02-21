@@ -50,14 +50,18 @@
 
     const openMobileNav = () => {
         mobileNav.classList.add('open');
+        mobileNav.setAttribute('aria-hidden', 'false');
         if (mobileNavOverlay) mobileNavOverlay.classList.add('open');
+        if (hamburgerMenu) hamburgerMenu.setAttribute('aria-expanded', 'true');
         document.body.classList.add('body-no-scroll');
         uiBack.open('mobile-nav');
     };
 
     const closeMobileNav = (fromPop) => {
         mobileNav.classList.remove('open');
+        mobileNav.setAttribute('aria-hidden', 'true');
         if (mobileNavOverlay) mobileNavOverlay.classList.remove('open');
+        if (hamburgerMenu) hamburgerMenu.setAttribute('aria-expanded', 'false');
         document.body.classList.remove('body-no-scroll');
         if (!fromPop) uiBack.requestClose('mobile-nav');
     };
@@ -490,7 +494,7 @@
         // Update last seen when opening article detail page
         try {
             const url = new URL(window.location.href);
-            const isArticleDetail = window.location.pathname.includes('article.html') || (window.location.pathname.includes('articles.html') && (url.searchParams.get('id') || url.searchParams.get('slug')));
+            const isArticleDetail = window.location.pathname.includes('articles.html') && (url.searchParams.get('id') || url.searchParams.get('slug'));
             if (isArticleDetail) {
                 const id = url.searchParams.get('id');
                 const slug = url.searchParams.get('slug');
@@ -802,6 +806,22 @@
         fetchProgramCountdown();
     }
 
+    const escapeHtml = (value) => String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const sanitizeUrl = (raw, fallback) => {
+        const val = String(raw || '').trim();
+        if (!val) return fallback;
+        if (/^javascript:/i.test(val)) return fallback;
+        if (/^data:(?!image\/)/i.test(val)) return fallback;
+        if (/^(https?:)?\/\//i.test(val) || val.startsWith('/')) return val;
+        return fallback;
+    };
+
     function renderHighlights(articles) {
         if (!highlightsGrid) return;
         if (articles.length === 0) {
@@ -812,15 +832,16 @@
         highlightsGrid.innerHTML = articles.map(art => {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = art.content;
-            const snippet = tempDiv.textContent.substring(0, 150) + '...';
+            const snippet = escapeHtml((tempDiv.textContent || '').substring(0, 150) + '...');
             const date = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            const safeTitle = escapeHtml(art.title || 'Tanpa Judul');
 
             return `
                 <a href="articles.html?id=${art.id}" class="highlight-item">
                     <div class="highlight-date">
                         <i class="fas fa-calendar-alt"></i> ${date}
                     </div>
-                    <h3 class="highlight-item-title">${art.title}</h3>
+                    <h3 class="highlight-item-title">${safeTitle}</h3>
                     <p class="highlight-item-snippet">${snippet}</p>
                 </a>
             `;
@@ -849,16 +870,20 @@
 
         articlesGrid.innerHTML = articles.map(art => {
             const date = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            const safeImage = sanitizeUrl(art.image, 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800');
+            const safeTitle = escapeHtml(art.title || 'Tanpa Judul');
+            const safeCategory = escapeHtml(art.category || 'Umum');
+            const safeAuthor = escapeHtml(art.author || 'Admin');
             return `
                 <article class="article-card reveal">
                     <div class="article-card-image">
-                        <img src="${art.image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800'}" alt="${art.title}" loading="lazy">
+                        <img src="${escapeHtml(safeImage)}" alt="${safeTitle}" loading="lazy">
                     </div>
                     <div class="article-card-content">
-                        <span class="article-badge">${art.category || 'Umum'}</span>
-                        <h3 class="article-card-title">${art.title}</h3>
+                        <span class="article-badge">${safeCategory}</span>
+                        <h3 class="article-card-title">${safeTitle}</h3>
                         <div class="article-card-meta">
-                            <span><i class="fas fa-user-edit"></i> ${art.author}</span>
+                            <span><i class="fas fa-user-edit"></i> ${safeAuthor}</span>
                             <span><i class="fas fa-calendar-day"></i> ${date}</span>
                         </div>
                         <a href="articles.html?id=${art.id}" class="stretched-link" style="position:absolute; inset:0; z-index:1;"></a>
@@ -985,22 +1010,6 @@
 
         uiBack.register('fab-menu', () => {
             fabContainer.classList.remove('open');
-        });
-    }
-
-    // 3. Scroll Progress Bar (for Article Detail)
-    if (activeDoc.includes('article.html') && !activeDoc.includes('articles.html')) {
-        const progressContainer = document.createElement('div');
-        progressContainer.className = 'scroll-progress-container';
-        progressContainer.innerHTML = '<div class="scroll-progress-bar" id="scroll-bar"></div>';
-        document.body.appendChild(progressContainer);
-
-        const scrollBar = document.getElementById('scroll-bar');
-        window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            if (scrollBar) scrollBar.style.width = scrolled + "%";
         });
     }
 

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
     const CACHE_KEY = 'ipm_ranking_cache';
+    const USER_USERNAME_KEY = 'ipmquiz_user_username';
 
     // Elements
     const userRankCard = document.getElementById('user-rank-card');
@@ -18,7 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let allData = [];
     let previousRanks = new Map();
-    const currentUser = "Anda";
+    const currentUser = (() => {
+        try {
+            return String(sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '').trim();
+        } catch {
+            return '';
+        }
+    })();
     const numberFormatter = new Intl.NumberFormat('id-ID');
 
     const nameKey = (value) => String(value || '').trim().toLowerCase();
@@ -198,8 +205,11 @@ document.addEventListener('DOMContentLoaded', () => {
         newData.forEach((p, index) => {
             newRankMap.set(nameKey(p.username), index + 1);
         });
+        if (!currentUser) {
+            previousRanks = newRankMap;
+            return;
+        }
 
-        // Check for "Anda" (User) rank change
         const userKey = nameKey(currentUser);
         const userOldRank = previousRanks.get(userKey);
         const userNewRank = newRankMap.get(userKey);
@@ -207,13 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userOldRank && userNewRank) {
             if (userNewRank < userOldRank) {
                 // Rank Improved
-                showRankToast('Peringkat Naik! 🚀', `Selamat! Anda naik dari #${userOldRank} ke #${userNewRank}`, 'gold');
+                showRankToast('Peringkat Naik', `Selamat! Kamu naik dari #${userOldRank} ke #${userNewRank}`, 'gold');
             }
         }
 
         // Check if user entered Top 3
         if ((!userOldRank || userOldRank > 3) && userNewRank <= 3) {
-            showRankToast('Masuk 3 Besar! 🏆', `Luar biasa! Anda sekarang berada di posisi #${userNewRank}`, 'gold');
+            showRankToast('Masuk 3 Besar', `Luar biasa! Kamu sekarang berada di posisi #${userNewRank}`, 'gold');
         }
 
         previousRanks = newRankMap;
@@ -226,6 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderUserRank(data) {
+        if (!currentUser) {
+            userRankCard.style.display = 'none';
+            return;
+        }
+
         const userIndex = data.findIndex(p => nameKey(p.username) === nameKey(currentUser));
 
         if (userIndex !== -1) {
@@ -352,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // UX: Active Today Indicator
             const lastActive = new Date(p.ts || p.timestamp || 0);
             const isToday = Number.isFinite(lastActive.getTime()) && lastActive.setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0);
-            const activeBadge = isToday ? '<span class="active-badge" title="Aktif Hari Ini">🔥</span>' : '';
+            const activeBadge = isToday ? '<span class="active-badge" title="Aktif Hari Ini"><i class="fas fa-fire"></i></span>' : '';
             const displayName = formatName(p.username);
             const safeName = escapeHtml(displayName);
             const displayPimpinan = escapeHtml(formatPimpinan(p.pimpinan));
@@ -372,8 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let copy = '';
                 if (nextUser) {
                     const diff = toNumber(nextUser.score) - toNumber(p.score);
-                    if (diff > 0) copy = `<div class="rank-motivation">Kejar <b>${formatScore(diff)} poin</b> lagi untuk salip ${escapeHtml(formatName(nextUser.username))}! 🚀</div>`;
-                    else copy = `<div class="rank-motivation">Skor sama! Ayo main lagi untuk menyalip! 🔥</div>`;
+                    if (diff > 0) copy = `<div class="rank-motivation">Kejar <b>${formatScore(diff)} poin</b> lagi untuk salip ${escapeHtml(formatName(nextUser.username))}.</div>`;
+                    else copy = '<div class="rank-motivation">Skor sama. Main lagi untuk menyalip.</div>';
                 }
 
                 item.dataset.motivation = copy ? "true" : "false"; // Hook for CSS
@@ -410,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add Global CTA at bottom
         const ctaParams = document.createElement('div');
         ctaParams.className = 'ranking-footer-cta';
-        ctaParams.innerHTML = `<button onclick="window.location.href='quiz.html'" class="btn-shine">🔥 Tantang Pemain Lain!</button>`;
+        ctaParams.innerHTML = '<button onclick="window.location.href=\'quiz.html\'" class="btn-shine">Tantang Pemain Lain</button>';
         rankingList.appendChild(ctaParams);
     }
 

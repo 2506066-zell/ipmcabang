@@ -1,16 +1,8 @@
 const { query } = require('./_db');
 const { json, parseJsonBody } = require('./_util');
 const crypto = require('crypto');
-
-// --- Helpers ---
-function scryptHash(password, salt) {
-    return new Promise((resolve, reject) => {
-        crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-            if (err) return reject(err);
-            resolve(derivedKey.toString('hex'));
-        });
-    });
-}
+const { hashPassword, verifyPassword } = require('./_password');
+const { getClientIp, checkRateLimit, setRateLimitHeaders } = require('./_rate_limit');
 
 async function tooManyFailures(username, ip) {
     const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -25,14 +17,26 @@ function setSessionCookie(res, token, expires) {
     res.setHeader('Set-Cookie', cookieValue);
 }
 
+function enforceRateLimit(req, res, key, limit, windowMs) {
+    const result = checkRateLimit({ key, id: getClientIp(req), limit, windowMs });
+    setRateLimitHeaders(res, result, limit);
+    if (!result.ok) {
+        json(res, 429, { status: 'error', message: 'Too many requests. Try again later.' });
+        return false;
+    }
+    return true;
+}
+
 // --- Handlers ---
 
 async function handleLogin(req, res) {
     if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    if (!enforceRateLimit(req, res, 'auth:login', 30, 10 * 60 * 1000)) return;
     const body = parseJsonBody(req);
+    const headers = req.headers || {};
     const username = String(body.username || '').trim().toLowerCase();
     const password = String(body.password || '');
-    const ip = String((req.headers['x-forwarded-for'] || '').toString().split(',')[0] || req.socket?.remoteAddress || 'unknown');
+    const ip = String((headers['x-forwarded-for'] || '').toString().split(',')[0] || req.socket?.remoteAddress || 'unknown');
 
     if (!username || !password) return json(res, 400, { status: 'error', message: 'Username & password wajib' });
 
@@ -41,16 +45,28 @@ async function handleLogin(req, res) {
     const user = (await query`SELECT id, username, nama_panjang, pimpinan, password_salt, password_hash, role FROM users WHERE LOWER(username)=${username}`).rows[0];
 
     let success = false;
+    let legacyHash = false;
     if (user) {
-        const hash = await scryptHash(password, user.password_salt || '');
-        if (hash === user.password_hash) {
+        const checked = await verifyPassword(password, user.password_salt, user.password_hash);
+        if (checked.ok) {
             success = true;
+            legacyHash = checked.legacy;
         }
     }
 
     await query`INSERT INTO login_attempts (username, ip, attempted_at, success) VALUES (${username}, ${ip}, ${new Date().toISOString()}, ${success})`;
 
     if (!success) return json(res, 401, { status: 'error', message: 'Username atau password salah' });
+
+    if (legacyHash) {
+        try {
+            const next = await hashPassword(password);
+            await query`UPDATE users SET password_salt=${next.salt}, password_hash=${next.hash} WHERE id=${user.id}`;
+        } catch (e) {
+            // Do not block login if migration fails; user can still access.
+            console.warn('Password rehash migration failed for user:', user.id, e.message || e);
+        }
+    }
 
     const token = crypto.randomBytes(24).toString('hex');
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 hari
@@ -65,6 +81,7 @@ async function handleLogin(req, res) {
 
 async function handleRegister(req, res) {
     if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    if (!enforceRateLimit(req, res, 'auth:register', 20, 10 * 60 * 1000)) return;
     const body = parseJsonBody(req);
     const username = String(body.username || '').trim().toLowerCase();
     const password = String(body.password || '');
@@ -73,14 +90,14 @@ async function handleRegister(req, res) {
     if (!username || !password) return json(res, 400, { status: 'error', message: 'Username & password wajib' });
     const existing = (await query`SELECT id FROM users WHERE LOWER(username)=${username}`).rows[0];
     if (existing) return json(res, 409, { status: 'error', message: 'Username sudah terpakai' });
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = await scryptHash(password, salt);
-    const ins = await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash) VALUES (${username}, ${nama_panjang}, ${pimpinan}, ${salt}, ${hash}) RETURNING id, username, nama_panjang, pimpinan`;
+    const pwd = await hashPassword(password);
+    const ins = await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash) VALUES (${username}, ${nama_panjang}, ${pimpinan}, ${pwd.salt}, ${pwd.hash}) RETURNING id, username, nama_panjang, pimpinan`;
     return json(res, 201, { status: 'success', user: ins.rows[0] });
 }
 
 async function handlePromoteAdmin(req, res) {
     if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    if (!enforceRateLimit(req, res, 'auth:promoteAdmin', 10, 10 * 60 * 1000)) return;
     const body = parseJsonBody(req);
     const username = String(body.username || '').trim().toLowerCase();
     const password = String(body.password || '');
@@ -90,8 +107,8 @@ async function handlePromoteAdmin(req, res) {
     if (c > 0) return json(res, 403, { status: 'error', message: 'Admin sudah ada' });
     const user = (await query`SELECT id, username, password_salt, password_hash FROM users WHERE LOWER(username)=${username}`).rows[0];
     if (!user) return json(res, 404, { status: 'error', message: 'User tidak ditemukan' });
-    const hash = await scryptHash(password, user.password_salt || '');
-    if (hash !== user.password_hash) return json(res, 401, { status: 'error', message: 'Password salah' });
+    const checked = await verifyPassword(password, user.password_salt, user.password_hash);
+    if (!checked.ok) return json(res, 401, { status: 'error', message: 'Password salah' });
     await query`UPDATE users SET role=${'admin'} WHERE id=${user.id}`;
     const token = crypto.randomBytes(24).toString('hex');
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -105,6 +122,7 @@ async function handlePromoteAdmin(req, res) {
 
 async function handleSeedAdmins(req, res) {
     if (req.method !== 'POST') return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    if (!enforceRateLimit(req, res, 'auth:seedAdmins', 10, 10 * 60 * 1000)) return;
     const body = parseJsonBody(req);
     const admins = Array.isArray(body.admins) ? body.admins : [];
     if (!admins.length) return json(res, 400, { status: 'error', message: 'Payload kosong' });
@@ -118,13 +136,12 @@ async function handleSeedAdmins(req, res) {
         if (!username || !password) continue;
         let user = (await query`SELECT id, username, password_salt, password_hash, role FROM users WHERE LOWER(username)=${username}`).rows[0];
         if (!user) {
-            const salt = crypto.randomBytes(16).toString('hex');
-            const hash = await scryptHash(password, salt);
-            const ins = await query`INSERT INTO users (username, password_salt, password_hash, role) VALUES (${username}, ${salt}, ${hash}, ${'admin'}) RETURNING id, username`;
+            const pwd = await hashPassword(password);
+            const ins = await query`INSERT INTO users (username, password_salt, password_hash, role) VALUES (${username}, ${pwd.salt}, ${pwd.hash}, ${'admin'}) RETURNING id, username`;
             user = ins.rows[0];
         } else {
-            const hash = await scryptHash(password, user.password_salt || '');
-            if (hash !== user.password_hash) {
+            const checked = await verifyPassword(password, user.password_salt, user.password_hash);
+            if (!checked.ok) {
                 return json(res, 401, { status: 'error', message: `Password salah untuk ${username}` });
             }
             if (String(user.role || '') !== 'admin') {
@@ -156,7 +173,7 @@ async function handleGetPimpinanOptions(req, res) {
 
 module.exports = async (req, res) => {
     try {
-        const action = req.query.action;
+        const action = req.query?.action;
         switch (action) {
             case 'login': return await handleLogin(req, res);
             case 'register': return await handleRegister(req, res);

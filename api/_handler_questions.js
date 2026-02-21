@@ -160,6 +160,7 @@ async function list(req, res) {
 
 module.exports = async (req, res) => {
     try {
+        req.query = req.query || {};
         if (req.method === 'GET') return await list(req, res);
         return json(res, 405, { status: 'error', message: 'Method not allowed' });
     } catch (e) {

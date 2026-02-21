@@ -2,6 +2,7 @@ const { query } = require('./_db');
 const { json, parseJsonBody } = require('./_util');
 const { requireAdminAuth } = require('./_auth');
 const { ensureSchema } = require('./_bootstrap');
+const { hashPassword } = require('./_password');
 
 const DEFAULT_GAMIFICATION = {
     enabled: true,
@@ -676,11 +677,8 @@ async function handleMigrate(req, res) {
     if (adminU && adminP) {
         const exists = (await query`SELECT id FROM users WHERE LOWER(username)=${adminU}`).rows[0];
         if (!exists) {
-            const crypto = require('crypto');
-            const salt = crypto.randomBytes(16).toString('hex');
-            const dk = crypto.scryptSync(adminP, salt, 64);
-            const hash = dk.toString('hex');
-            await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${salt}, ${hash}, ${'admin'})`;
+            const pwd = await hashPassword(adminP);
+            await query`INSERT INTO users (username, nama_panjang, pimpinan, password_salt, password_hash, role) VALUES (${adminU}, ${'Administrator'}, ${'IPM'}, ${pwd.salt}, ${pwd.hash}, ${'admin'})`;
         }
     }
     return json(res, 200, { status: 'success' });
@@ -688,6 +686,7 @@ async function handleMigrate(req, res) {
 
 module.exports = async (req, res) => {
     try {
+        req.query = req.query || {};
         const action = req.query.action;
 
         if (req.method !== 'POST') {
