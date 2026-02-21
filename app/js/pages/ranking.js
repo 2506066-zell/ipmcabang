@@ -270,33 +270,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTop3(top3Data) {
         top3Container.innerHTML = '';
-
-        // Order for podium: 2, 1, 3
-        const reordered = [null, null, null];
-
-        // FIX: Handle cases where there are fewer than 3 players
-        if (top3Data.length === 1) {
-            reordered[1] = top3Data[0]; // Center
-        } else if (top3Data.length === 2) {
-            reordered[1] = top3Data[0]; // Center (1st)
-            reordered[0] = top3Data[1]; // Left (2nd)
-        } else {
-            reordered[1] = top3Data[0]; // Rank 1 -> Center
-            reordered[0] = top3Data[1]; // Rank 2 -> Left
-            reordered[2] = top3Data[2]; // Rank 3 -> Right
-        }
-
-        reordered.forEach((p, i) => {
-            if (!p) return;
-
-            // Determine actual rank based on position in reordered array
-            let rank;
-            if (i === 1) rank = 1;
-            else if (i === 0) rank = 2;
-            else rank = 3;
+        for (let rank = 1; rank <= 3; rank++) {
+            const p = top3Data[rank - 1] || null;
 
             const podiumItem = document.createElement('div');
-            podiumItem.className = `podium-item rank-${rank}`;
+            podiumItem.className = `podium-item rank-${rank}${p ? '' : ' is-empty'}`;
+
+            if (!p) {
+                podiumItem.innerHTML = `
+                    <div class="avatar-container placeholder">
+                        <span class="avatar-char">-</span>
+                    </div>
+                    <div class="podium-base">
+                        <div class="podium-rank">Posisi ${rank}</div>
+                        <div class="podium-name">Belum Ada</div>
+                        <div class="podium-pimpinan">Menunggu peserta</div>
+                        <div class="podium-score">0 <span>pts</span></div>
+                    </div>
+                `;
+                top3Container.appendChild(podiumItem);
+                continue;
+            }
 
             // UX: Active Indicator for Top 3
             const lastActive = new Date(p.ts || p.timestamp || 0);
@@ -329,18 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             top3Container.appendChild(podiumItem);
-        });
-
-        // Cinematic GSAP entry for Top 3
-        if (window.gsap) {
-            gsap.from(".podium-item", {
-                y: 60,
-                opacity: 0,
-                scale: 0.9,
-                duration: 0.8,
-                stagger: 0.2,
-                ease: "back.out(1.7)"
-            });
         }
     }
 

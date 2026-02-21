@@ -3266,14 +3266,14 @@ body.page-quiz {
     flex: 1;
 }
 
-.page-struktur .header-title {
+.page-struktur .anggota-header .header-title {
     font-size: 20px;
     font-weight: 800;
     color: #1a1a1a;
     letter-spacing: -0.3px;
 }
 
-.page-struktur .header-count {
+.page-struktur .anggota-header .header-count {
     font-size: 12px;
     color: #888;
     font-weight: 600;
@@ -4014,11 +4014,11 @@ body.page-quiz {
         font-size: 16px;
     }
 
-    .page-struktur .header-title {
+    .page-struktur .anggota-header .header-title {
         font-size: 18px;
     }
 
-    .page-struktur .header-count {
+    .page-struktur .anggota-header .header-count {
         font-size: 11px;
     }
 
