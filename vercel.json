@@ -27,98 +27,94 @@
       ]
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/auth/login",
-      "dest": "/api/index?segment=auth&action=login"
+      "source": "/api/auth/login",
+      "destination": "/api/index?segment=auth&action=login"
     },
     {
-      "src": "/api/auth/register",
-      "dest": "/api/index?segment=auth&action=register"
+      "source": "/api/auth/register",
+      "destination": "/api/index?segment=auth&action=register"
     },
     {
-      "src": "/api/auth/adminLogin",
-      "dest": "/api/index?segment=auth&action=adminLogin"
+      "source": "/api/auth/adminLogin",
+      "destination": "/api/index?segment=auth&action=adminLogin"
     },
     {
-      "src": "/api/auth/promoteAdmin",
-      "dest": "/api/index?segment=auth&action=promoteAdmin"
+      "source": "/api/auth/promoteAdmin",
+      "destination": "/api/index?segment=auth&action=promoteAdmin"
     },
     {
-      "src": "/api/auth/seedAdmins",
-      "dest": "/api/index?segment=auth&action=seedAdmins"
+      "source": "/api/auth/seedAdmins",
+      "destination": "/api/index?segment=auth&action=seedAdmins"
     },
     {
-      "src": "/api/dbHealth",
-      "dest": "/api/index?action=dbHealth"
+      "source": "/api/dbHealth",
+      "destination": "/api/index?action=dbHealth"
     },
     {
-      "src": "/api/health",
-      "dest": "/api/index?action=health"
+      "source": "/api/health",
+      "destination": "/api/index?action=health"
     },
     {
-      "src": "/api/migrate",
-      "dest": "/api/index?segment=admin&action=migrate"
+      "source": "/api/migrate",
+      "destination": "/api/index?segment=admin&action=migrate"
     },
     {
-      "src": "/api/resetSet",
-      "dest": "/api/index?segment=admin&action=resetSet"
+      "source": "/api/resetSet",
+      "destination": "/api/index?segment=admin&action=resetSet"
     },
     {
-      "src": "/api/notifications",
-      "dest": "/api/index?segment=users&action=notifications"
+      "source": "/api/notifications",
+      "destination": "/api/index?segment=users&action=notifications"
     },
     {
-      "src": "/api/admin/users",
-      "dest": "/api/index?segment=users"
+      "source": "/api/admin/users",
+      "destination": "/api/index?segment=users"
     },
     {
-      "src": "/api/admin/questions",
-      "dest": "/api/index?segment=admin"
+      "source": "/api/admin/questions",
+      "destination": "/api/index?segment=admin"
     },
     {
-      "src": "/api/admin/materials",
-      "dest": "/api/index?segment=admin"
+      "source": "/api/admin/materials",
+      "destination": "/api/index?segment=admin"
     },
     {
-      "src": "/api/articles",
-      "dest": "/api/index?segment=articles"
+      "source": "/api/articles",
+      "destination": "/api/index?segment=articles"
     },
     {
-      "src": "/api/materials",
-      "dest": "/api/index?segment=materials"
+      "source": "/api/materials",
+      "destination": "/api/index?segment=materials"
     },
     {
-      "src": "/api/questions",
-      "dest": "/api/index?segment=questions"
+      "source": "/api/questions",
+      "destination": "/api/index?segment=questions"
     },
     {
-      "src": "/api/results",
-      "dest": "/api/index?segment=results"
+      "source": "/api/results",
+      "destination": "/api/index?segment=results"
     },
     {
-      "src": "/api/users",
-      "dest": "/api/index?segment=users"
+      "source": "/api/users",
+      "destination": "/api/index?segment=users"
     },
     {
-      "src": "/api/events",
-      "dest": "/api/events"
+      "source": "/api/events",
+      "destination": "/api/events"
     },
     {
-      "src": "/api/upload",
-      "dest": "/api/upload"
+      "source": "/api/upload",
+      "destination": "/api/upload"
     },
     {
-      "src": "/api/cron/notifications",
-      "dest": "/api/index?segment=admin&action=runScheduledNotifications"
+      "source": "/api/cron/notifications",
+      "destination": "/api/index?segment=admin&action=runScheduledNotifications"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/api/:path*",
+      "destination": "/api/index"
     }
   ],
   "crons": [
