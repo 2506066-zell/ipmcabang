@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v9';
+const STATIC_CACHE = 'static-v10';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -41,6 +41,7 @@ const STATIC_ASSETS = [
   '/scripts/login.js',
   '/scripts/register.js',
   '/manifest.json',
+  '/ipm%20(2).png',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
 ];

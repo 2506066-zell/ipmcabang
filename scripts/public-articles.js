@@ -1,5 +1,6 @@
 ﻿const API_BASE = '/api/articles';
 let listInitialized = false;
+const LOCAL_ARTICLE_FALLBACK = '/ipm%20(2).png';
 
 function escapeHtml(value) {
     return String(value || '')
@@ -14,7 +15,8 @@ function sanitizeUrl(raw, fallback = '#') {
     const val = String(raw || '').trim();
     if (!val) return fallback;
     if (/^javascript:/i.test(val)) return fallback;
-    if (/^data:(?!image\/)/i.test(val)) return fallback;
+    if (/^data:image\//i.test(val)) return val;
+    if (/^data:/i.test(val)) return fallback;
     if (/^(https?:)?\/\//i.test(val) || val.startsWith('/')) return val;
     return fallback;
 }
@@ -137,7 +139,7 @@ function initListPage() {
         }
 
         const cards = articles.map((art, index) => {
-            const thumbUrl = sanitizeUrl(art.image, 'https://via.placeholder.com/400x250?text=No+Thumbnail');
+            const thumbUrl = sanitizeUrl(art.image, LOCAL_ARTICLE_FALLBACK);
             const div = document.createElement('div');
             div.innerHTML = (art.content || '').substring(0, 120) + '...';
             const excerpt = escapeHtml(div.textContent || div.innerText || '');
@@ -153,7 +155,7 @@ function initListPage() {
             card.style.animationDelay = `${index * 0.1}s`;
             card.innerHTML = `
                 <div class="card-thumbnail">
-                    <img src="${safeThumb}" alt="${safeTitle}" onload="this.classList.add('loaded')">
+                    <img src="${safeThumb}" alt="${safeTitle}" onload="this.classList.add('loaded')" onerror="this.onerror=null;this.src='${LOCAL_ARTICLE_FALLBACK}'">
                     <span class="card-category-badge">${safeCategory}</span>
                 </div>
                 <div class="card-content">
@@ -221,7 +223,7 @@ async function initSidebar() {
         if (data.status === 'success' && latestList) {
             latestList.innerHTML = data.articles.map(art => `
                 <a href="articles.html?id=${art.id}" class="sidebar-item">
-                    <div class="sidebar-item-thumb" style="background-image: url('${escapeHtml(sanitizeUrl(art.image, 'https://via.placeholder.com/100'))}')"></div>
+                    <div class="sidebar-item-thumb" style="background-image: url('${escapeHtml(sanitizeUrl(art.image, LOCAL_ARTICLE_FALLBACK))}')"></div>
                     <div class="sidebar-item-info">
                         <h4 class="sidebar-item-title">${escapeHtml(art.title || 'Tanpa Judul')}</h4>
                         <span class="sidebar-item-date">${new Date(art.publish_date).toLocaleDateString('id-ID')}</span>
@@ -438,13 +440,13 @@ function initDetailPage(id, slug) {
                 return;
             }
             wrap.innerHTML = items.map(a => {
-                const thumb = sanitizeUrl(a.image, 'https://via.placeholder.com/320x180?text=Artikel');
+                const thumb = sanitizeUrl(a.image, LOCAL_ARTICLE_FALLBACK);
                 const snippet = escapeHtml(stripHtml(a.content).slice(0, 120));
                 const safeTitle = escapeHtml(a.title || 'Tanpa Judul');
                 return `
                     <a class="rec-card" href="articles.html?id=${a.id}">
                         <div class="rec-thumb">
-                            <img src="${escapeHtml(thumb)}" alt="${safeTitle}" loading="lazy" decoding="async">
+                            <img src="${escapeHtml(thumb)}" alt="${safeTitle}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${LOCAL_ARTICLE_FALLBACK}'">
                         </div>
                         <div class="rec-body">
                             <div class="rec-card-title">${safeTitle}</div>

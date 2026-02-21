@@ -817,7 +817,8 @@
         const val = String(raw || '').trim();
         if (!val) return fallback;
         if (/^javascript:/i.test(val)) return fallback;
-        if (/^data:(?!image\/)/i.test(val)) return fallback;
+        if (/^data:image\//i.test(val)) return val;
+        if (/^data:/i.test(val)) return fallback;
         if (/^(https?:)?\/\//i.test(val) || val.startsWith('/')) return val;
         return fallback;
     };
@@ -870,14 +871,14 @@
 
         articlesGrid.innerHTML = articles.map(art => {
             const date = new Date(art.publish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            const safeImage = sanitizeUrl(art.image, 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800');
+            const safeImage = sanitizeUrl(art.image, '/ipm%20(2).png');
             const safeTitle = escapeHtml(art.title || 'Tanpa Judul');
             const safeCategory = escapeHtml(art.category || 'Umum');
             const safeAuthor = escapeHtml(art.author || 'Admin');
             return `
                 <article class="article-card reveal">
                     <div class="article-card-image">
-                        <img src="${escapeHtml(safeImage)}" alt="${safeTitle}" loading="lazy">
+                        <img src="${escapeHtml(safeImage)}" alt="${safeTitle}" loading="lazy" onerror="this.onerror=null;this.src='/ipm%20(2).png'">
                     </div>
                     <div class="article-card-content">
                         <span class="article-badge">${safeCategory}</span>
