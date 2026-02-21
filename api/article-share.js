@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
     const finalDetailPath = `/articles/${encodeURIComponent(articleSlug)}`;
     const title = `${article.title || 'Artikel Organisasi'} - PC IPM Panawuan`;
     const description = buildDescription(article);
-    const imageUrl = new URL(`/api/article-share-image?slug=${encodeURIComponent(articleSlug)}`, origin).toString();
+    const imageUrl = new URL(`/api/article-share-image/${encodeURIComponent(articleSlug)}.jpg`, origin).toString();
     const canonicalUrl = new URL(finalDetailPath, origin).toString();
     const publishedIso = toIsoDate(article.publish_date || article.created_at || Date.now());
 
@@ -126,6 +126,7 @@ module.exports = async (req, res) => {
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
   <meta property="article:published_time" content="${escapeHtml(publishedIso)}">
   <meta name="twitter:card" content="summary_large_image">

@@ -59,6 +59,10 @@
       "destination": "/api/article-share"
     },
     {
+      "source": "/api/article-share-image/:slug",
+      "destination": "/api/article-share-image?slug=:slug"
+    },
+    {
       "source": "/api/article-share-image",
       "destination": "/api/article-share-image"
     },

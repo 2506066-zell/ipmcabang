@@ -29,13 +29,27 @@ function parseDataImage(raw) {
   }
 }
 
+function getSlug(req) {
+  const querySlug = String((req.query && req.query.slug) || '').trim();
+  if (querySlug) return querySlug;
+  const path = String(req.url || '');
+  const match = path.match(/\/api\/article-share-image\/([^/?#]+)/i);
+  if (!match || !match[1]) return '';
+  const raw = match[1].replace(/\.(jpg|jpeg|png|webp)$/i, '');
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     applySecurityHeaders(res);
     return res.status(405).send('Method Not Allowed');
   }
 
-  const slug = String((req.query && req.query.slug) || '').trim();
+  const slug = getSlug(req);
   const origin = getOrigin(req);
   const fallbackUrl = new URL(FALLBACK_IMAGE, origin).toString();
   if (!slug) return redirect(res, fallbackUrl);
@@ -50,7 +64,8 @@ module.exports = async (req, res) => {
       applySecurityHeaders(res);
       res.setHeader('Content-Type', parsedData.mime);
       res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=1800');
-      if (req.method === 'HEAD') return res.status(200).send('');
+      res.setHeader('Content-Length', String(parsedData.buffer.length));
+      if (req.method === 'HEAD') return res.status(200).end();
       return res.status(200).send(parsedData.buffer);
     }
 
