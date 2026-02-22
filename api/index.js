@@ -16,6 +16,7 @@ const routes = {
   'questions': require('./_handler_questions'),
   'results': require('./_handler_results'),
   'users': require('./_handler_users'),
+  'feedback': require('./_handler_feedback'),
   'push': require('./_handler_push')
 };
 

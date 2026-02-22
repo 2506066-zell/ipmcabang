@@ -144,6 +144,18 @@
     return state.bidang.find((item) => item.code === state.currentBidangCode) || null;
   }
 
+  function getStoredUsername() {
+    const keys = ['ipmquiz_user_username', 'ipmquiz_admin_username'];
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      const fromSession = String(sessionStorage.getItem(key) || '').trim();
+      if (fromSession) return fromSession;
+      const fromLocal = String(localStorage.getItem(key) || '').trim();
+      if (fromLocal) return fromLocal;
+    }
+    return '';
+  }
+
   function hideLoadingOverlay() {
     if (!els.loadingOverlay) return;
     els.loadingOverlay.classList.add('hidden');
@@ -340,6 +352,76 @@
     });
   }
 
+  function syncFeedbackSubject() {
+    if (!els.orgFeedbackSubject) return;
+    if (String(els.orgFeedbackSubject.value || '').trim()) return;
+    const activeBidang = getCurrentBidang();
+    if (activeBidang?.name) {
+      els.orgFeedbackSubject.value = `Masukan untuk bidang ${activeBidang.name}`;
+      return;
+    }
+    els.orgFeedbackSubject.value = 'Masukan halaman Struktur Organisasi';
+  }
+
+  function setFeedbackStatus(message, type) {
+    if (!els.orgFeedbackStatus) return;
+    const tone = type || 'muted';
+    els.orgFeedbackStatus.textContent = String(message || '');
+    els.orgFeedbackStatus.className = `org-feedback-status ${tone}`;
+  }
+
+  async function submitFeedback(event) {
+    event.preventDefault();
+    const message = String(els.orgFeedbackMessage?.value || '').trim();
+    if (message.length < 10) {
+      setFeedbackStatus('Pesan minimal 10 karakter.', 'error');
+      return;
+    }
+
+    const activeBidang = getCurrentBidang();
+    const payload = {
+      source_page: 'struktur-organisasi',
+      subject: String(els.orgFeedbackSubject?.value || '').trim(),
+      sender_name: String(els.orgFeedbackName?.value || '').trim() || getStoredUsername(),
+      sender_contact: String(els.orgFeedbackContact?.value || '').trim(),
+      message,
+      context: {
+        bidang: activeBidang?.name || '',
+        page_url: window.location.href,
+        user_agent: navigator.userAgent
+      }
+    };
+
+    if (els.orgFeedbackSubmitBtn) {
+      els.orgFeedbackSubmitBtn.disabled = true;
+      els.orgFeedbackSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+    }
+    setFeedbackStatus('Mengirim kritik & saran...', 'muted');
+
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.status !== 'success') {
+        throw new Error(data?.message || `HTTP ${res.status}`);
+      }
+      if (els.orgFeedbackMessage) els.orgFeedbackMessage.value = '';
+      if (els.orgFeedbackSubject) els.orgFeedbackSubject.value = '';
+      setFeedbackStatus('Terima kasih. Pesan kamu sudah masuk ke admin.', 'success');
+      syncFeedbackSubject();
+    } catch (err) {
+      setFeedbackStatus(`Gagal kirim: ${err.message || 'error'}`, 'error');
+    } finally {
+      if (els.orgFeedbackSubmitBtn) {
+        els.orgFeedbackSubmitBtn.disabled = false;
+        els.orgFeedbackSubmitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim';
+      }
+    }
+  }
+
   function setDetailSegment(segment) {
     const target = segment === 'program' ? 'program' : 'anggota';
     state.currentSegment = target;
@@ -378,6 +460,7 @@
 
     renderDetailMembers(selected);
     renderPrograms(selected);
+    syncFeedbackSubject();
     setDetailSegment(segment || 'anggota');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -387,6 +470,7 @@
     if (els.viewBidangGrid) els.viewBidangGrid.classList.remove('hidden');
     state.currentBidangCode = '';
     state.currentSegment = 'anggota';
+    syncFeedbackSubject();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -464,6 +548,10 @@
       els.detailSegmentProgram.addEventListener('click', () => setDetailSegment('program'));
     }
 
+    if (els.orgFeedbackForm) {
+      els.orgFeedbackForm.addEventListener('submit', submitFeedback);
+    }
+
     if (els.bidangGrid) {
       els.bidangGrid.addEventListener('click', (event) => {
         const btn = event.target.closest('button[data-action]');
@@ -514,6 +602,13 @@
     els.leadershipSection = byId('leadershipSection');
     els.membersSection = byId('membersSection');
     els.programList = byId('programList');
+    els.orgFeedbackForm = byId('orgFeedbackForm');
+    els.orgFeedbackName = byId('orgFeedbackName');
+    els.orgFeedbackContact = byId('orgFeedbackContact');
+    els.orgFeedbackSubject = byId('orgFeedbackSubject');
+    els.orgFeedbackMessage = byId('orgFeedbackMessage');
+    els.orgFeedbackSubmitBtn = byId('orgFeedbackSubmitBtn');
+    els.orgFeedbackStatus = byId('orgFeedbackStatus');
 
     els.anggotaDetailOverlay = byId('anggotaDetailOverlay');
     els.anggotaDetailCard = byId('anggotaDetailCard');
@@ -528,6 +623,7 @@
     els.anggotaInstagramBtn = byId('anggotaInstagramBtn');
 
     bindEvents();
+    syncFeedbackSubject();
     state.bidang = await fetchOrganizationData();
     renderBidangGrid();
     hideLoadingOverlay();

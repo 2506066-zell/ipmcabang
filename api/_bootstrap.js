@@ -166,6 +166,21 @@ async function ensureSchema() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS feedback_messages (
+    id SERIAL PRIMARY KEY,
+    source_page TEXT DEFAULT 'struktur-organisasi',
+    subject TEXT,
+    sender_name TEXT,
+    sender_contact TEXT,
+    message TEXT NOT NULL,
+    context_json JSONB,
+    source_ip TEXT,
+    status TEXT DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT NOW(),
+    resolved_at TIMESTAMP,
+    resolved_by INT REFERENCES users(id)
+  )`;
+
   await query`CREATE TABLE IF NOT EXISTS articles (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
@@ -317,6 +332,16 @@ async function ensureSchema() {
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 1`;
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS source_page TEXT DEFAULT 'struktur-organisasi'`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS subject TEXT`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS sender_name TEXT`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS sender_contact TEXT`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS message TEXT`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS context_json JSONB`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS source_ip TEXT`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'open'`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP`;
+  await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS resolved_by INT`;
 
   await seedOrganizationData();
 
@@ -330,6 +355,9 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_materials_active ON materials(active)`;
   await query`CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_feedback_messages_status_created ON feedback_messages(status, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_feedback_messages_created ON feedback_messages(created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_feedback_messages_source_ip_created ON feedback_messages(source_ip, created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_status ON scheduled_notifications(status)`;
   await query`CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_send_at ON scheduled_notifications(send_at)`;
   await query`CREATE INDEX IF NOT EXISTS idx_org_bidang_sort ON org_bidang(sort_order, id)`;

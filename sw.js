@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v24';
+const STATIC_CACHE = 'static-v25';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -241,6 +241,26 @@ self.addEventListener('fetch', (event) => {
 });
 
 // --- PUSH NOTIFICATIONS ---
+function normalizeNotificationUrl(rawUrl) {
+  const raw = String(rawUrl || '').trim();
+  if (!raw) return `${self.location.origin}/`;
+  if (/^(javascript|data|vbscript):/i.test(raw)) return `${self.location.origin}/`;
+  const looksLikeDomain = /^[a-z0-9.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(raw);
+  const candidate = (/^https?:\/\//i.test(raw) || raw.startsWith('/'))
+    ? raw
+    : (looksLikeDomain ? `https://${raw}` : raw);
+  try {
+    const parsed = new URL(candidate, self.location.origin);
+    if (parsed.origin === self.location.origin) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || '/';
+    }
+    return parsed.href;
+  } catch (e) {
+    const cleaned = raw.replace(/^\.?\//, '').trim();
+    return cleaned ? `/${cleaned}` : '/';
+  }
+}
+
 self.addEventListener('push', (event) => {
   let data = {};
   try {
@@ -249,13 +269,17 @@ self.addEventListener('push', (event) => {
     data = { body: event.data ? event.data.text() : '' };
   }
 
+  const targetUrl = normalizeNotificationUrl(data.url || '/');
   const title = data.title || 'Notifikasi IPM';
   const options = {
     body: data.body || 'Ada pembaruan baru.',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
+    actions: [
+      { action: 'open', title: 'Buka' }
+    ],
     data: {
-      url: data.url || '/'
+      url: targetUrl
     }
   };
 
@@ -264,13 +288,31 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification?.data?.url || '/';
+  const destination = normalizeNotificationUrl(event.notification?.data?.url || '/');
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
+      const destinationUrl = new URL(destination, self.location.origin);
+
+      // Fokus tab yang sudah tepat lebih dulu.
       for (const client of clientList) {
-        if (client.url.includes(url) && 'focus' in client) return client.focus();
+        try {
+          if (new URL(client.url).href === destinationUrl.href && 'focus' in client) {
+            return client.focus();
+          }
+        } catch (e) {}
       }
-      if (clients.openWindow) return clients.openWindow(url);
+
+      // Jika ada jendela aplikasi yang masih hidup, navigasikan di sana agar terasa "langsung buka di homescreen".
+      for (const client of clientList) {
+        try {
+          const clientUrl = new URL(client.url);
+          if (clientUrl.origin !== destinationUrl.origin) continue;
+          if ('navigate' in client) await client.navigate(destinationUrl.href);
+          if ('focus' in client) return client.focus();
+        } catch (e) {}
+      }
+
+      if (clients.openWindow) return clients.openWindow(destinationUrl.href);
       return null;
     })
   );

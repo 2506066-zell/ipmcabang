@@ -2,6 +2,25 @@ const { json, parseJsonBody } = require('./_util');
 const { getSessionUser, requireAdminAuth } = require('./_auth');
 const { getVapid, saveSubscription, removeSubscription, sendToAll, sendToUser } = require('./_push');
 
+function normalizeNotificationUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '/';
+  if (/^(javascript|data|vbscript):/i.test(raw)) return '/';
+  const looksLikeDomain = /^[a-z0-9.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(raw);
+  const candidate = (/^https?:\/\//i.test(raw) || raw.startsWith('/'))
+    ? raw
+    : (looksLikeDomain ? `https://${raw}` : raw);
+  try {
+    if (/^https?:\/\//i.test(candidate)) return new URL(candidate).href;
+    const parsed = new URL(candidate, 'http://local.app');
+    const normalized = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return normalized.startsWith('/') ? normalized : `/${normalized}`;
+  } catch {
+    const cleaned = raw.replace(/^\.?\//, '').trim();
+    return cleaned ? `/${cleaned}` : '/';
+  }
+}
+
 module.exports = async (req, res) => {
   try {
     const action = req.query.action || '';
@@ -35,7 +54,7 @@ module.exports = async (req, res) => {
       const payload = {
         title: body.title || 'Notifikasi IPM',
         body: body.body || 'Ada pembaruan baru.',
-        url: body.url || '/'
+        url: normalizeNotificationUrl(body.url || '/')
       };
       const result = await sendToAll(payload);
       return json(res, 200, { status: 'success', result });
@@ -49,7 +68,7 @@ module.exports = async (req, res) => {
       const payload = {
         title: body.title || 'Notifikasi IPM',
         body: body.body || 'Ada pembaruan baru.',
-        url: body.url || '/'
+        url: normalizeNotificationUrl(body.url || '/')
       };
       const result = await sendToUser(userId, payload);
       return json(res, 200, { status: 'success', result });

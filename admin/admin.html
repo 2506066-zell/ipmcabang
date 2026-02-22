@@ -294,7 +294,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="notify-url">Tautan (opsional)</label>
-                                <input type="text" id="notify-url" placeholder="/quiz.html">
+                                <input type="text" id="notify-url" placeholder="/articles/slug-judul-anda">
+                                <small class="form-hint">Contoh: <code>/articles/slug-judul</code> atau URL lengkap.</small>
                             </div>
                             <div class="form-group">
                                 <label for="notify-target">Target Notifikasi</label>
@@ -330,6 +331,30 @@
                         <div class="action-group wrap mt-12">
                             <button class="btn btn-secondary" id="notify-schedule-reload">Muat Jadwal Notifikasi</button>
                             <button class="btn btn-primary" id="notify-schedule-run">Jalankan Jadwal Sekarang</button>
+                        </div>
+                    </section>
+                    <section class="card section-card mt-20" id="admin-feedback-card">
+                        <h3 class="section-card-title section-title-icon">
+                            <i class="fas fa-comment-dots"></i> Pesan Kritik &amp; Saran (Struktur Organisasi)
+                        </h3>
+                        <p class="small muted mb-12">Pesan dari user di halaman Struktur Organisasi akan masuk ke sini.</p>
+                        <div class="toolbar-row toolbar-spread mb-12">
+                            <div class="toolbar-row toolbar-grow">
+                                <select id="feedback-status-filter" class="toolbar-select">
+                                    <option value="all">Semua Status</option>
+                                    <option value="open">Belum Ditindaklanjuti</option>
+                                    <option value="resolved">Selesai</option>
+                                </select>
+                            </div>
+                            <div class="action-group">
+                                <span class="small muted" id="feedback-count">0 pesan</span>
+                                <button class="btn btn-secondary" id="feedback-refresh-btn">
+                                    <i class="fas fa-rotate"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div id="feedback-list" class="list-container">
+                            <div class="small muted">Belum ada pesan.</div>
                         </div>
                     </section>
                 </div>

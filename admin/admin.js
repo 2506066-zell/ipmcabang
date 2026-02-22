@@ -22,6 +22,7 @@
         results: [],
         users: [],
         logs: [],
+        feedbackMessages: [],
         schedules: [],
         pimpinanOptions: [],
         connected: false,
@@ -90,6 +91,26 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function normalizeNotificationUrlInput(rawUrl) {
+        const raw = String(rawUrl || '').trim();
+        if (!raw) return '/';
+        if (/^(javascript|data|vbscript):/i.test(raw)) return '/';
+        const looksLikeDomain = /^[a-z0-9.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(raw);
+        const candidate = (/^https?:\/\//i.test(raw) || raw.startsWith('/'))
+            ? raw
+            : (looksLikeDomain ? `https://${raw}` : raw);
+        try {
+            const parsed = new URL(candidate, window.location.origin);
+            if (parsed.origin === window.location.origin) {
+                return `${parsed.pathname}${parsed.search}${parsed.hash}` || '/';
+            }
+            return parsed.href;
+        } catch {
+            const cleaned = raw.replace(/^\.?\//, '').trim();
+            return cleaned ? `/${cleaned}` : '/';
+        }
     }
 
     // --- ELEMENTS ---
@@ -238,6 +259,10 @@
             notifyScheduleRun: document.getElementById('notify-schedule-run'),
             notifyPreviewBtn: document.getElementById('notify-preview-btn'),
             notifyPreviewBox: document.getElementById('notify-preview-box'),
+            feedbackList: document.getElementById('feedback-list'),
+            feedbackCount: document.getElementById('feedback-count'),
+            feedbackRefreshBtn: document.getElementById('feedback-refresh-btn'),
+            feedbackStatusFilter: document.getElementById('feedback-status-filter'),
 
             // Question Modal
             modal: document.getElementById('question-modal'),
@@ -513,6 +538,7 @@
         if (tabName === 'users') {
             loadNotifySchedules();
             loadPimpinanOptions();
+            loadFeedbackMessages();
         }
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();
@@ -743,6 +769,94 @@
         } catch (e) {
             console.error('Load scheduled notifications failed:', e);
             els.notifyScheduleList.innerHTML = '<div class="small muted">Gagal memuat jadwal notifikasi.</div>';
+        }
+    }
+
+    function formatFeedbackDate(value) {
+        if (!value) return '-';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function parseFeedbackContext(input) {
+        if (!input) return {};
+        if (typeof input === 'object') return input;
+        try {
+            return JSON.parse(input);
+        } catch {
+            return {};
+        }
+    }
+
+    function renderFeedbackList() {
+        if (!els.feedbackList) return;
+        const items = Array.isArray(state.feedbackMessages) ? state.feedbackMessages : [];
+        if (els.feedbackCount) {
+            els.feedbackCount.textContent = `${items.length} pesan`;
+        }
+        if (!items.length) {
+            els.feedbackList.innerHTML = '<div class="small muted">Belum ada pesan kritik & saran.</div>';
+            return;
+        }
+
+        els.feedbackList.innerHTML = items.map((item) => {
+            const ctx = parseFeedbackContext(item.context_json);
+            const status = String(item.status || 'open').toLowerCase() === 'resolved' ? 'resolved' : 'open';
+            const statusLabel = status === 'resolved' ? 'Selesai' : 'Belum Ditindaklanjuti';
+            const subject = String(item.subject || '').trim() || `Masukan ${item.source_page || 'struktur-organisasi'}`;
+            const sender = String(item.sender_name || '').trim() || 'Anonim';
+            const contact = String(item.sender_contact || '').trim();
+            const bidang = String(ctx.bidang || '').trim();
+            const actionBtn = status === 'open'
+                ? `<button type="button" class="btn btn-xs btn-primary feedback-mark-btn" data-id="${item.id}" data-resolved="true">Tandai Selesai</button>`
+                : `<button type="button" class="btn btn-xs btn-secondary feedback-mark-btn" data-id="${item.id}" data-resolved="false">Buka Lagi</button>`;
+            return `
+                <article class="feedback-item" data-id="${item.id}">
+                    <div class="feedback-item-head">
+                        <div>
+                            <div class="feedback-item-title">${escapeHtml(subject)}</div>
+                            <div class="feedback-item-meta">
+                                Dari: ${escapeHtml(sender)}
+                                ${contact ? ` • ${escapeHtml(contact)}` : ''}
+                                • ${escapeHtml(formatFeedbackDate(item.created_at))}
+                            </div>
+                        </div>
+                        <span class="feedback-status ${status}">${statusLabel}</span>
+                    </div>
+                    <div class="feedback-item-message">${escapeHtml(item.message || '')}</div>
+                    <div class="feedback-item-context">
+                        Sumber: ${escapeHtml(item.source_page || 'struktur-organisasi')}
+                        ${bidang ? ` • Bidang: ${escapeHtml(bidang)}` : ''}
+                    </div>
+                    <div class="feedback-item-actions">
+                        ${actionBtn}
+                        <button type="button" class="btn btn-xs btn-secondary feedback-delete-btn" data-id="${item.id}">Hapus</button>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    async function loadFeedbackMessages() {
+        if (!els.feedbackList) return;
+        const status = String(els.feedbackStatusFilter?.value || 'all').trim();
+        els.feedbackList.innerHTML = '<div class="small muted">Memuat pesan...</div>';
+        try {
+            const data = await apiAdminVercel('GET', `/api/feedback?action=list&status=${encodeURIComponent(status)}&size=50`);
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat pesan.');
+            state.feedbackMessages = Array.isArray(data.items) ? data.items : [];
+            renderFeedbackList();
+        } catch (e) {
+            console.error('Load feedback messages failed:', e);
+            els.feedbackList.innerHTML = `<div class="small muted">Gagal memuat pesan: ${escapeHtml(e.message || 'error')}</div>`;
+            if (els.feedbackCount) els.feedbackCount.textContent = '0 pesan';
         }
     }
 
@@ -1810,6 +1924,39 @@
         els.userSearchInput?.addEventListener('input', debounce(() => renderUsers(), 300));
         els.userSortSelect?.addEventListener('change', () => renderUsers());
         els.userStatusFilter?.addEventListener('change', () => renderUsers());
+        els.feedbackRefreshBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadFeedbackMessages();
+        });
+        els.feedbackStatusFilter?.addEventListener('change', () => loadFeedbackMessages());
+        els.feedbackList?.addEventListener('click', async (e) => {
+            const markBtn = e.target.closest('.feedback-mark-btn');
+            if (markBtn) {
+                const id = Number(markBtn.dataset.id || 0);
+                const resolved = String(markBtn.dataset.resolved || 'true') !== 'false';
+                if (!id) return;
+                try {
+                    await apiAdminVercel('POST', '/api/feedback?action=resolve', { id, resolved });
+                    if (window.Toast) Toast.show('Status pesan diperbarui', 'success');
+                    loadFeedbackMessages();
+                } catch (err) {
+                    if (window.Toast) Toast.show(`Gagal update status: ${err.message || 'error'}`, 'error');
+                }
+                return;
+            }
+            const deleteBtn = e.target.closest('.feedback-delete-btn');
+            if (!deleteBtn) return;
+            const id = Number(deleteBtn.dataset.id || 0);
+            if (!id) return;
+            if (!confirm('Hapus pesan ini dari inbox admin?')) return;
+            try {
+                await apiAdminVercel('DELETE', '/api/feedback?action=delete', { id });
+                if (window.Toast) Toast.show('Pesan dihapus', 'success');
+                loadFeedbackMessages();
+            } catch (err) {
+                if (window.Toast) Toast.show(`Gagal menghapus pesan: ${err.message || 'error'}`, 'error');
+            }
+        });
         els.refreshLogsBtn?.addEventListener('click', loadLogs);
 
 
@@ -1819,7 +1966,12 @@
                 e.preventDefault();
                 const title = String(els.notifyTitle?.value || '').trim();
                 const message = String(els.notifyMessage?.value || '').trim();
-                const url = String(els.notifyUrl?.value || '').trim() || '/';
+                const rawUrl = String(els.notifyUrl?.value || '').trim();
+                if (/^(javascript|data|vbscript):/i.test(rawUrl)) {
+                    if (els.notifyStatus) els.notifyStatus.textContent = 'Format tautan tidak diizinkan.';
+                    return;
+                }
+                const url = normalizeNotificationUrlInput(rawUrl || '/');
                 const save = !!(els.notifySave && els.notifySave.checked);
                 const target = String(els.notifyTarget?.value || 'all');
                 const scheduleAtRaw = String(els.notifySchedule?.value || '').trim();
@@ -1874,6 +2026,12 @@
             });
         }
 
+        els.notifyUrl?.addEventListener('blur', () => {
+            const current = String(els.notifyUrl?.value || '').trim();
+            if (!current) return;
+            els.notifyUrl.value = normalizeNotificationUrlInput(current);
+        });
+
         els.notifyScheduleReload?.addEventListener('click', (e) => {
             e.preventDefault();
             loadNotifySchedules();
@@ -1883,6 +2041,7 @@
             if (!els.notifyPreviewBox) return;
             const title = String(els.notifyTitle?.value || '').trim() || 'Notifikasi IPM';
             const message = String(els.notifyMessage?.value || '').trim() || 'Contoh isi notifikasi akan tampil di sini.';
+            const url = normalizeNotificationUrlInput(String(els.notifyUrl?.value || '').trim() || '/');
             const targetLabel = els.notifyTarget?.value?.startsWith('pimpinan:') ? 'Grup Pimpinan' : 'Semua User';
             const now = new Date();
             const timeLabel = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -1895,7 +2054,7 @@
                     <div class="lockscreen-card">
                         <div class="lockscreen-title">${escapeHtml(title)}</div>
                         <div class="lockscreen-body">${escapeHtml(message)}</div>
-                        <div class="lockscreen-footer">${escapeHtml(targetLabel)}</div>
+                        <div class="lockscreen-footer">${escapeHtml(targetLabel)} • ${escapeHtml(url)}</div>
                     </div>
                 </div>
             `;

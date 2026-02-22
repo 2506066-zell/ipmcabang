@@ -5173,6 +5173,113 @@ body.quiz-active .premium-fab-container {
     font-weight: 600;
 }
 
+.page-struktur .org-feedback-card {
+    margin-top: 24px;
+    margin-bottom: 36px;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(30, 62, 45, 0.13);
+    background: #ffffff;
+    box-shadow: 0 8px 22px rgba(21, 40, 31, 0.07);
+}
+
+.page-struktur .org-feedback-head h2 {
+    font-size: 20px;
+    line-height: 1.25;
+    color: #15221a;
+    font-weight: 750;
+}
+
+.page-struktur .org-feedback-head p {
+    margin-top: 6px;
+    color: #5b6861;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.page-struktur .org-feedback-form {
+    margin-top: 14px;
+}
+
+.page-struktur .org-feedback-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.page-struktur .org-feedback-field {
+    margin-bottom: 10px;
+}
+
+.page-struktur .org-feedback-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #314138;
+    margin-bottom: 6px;
+}
+
+.page-struktur .org-feedback-field input,
+.page-struktur .org-feedback-field textarea {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid rgba(31, 91, 63, 0.2);
+    background: #fdfefd;
+    color: #1b2a21;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.page-struktur .org-feedback-field input:focus,
+.page-struktur .org-feedback-field textarea:focus {
+    outline: none;
+    border-color: rgba(31, 91, 63, 0.45);
+    box-shadow: 0 0 0 3px rgba(31, 91, 63, 0.12);
+}
+
+.page-struktur .org-feedback-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.page-struktur .btn-submit-feedback {
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid #214d37;
+    background: #214d37;
+    color: #ffffff;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.page-struktur .btn-submit-feedback:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+.page-struktur .org-feedback-status {
+    font-size: 13px;
+    font-weight: 600;
+    color: #65726b;
+}
+
+.page-struktur .org-feedback-status.success {
+    color: #1e744c;
+}
+
+.page-struktur .org-feedback-status.error {
+    color: #a23232;
+}
+
 .page-struktur .anggota-detail-card {
     max-width: 420px;
 }
@@ -5262,6 +5369,15 @@ body.quiz-active .premium-fab-container {
 
     .page-struktur .program-card-desc {
         font-size: 13px;
+    }
+
+    .page-struktur .org-feedback-card {
+        padding: 14px;
+    }
+
+    .page-struktur .org-feedback-row {
+        grid-template-columns: 1fr;
+        gap: 0;
     }
 }
 

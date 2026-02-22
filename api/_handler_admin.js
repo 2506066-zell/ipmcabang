@@ -80,6 +80,28 @@ function parseTarget(rawTarget) {
     return { type: 'pimpinan', value: raw, label: raw };
 }
 
+function normalizeNotificationUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '/';
+    if (/^(javascript|data|vbscript):/i.test(raw)) return '/';
+    const looksLikeDomain = /^[a-z0-9.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(raw);
+    const candidate = (/^https?:\/\//i.test(raw) || raw.startsWith('/'))
+        ? raw
+        : (looksLikeDomain ? `https://${raw}` : raw);
+
+    try {
+        if (/^https?:\/\//i.test(candidate)) {
+            return new URL(candidate).href;
+        }
+        const parsed = new URL(candidate, 'http://local.app');
+        const normalized = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        return normalized.startsWith('/') ? normalized : `/${normalized}`;
+    } catch (e) {
+        const cleaned = raw.replace(/^\.?\//, '').trim();
+        return cleaned ? `/${cleaned}` : '/';
+    }
+}
+
 async function getTargetUserIds(target) {
     if (!target || target.type === 'all') return null;
     if (!target.value) return [];
@@ -125,6 +147,7 @@ async function sendPushToTarget(payload, target, userIds) {
 
 async function sendNotificationToTarget({ title, message, url, save, target }) {
     const msg = title && message ? `${title} - ${message}` : (message || title || '');
+    const safeUrl = normalizeNotificationUrl(url);
     const userIds = await getTargetUserIds(target);
     if (save !== false) {
         await saveInAppNotifications(msg, target, userIds);
@@ -132,7 +155,7 @@ async function sendNotificationToTarget({ title, message, url, save, target }) {
     await sendPushToTarget({
         title: title || 'Notifikasi IPM',
         body: message || title || 'Ada pembaruan baru.',
-        url: url || '/'
+        url: safeUrl
     }, target, userIds);
     return { userCount: Array.isArray(userIds) ? userIds.length : null };
 }
@@ -408,7 +431,7 @@ async function handleBroadcastNotification(req, res) {
     const b = parseJsonBody(req) || {};
     const title = String(b.title || '').trim();
     const message = String(b.message || '').trim();
-    const url = String(b.url || '/').trim();
+    const url = normalizeNotificationUrl(b.url || '/');
     const save = b.save !== false;
     const target = parseTarget(b.target);
 
@@ -435,7 +458,7 @@ async function handleScheduleNotification(req, res) {
     const b = parseJsonBody(req) || {};
     const title = String(b.title || '').trim();
     const message = String(b.message || '').trim();
-    const url = String(b.url || '/').trim();
+    const url = normalizeNotificationUrl(b.url || '/');
     const save = b.save !== false;
     const target = parseTarget(b.target);
     const sendAtRaw = String(b.schedule_at || b.send_at || '').trim();
