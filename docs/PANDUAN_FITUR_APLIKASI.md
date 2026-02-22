@@ -1,271 +1,117 @@
 # Panduan Fitur Aplikasi Organisasi IPM Panawuan
 
-Dokumen ini menjelaskan fitur aplikasi dari sisi pengguna umum (anggota, kader, pengunjung) dan admin/pengurus.
+Dokumen ini dibuat untuk penjelasan ke client mengenai fitur aplikasi dari sisi pengguna umum dan admin, dengan bahasa sederhana.
 
-Update terakhir: 21 Februari 2026
+## 1. Gambaran Singkat
+Aplikasi ini adalah pusat informasi organisasi yang menyatukan:
+- Informasi kegiatan dan program kerja.
+- Media publikasi artikel organisasi.
+- Materi pembelajaran kader.
+- Kuis edukatif dan papan peringkat.
+- Pengelolaan operasional oleh admin dalam satu tempat.
 
-## 1. Tujuan Aplikasi
-Aplikasi ini dibuat untuk memudahkan pengguna dalam:
-- Mengakses informasi organisasi.
-- Membaca artikel dan berita kader.
-- Mengikuti kuis edukatif.
-- Melihat papan peringkat.
-- Mengakses materi dan e-book.
+Tujuan utamanya adalah membuat informasi organisasi lebih cepat diakses, lebih rapi dikelola, dan lebih mudah dipahami oleh anggota maupun masyarakat.
 
-## 2. Halaman Utama dan Fungsinya
-### Beranda (`/`)
-Fungsi utama:
-- Menampilkan identitas organisasi.
-- Menampilkan agenda utama dan countdown program kerja.
-- Menampilkan artikel terbaru.
+## 2. Fitur Utama untuk Pengguna
 
-Yang bisa dilakukan pengguna:
-1. Buka tombol `Tentang Kami` untuk masuk ke struktur organisasi.
-2. Buka tombol `Kader Pintar` untuk masuk ke kuis.
-3. Buka `Lihat Semua Artikel` untuk masuk ke daftar artikel.
+### Beranda Informasi
+Pengguna langsung melihat ringkasan informasi penting organisasi, termasuk pengumuman dan agenda terdekat.
 
-### Struktur Organisasi (`/struktur-organisasi.html`)
-Fungsi utama:
-- Menampilkan bidang organisasi.
-- Menampilkan anggota per bidang.
-- Menampilkan program kerja per bidang.
-- Data ditarik dinamis dari server (`/api/organization`) sehingga selalu mengikuti update admin.
+### Struktur Organisasi Interaktif
+Pengguna dapat melihat setiap bidang, susunan anggota, dan program kerja dengan tampilan yang rapi dan mudah dipahami.
 
-Yang bisa dilakukan pengguna:
-1. Pilih salah satu bidang.
-2. Klik `Anggota` untuk melihat daftar anggota.
-3. Klik `Program` untuk melihat program kerja bidang.
-4. Klik anggota untuk melihat detail profil anggota.
-5. Jika data bidang belum diisi, halaman menampilkan empty state yang informatif.
+### Program Kerja per Bidang
+Setiap bidang memiliki daftar program kerja yang jelas, sehingga pengguna bisa tahu fokus kegiatan organisasi saat ini.
 
-### Artikel (`/articles`)
-Fungsi utama:
-- Menampilkan daftar artikel organisasi.
-- Menyediakan mode baca detail artikel dengan URL yang rapi.
+### Kritik dan Saran Program Kerja
+Pengguna dapat mengirim masukan tentang program kerja melalui form khusus di halaman struktur organisasi. Masukan ini langsung masuk ke admin untuk ditindaklanjuti.
 
-Yang bisa dilakukan pengguna:
-1. Cari artikel lewat kolom pencarian.
-2. Filter artikel berdasarkan urutan dan kategori.
-3. Buka artikel untuk membaca detail.
-4. Bagikan artikel melalui tombol share (WhatsApp, X, salin tautan).
+### Artikel dan Berita Organisasi
+Pengguna bisa membaca artikel, kabar kegiatan, dan tulisan edukatif dengan tampilan baca yang nyaman di ponsel maupun desktop.
 
-Catatan URL:
-- Daftar artikel: `/articles`
-- Detail artikel: `/articles/{slug}`
+### Materi Belajar
+Tersedia materi dan dokumen pembelajaran yang bisa dibuka oleh pengguna untuk mendukung pengembangan kader.
 
-### Materi dan E-Book (`/materi.html`)
-Fungsi utama:
-- Menyediakan materi belajar dan dokumen organisasi.
+### Kuis Edukatif
+Pengguna dapat mengikuti kuis sebagai sarana belajar yang lebih interaktif dan menyenangkan.
 
-Yang bisa dilakukan pengguna:
-1. Cari materi lewat kolom pencarian.
-2. Filter materi berdasarkan kategori.
-3. Buka atau unduh materi dari kartu materi.
+### Papan Peringkat
+Hasil kuis ditampilkan dalam ranking sehingga memberi motivasi untuk belajar lebih konsisten.
 
-### Quiz (`/quiz.html` dan `/quiz-gamified.html`)
-Fungsi utama:
-- Menguji pengetahuan pengguna tentang materi organisasi.
+### Notifikasi Pengingat
+Pengguna mendapatkan notifikasi informasi penting, termasuk notifikasi yang saat diklik bisa langsung membuka halaman tujuan.
 
-Yang bisa dilakukan pengguna:
-1. Login terlebih dahulu.
-2. Pilih set kuis yang tersedia.
-3. Jawab seluruh soal sampai selesai.
-4. Lihat skor akhir.
-5. Lanjut ke halaman peringkat.
+### Pengalaman Seperti Aplikasi Mobile
+Website dapat dipasang ke layar utama ponsel agar akses lebih cepat seperti membuka aplikasi biasa.
 
-Catatan penting:
-- Secara default, pengguna diarahkan ke kuis gamified (`/quiz-gamified.html`).
-- Kuis lama hanya dibuka jika parameter legacy dipakai (`/quiz.html?legacy=1`).
-- Set kuis umumnya hanya bisa dikerjakan satu kali sampai direset admin.
+### Halaman Bantuan
+Tersedia panduan penggunaan untuk memudahkan pengguna baru memahami fitur-fitur utama.
 
-### Peringkat (`/ranking.html`)
-Fungsi utama:
-- Menampilkan ranking peserta kuis.
+## 3. Fitur Utama untuk Admin
 
-Yang bisa dilakukan pengguna:
-1. Lihat podium Top 1-3.
-2. Gunakan filter ranking: `Semua`, `Mingguan`, `Harian`.
-3. Cari nama peserta lewat kolom pencarian.
-4. Cek catatan periode ranking dan pembaruan data.
+### Dashboard Operasional
+Admin melihat ringkasan kondisi sistem dan aktivitas terbaru dalam satu layar.
 
-### Bantuan (`/help.html`)
-Fungsi utama:
-- Menyediakan panduan cepat untuk fitur inti aplikasi.
+### Kelola Artikel
+Admin dapat membuat, mengubah, dan menerbitkan artikel organisasi dengan alur kerja yang rapi.
 
-Yang bisa dilakukan pengguna:
-1. Pelajari langkah penggunaan akun, kuis, artikel, materi, dan notifikasi.
-2. Gunakan bagian FAQ untuk kendala umum.
-3. Gunakan kontak yang tersedia jika membutuhkan bantuan lanjutan.
+### Kelola Materi
+Admin bisa menambah dan memperbarui materi pembelajaran agar konten selalu relevan.
 
-## 3. Fitur Akun Pengguna
-### Daftar akun (`/register.html`)
-Data yang diisi:
-1. Nama panjang.
-2. Asal pimpinan.
-3. Username.
-4. Password.
+### Kelola Bank Soal Kuis
+Admin dapat menyusun soal kuis, memperbarui pertanyaan, dan menjaga kualitas konten kuis.
 
-### Login (`/login.html`)
-Fitur:
-- Login dengan username dan password.
-- Opsi `ingat saya`.
-- Tautan cepat ke halaman daftar jika belum punya akun.
+### Kelola Hasil Kuis
+Admin dapat memantau hasil peserta untuk evaluasi pembelajaran dan kegiatan kaderisasi.
 
-## 4. Fitur Pendukung Pengalaman Pengguna
-### Notifikasi
-Tersedia di header (ikon lonceng pada halaman yang mendukung).
+### Kelola Struktur Organisasi
+Admin bisa mengatur data anggota per bidang dan program kerja per bidang agar selalu terbaru.
 
-Fungsi:
-- Melihat notifikasi terbaru.
-- Menandai notifikasi sebagai dibaca.
+### Kotak Masuk Kritik dan Saran
+Admin menerima masukan dari pengguna terkait program kerja, lalu bisa menandai pesan sudah ditindaklanjuti atau masih terbuka.
 
-### PWA (Install aplikasi)
-Fungsi:
-- Aplikasi bisa dipasang ke home screen.
-- Memberikan pengalaman seperti aplikasi mobile.
+### Broadcast dan Jadwal Notifikasi
+Admin bisa mengirim informasi ke pengguna secara langsung atau menjadwalkan pengiriman pada waktu tertentu.
 
-Saran penggunaan:
-1. Izinkan notifikasi saat diminta browser.
-2. Install aplikasi dari prompt yang muncul agar akses lebih cepat.
+### Pengaturan Jadwal Kegiatan/Kuis
+Admin mengatur waktu kegiatan agar informasi tampil tepat waktu kepada pengguna.
 
-### Navigasi mobile
-Fitur:
-- Hamburger menu.
-- Bottom navigation.
-- Akses cepat ke halaman utama dari layar kecil.
+### Pengaturan Pengalaman Kuis
+Admin dapat menyesuaikan aturan kuis agar pengalaman belajar tetap menarik dan terarah.
 
-## 5. Alur Pengguna yang Direkomendasikan
-Untuk pengguna baru:
-1. Daftar akun.
-2. Login.
-3. Baca artikel terbaru di `/articles`.
-4. Pelajari materi di `/materi.html`.
-5. Ikuti kuis.
-6. Pantau posisi di halaman ranking.
+### Manajemen Pengguna
+Admin dapat mengelola akun pengguna untuk menjaga kelancaran operasional harian.
 
-Untuk pengguna rutin:
-1. Cek beranda untuk update program.
-2. Cek notifikasi.
-3. Lanjutkan baca artikel dan materi terbaru.
-4. Ikuti kuis terjadwal.
-5. Pantau ranking berkala.
+### Riwayat Aktivitas Admin
+Setiap aktivitas penting admin tercatat untuk menjaga keteraturan kerja tim.
 
-## 6. Troubleshooting Singkat
-### Data tidak muncul
-Solusi:
-1. Refresh halaman.
-2. Pastikan koneksi internet stabil.
-3. Coba buka ulang aplikasi.
+## 4. Alur Penggunaan Singkat
 
-### Tidak bisa mengerjakan kuis
-Kemungkinan:
-- Belum login.
-- Set kuis sudah pernah dikerjakan.
-- Set kuis belum masuk jadwal aktif.
+### Alur Pengguna
+1. Buka aplikasi.
+2. Lihat informasi terbaru di beranda.
+3. Baca artikel atau materi.
+4. Ikuti kuis.
+5. Cek ranking.
+6. Kirim kritik dan saran bila diperlukan.
 
-### Notifikasi tidak tampil
-Solusi:
-1. Cek izin notifikasi di browser.
-2. Pastikan notifikasi perangkat tidak dimatikan.
-3. Reload halaman lalu cek ikon lonceng.
+### Alur Admin
+1. Masuk ke panel admin.
+2. Cek ringkasan kondisi di dashboard.
+3. Perbarui konten artikel, materi, dan struktur organisasi.
+4. Kirim notifikasi jika ada informasi penting.
+5. Tinjau masukan pengguna dan tindak lanjuti.
 
-### Preview share artikel tidak sesuai
-Solusi:
-1. Pastikan bagikan URL detail artikel berbasis slug (`/articles/{slug}`).
-2. Tunggu cache pratinjau platform pesan diperbarui.
 
-## 7. Batasan dan Catatan
-- Tampilan dan fitur dapat berbeda sedikit antara desktop dan mobile.
-- Beberapa data (ranking, notifikasi, artikel) bergantung pada update server.
-- Reset kuis ditentukan oleh kebijakan admin.
+- Informasi organisasi lebih terpusat dan mudah diakses.
+- Komunikasi organisasi ke anggota jadi lebih cepat.
+- Pengelolaan konten dan operasional lebih rapi.
+- Ada jalur masukan langsung dari pengguna ke admin.
+- Citra organisasi terlihat lebih profesional dan modern.
 
-## 8. Fitur Admin (Khusus Pengurus)
-### Akses admin
-URL utama:
-- Portal admin: `/admin/admin.html`
-- Editor artikel: `/admin/editor.html`
+## 6. Kesimpulan
+Aplikasi ini bukan hanya media informasi, tetapi juga alat kerja organisasi:
+- Untuk pengguna: mudah mendapatkan informasi dan belajar.
+- Untuk admin: mudah mengelola konten, komunikasi, dan evaluasi.
 
-Halaman pendukung:
-- Setup admin pertama: `/admin/setup.html`
-- Import soal CSV: `/admin/import.html`
-- Monitor sistem: `/admin/monitor.html`
-- Halaman offline admin: `/admin/offline.html`
-
-### Struktur menu admin dan fungsinya
-### Overview: Dashboard Operasional
-Fungsi:
-- Ringkasan statistik utama.
-- Aktivitas terbaru admin.
-- Titik pantau kondisi sistem harian.
-
-### Assessment Ops: Bank Soal
-Fungsi:
-- Tambah, edit, hapus soal.
-- Filter soal berdasarkan set kuis dan kategori.
-- Menjaga kualitas bank soal.
-
-### Assessment Ops: Hasil Assessment
-Fungsi:
-- Review hasil pengerjaan kuis pengguna.
-- Monitoring performa peserta.
-
-### Content Ops: Manajemen Artikel
-Fungsi:
-- Kelola daftar artikel.
-- Buka editor artikel dan publikasi konten.
-- Cari artikel berdasarkan keyword.
-
-### Content Ops: Manajemen Materi
-Fungsi:
-- Kelola materi/e-book publik.
-- Tambah, edit, dan atur status materi.
-
-### Content Ops: Struktur Organisasi
-Fungsi:
-- Mengelola anggota per bidang (tambah, edit, hapus).
-- Mengelola program kerja per bidang (tambah, edit, hapus).
-- Mendukung foto anggota dari URL atau upload langsung.
-- Menjaga urutan tampil anggota/program dengan field `sort_order`.
-
-### User & Comms
-Fungsi:
-- Manajemen user (tambah/edit/status).
-- Broadcast notifikasi ke pengguna.
-- Menjalankan notifikasi terjadwal.
-
-### System: Konfigurasi Sistem
-Fungsi:
-- Kelola jadwal kuis.
-- Pengaturan gamifikasi.
-- Pengaturan opsi asal pimpinan.
-- `Danger Zone` untuk reset set kuis (aksi berisiko tinggi).
-
-### System: Audit Log
-Fungsi:
-- Melihat jejak aktivitas admin untuk audit internal.
-
-### Workflow admin yang direkomendasikan
-Untuk operasional harian:
-1. Buka Dashboard Operasional untuk cek status umum.
-2. Cek `Jadwal Kuis` di Konfigurasi Sistem.
-3. Cek `User & Comms` untuk notifikasi penting.
-4. Cek `Manajemen Artikel` dan `Manajemen Materi` untuk update konten.
-5. Cek `Audit Log` untuk memastikan tidak ada anomali.
-
-Untuk publikasi artikel:
-1. Buka `Manajemen Artikel`.
-2. Masuk ke editor.
-3. Tulis konten dan cek preview.
-4. Pastikan kualitas konten valid.
-5. Publikasikan.
-
-### Catatan keamanan admin
-- Gunakan akun admin hanya untuk pengurus resmi.
-- Hindari berbagi kredensial.
-- Lakukan logout setelah selesai, terutama di perangkat bersama.
-- Gunakan `Danger Zone` hanya saat benar-benar diperlukan.
-
-## 9. Dokumen Terkait
-- Panduan admin: `docs/ADMIN_GUIDE.md`
-- Panduan editor artikel: `docs/EDITOR_ARTICLE_GUIDE.md`
-- Dokumentasi API: `docs/API_DOCS.md`
+Dengan pengelolaan rutin, aplikasi ini bisa menjadi kanal utama informasi organisasi yang terpercaya.
