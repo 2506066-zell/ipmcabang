@@ -230,10 +230,27 @@
     if (els.heroTotalProgram) els.heroTotalProgram.textContent = String(totalProgram);
   }
 
-  function createNodeCard(bidang) {
+  function createNodeCard(bidang, variant) {
     const initials = bidang.name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
+    const nodeVariant = variant || 'field';
+    if (nodeVariant === 'leader' || nodeVariant === 'core') {
+      return `
+        <button type="button" class="org-node-card org-node-card-circle ${nodeVariant === 'leader' ? 'is-leader' : 'is-core'}" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
+          <div class="org-node-circle-media">
+            <div class="org-node-media${bidang.image_url ? '' : ' no-image'}">
+              <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
+              ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load">` : ''}
+            </div>
+          </div>
+          <div class="org-node-content">
+            <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
+            <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
+          </div>
+        </button>
+      `;
+    }
     return `
-      <button type="button" class="org-node-card" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
+      <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
         <div class="org-node-media${bidang.image_url ? '' : ' no-image'}">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load">` : ''}
@@ -246,18 +263,12 @@
     `;
   }
 
-  function renderOrgChartTier(title, subtitle, items, tierClass, hasParent) {
-    if (!items.length) return '';
+  function renderStageLabel(title, subtitle) {
     return `
-      <section class="org-tier ${tierClass}" data-parent="${hasParent ? 'true' : 'false'}">
-        <header class="org-tier-head">
-          <h2 class="org-tier-title">${escapeHtml(title)}</h2>
-          <p class="org-tier-subtitle">${escapeHtml(subtitle)}</p>
-        </header>
-        <div class="org-tier-track ${items.length > 1 ? 'is-multi' : 'is-single'}">
-          ${items.map((item) => createNodeCard(item)).join('')}
-        </div>
-      </section>
+      <header class="org-stage-label">
+        <h2>${escapeHtml(title)}</h2>
+        <p>${escapeHtml(subtitle)}</p>
+      </header>
     `;
   }
 
@@ -268,11 +279,42 @@
       return;
     }
     const tiers = classifyBidangTiers();
-    const blocks = [];
-    if (tiers.top.length) blocks.push(renderOrgChartTier('Pimpinan Utama', 'Pengarah gerak organisasi', tiers.top, 'org-tier-top', false));
-    if (tiers.core.length) blocks.push(renderOrgChartTier('Unsur Inti', 'Koordinasi utama organisasi', tiers.core, 'org-tier-core', true));
-    if (tiers.fields.length) blocks.push(renderOrgChartTier('Bidang Pelaksana', 'Eksekusi program dan layanan kader', tiers.fields, 'org-tier-fields', true));
-    els.bidangGrid.innerHTML = blocks.join('');
+    const topNode = tiers.top[0] || null;
+    const coreNodes = tiers.core;
+    const fieldNodes = tiers.fields;
+    const hasTopAndCore = Boolean(topNode && coreNodes.length);
+    const hasCoreAndFields = Boolean(coreNodes.length && fieldNodes.length);
+
+    els.bidangGrid.innerHTML = `
+      <div class="org-structure-premium">
+        ${topNode ? `
+          <section class="org-leadership-stage">
+            ${renderStageLabel('Pimpinan Utama', 'Pengarah gerak organisasi')}
+            <div class="org-leadership-track">
+              ${createNodeCard(topNode, 'leader')}
+            </div>
+          </section>
+        ` : ''}
+        ${hasTopAndCore ? '<div class="org-stage-connector is-top-core" aria-hidden="true"></div>' : ''}
+        ${coreNodes.length ? `
+          <section class="org-core-stage">
+            ${renderStageLabel('Unsur Inti', 'Koordinasi utama organisasi')}
+            <div class="org-core-track">
+              ${coreNodes.map((item) => createNodeCard(item, 'core')).join('')}
+            </div>
+          </section>
+        ` : ''}
+        ${hasCoreAndFields ? '<div class="org-stage-connector is-core-fields" aria-hidden="true"></div>' : ''}
+        ${fieldNodes.length ? `
+          <section class="org-field-stage">
+            ${renderStageLabel('Bidang Pelaksana', 'Eksekusi program dan layanan kader')}
+            <div class="org-field-grid">
+              ${fieldNodes.map((item) => createNodeCard(item, 'field')).join('')}
+            </div>
+          </section>
+        ` : ''}
+      </div>
+    `;
     setupLazyLoading();
   }
 
