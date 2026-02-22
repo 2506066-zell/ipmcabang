@@ -4,6 +4,10 @@ body.page-editor {
     color: #0f172a;
 }
 
+body.page-editor.body-no-scroll {
+    overflow: hidden;
+}
+
 .page-editor .editor-page-wrapper {
     min-height: 100vh;
     display: flex;
@@ -39,6 +43,12 @@ body.page-editor {
     font-size: 0.88rem;
     font-weight: 700;
     color: #1e293b;
+}
+
+.page-editor .editor-quality-status {
+    font-size: 0.76rem;
+    color: #0f5132;
+    font-weight: 700;
 }
 
 .page-editor .editor-autosave {
@@ -297,6 +307,20 @@ body.page-editor {
     cursor: pointer;
 }
 
+.page-editor .tool-btn.tool-btn-text {
+    padding: 0 12px;
+    min-width: auto;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-editor #editor-template-select {
+    min-width: 152px;
+}
+
 .page-editor .tool-btn.active {
     background: #111827;
     color: #fff;
@@ -381,6 +405,193 @@ body.page-editor {
     background: #f8fafc;
 }
 
+.page-editor .article-quality-score-card {
+    border: 1px solid #cfd9e6;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.page-editor .quality-score-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-editor .quality-grade-badge {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 800;
+    border: 1px solid transparent;
+}
+
+.page-editor .quality-grade-badge.grade-a {
+    background: #e9f9ef;
+    color: #0f7a3f;
+    border-color: #b8e7c8;
+}
+
+.page-editor .quality-grade-badge.grade-b {
+    background: #eef7ff;
+    color: #1d4ed8;
+    border-color: #c9dbff;
+}
+
+.page-editor .quality-grade-badge.grade-c {
+    background: #fff8e7;
+    color: #9a6700;
+    border-color: #f2d28f;
+}
+
+.page-editor .quality-grade-badge.grade-d,
+.page-editor .quality-grade-badge.grade-e {
+    background: #fff1f1;
+    color: #b42318;
+    border-color: #f2c2c0;
+}
+
+.page-editor .quality-grade-badge.grade-pending {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #d7e0ea;
+}
+
+.page-editor .quality-score-meta {
+    min-width: 0;
+    flex: 1;
+}
+
+.page-editor .quality-score-meta strong {
+    display: block;
+    color: #0f172a;
+    font-size: 1.02rem;
+}
+
+.page-editor .quality-score-meta p {
+    margin: 2px 0 0;
+    color: #475569;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.page-editor .quality-details-toggle {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid #d7e0ea;
+    background: #f8fafc;
+    color: #334155;
+    cursor: pointer;
+}
+
+.page-editor .quality-details-toggle i {
+    transition: transform 0.2s ease;
+}
+
+.page-editor .quality-details-toggle[aria-expanded="false"] i {
+    transform: rotate(180deg);
+}
+
+.page-editor .quality-details-body {
+    margin-top: 10px;
+}
+
+.page-editor .quality-details-body.is-collapsed {
+    display: none;
+}
+
+.page-editor .quality-domain-breakdown {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.page-editor .quality-domain-item {
+    border: 1px solid #dbe1ea;
+    border-radius: 9px;
+    background: #f8fafc;
+    padding: 8px;
+}
+
+.page-editor .quality-domain-item strong {
+    display: block;
+    color: #0f172a;
+    font-size: 0.78rem;
+}
+
+.page-editor .quality-domain-item span {
+    display: block;
+    margin-top: 3px;
+    color: #475569;
+    font-size: 0.76rem;
+}
+
+.page-editor .quality-params-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.page-editor .quality-param-item {
+    border: 1px solid #dbe1ea;
+    border-radius: 9px;
+    padding: 8px 9px;
+    background: #fbfdff;
+}
+
+.page-editor .quality-param-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.page-editor .quality-param-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.page-editor .quality-param-status {
+    border-radius: 999px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+}
+
+.page-editor .quality-param-status.pass {
+    color: #116530;
+    background: #eaf9ef;
+}
+
+.page-editor .quality-param-status.warning {
+    color: #925b0e;
+    background: #fff5de;
+}
+
+.page-editor .quality-param-status.error {
+    color: #b42318;
+    background: #ffeaea;
+}
+
+.page-editor .quality-param-note {
+    margin-top: 5px;
+    font-size: 0.76rem;
+    color: #546273;
+    line-height: 1.4;
+}
+
 .page-editor .article-lint-title {
     margin: 0 0 8px;
     font-size: 0.82rem;
@@ -430,6 +641,58 @@ body.page-editor {
     gap: 10px;
 }
 
+.page-editor .editor-modal[hidden] {
+    display: none;
+}
+
+.page-editor .editor-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.page-editor .editor-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.page-editor .editor-modal-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(480px, 100%);
+    border-radius: 12px;
+    border: 1px solid #dbe1ea;
+    background: #ffffff;
+    padding: 16px;
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.25);
+}
+
+.page-editor .editor-modal-dialog h3 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.page-editor .editor-modal-dialog p {
+    margin: 0;
+    color: #334155;
+    line-height: 1.55;
+    font-size: 0.9rem;
+}
+
+.page-editor .editor-modal-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
 @media (max-width: 1024px) {
     .page-editor .editor-split-layout {
         grid-template-columns: 1fr;
@@ -458,6 +721,18 @@ body.page-editor {
         top: 70px;
         overflow-x: auto;
         flex-wrap: nowrap;
+    }
+
+    .page-editor .quality-domain-breakdown {
+        grid-template-columns: 1fr;
+    }
+
+    .page-editor .quality-details-body {
+        display: none;
+    }
+
+    .page-editor .quality-details-body.is-mobile-open {
+        display: block;
     }
 }
 

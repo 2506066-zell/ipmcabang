@@ -70,6 +70,15 @@ function getArticleUrl(article) {
     return toAbsoluteUrl(getArticlePath(article));
 }
 
+function getShareImageUrl(article) {
+    const slug = String(article?.slug || '').trim();
+    if (slug) {
+        return toAbsoluteUrl(`/api/article-share-image/${encodeURIComponent(slug)}.jpg`);
+    }
+    const safeImage = sanitizeUrl(article?.image, LOCAL_ARTICLE_FALLBACK);
+    return toAbsoluteUrl(safeImage);
+}
+
 function getExcerptFromContent(content, maxChars = 180, fallback = '') {
     const plain = stripHtml(content || fallback || '');
     if (!plain) return '';
@@ -962,8 +971,7 @@ function updateSEO(article) {
     const canonicalUrl = getArticleUrl(article);
     const title = `${article.title || 'Artikel Organisasi'} - ${siteLabel}`;
     const description = getExcerptFromContent(article.content, 170, article.summary || article.excerpt || '');
-    const safeImage = sanitizeUrl(article.image, LOCAL_ARTICLE_FALLBACK);
-    const imageUrl = toAbsoluteUrl(safeImage);
+    const imageUrl = getShareImageUrl(article);
 
     document.title = title;
     setMetaByName('description', description);
@@ -971,12 +979,17 @@ function updateSEO(article) {
     setMetaByProperty('og:title', title);
     setMetaByProperty('og:description', description);
     setMetaByProperty('og:image', imageUrl);
+    setMetaByProperty('og:image:url', imageUrl);
+    setMetaByProperty('og:image:secure_url', imageUrl);
+    setMetaByProperty('og:image:width', '1200');
+    setMetaByProperty('og:image:height', '630');
     setMetaByProperty('og:url', canonicalUrl);
     setMetaByProperty('article:published_time', toIsoDate(article.publish_date));
     setMetaByName('twitter:card', 'summary_large_image');
     setMetaByName('twitter:title', title);
     setMetaByName('twitter:description', description);
     setMetaByName('twitter:image', imageUrl);
+    setMetaByName('twitter:image:alt', article.title || 'Thumbnail artikel PC IPM Panawuan');
     setCanonical(canonicalUrl);
     updateJSONLD(article, canonicalUrl, description, imageUrl);
 }

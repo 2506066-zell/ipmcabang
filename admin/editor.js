@@ -5,6 +5,74 @@
     const DRAFT_KEY = 'ipmquiz_editor_draft';
     const MIN_WORD_COUNT = 120;
     const DEBOUNCE_MS = 250;
+    const DOMAIN_WEIGHTS = {
+        structure: 45,
+        readability: 35,
+        seo: 20
+    };
+
+    const ARTICLE_TEMPLATES = {
+        lead_news: `
+            <p>Tulis ringkasan berita utama dalam 2-3 kalimat. Jelaskan siapa, apa, kapan, dan dampaknya.</p>
+            <h2>Konteks Utama</h2>
+            <p>Jelaskan latar belakang isu atau kegiatan secara ringkas.</p>
+            <h2>Fakta Lapangan</h2>
+            <p>Masukkan data, kutipan, atau temuan utama agar pembaca mendapat gambaran nyata.</p>
+            <h3>Detail Penting</h3>
+            <p>Tambahkan detail pendukung yang relevan.</p>
+            <h2>Penutup</h2>
+            <p>Tutup dengan kesimpulan singkat dan ajakan tindak lanjut bila diperlukan.</p>
+        `,
+        opinion: `
+            <p>Tulis pembuka opini: posisi pendapatmu dan alasan paling kuat dalam 2-3 kalimat.</p>
+            <h2>Argumen Inti</h2>
+            <p>Jelaskan argumen utama secara jelas dan fokus.</p>
+            <h2>Analisis</h2>
+            <p>Bandingkan perspektif lain, lalu jelaskan kenapa pendapatmu lebih relevan.</p>
+            <h3>Contoh Nyata</h3>
+            <p>Masukkan contoh kasus agar pembaca mudah memahami poin.</p>
+            <h2>Kesimpulan</h2>
+            <p>Rangkum argumen dan berikan pesan akhir yang tegas.</p>
+        `,
+        work_program: `
+            <p>Jelaskan tujuan program kerja dalam 2-3 kalimat singkat.</p>
+            <h2>Latar Belakang Program</h2>
+            <p>Uraikan masalah yang ingin diselesaikan dan urgensi program.</p>
+            <h2>Rencana Pelaksanaan</h2>
+            <p>Jelaskan tahapan, target waktu, dan pihak yang terlibat.</p>
+            <h3>Indikator Keberhasilan</h3>
+            <ul>
+                <li>Tuliskan indikator 1</li>
+                <li>Tuliskan indikator 2</li>
+            </ul>
+            <h2>Penutup</h2>
+            <p>Jelaskan manfaat program untuk anggota atau masyarakat.</p>
+        `,
+        activity_release: `
+            <p>Tulis pembuka rilis: kegiatan apa yang dilaksanakan, kapan, dan oleh siapa.</p>
+            <h2>Ringkasan Kegiatan</h2>
+            <p>Jelaskan jalannya kegiatan dari awal hingga akhir secara singkat.</p>
+            <h2>Hasil dan Dampak</h2>
+            <p>Uraikan output kegiatan dan dampaknya.</p>
+            <h3>Kutipan Narasumber</h3>
+            <blockquote>Tuliskan kutipan singkat narasumber atau penanggung jawab.</blockquote>
+            <h2>Tindak Lanjut</h2>
+            <p>Tuliskan agenda lanjutan setelah kegiatan berlangsung.</p>
+        `,
+        announcement: `
+            <p>Tulis inti pengumuman secara langsung dalam 1-2 kalimat.</p>
+            <h2>Informasi Utama</h2>
+            <ul>
+                <li>Waktu:</li>
+                <li>Tempat:</li>
+                <li>Sasaran:</li>
+            </ul>
+            <h2>Ketentuan</h2>
+            <p>Jelaskan syarat, dokumen, atau aturan penting.</p>
+            <h2>Kontak dan Penutup</h2>
+            <p>Berikan kontak panitia/admin dan kalimat penutup yang jelas.</p>
+        `
+    };
 
     const state = {
         session: sessionStorage.getItem(SESSION_KEY) || '',
@@ -12,7 +80,10 @@
         loading: false,
         savedRange: null,
         currentPane: 'write',
-        lint: { errors: [], warnings: [] }
+        lint: { errors: [], warnings: [] },
+        quality: null,
+        coverMeta: null,
+        lowGradeResolver: null
     };
 
     const els = {
@@ -29,6 +100,7 @@
         inpContent: document.getElementById('art-content'),
         toolbar: document.getElementById('editor-toolbar'),
         statusText: document.getElementById('editor-status'),
+        qualityStatusText: document.getElementById('editor-quality-status'),
         autosaveText: document.getElementById('editor-autosave'),
         saveBtn: document.getElementById('art-save-btn'),
         saveBtnBottom: document.getElementById('art-save-btn-bottom'),
@@ -40,7 +112,18 @@
         tabButtons: Array.from(document.querySelectorAll('.editor-tab-btn')),
         livePreview: document.getElementById('editor-live-preview'),
         lintList: document.getElementById('article-lint-list'),
+        qualityScoreCard: document.getElementById('article-quality-score-card'),
+        qualityGradeBadge: document.getElementById('quality-grade-badge'),
+        qualityScoreValue: document.getElementById('quality-score-value'),
+        qualityScoreSummary: document.getElementById('quality-score-summary'),
+        qualityDomainBreakdown: document.getElementById('quality-domain-breakdown'),
+        qualityParamsList: document.getElementById('quality-params-list'),
+        qualityDetailsToggle: document.getElementById('quality-details-toggle'),
+        qualityDetailsBody: document.getElementById('quality-details-body'),
         blockSelect: document.getElementById('editor-block-style'),
+        templateSelect: document.getElementById('editor-template-select'),
+        insertTemplateBtn: document.getElementById('editor-insert-template-btn'),
+        normalizeBtn: document.getElementById('editor-normalize-btn'),
         inlineImageInput: document.getElementById('editor-inline-image'),
         linkPopover: document.getElementById('editor-link-popover'),
         linkInput: document.getElementById('editor-link-input'),
@@ -49,7 +132,11 @@
         imagePopover: document.getElementById('editor-image-popover'),
         imageInput: document.getElementById('editor-image-input'),
         imageApplyBtn: document.getElementById('editor-image-apply'),
-        imageUploadBtn: document.getElementById('editor-image-upload')
+        imageUploadBtn: document.getElementById('editor-image-upload'),
+        lowGradeModal: document.getElementById('low-grade-confirm-modal'),
+        lowGradeGrade: document.getElementById('low-grade-confirm-grade'),
+        lowGradeCancelBtn: document.getElementById('low-grade-cancel-btn'),
+        lowGradeConfirmBtn: document.getElementById('low-grade-confirm-btn')
     };
 
     function getRenderer() {
@@ -113,8 +200,20 @@
 
     function updateStatus(wordCount) {
         if (els.statusText) {
-            els.statusText.textContent = `Draft • ${wordCount} kata`;
+            els.statusText.textContent = `Draft - ${wordCount} kata`;
         }
+    }
+
+    function updateQualityHeaderStatus(quality) {
+        if (!els.qualityStatusText) return;
+        if (!quality) {
+            els.qualityStatusText.textContent = 'Grade - | Perlu evaluasi';
+            return;
+        }
+        const statusText = quality.errors.length > 0
+            ? 'Perlu perbaikan'
+            : (quality.grade === 'A' || quality.grade === 'B' || quality.grade === 'C' ? 'Siap publish' : 'Perlu rapikan');
+        els.qualityStatusText.textContent = `Grade ${quality.grade} | ${statusText}`;
     }
 
     function updateAutosaveLabel(text) {
@@ -127,6 +226,369 @@
             ? renderer.stripHtml(html)
             : String(html || '').replace(/<[^>]+>/g, ' ');
         return plain.trim() ? plain.trim().split(/\s+/).length : 0;
+    }
+
+    function getCoverMimeFromSource(src) {
+        const value = String(src || '').trim();
+        if (!value) return '';
+        const dataMatch = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/i);
+        if (dataMatch && dataMatch[1]) return dataMatch[1].toLowerCase();
+        if (/\.png(\?|#|$)/i.test(value)) return 'image/png';
+        if (/\.jpe?g(\?|#|$)/i.test(value)) return 'image/jpeg';
+        if (/\.webp(\?|#|$)/i.test(value)) return 'image/webp';
+        if (/\.gif(\?|#|$)/i.test(value)) return 'image/gif';
+        return '';
+    }
+
+    function inspectCoverImage(src) {
+        const value = String(src || '').trim();
+        if (!value) {
+            state.coverMeta = null;
+            return;
+        }
+
+        const meta = {
+            status: 'pending',
+            mime: getCoverMimeFromSource(value),
+            width: 0,
+            height: 0
+        };
+        state.coverMeta = meta;
+
+        const img = new Image();
+        img.onload = () => {
+            meta.status = 'ok';
+            meta.width = Number(img.naturalWidth || 0);
+            meta.height = Number(img.naturalHeight || 0);
+            runStructureLint();
+        };
+        img.onerror = () => {
+            meta.status = 'error';
+            runStructureLint();
+        };
+        img.src = value;
+    }
+
+    function countWords(text) {
+        const plain = String(text || '').trim();
+        if (!plain) return 0;
+        return plain.split(/\s+/).filter(Boolean).length;
+    }
+
+    function normalizeTextValue(text) {
+        return String(text || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function statusWeight(status) {
+        if (status === 'pass') return 1;
+        if (status === 'warning') return 0.5;
+        return 0;
+    }
+
+    function scoreItems(maxScore, items) {
+        if (!items.length) return 0;
+        const totalWeight = items.reduce((sum, item) => sum + statusWeight(item.status), 0);
+        return Math.round((totalWeight / items.length) * maxScore);
+    }
+
+    function gradeFromScore(score) {
+        if (score >= 90) return 'A';
+        if (score >= 80) return 'B';
+        if (score >= 70) return 'C';
+        if (score >= 55) return 'D';
+        return 'E';
+    }
+
+    function createCheckItem(domain, label, ok, messageOk, messageBad, options) {
+        const opts = options || {};
+        const status = ok ? 'pass' : (opts.severity === 'error' ? 'error' : 'warning');
+        return {
+            domain,
+            label,
+            status,
+            critical: Boolean(opts.critical),
+            message: ok ? messageOk : messageBad
+        };
+    }
+
+    function getContentAnalysis(rawContent) {
+        const sanitized = sanitizeHtml(rawContent || '');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sanitized, 'text/html');
+        const body = doc.body;
+        const plain = normalizeTextValue(body.textContent || '');
+        const paragraphs = Array.from(body.querySelectorAll('p'));
+        const headings = Array.from(body.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        const h2List = Array.from(body.querySelectorAll('h2'));
+        const h3List = Array.from(body.querySelectorAll('h3'));
+        const images = Array.from(body.querySelectorAll('img'));
+        const links = Array.from(body.querySelectorAll('a'));
+        const lists = Array.from(body.querySelectorAll('ul, ol'));
+        const blockquotes = Array.from(body.querySelectorAll('blockquote'));
+
+        const paragraphWords = paragraphs.map((p) => countWords(normalizeTextValue(p.textContent || '')));
+        const emptyHeadings = headings.filter((h) => !normalizeTextValue(h.textContent || ''));
+        const emptyParagraphIndexes = [];
+        let consecutiveEmptyParagraphChains = 0;
+        let inEmptyChain = false;
+        paragraphs.forEach((p, idx) => {
+            const empty = !normalizeTextValue(p.textContent || '');
+            if (empty) emptyParagraphIndexes.push(idx);
+            if (empty && !inEmptyChain) {
+                inEmptyChain = true;
+                consecutiveEmptyParagraphChains += 1;
+            }
+            if (!empty) inEmptyChain = false;
+        });
+
+        let h3BeforeH2 = false;
+        let seenH2 = false;
+        Array.from(body.querySelectorAll('h2, h3')).forEach((el) => {
+            const tag = el.tagName.toLowerCase();
+            if (tag === 'h2') seenH2 = true;
+            if (tag === 'h3' && !seenH2) h3BeforeH2 = true;
+        });
+
+        const emptyListItems = Array.from(body.querySelectorAll('li')).filter((li) => !normalizeTextValue(li.textContent || ''));
+        const fragmentedBlockquotes = blockquotes.filter((q) => countWords(normalizeTextValue(q.textContent || '')) < 4);
+        const strongCount = body.querySelectorAll('strong, b').length;
+        const italicCount = body.querySelectorAll('em, i').length;
+
+        return {
+            doc,
+            body,
+            plain,
+            wordCount: countWords(plain),
+            paragraphs,
+            paragraphWords,
+            headings,
+            h2List,
+            h3List,
+            images,
+            links,
+            lists,
+            blockquotes,
+            emptyHeadings,
+            emptyParagraphIndexes,
+            consecutiveEmptyParagraphChains,
+            h3BeforeH2,
+            emptyListItems,
+            fragmentedBlockquotes,
+            strongCount,
+            italicCount
+        };
+    }
+
+    function evaluateStructure(meta) {
+        const items = [];
+        const title = normalizeTextValue(els.inpTitle ? els.inpTitle.value : '');
+        const author = normalizeTextValue(els.inpAuthor ? els.inpAuthor.value : '');
+        items.push(createCheckItem(
+            'Struktur',
+            'Judul minimal 12 karakter',
+            title.length >= 12,
+            'Judul sudah memenuhi panjang minimum.',
+            'Panjangkan judul hingga minimal 12 karakter.',
+            { critical: true, severity: 'error' }
+        ));
+        items.push(createCheckItem(
+            'Struktur',
+            'Penulis terisi',
+            Boolean(author),
+            'Penulis sudah diisi.',
+            'Isi nama penulis sebelum publish.',
+            { critical: true, severity: 'error' }
+        ));
+        items.push(createCheckItem(
+            'Struktur',
+            `Konten minimal ${MIN_WORD_COUNT} kata`,
+            meta.wordCount >= MIN_WORD_COUNT,
+            `Konten sudah memenuhi minimal ${MIN_WORD_COUNT} kata.`,
+            `Tambahkan isi artikel hingga minimal ${MIN_WORD_COUNT} kata.`,
+            { critical: true, severity: 'error' }
+        ));
+        items.push(createCheckItem(
+            'Struktur',
+            'Urutan heading konsisten',
+            !meta.h3BeforeH2,
+            'Urutan heading sudah konsisten.',
+            'Ada H3 sebelum H2. Rapikan urutan heading.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'Struktur',
+            'Heading tidak kosong',
+            meta.emptyHeadings.length === 0,
+            'Tidak ada heading kosong.',
+            'Hapus heading kosong atau isi teks heading.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'Struktur',
+            'Paragraf kosong tidak beruntun',
+            meta.consecutiveEmptyParagraphChains <= 1,
+            'Jarak paragraf sudah rapi.',
+            'Ada paragraf kosong beruntun. Rapikan spasi antar paragraf.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'Struktur',
+            'List dan quote tidak terfragmentasi',
+            meta.emptyListItems.length === 0 && meta.fragmentedBlockquotes.length === 0,
+            'List dan quote tersusun rapi.',
+            'Ada list/quote yang kosong atau terlalu pendek. Lengkapi atau hapus.',
+            { severity: 'warning' }
+        ));
+        return items;
+    }
+
+    function evaluateReadability(meta) {
+        const items = [];
+        const longParagraphCount = meta.paragraphWords.filter((count) => count > 120).length;
+        const contentLengthNeedsHeadings = meta.wordCount >= 350;
+        const headingEnough = !contentLengthNeedsHeadings || meta.h2List.length >= 2;
+        const heavyInlineFormatting = (meta.strongCount + meta.italicCount) > Math.max(8, meta.paragraphs.length * 3);
+        const imagesWithoutAlt = meta.images.filter((img) => !normalizeTextValue(img.getAttribute('alt') || ''));
+
+        items.push(createCheckItem(
+            'Readability',
+            'Panjang paragraf ideal',
+            longParagraphCount === 0,
+            'Panjang paragraf sudah nyaman dibaca.',
+            `Ada ${longParagraphCount} paragraf terlalu panjang. Pecah agar lebih nyaman dibaca.`,
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'Readability',
+            'Distribusi subjudul cukup',
+            headingEnough,
+            'Distribusi subjudul sudah cukup.',
+            'Artikel panjang butuh minimal 2 subjudul H2 agar mudah dipindai.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'Readability',
+            'Kepadatan format sehat',
+            !heavyInlineFormatting,
+            'Penekanan teks tidak berlebihan.',
+            'Penggunaan bold/italic terlalu padat. Kurangi agar ritme baca tetap nyaman.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'Readability',
+            'Spasi antar paragraf konsisten',
+            meta.consecutiveEmptyParagraphChains <= 1,
+            'Spasi antar paragraf konsisten.',
+            'Temukan paragraf kosong beruntun. Gunakan satu pemisah antar bagian.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'Readability',
+            'Gambar inline memiliki alt',
+            imagesWithoutAlt.length === 0,
+            'Semua gambar inline sudah punya alt.',
+            'Tambahkan alt pada gambar inline agar lebih jelas dan aksesibel.',
+            { severity: 'warning' }
+        ));
+        return items;
+    }
+
+    function evaluateSeoReadiness(meta) {
+        const items = [];
+        const title = normalizeTextValue(els.inpTitle ? els.inpTitle.value : '');
+        const coverImage = normalizeTextValue(els.inpBase64 ? els.inpBase64.value : '');
+        const intro = meta.paragraphs.length ? normalizeTextValue(meta.paragraphs[0].textContent || '') : '';
+        const coverMime = getCoverMimeFromSource(coverImage);
+        const coverMeta = state.coverMeta;
+        const hasValidDimension = coverMeta && coverMeta.status === 'ok' && coverMeta.width > 0 && coverMeta.height > 0;
+        const ratio = hasValidDimension ? (coverMeta.width / coverMeta.height) : 0;
+
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Cover image tersedia',
+            Boolean(coverImage),
+            'Cover artikel sudah tersedia.',
+            'Tambah gambar sampul agar preview share tampil lengkap.',
+            { critical: true, severity: 'error' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Format cover JPG/PNG',
+            Boolean(coverImage) && /^image\/(jpeg|png)$/i.test(coverMime),
+            'Format cover sudah sesuai.',
+            'Gunakan JPG atau PNG agar preview WhatsApp lebih konsisten.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Resolusi cover >= 1200x630',
+            Boolean(coverImage) && hasValidDimension && coverMeta.width >= 1200 && coverMeta.height >= 630,
+            'Resolusi cover sudah ideal.',
+            'Resolusi cover disarankan minimal 1200 x 630.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Rasio cover mendekati 1.91:1',
+            Boolean(coverImage) && hasValidDimension && Math.abs(ratio - (1200 / 630)) <= 0.12,
+            'Rasio cover sudah rapi untuk kartu share.',
+            'Gunakan rasio sekitar 1.91:1 (contoh 1200 x 630).',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Judul cukup kuat untuk snippet',
+            title.length >= 36,
+            'Panjang judul sudah baik untuk snippet.',
+            'Pertimbangkan judul 36+ karakter agar snippet lebih informatif.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Dek/intro tersedia di paragraf awal',
+            intro.length >= 80,
+            'Paragraf awal sudah cukup menjelaskan konteks.',
+            'Perkuat paragraf pembuka agar konteks artikel langsung jelas.',
+            { severity: 'warning' }
+        ));
+        return items;
+    }
+
+    function buildQualityAssessment(rawContent) {
+        const meta = getContentAnalysis(rawContent);
+        const structureItems = evaluateStructure(meta);
+        const readabilityItems = evaluateReadability(meta);
+        const seoItems = evaluateSeoReadiness(meta);
+
+        const structureScore = scoreItems(DOMAIN_WEIGHTS.structure, structureItems);
+        const readabilityScore = scoreItems(DOMAIN_WEIGHTS.readability, readabilityItems);
+        const seoScore = scoreItems(DOMAIN_WEIGHTS.seo, seoItems);
+        const totalScore = structureScore + readabilityScore + seoScore;
+        const grade = gradeFromScore(totalScore);
+
+        const allItems = [...structureItems, ...readabilityItems, ...seoItems];
+        const errors = allItems.filter((item) => item.status === 'error').map((item) => item.message);
+        const warnings = allItems.filter((item) => item.status === 'warning').map((item) => item.message);
+
+        let summary = 'Perlu evaluasi kualitas artikel.';
+        if (errors.length > 0) summary = 'Perlu perbaikan kritis sebelum publish.';
+        else if (grade === 'A' || grade === 'B' || grade === 'C') summary = 'Siap Publish';
+        else summary = 'Perlu perapihan ringan sebelum publish.';
+
+        return {
+            meta,
+            score: totalScore,
+            grade,
+            summary,
+            errors,
+            warnings,
+            domains: [
+                { key: 'structure', label: 'Struktur', score: structureScore, max: DOMAIN_WEIGHTS.structure },
+                { key: 'readability', label: 'Readability', score: readabilityScore, max: DOMAIN_WEIGHTS.readability },
+                { key: 'seo', label: 'SEO & Share', score: seoScore, max: DOMAIN_WEIGHTS.seo }
+            ],
+            parameterDetails: allItems
+        };
     }
 
     function sanitizeHtml(rawHtml) {
@@ -342,42 +804,37 @@
         setupPreviewToc(els.livePreview, 'preview-');
     }
 
-    function runStructureLint() {
-        const errors = [];
-        const warnings = [];
-        const rawContent = els.editorArea ? els.editorArea.innerHTML : '';
-        const contentHtml = sanitizeHtml(rawContent);
-        const wordCount = getWordCountFromHtml(contentHtml);
-        const title = String(els.inpTitle ? els.inpTitle.value : '').trim();
-        const author = String(els.inpAuthor ? els.inpAuthor.value : '').trim();
+    function renderQualityScoreCard(quality) {
+        if (!els.qualityScoreCard || !quality) return;
 
-        if (title.length < 12) errors.push('Judul minimal 12 karakter.');
-        if (!author) errors.push('Penulis wajib diisi.');
-        if (wordCount < MIN_WORD_COUNT) errors.push(`Konten minimal ${MIN_WORD_COUNT} kata.`);
+        if (els.qualityGradeBadge) {
+            const badge = els.qualityGradeBadge;
+            badge.textContent = quality.grade;
+            badge.className = `quality-grade-badge grade-${String(quality.grade || '').toLowerCase() || 'pending'}`;
+        }
+        if (els.qualityScoreValue) els.qualityScoreValue.textContent = `${quality.score}/100`;
+        if (els.qualityScoreSummary) els.qualityScoreSummary.textContent = quality.summary;
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(rawContent, 'text/html');
-        const h1Count = doc.querySelectorAll('h1').length;
-        if (h1Count > 1) warnings.push('Terdapat lebih dari satu H1 pada konten.');
+        if (els.qualityDomainBreakdown) {
+            els.qualityDomainBreakdown.innerHTML = quality.domains.map((domain) => `
+                <div class="quality-domain-item">
+                    <strong>${domain.label}</strong>
+                    <span>${domain.score}/${domain.max}</span>
+                </div>
+            `).join('');
+        }
 
-        let foundH2 = false;
-        let hasH3BeforeH2 = false;
-        const headings = Array.from(doc.querySelectorAll('h2, h3'));
-        headings.forEach((heading) => {
-            if (heading.tagName.toLowerCase() === 'h2') foundH2 = true;
-            if (heading.tagName.toLowerCase() === 'h3' && !foundH2) {
-                hasH3BeforeH2 = true;
-            }
-        });
-        if (hasH3BeforeH2) warnings.push('H3 ditemukan sebelum H2.');
-
-        const images = Array.from(doc.querySelectorAll('img'));
-        const imageWithoutAlt = images.some((img) => !(img.getAttribute('alt') || '').trim());
-        if (imageWithoutAlt) warnings.push('Sebagian gambar belum memiliki alt text.');
-
-        state.lint = { errors, warnings };
-        renderLintPanel(errors, warnings);
-        return state.lint;
+        if (els.qualityParamsList) {
+            els.qualityParamsList.innerHTML = quality.parameterDetails.map((item) => `
+                <li class="quality-param-item">
+                    <div class="quality-param-head">
+                        <span class="quality-param-title">${item.domain}: ${item.label}</span>
+                        <span class="quality-param-status ${item.status}">${item.status}</span>
+                    </div>
+                    <p class="quality-param-note">${item.message}</p>
+                </li>
+            `).join('');
+        }
     }
 
     function renderLintPanel(errors, warnings) {
@@ -393,6 +850,17 @@
             rows.push('<li class="article-lint-item success"><i class="fas fa-circle-check"></i><span>Struktur artikel sudah rapi dan siap publish.</span></li>');
         }
         els.lintList.innerHTML = rows.join('');
+    }
+
+    function runStructureLint() {
+        const rawContent = els.editorArea ? els.editorArea.innerHTML : '';
+        const quality = buildQualityAssessment(rawContent);
+        state.quality = quality;
+        state.lint = { errors: quality.errors, warnings: quality.warnings };
+        renderQualityScoreCard(quality);
+        renderLintPanel(quality.errors, quality.warnings);
+        updateQualityHeaderStatus(quality);
+        return state.lint;
     }
 
     function saveDraft() {
@@ -433,6 +901,7 @@
                     if (img) img.src = draft.image;
                     els.previewDiv.style.display = 'block';
                 }
+                inspectCoverImage(draft.image);
             }
             updateAutosaveLabel(`Draft dipulihkan ${new Date(draft.ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`);
         } catch {
@@ -456,6 +925,233 @@
         renderLivePreview();
     }, DEBOUNCE_MS);
 
+    function isEditorEmpty() {
+        const raw = els.editorArea ? els.editorArea.innerHTML : '';
+        return !normalizeTextValue(String(raw || '').replace(/<[^>]+>/g, ' '));
+    }
+
+    function placeCursorAtEnd(node) {
+        if (!node) return;
+        node.focus();
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        range.collapse(false);
+        const sel = window.getSelection();
+        if (!sel) return;
+        sel.removeAllRanges();
+        sel.addRange(range);
+        saveSelection();
+    }
+
+    function insertTemplateToEditor() {
+        if (!els.templateSelect || !els.editorArea) return;
+        const key = String(els.templateSelect.value || '').trim();
+        const template = ARTICLE_TEMPLATES[key];
+        if (!template) {
+            notify('Pilih template dulu.', 'warning');
+            return;
+        }
+
+        const html = sanitizeHtml(template);
+        if (isEditorEmpty()) {
+            els.editorArea.innerHTML = html;
+        } else {
+            placeCursorAtEnd(els.editorArea);
+            execCommand('insertHTML', `<p></p>${html}`);
+        }
+        notify('Template berhasil disisipkan.', 'success');
+        handleEditorContentChange();
+    }
+
+    function normalizeEditorContent() {
+        if (!els.editorArea) return { html: '', changes: 0 };
+        const input = sanitizeHtml(els.editorArea.innerHTML || '');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(input, 'text/html');
+        const body = doc.body;
+        let changes = 0;
+
+        const headingNodes = Array.from(body.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        let seenH2 = false;
+        headingNodes.forEach((heading) => {
+            const text = normalizeTextValue(heading.textContent || '');
+            if (!text) {
+                heading.remove();
+                changes += 1;
+                return;
+            }
+
+            const oldTag = heading.tagName.toLowerCase();
+            let newTag = oldTag;
+            if (oldTag === 'h1') newTag = 'h2';
+            if (oldTag === 'h4' || oldTag === 'h5' || oldTag === 'h6') newTag = 'h3';
+            if (newTag === 'h3' && !seenH2) newTag = 'h2';
+            if (newTag === 'h2') seenH2 = true;
+
+            if (newTag !== oldTag) {
+                const replacement = doc.createElement(newTag);
+                replacement.innerHTML = heading.innerHTML;
+                heading.replaceWith(replacement);
+                changes += 1;
+            }
+        });
+
+        let prevEmptyParagraph = false;
+        Array.from(body.querySelectorAll('p')).forEach((p) => {
+            const text = normalizeTextValue(p.textContent || '');
+            if (!text) {
+                if (prevEmptyParagraph) {
+                    p.remove();
+                    changes += 1;
+                    return;
+                }
+                prevEmptyParagraph = true;
+                return;
+            }
+            prevEmptyParagraph = false;
+        });
+
+        Array.from(body.querySelectorAll('ul, ol')).forEach((list) => {
+            Array.from(list.querySelectorAll('li')).forEach((li) => {
+                if (!normalizeTextValue(li.textContent || '')) {
+                    li.remove();
+                    changes += 1;
+                }
+            });
+            if (!list.querySelector('li')) {
+                list.remove();
+                changes += 1;
+            }
+        });
+
+        Array.from(body.querySelectorAll('blockquote')).forEach((quote) => {
+            if (countWords(normalizeTextValue(quote.textContent || '')) < 4) {
+                quote.remove();
+                changes += 1;
+            }
+        });
+
+        Array.from(body.querySelectorAll('a')).forEach((link) => {
+            const href = normalizeHref(link.getAttribute('href') || '');
+            if (!href) {
+                link.removeAttribute('href');
+                link.removeAttribute('target');
+                link.removeAttribute('rel');
+                changes += 1;
+                return;
+            }
+            link.setAttribute('href', href);
+            if (/^https?:\/\//i.test(href)) {
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
+            }
+        });
+
+        // Normalize excessive whitespace in text nodes without destroying inline markup.
+        Array.from(body.querySelectorAll('p, h2, h3, li, blockquote')).forEach((el) => {
+            const walker = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            const textNodes = [];
+            while (walker.nextNode()) {
+                textNodes.push(walker.currentNode);
+            }
+            textNodes.forEach((textNode) => {
+                const original = textNode.nodeValue || '';
+                if (!original) return;
+                let normalized = original.replace(/\s+/g, ' ');
+                if (!textNode.previousSibling) normalized = normalized.replace(/^\s+/, '');
+                if (!textNode.nextSibling) normalized = normalized.replace(/\s+$/, '');
+                if (normalized !== original) {
+                    textNode.nodeValue = normalized;
+                    changes += 1;
+                }
+            });
+        });
+
+        return { html: body.innerHTML.trim(), changes };
+    }
+
+    function runManualNormalize() {
+        if (!els.editorArea) return;
+        const result = normalizeEditorContent();
+        els.editorArea.innerHTML = result.html || '<p></p>';
+        handleEditorContentChange();
+        notify(`Konten dirapikan (${result.changes} penyesuaian).`, 'success');
+    }
+
+    function syncQualityDetailForViewport() {
+        if (!els.qualityDetailsBody || !els.qualityDetailsToggle) return;
+        if (isMobileView()) {
+            if (!els.qualityDetailsBody.dataset.mobileInit) {
+                els.qualityDetailsBody.classList.remove('is-mobile-open');
+                els.qualityDetailsBody.dataset.mobileInit = '1';
+            }
+            const open = els.qualityDetailsBody.classList.contains('is-mobile-open');
+            els.qualityDetailsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            return;
+        }
+        delete els.qualityDetailsBody.dataset.mobileInit;
+        els.qualityDetailsBody.classList.remove('is-collapsed');
+        els.qualityDetailsBody.classList.add('is-mobile-open');
+        els.qualityDetailsToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function bindQualityTools() {
+        if (els.insertTemplateBtn) {
+            els.insertTemplateBtn.addEventListener('click', insertTemplateToEditor);
+        }
+        if (els.normalizeBtn) {
+            els.normalizeBtn.addEventListener('click', runManualNormalize);
+        }
+        if (els.qualityDetailsToggle && els.qualityDetailsBody) {
+            els.qualityDetailsToggle.addEventListener('click', () => {
+                if (isMobileView()) {
+                    const open = els.qualityDetailsBody.classList.toggle('is-mobile-open');
+                    els.qualityDetailsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    return;
+                }
+                const collapsed = els.qualityDetailsBody.classList.toggle('is-collapsed');
+                els.qualityDetailsToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            });
+        }
+        syncQualityDetailForViewport();
+    }
+
+    function closeLowGradeModal(approved) {
+        if (!els.lowGradeModal) return;
+        els.lowGradeModal.hidden = true;
+        els.lowGradeModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('body-no-scroll');
+        if (state.lowGradeResolver) {
+            const resolve = state.lowGradeResolver;
+            state.lowGradeResolver = null;
+            resolve(Boolean(approved));
+        }
+    }
+
+    function requestLowGradeConfirmation(quality) {
+        if (!els.lowGradeModal) return Promise.resolve(true);
+        if (els.lowGradeGrade) els.lowGradeGrade.textContent = quality.grade;
+        els.lowGradeModal.hidden = false;
+        els.lowGradeModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('body-no-scroll');
+        return new Promise((resolve) => {
+            state.lowGradeResolver = resolve;
+        });
+    }
+
+    function bindLowGradeModal() {
+        if (!els.lowGradeModal) return;
+        if (els.lowGradeCancelBtn) els.lowGradeCancelBtn.addEventListener('click', () => closeLowGradeModal(false));
+        if (els.lowGradeConfirmBtn) els.lowGradeConfirmBtn.addEventListener('click', () => closeLowGradeModal(true));
+        const backdrop = els.lowGradeModal.querySelector('[data-dismiss="true"]');
+        if (backdrop) backdrop.addEventListener('click', () => closeLowGradeModal(false));
+        document.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape' && !els.lowGradeModal.hidden) {
+                closeLowGradeModal(false);
+            }
+        });
+    }
+
     function bindCoverImageUpload() {
         if (els.inpFile) {
             els.inpFile.onchange = () => {
@@ -476,6 +1172,7 @@
                         if (img) img.src = result;
                         els.previewDiv.style.display = 'block';
                     }
+                    inspectCoverImage(result);
                     handleEditorContentChange();
                 };
                 reader.readAsDataURL(file);
@@ -487,6 +1184,7 @@
                 if (els.inpBase64) els.inpBase64.value = '';
                 if (els.inpFile) els.inpFile.value = '';
                 if (els.previewDiv) els.previewDiv.style.display = 'none';
+                inspectCoverImage('');
                 handleEditorContentChange();
             };
         }
@@ -629,6 +1327,7 @@
 
         window.addEventListener('resize', () => {
             if (!isMobileView()) setPane('write');
+            syncQualityDetailForViewport();
         });
     }
 
@@ -656,6 +1355,7 @@
                     if (img) img.src = article.image;
                     els.previewDiv.style.display = 'block';
                 }
+                inspectCoverImage(article.image);
             }
         } finally {
             showLoader(false);
@@ -692,6 +1392,13 @@
             if (state.lint.errors.length > 0) {
                 notify('Perbaiki error kualitas artikel sebelum publish.', 'error');
                 return;
+            }
+
+            const quality = state.quality;
+            const lowGrade = quality && (quality.grade === 'D' || quality.grade === 'E');
+            if (lowGrade) {
+                const approved = await requestLowGradeConfirmation(quality);
+                if (!approved) return;
             }
 
             const payload = buildPayload();
@@ -747,6 +1454,8 @@
         bindPaneToggle();
         bindCoverImageUpload();
         bindToolbar();
+        bindQualityTools();
+        bindLowGradeModal();
         bindInputObservers();
         bindFormActions();
 
@@ -770,3 +1479,5 @@
         notify(err.message || 'Gagal memuat editor.', 'error');
     });
 })();
+
+

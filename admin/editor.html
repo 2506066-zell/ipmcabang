@@ -31,6 +31,7 @@
                 </a>
                 <div class="editor-status-stack">
                     <span class="editor-status" id="editor-status">Siap menulis...</span>
+                    <small id="editor-quality-status" class="editor-quality-status">Grade - | Perlu evaluasi</small>
                     <small id="editor-autosave" class="editor-autosave">Belum ada draft</small>
                 </div>
             </div>
@@ -133,6 +134,24 @@
                             </div>
                             <div class="tool-divider"></div>
                             <div class="tool-group">
+                                <label for="editor-template-select" class="tool-label">Template</label>
+                                <select id="editor-template-select" class="tool-select">
+                                    <option value="">Pilih Template</option>
+                                    <option value="lead_news">Lead Berita</option>
+                                    <option value="opinion">Opini</option>
+                                    <option value="work_program">Program Kerja</option>
+                                    <option value="activity_release">Rilis Kegiatan</option>
+                                    <option value="announcement">Pengumuman</option>
+                                </select>
+                                <button type="button" class="tool-btn tool-btn-text" id="editor-insert-template-btn" title="Sisipkan template">
+                                    <i class="fas fa-plus-square"></i> Template
+                                </button>
+                                <button type="button" class="tool-btn tool-btn-text" id="editor-normalize-btn" title="Rapikan struktur dan format">
+                                    <i class="fas fa-broom"></i> Rapikan
+                                </button>
+                            </div>
+                            <div class="tool-divider"></div>
+                            <div class="tool-group">
                                 <button type="button" class="tool-btn" data-action="link" title="Insert Link (Ctrl/Cmd+K)">
                                     <i class="fas fa-link"></i>
                                 </button>
@@ -167,6 +186,22 @@
                         </div>
 
                         <section id="article-lint-panel" class="article-lint-panel" aria-live="polite">
+                            <div id="article-quality-score-card" class="article-quality-score-card">
+                                <div class="quality-score-head">
+                                    <span id="quality-grade-badge" class="quality-grade-badge grade-pending">-</span>
+                                    <div class="quality-score-meta">
+                                        <strong id="quality-score-value">0/100</strong>
+                                        <p id="quality-score-summary">Perlu evaluasi kualitas artikel.</p>
+                                    </div>
+                                    <button type="button" id="quality-details-toggle" class="quality-details-toggle" aria-expanded="true" aria-controls="quality-details-body">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                </div>
+                                <div id="quality-details-body" class="quality-details-body">
+                                    <div id="quality-domain-breakdown" class="quality-domain-breakdown"></div>
+                                    <ul id="quality-params-list" class="quality-params-list"></ul>
+                                </div>
+                            </div>
                             <h3 class="article-lint-title">Kualitas Artikel</h3>
                             <ul id="article-lint-list" class="article-lint-list"></ul>
                         </section>
@@ -194,5 +229,19 @@
     <script src="../scripts/toast.js"></script>
     <script src="/app/js/features/articles/article-renderer-shared.js"></script>
     <script src="editor.js" defer></script>
+
+    <div id="low-grade-confirm-modal" class="editor-modal" hidden aria-hidden="true">
+        <div class="editor-modal-backdrop" data-dismiss="true"></div>
+        <div class="editor-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="low-grade-confirm-title" aria-describedby="low-grade-confirm-desc">
+            <h3 id="low-grade-confirm-title">Kualitas Artikel Masih Rendah</h3>
+            <p id="low-grade-confirm-desc">
+                Grade artikel saat ini <strong id="low-grade-confirm-grade">D</strong>. Kamu tetap bisa publish, tapi disarankan rapikan dulu agar lebih profesional.
+            </p>
+            <div class="editor-modal-actions">
+                <button type="button" class="btn btn-secondary" id="low-grade-cancel-btn">Kembali Perbaiki</button>
+                <button type="button" class="btn btn-primary" id="low-grade-confirm-btn">Tetap Publish</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

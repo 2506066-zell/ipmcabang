@@ -106,14 +106,20 @@ module.exports = async (req, res) => {
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
   <meta property="og:type" content="article">
+  <meta property="og:locale" content="id_ID">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:url" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:width" content="${DEFAULT_OG_WIDTH}">
+  <meta property="og:image:height" content="${DEFAULT_OG_HEIGHT}">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+  <meta name="twitter:image:alt" content="${escapeHtml(title)}">
   <meta name="robots" content="noindex,nofollow">
 </head>
 <body>
@@ -143,10 +149,12 @@ module.exports = async (req, res) => {
   <meta name="description" content="${escapeHtml(description)}">
   <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
   <meta property="og:type" content="article">
+  <meta property="og:locale" content="id_ID">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:site_name" content="PC IPM Panawuan">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:type" content="${escapeHtml(imageMime)}">
   <meta property="og:image:width" content="${DEFAULT_OG_WIDTH}">
@@ -158,6 +166,8 @@ module.exports = async (req, res) => {
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+  <meta name="twitter:image:alt" content="${escapeHtml(article.title || 'Thumbnail artikel PC IPM Panawuan')}">
+  <meta name="twitter:url" content="${escapeHtml(canonicalUrl)}">
   <script type="application/ld+json">${JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Article',
