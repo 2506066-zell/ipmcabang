@@ -701,7 +701,7 @@ function setupShareButtons(container) {
     const hasNative = typeof navigator.share === 'function';
 
     if (nativeBtn) nativeBtn.style.display = hasNative ? 'inline-flex' : 'none';
-    if (waBtn) waBtn.style.display = hasNative ? 'none' : 'inline-flex';
+    if (waBtn) waBtn.style.display = 'inline-flex';
 
     const onNative = () => window.shareArticleNative();
     const onCopy = () => window.shareArticle('copy');
@@ -990,8 +990,6 @@ window.shareArticleNative = function () {
     const data = window.__currentArticle || {};
     if (navigator.share) {
         navigator.share({
-            title: data.title || document.title,
-            text: data.title || document.title,
             url: data.url || window.location.href
         }).catch(() => {
             if (window.shareArticle) window.shareArticle('copy');
