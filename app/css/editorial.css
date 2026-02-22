@@ -76,6 +76,45 @@
   text-indent: 0;
 }
 
+.pro-article hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c9d4e2, transparent);
+  margin: 2.1em 0;
+}
+
+.pro-article p[data-align="left"],
+.pro-article h2[data-align="left"],
+.pro-article h3[data-align="left"],
+.pro-article li[data-align="left"],
+.pro-article blockquote[data-align="left"] {
+  text-align: left;
+}
+
+.pro-article p[data-align="center"],
+.pro-article h2[data-align="center"],
+.pro-article h3[data-align="center"],
+.pro-article li[data-align="center"],
+.pro-article blockquote[data-align="center"] {
+  text-align: center;
+}
+
+.pro-article p[data-align="right"],
+.pro-article h2[data-align="right"],
+.pro-article h3[data-align="right"],
+.pro-article li[data-align="right"],
+.pro-article blockquote[data-align="right"] {
+  text-align: right;
+}
+
+.pro-article p[data-align="justify"],
+.pro-article h2[data-align="justify"],
+.pro-article h3[data-align="justify"],
+.pro-article li[data-align="justify"],
+.pro-article blockquote[data-align="justify"] {
+  text-align: justify;
+}
+
 .pro-article img {
   display: block;
   margin: 1.6em auto;

@@ -2,8 +2,10 @@
     'use strict';
 
     const LOCAL_ARTICLE_FALLBACK = '/ipm%20(2).png';
-    const ALLOWED_TAGS = new Set(['p', 'h2', 'h3', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote', 'img', 'br']);
-    const VOID_TAGS = new Set(['img', 'br']);
+    const ALLOWED_TAGS = new Set(['p', 'h2', 'h3', 'strong', 'em', 'b', 'i', 'a', 'ul', 'ol', 'li', 'blockquote', 'img', 'br', 'hr']);
+    const VOID_TAGS = new Set(['img', 'br', 'hr']);
+    const ALIGNMENT_TAGS = new Set(['p', 'h2', 'h3', 'li', 'blockquote']);
+    const ALIGNMENT_VALUES = new Set(['left', 'center', 'right', 'justify']);
 
     function escapeHtml(value) {
         return String(value || '')
@@ -102,6 +104,16 @@
                 return;
             }
 
+            if (name === 'data-align' && ALIGNMENT_TAGS.has(tag)) {
+                const normalized = value.toLowerCase();
+                if (ALIGNMENT_VALUES.has(normalized)) {
+                    node.setAttribute('data-align', normalized);
+                } else {
+                    node.removeAttribute(attr.name);
+                }
+                return;
+            }
+
             node.removeAttribute(attr.name);
         });
 
@@ -154,6 +166,10 @@
             postDoc.querySelectorAll('h1').forEach((h1) => {
                 const h2 = postDoc.createElement('h2');
                 h2.innerHTML = h1.innerHTML;
+                const align = h1.getAttribute('data-align');
+                if (align && ALIGNMENT_VALUES.has(String(align).toLowerCase())) {
+                    h2.setAttribute('data-align', String(align).toLowerCase());
+                }
                 h1.parentNode.replaceChild(h2, h1);
             });
             return postDoc.body.innerHTML.trim();

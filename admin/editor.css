@@ -298,13 +298,18 @@ body.page-editor.body-no-scroll {
 }
 
 .page-editor .tool-btn {
-    min-height: 38px;
-    min-width: 38px;
+    min-height: 44px;
+    min-width: 44px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     color: #334155;
     background: #fff;
     cursor: pointer;
+}
+
+.page-editor .tool-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
 }
 
 .page-editor .tool-btn.tool-btn-text {
@@ -327,6 +332,18 @@ body.page-editor.body-no-scroll {
     border-color: #111827;
 }
 
+.page-editor .tool-btn[aria-pressed="true"] {
+    background: #0f766e;
+    color: #ffffff;
+    border-color: #0f766e;
+}
+
+.page-editor .tool-btn:focus-visible,
+.page-editor .tool-select:focus-visible {
+    outline: 2px solid #0f766e;
+    outline-offset: 1px;
+}
+
 .page-editor .tool-divider {
     width: 1px;
     height: 24px;
@@ -339,6 +356,38 @@ body.page-editor.body-no-scroll {
     border: 1px solid #dbe1ea;
     border-radius: 10px;
     background: #f8fafc;
+}
+
+.page-editor .editor-popover-wide {
+    padding: 12px;
+}
+
+.page-editor .editor-popover-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.page-editor .editor-popover-grid .tool-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0 12px;
+}
+
+.page-editor .editor-paste-choice {
+    border-color: #cdd9e8;
+    background: #ffffff;
+}
+
+.page-editor .editor-paste-desc {
+    margin: 2px 0 10px;
+    font-size: 0.82rem;
+    color: #475569;
+}
+
+.page-editor .editor-paste-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
 }
 
 .page-editor .editor-popover[hidden] {
@@ -720,7 +769,33 @@ body.page-editor.body-no-scroll {
     .page-editor .editor-toolbar {
         top: 70px;
         overflow-x: auto;
+        overflow-y: hidden;
         flex-wrap: nowrap;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .page-editor .tool-group,
+    .page-editor .tool-divider {
+        scroll-snap-align: start;
+        flex: 0 0 auto;
+    }
+
+    .page-editor #editor-more-tools-panel.editor-popover-wide {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: 14px;
+        margin-top: 0;
+        z-index: 1600;
+        border-radius: 14px;
+        box-shadow: 0 14px 38px rgba(15, 23, 42, 0.28);
+        max-height: 58vh;
+        overflow: auto;
+    }
+
+    .page-editor .editor-popover-grid {
+        grid-template-columns: 1fr;
     }
 
     .page-editor .quality-domain-breakdown {

@@ -83,7 +83,8 @@
         lint: { errors: [], warnings: [] },
         quality: null,
         coverMeta: null,
-        lowGradeResolver: null
+        lowGradeResolver: null,
+        pendingPaste: null
     };
 
     const els = {
@@ -133,6 +134,12 @@
         imageInput: document.getElementById('editor-image-input'),
         imageApplyBtn: document.getElementById('editor-image-apply'),
         imageUploadBtn: document.getElementById('editor-image-upload'),
+        moreToolsBtn: document.getElementById('editor-more-tools-btn'),
+        moreToolsPanel: document.getElementById('editor-more-tools-panel'),
+        pasteChoicePopover: document.getElementById('editor-paste-choice-popover'),
+        pasteCleanBtn: document.getElementById('editor-paste-clean-btn'),
+        pasteKeepBtn: document.getElementById('editor-paste-keep-btn'),
+        pasteCancelBtn: document.getElementById('editor-paste-cancel-btn'),
         lowGradeModal: document.getElementById('low-grade-confirm-modal'),
         lowGradeGrade: document.getElementById('low-grade-confirm-grade'),
         lowGradeCancelBtn: document.getElementById('low-grade-cancel-btn'),
@@ -631,6 +638,122 @@
         refreshToolbarState();
     }
 
+    function closestElement(node, selector) {
+        if (!node) return null;
+        if (node.nodeType === Node.ELEMENT_NODE) return node.closest(selector);
+        if (node.parentElement) return node.parentElement.closest(selector);
+        return null;
+    }
+
+    function getSelectionRootElement() {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return null;
+        return sel.anchorNode && sel.anchorNode.nodeType === Node.ELEMENT_NODE
+            ? sel.anchorNode
+            : sel.anchorNode && sel.anchorNode.parentElement
+                ? sel.anchorNode.parentElement
+                : null;
+    }
+
+    function getActiveBlockElement() {
+        const anchorEl = getSelectionRootElement();
+        return closestElement(anchorEl, 'p, h2, h3, li, blockquote');
+    }
+
+    function getSelectedBlockElements() {
+        if (!els.editorArea) return [];
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return [];
+        const range = sel.getRangeAt(0);
+        const allBlocks = Array.from(els.editorArea.querySelectorAll('p, h2, h3, li, blockquote'));
+        const inRange = allBlocks.filter((block) => {
+            try {
+                return range.intersectsNode(block);
+            } catch {
+                return false;
+            }
+        });
+        if (inRange.length) return inRange;
+        const active = getActiveBlockElement();
+        return active ? [active] : [];
+    }
+
+    function setLinkSecurityAttributes(anchorEl, href) {
+        if (!anchorEl) return;
+        anchorEl.setAttribute('href', href);
+        if (/^https?:\/\//i.test(href)) {
+            anchorEl.setAttribute('target', '_blank');
+            anchorEl.setAttribute('rel', 'noopener noreferrer');
+        } else {
+            anchorEl.removeAttribute('target');
+            anchorEl.removeAttribute('rel');
+        }
+    }
+
+    function applyAlignment(alignment) {
+        const safeAlign = ['left', 'center', 'right', 'justify'].includes(alignment) ? alignment : 'left';
+        const targets = getSelectedBlockElements();
+        if (!targets.length) {
+            notify('Pilih paragraf atau heading yang ingin diratakan.', 'warning');
+            return;
+        }
+        targets.forEach((block) => {
+            block.setAttribute('data-align', safeAlign);
+        });
+        if (els.editorArea) els.editorArea.focus();
+        handleEditorContentChange();
+    }
+
+    function insertHorizontalRule() {
+        restoreSelection();
+        const ok = document.execCommand('insertHorizontalRule', false);
+        if (!ok) execCommand('insertHTML', '<hr>');
+        if (els.editorArea) els.editorArea.focus();
+        handleEditorContentChange();
+    }
+
+    function getCurrentAlignment() {
+        const activeBlock = getActiveBlockElement();
+        if (!activeBlock) return '';
+        const align = String(activeBlock.getAttribute('data-align') || '').toLowerCase();
+        return ['left', 'center', 'right', 'justify'].includes(align) ? align : '';
+    }
+
+    function toSemanticParagraphs(rawText) {
+        const escapeText = (value) => String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        return String(rawText || '')
+            .split(/\n{2,}/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => `<p>${escapeText(line)}</p>`)
+            .join('');
+    }
+
+    function cleanPastedHtml(rawHtml, fallbackText) {
+        const renderer = getRenderer();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(String(rawHtml || ''), 'text/html');
+        if (!doc.body) return toSemanticParagraphs(fallbackText);
+        const plain = (doc.body.textContent || '').trim();
+        if (!plain) return '';
+        if (renderer && typeof renderer.sanitizeArticleHTML === 'function') {
+            return renderer.sanitizeArticleHTML(toSemanticParagraphs(plain), { removeHeadingOne: true });
+        }
+        return toSemanticParagraphs(plain);
+    }
+
+    function closeAllPopovers() {
+        if (els.linkPopover) els.linkPopover.hidden = true;
+        if (els.imagePopover) els.imagePopover.hidden = true;
+        if (els.moreToolsPanel) els.moreToolsPanel.hidden = true;
+        if (els.pasteChoicePopover) els.pasteChoicePopover.hidden = true;
+        if (els.moreToolsBtn) els.moreToolsBtn.setAttribute('aria-expanded', 'false');
+        state.pendingPaste = null;
+    }
+
     function refreshToolbarState() {
         if (!els.toolbar) return;
         const buttons = els.toolbar.querySelectorAll('.tool-btn[data-command]');
@@ -644,22 +767,57 @@
             }
             btn.classList.toggle('active', Boolean(active));
         });
-    }
 
-    function closeAllPopovers() {
-        if (els.linkPopover) els.linkPopover.hidden = true;
-        if (els.imagePopover) els.imagePopover.hidden = true;
+        const alignMap = {
+            alignLeft: 'left',
+            alignCenter: 'center',
+            alignRight: 'right',
+            alignJustify: 'justify'
+        };
+        const currentAlign = getCurrentAlignment();
+        Object.keys(alignMap).forEach((action) => {
+            const btn = document.querySelector(`.tool-btn[data-action="${action}"]`);
+            if (!btn) return;
+            btn.setAttribute('aria-pressed', alignMap[action] === currentAlign ? 'true' : 'false');
+        });
+
+        const outdentBtn = document.querySelector('.tool-btn[data-action="outdent"]');
+        if (outdentBtn) {
+            let enabled = true;
+            try {
+                enabled = document.queryCommandEnabled('outdent');
+            } catch {
+                enabled = true;
+            }
+            outdentBtn.disabled = !enabled;
+        }
+
+        const activeBlock = getActiveBlockElement();
+        if (els.blockSelect && activeBlock) {
+            const tag = activeBlock.tagName.toLowerCase();
+            if (tag === 'h2' || tag === 'h3' || tag === 'p') {
+                els.blockSelect.value = tag;
+            }
+        }
     }
 
     function openLinkPopover() {
-        closeAllPopovers();
+        if (els.imagePopover) els.imagePopover.hidden = true;
+        if (els.moreToolsPanel) els.moreToolsPanel.hidden = true;
+        if (els.pasteChoicePopover) els.pasteChoicePopover.hidden = true;
+        if (els.moreToolsBtn) els.moreToolsBtn.setAttribute('aria-expanded', 'false');
         if (!els.linkPopover || !els.linkInput) return;
+        const activeAnchor = closestElement(getSelectionRootElement(), 'a');
+        els.linkInput.value = activeAnchor ? String(activeAnchor.getAttribute('href') || '') : '';
         els.linkPopover.hidden = false;
         els.linkInput.focus();
     }
 
     function openImagePopover() {
-        closeAllPopovers();
+        if (els.linkPopover) els.linkPopover.hidden = true;
+        if (els.moreToolsPanel) els.moreToolsPanel.hidden = true;
+        if (els.pasteChoicePopover) els.pasteChoicePopover.hidden = true;
+        if (els.moreToolsBtn) els.moreToolsBtn.setAttribute('aria-expanded', 'false');
         if (!els.imagePopover || !els.imageInput) return;
         els.imagePopover.hidden = false;
         els.imageInput.focus();
@@ -673,14 +831,20 @@
             return;
         }
         restoreSelection();
+        const activeAnchor = closestElement(getSelectionRootElement(), 'a');
         const sel = window.getSelection();
-        if (sel && !sel.isCollapsed) {
+        if (activeAnchor && (!sel || sel.isCollapsed)) {
+            setLinkSecurityAttributes(activeAnchor, href);
+        } else if (sel && !sel.isCollapsed) {
             execCommand('createLink', href);
         } else {
             execCommand('insertHTML', `<a href="${href}" target="_blank" rel="noopener noreferrer">${href}</a>`);
         }
+        const linked = closestElement(getSelectionRootElement(), 'a');
+        if (linked) setLinkSecurityAttributes(linked, href);
         closeAllPopovers();
         els.linkInput.value = '';
+        handleEditorContentChange();
     }
 
     function applyInlineImageSource(src) {
@@ -701,6 +865,155 @@
         closeAllPopovers();
         els.imageInput.value = '';
         handleEditorContentChange();
+    }
+
+    function removeActiveLink() {
+        restoreSelection();
+        execCommand('unlink');
+        handleEditorContentChange();
+    }
+
+    function openMoreToolsPanel() {
+        if (!els.moreToolsPanel || !els.moreToolsBtn) return;
+        const willOpen = els.moreToolsPanel.hidden;
+        closeAllPopovers();
+        els.moreToolsPanel.hidden = !willOpen;
+        els.moreToolsBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+            const firstBtn = els.moreToolsPanel.querySelector('.tool-btn');
+            if (firstBtn) firstBtn.focus();
+        }
+    }
+
+    function openPasteChoicePopover(html, text) {
+        if (!els.pasteChoicePopover) return;
+        state.pendingPaste = {
+            html: String(html || ''),
+            text: String(text || '')
+        };
+        if (els.linkPopover) els.linkPopover.hidden = true;
+        if (els.imagePopover) els.imagePopover.hidden = true;
+        if (els.moreToolsPanel) els.moreToolsPanel.hidden = true;
+        if (els.moreToolsBtn) els.moreToolsBtn.setAttribute('aria-expanded', 'false');
+        els.pasteChoicePopover.hidden = false;
+        if (els.pasteCleanBtn) els.pasteCleanBtn.focus();
+    }
+
+    function closePasteChoicePopover() {
+        if (els.pasteChoicePopover) els.pasteChoicePopover.hidden = true;
+        state.pendingPaste = null;
+        if (els.editorArea) els.editorArea.focus();
+    }
+
+    function applyPendingPaste(mode) {
+        if (!state.pendingPaste) return;
+        restoreSelection();
+        const html = state.pendingPaste.html;
+        const text = state.pendingPaste.text;
+        let payload = '';
+        if (mode === 'keep') {
+            payload = sanitizeHtml(html || toSemanticParagraphs(text));
+        } else {
+            payload = cleanPastedHtml(html, text);
+        }
+        execCommand('insertHTML', payload || toSemanticParagraphs(text));
+        closePasteChoicePopover();
+        handleEditorContentChange();
+    }
+
+    async function readClipboardPayload() {
+        if (!navigator.clipboard) return null;
+        const payload = { html: '', text: '' };
+        if (navigator.clipboard.read) {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                if (item.types.includes('text/html')) {
+                    const blob = await item.getType('text/html');
+                    payload.html = await blob.text();
+                }
+                if (item.types.includes('text/plain')) {
+                    const blob = await item.getType('text/plain');
+                    payload.text = await blob.text();
+                }
+            }
+        }
+        if (!payload.text && navigator.clipboard.readText) {
+            payload.text = await navigator.clipboard.readText();
+        }
+        return payload;
+    }
+
+    async function runClipboardPaste(mode) {
+        try {
+            const payload = await readClipboardPayload();
+            if (!payload || (!payload.html && !payload.text)) {
+                notify('Clipboard kosong atau akses ditolak browser.', 'warning');
+                return;
+            }
+            restoreSelection();
+            if (mode === 'keep') {
+                execCommand('insertHTML', sanitizeHtml(payload.html || toSemanticParagraphs(payload.text)));
+            } else {
+                execCommand('insertHTML', cleanPastedHtml(payload.html, payload.text));
+            }
+            handleEditorContentChange();
+        } catch {
+            notify('Browser memblokir akses clipboard. Gunakan Ctrl/Cmd+V.', 'warning');
+        }
+    }
+
+    function executeToolbarAction(action) {
+        switch (action) {
+        case 'undo':
+            execCommand('undo');
+            handleEditorContentChange();
+            return;
+        case 'redo':
+            execCommand('redo');
+            handleEditorContentChange();
+            return;
+        case 'removeFormat':
+            execCommand('removeFormat');
+            handleEditorContentChange();
+            return;
+        case 'toggleMoreTools':
+            openMoreToolsPanel();
+            return;
+        case 'alignLeft':
+            applyAlignment('left');
+            return;
+        case 'alignCenter':
+            applyAlignment('center');
+            return;
+        case 'alignRight':
+            applyAlignment('right');
+            return;
+        case 'alignJustify':
+            applyAlignment('justify');
+            return;
+        case 'indent':
+            execCommand('indent');
+            handleEditorContentChange();
+            return;
+        case 'outdent':
+            execCommand('outdent');
+            handleEditorContentChange();
+            return;
+        case 'insertHr':
+            insertHorizontalRule();
+            return;
+        case 'unlink':
+            removeActiveLink();
+            return;
+        case 'pasteCleanNow':
+            runClipboardPaste('clean');
+            return;
+        case 'pasteKeepNow':
+            runClipboardPaste('keep');
+            return;
+        default:
+            return;
+        }
     }
 
     function handleInlineImageUpload(file) {
@@ -1193,12 +1506,12 @@
     function bindToolbar() {
         if (!els.toolbar || !els.editorArea) return;
         try {
-            document.execCommand('styleWithCSS', false, true);
+            document.execCommand('styleWithCSS', false, false);
         } catch {
             // unsupported on some browsers
         }
 
-        const commandButtons = els.toolbar.querySelectorAll('.tool-btn');
+        const commandButtons = document.querySelectorAll('#editor-toolbar .tool-btn, #editor-more-tools-panel .tool-btn');
         commandButtons.forEach((btn) => {
             btn.addEventListener('mousedown', saveSelection);
             btn.addEventListener('click', (evt) => {
@@ -1211,6 +1524,10 @@
                 }
                 if (action === 'image') {
                     openImagePopover();
+                    return;
+                }
+                if (action) {
+                    executeToolbarAction(action);
                     return;
                 }
                 if (!command) return;
@@ -1231,6 +1548,9 @@
         if (els.linkApplyBtn) els.linkApplyBtn.addEventListener('click', applyLink);
         if (els.linkCancelBtn) els.linkCancelBtn.addEventListener('click', closeAllPopovers);
         if (els.imageApplyBtn) els.imageApplyBtn.addEventListener('click', applyImageFromUrl);
+        if (els.pasteCleanBtn) els.pasteCleanBtn.addEventListener('click', () => applyPendingPaste('clean'));
+        if (els.pasteKeepBtn) els.pasteKeepBtn.addEventListener('click', () => applyPendingPaste('keep'));
+        if (els.pasteCancelBtn) els.pasteCancelBtn.addEventListener('click', closePasteChoicePopover);
         if (els.imageUploadBtn && els.inlineImageInput) {
             els.imageUploadBtn.addEventListener('click', () => els.inlineImageInput.click());
         }
@@ -1263,23 +1583,35 @@
             if (key === 'k') {
                 evt.preventDefault();
                 openLinkPopover();
+                return;
+            }
+            if (key === 'z' && evt.shiftKey) {
+                evt.preventDefault();
+                executeToolbarAction('redo');
+                return;
+            }
+            if (key === 'y') {
+                evt.preventDefault();
+                executeToolbarAction('redo');
+                return;
+            }
+            if (key === 'z') {
+                evt.preventDefault();
+                executeToolbarAction('undo');
             }
         });
 
         els.editorArea.addEventListener('paste', (evt) => {
-            evt.preventDefault();
             const html = evt.clipboardData.getData('text/html');
             const text = evt.clipboardData.getData('text/plain');
-            let sanitized = '';
             if (html) {
-                sanitized = sanitizeHtml(html);
-            } else {
-                sanitized = String(text || '')
-                    .split(/\n{2,}/)
-                    .map((line) => `<p>${line.trim()}</p>`)
-                    .join('');
+                evt.preventDefault();
+                saveSelection();
+                openPasteChoicePopover(html, text);
+                return;
             }
-            execCommand('insertHTML', sanitized);
+            evt.preventDefault();
+            execCommand('insertHTML', toSemanticParagraphs(text));
             handleEditorContentChange();
         });
 
@@ -1299,9 +1631,17 @@
 
         document.addEventListener('click', (evt) => {
             const isPopover = evt.target.closest('.editor-popover');
-            const isTool = evt.target.closest('.tool-btn[data-action]');
+            const isTool = evt.target.closest('.tool-btn');
             if (!isPopover && !isTool) closeAllPopovers();
         });
+
+        document.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape') {
+                closeAllPopovers();
+            }
+        });
+
+        refreshToolbarState();
     }
 
     function bindPaneToggle() {

@@ -1102,3 +1102,79 @@ body.page-articles-unified.reading-mode .premium-fab-container {
     }
 }
 
+/* --- Reading View Micro Refactor (Override-Only, Mobile-First) --- */
+body.page-articles-unified.reading-mode {
+    --reading-gutter: clamp(14px, 4vw, 18px);
+    --reading-paragraph-gap: clamp(18px, 4.4vw, 22px);
+}
+
+body.page-articles-unified.reading-mode #article-detail-content .article-detail,
+body.page-articles-unified.reading-mode #article-detail-container .article-detail {
+    max-width: none;
+    margin: 0;
+    padding: 14px var(--reading-gutter) 18px;
+}
+
+body.page-articles-unified.reading-mode .article-content-body {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    font-size: clamp(1.05rem, 1.6vw, 1.1rem);
+    line-height: clamp(1.75, 1.85, 1.9);
+    color: #222;
+}
+
+body.page-articles-unified.reading-mode .article-content-body p {
+    margin: 0;
+    margin-block: var(--reading-paragraph-gap);
+}
+
+body.page-articles-unified.reading-mode .article-content-body p:first-child {
+    margin-top: 0;
+}
+
+body.page-articles-unified.reading-mode .article-content-body p:last-child {
+    margin-bottom: 0;
+}
+
+body.page-articles-unified.reading-mode .article-content-body h2,
+body.page-articles-unified.reading-mode .article-content-body h3,
+body.page-articles-unified.reading-mode .article-content-body h4 {
+    margin-top: clamp(30px, 7vw, 40px);
+    margin-bottom: clamp(12px, 3vw, 16px);
+    line-height: 1.28;
+}
+
+body.page-articles-unified.reading-mode .article-content-body ul,
+body.page-articles-unified.reading-mode .article-content-body ol {
+    margin-block: 18px;
+    padding-left: 20px;
+}
+
+body.page-articles-unified.reading-mode .article-content-body li {
+    margin: 0 0 clamp(6px, 2vw, 10px);
+}
+
+body.page-articles-unified.reading-mode .article-content-body li:last-child {
+    margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+    body.page-articles-unified.reading-mode {
+        --reading-gutter: 24px;
+    }
+
+    body.page-articles-unified.reading-mode #article-detail-content .article-detail,
+    body.page-articles-unified.reading-mode #article-detail-container .article-detail {
+        max-width: 700px;
+        margin: 0 auto;
+        padding-left: var(--reading-gutter);
+        padding-right: var(--reading-gutter);
+    }
+
+    body.page-articles-unified.reading-mode .article-content-body {
+        max-width: min(72ch, 100%);
+        margin: 0 auto;
+    }
+}
+
