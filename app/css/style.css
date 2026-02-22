@@ -5201,6 +5201,37 @@ body.quiz-active .premium-fab-container {
     margin-top: 14px;
 }
 
+.page-struktur .org-feedback-trigger {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 10px;
+    border: 1px dashed rgba(31, 91, 63, 0.45);
+    background: #f7fbf8;
+    color: #1f5b3f;
+    padding: 10px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-struktur .org-feedback-trigger:hover,
+.page-struktur .org-feedback-trigger.active {
+    border-style: solid;
+    border-color: rgba(31, 91, 63, 0.6);
+    background: #eef7f1;
+}
+
+.page-struktur .org-feedback-panel {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(31, 91, 63, 0.12);
+}
+
 .page-struktur .org-feedback-row {
     display: grid;
     grid-template-columns: 1fr 1fr;

@@ -108,37 +108,44 @@
 
         <section class="org-feedback-card" id="orgFeedbackSection" aria-labelledby="orgFeedbackTitle">
             <div class="org-feedback-head">
-                <h2 id="orgFeedbackTitle">Kritik &amp; Saran</h2>
-                <p>Bantu kami memperbaiki halaman Struktur Organisasi agar lebih jelas dan nyaman digunakan.</p>
+                <h2 id="orgFeedbackTitle">Kritik &amp; Saran Program Kerja</h2>
+                <p>Masukan kamu akan dipakai untuk meningkatkan kualitas program kerja tiap bidang.</p>
             </div>
-            <form id="orgFeedbackForm" class="org-feedback-form">
-                <div class="org-feedback-row">
-                    <div class="org-feedback-field">
-                        <label for="orgFeedbackName">Nama (opsional)</label>
-                        <input type="text" id="orgFeedbackName" maxlength="80" placeholder="Nama kamu">
+            <button type="button" class="org-feedback-trigger" id="orgFeedbackToggleBtn" aria-expanded="false"
+                aria-controls="orgFeedbackPanel">
+                <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                <span>Kirim Kritik &amp; Saran Program Kerja</span>
+            </button>
+            <div class="org-feedback-panel" id="orgFeedbackPanel" hidden>
+                <form id="orgFeedbackForm" class="org-feedback-form">
+                    <div class="org-feedback-row">
+                        <div class="org-feedback-field">
+                            <label for="orgFeedbackName">Nama (opsional)</label>
+                            <input type="text" id="orgFeedbackName" maxlength="80" placeholder="Nama kamu">
+                        </div>
+                        <div class="org-feedback-field">
+                            <label for="orgFeedbackContact">Kontak (opsional)</label>
+                            <input type="text" id="orgFeedbackContact" maxlength="120" placeholder="WA / Email / IG">
+                        </div>
                     </div>
                     <div class="org-feedback-field">
-                        <label for="orgFeedbackContact">Kontak (opsional)</label>
-                        <input type="text" id="orgFeedbackContact" maxlength="120" placeholder="WA / Email / IG">
+                        <label for="orgFeedbackSubject">Topik Program Kerja</label>
+                        <input type="text" id="orgFeedbackSubject" maxlength="140"
+                            placeholder="Contoh: Program kaderisasi perlu timeline lebih jelas">
                     </div>
-                </div>
-                <div class="org-feedback-field">
-                    <label for="orgFeedbackSubject">Topik</label>
-                    <input type="text" id="orgFeedbackSubject" maxlength="140"
-                        placeholder="Contoh: Susunan bidang perkaderan kurang jelas">
-                </div>
-                <div class="org-feedback-field">
-                    <label for="orgFeedbackMessage">Pesan</label>
-                    <textarea id="orgFeedbackMessage" rows="4" maxlength="2000"
-                        placeholder="Tulis kritik/saran kamu secara spesifik agar mudah ditindaklanjuti admin." required></textarea>
-                </div>
-                <div class="org-feedback-actions">
-                    <button type="submit" class="btn-submit-feedback" id="orgFeedbackSubmitBtn">
-                        <i class="fas fa-paper-plane"></i> Kirim
-                    </button>
-                    <span class="org-feedback-status" id="orgFeedbackStatus" aria-live="polite"></span>
-                </div>
-            </form>
+                    <div class="org-feedback-field">
+                        <label for="orgFeedbackMessage">Pesan</label>
+                        <textarea id="orgFeedbackMessage" rows="4" maxlength="2000"
+                            placeholder="Tulis kritik/saran program kerja secara spesifik agar mudah ditindaklanjuti admin." required></textarea>
+                    </div>
+                    <div class="org-feedback-actions">
+                        <button type="submit" class="btn-submit-feedback" id="orgFeedbackSubmitBtn">
+                            <i class="fas fa-paper-plane"></i> Kirim
+                        </button>
+                        <span class="org-feedback-status" id="orgFeedbackStatus" aria-live="polite"></span>
+                    </div>
+                </form>
+            </div>
         </section>
     </main>
 

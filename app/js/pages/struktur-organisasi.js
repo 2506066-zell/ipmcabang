@@ -357,10 +357,25 @@
     if (String(els.orgFeedbackSubject.value || '').trim()) return;
     const activeBidang = getCurrentBidang();
     if (activeBidang?.name) {
-      els.orgFeedbackSubject.value = `Masukan untuk bidang ${activeBidang.name}`;
+      els.orgFeedbackSubject.value = `Masukan Program Kerja Bidang ${activeBidang.name}`;
       return;
     }
-    els.orgFeedbackSubject.value = 'Masukan halaman Struktur Organisasi';
+    els.orgFeedbackSubject.value = 'Masukan Program Kerja Struktur Organisasi';
+  }
+
+  function setFeedbackPanelOpen(open) {
+    const shouldOpen = Boolean(open);
+    if (!els.orgFeedbackPanel || !els.orgFeedbackToggleBtn) return;
+    els.orgFeedbackPanel.hidden = !shouldOpen;
+    els.orgFeedbackToggleBtn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    els.orgFeedbackToggleBtn.classList.toggle('active', shouldOpen);
+    if (shouldOpen && els.orgFeedbackMessage) {
+      setTimeout(() => {
+        if (document.activeElement !== els.orgFeedbackMessage) {
+          els.orgFeedbackMessage.focus();
+        }
+      }, 30);
+    }
   }
 
   function setFeedbackStatus(message, type) {
@@ -374,19 +389,22 @@
     event.preventDefault();
     const message = String(els.orgFeedbackMessage?.value || '').trim();
     if (message.length < 10) {
+      setFeedbackPanelOpen(true);
       setFeedbackStatus('Pesan minimal 10 karakter.', 'error');
       return;
     }
 
     const activeBidang = getCurrentBidang();
     const payload = {
-      source_page: 'struktur-organisasi',
+      source_page: 'struktur-organisasi-program-kerja',
       subject: String(els.orgFeedbackSubject?.value || '').trim(),
       sender_name: String(els.orgFeedbackName?.value || '').trim() || getStoredUsername(),
       sender_contact: String(els.orgFeedbackContact?.value || '').trim(),
       message,
       context: {
         bidang: activeBidang?.name || '',
+        segment: state.currentSegment || 'anggota',
+        focus: 'program-kerja',
         page_url: window.location.href,
         user_agent: navigator.userAgent
       }
@@ -548,6 +566,13 @@
       els.detailSegmentProgram.addEventListener('click', () => setDetailSegment('program'));
     }
 
+    if (els.orgFeedbackToggleBtn) {
+      els.orgFeedbackToggleBtn.addEventListener('click', () => {
+        const isOpen = String(els.orgFeedbackToggleBtn.getAttribute('aria-expanded')) === 'true';
+        setFeedbackPanelOpen(!isOpen);
+      });
+    }
+
     if (els.orgFeedbackForm) {
       els.orgFeedbackForm.addEventListener('submit', submitFeedback);
     }
@@ -603,6 +628,8 @@
     els.membersSection = byId('membersSection');
     els.programList = byId('programList');
     els.orgFeedbackForm = byId('orgFeedbackForm');
+    els.orgFeedbackPanel = byId('orgFeedbackPanel');
+    els.orgFeedbackToggleBtn = byId('orgFeedbackToggleBtn');
     els.orgFeedbackName = byId('orgFeedbackName');
     els.orgFeedbackContact = byId('orgFeedbackContact');
     els.orgFeedbackSubject = byId('orgFeedbackSubject');
@@ -624,6 +651,7 @@
 
     bindEvents();
     syncFeedbackSubject();
+    setFeedbackPanelOpen(false);
     state.bidang = await fetchOrganizationData();
     renderBidangGrid();
     hideLoadingOverlay();
