@@ -37,18 +37,7 @@
   "rewrites": [
     {
       "source": "/articles/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(WhatsApp|whatsapp|facebookexternalhit|Facebot|Twitterbot|twitterbot|Slackbot|slackbot|TelegramBot|telegrambot|LinkedInBot|linkedinbot|Discordbot|discordbot|Googlebot|googlebot|bingbot|Bingbot).*"
-        }
-      ],
       "destination": "/api/article-share?slug=:slug"
-    },
-    {
-      "source": "/articles/:slug",
-      "destination": "/articles.html?slug=:slug"
     },
     {
       "source": "/articles",

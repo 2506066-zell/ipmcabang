@@ -2,6 +2,8 @@ const ArticleModel = require('../models/ArticleModel');
 const { applySecurityHeaders } = require('./_util');
 
 const FALLBACK_IMAGE = '/ipm%20(2).png';
+const DEFAULT_OG_WIDTH = '1200';
+const DEFAULT_OG_HEIGHT = '630';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -37,6 +39,10 @@ function toIsoDate(value) {
   const date = new Date(value || Date.now());
   if (Number.isNaN(date.getTime())) return new Date().toISOString();
   return date.toISOString();
+}
+
+function buildClientRedirectPath(slug) {
+  return `/articles?slug=${encodeURIComponent(String(slug || '').trim())}`;
 }
 
 function detectImageMime(articleImage) {
@@ -120,6 +126,7 @@ module.exports = async (req, res) => {
 
     const articleSlug = String(article.slug || slug).trim();
     const finalDetailPath = `/articles/${encodeURIComponent(articleSlug)}`;
+    const clientDetailPath = buildClientRedirectPath(articleSlug);
     const title = `${article.title || 'Artikel Organisasi'} - PC IPM Panawuan`;
     const description = buildDescription(article);
     const imageUrl = new URL(`/api/article-share-image/${encodeURIComponent(articleSlug)}.jpg`, origin).toString();
@@ -142,6 +149,9 @@ module.exports = async (req, res) => {
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:type" content="${escapeHtml(imageMime)}">
+  <meta property="og:image:width" content="${DEFAULT_OG_WIDTH}">
+  <meta property="og:image:height" content="${DEFAULT_OG_HEIGHT}">
+  <meta property="og:image:alt" content="${escapeHtml(article.title || 'Thumbnail artikel PC IPM Panawuan')}">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
   <meta property="article:published_time" content="${escapeHtml(publishedIso)}">
   <meta name="twitter:card" content="summary_large_image">
@@ -159,8 +169,19 @@ module.exports = async (req, res) => {
   })}</script>
 </head>
 <body>
+  <script>
+    (function () {
+      try {
+        window.location.replace(${JSON.stringify(clientDetailPath)});
+      } catch (e) {}
+    })();
+  </script>
+  <noscript>
+    <p>Mengarahkan ke artikel...</p>
+    <p><a href="${escapeHtml(clientDetailPath)}">Buka artikel</a></p>
+  </noscript>
   <p>Preview artikel siap dibagikan.</p>
-  <p><a href="${escapeHtml(finalDetailPath)}">Buka artikel</a></p>
+  <p><a href="${escapeHtml(clientDetailPath)}">Buka artikel</a></p>
 </body>
 </html>`;
 

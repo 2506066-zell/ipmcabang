@@ -6498,23 +6498,6 @@ body.quiz-active .premium-fab-container {
 /* Struktur Organisasi - Susunan Bidang Premium */
 .page-struktur .org-chart-canvas {
     overflow: visible;
-    position: relative;
-    isolation: isolate;
-}
-
-.page-struktur .org-chart-canvas::before {
-    content: "";
-    position: absolute;
-    inset: -12px;
-    z-index: -1;
-    border-radius: 22px;
-    background:
-        radial-gradient(120% 140% at 10% -10%, rgba(236, 247, 241, 0.92) 0%, rgba(247, 251, 249, 0.72) 38%, rgba(255, 255, 255, 0.58) 100%),
-        linear-gradient(140deg, rgba(255, 255, 255, 0.82), rgba(246, 251, 248, 0.64));
-    border: 1px solid rgba(31, 92, 63, 0.1);
-    box-shadow: 0 14px 28px rgba(15, 37, 27, 0.08);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 
 .page-struktur .org-structure-premium {
@@ -6526,23 +6509,6 @@ body.quiz-active .premium-fab-container {
     text-align: center;
     display: grid;
     gap: 4px;
-    justify-items: center;
-}
-
-.page-struktur .org-stage-level {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 22px;
-    padding: 0 10px;
-    border-radius: 999px;
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    font-weight: 800;
-    color: #1f5a3e;
-    background: rgba(224, 241, 232, 0.86);
-    border: 1px solid rgba(31, 91, 63, 0.2);
 }
 
 .page-struktur .org-stage-label h2 {
@@ -6557,21 +6523,6 @@ body.quiz-active .premium-fab-container {
     font-size: 13px;
     color: #5f6e65;
     font-weight: 550;
-}
-
-.page-struktur .org-leadership-stage .org-stage-level {
-    color: #164531;
-    background: rgba(215, 236, 225, 0.9);
-}
-
-.page-struktur .org-core-stage .org-stage-level {
-    color: #315142;
-    background: rgba(233, 241, 236, 0.88);
-}
-
-.page-struktur .org-field-stage .org-stage-level {
-    color: #4d6057;
-    background: rgba(241, 246, 244, 0.92);
 }
 
 .page-struktur .org-leadership-stage,
@@ -6602,31 +6553,37 @@ body.quiz-active .premium-fab-container {
 .page-struktur .org-stage-connector {
     position: relative;
     height: 40px;
-    display: grid;
-    place-items: center;
 }
 
 .page-struktur .org-stage-connector::before {
-    content: none;
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 1.5px dashed rgba(33, 92, 63, 0.38);
 }
 
-.page-struktur .org-connector-svg {
-    width: min(580px, 92%);
+.page-struktur .org-stage-connector.is-top-core::before {
+    top: 0;
     height: 100%;
-    overflow: visible;
 }
 
 .page-struktur .org-stage-connector.is-core-fields {
     height: 52px;
 }
 
-.page-struktur .org-connector-svg path {
-    fill: none;
-    stroke: rgba(31, 91, 63, 0.34);
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-dasharray: 3 5;
+.page-struktur .org-stage-connector.is-core-fields::before {
+    top: 12px;
+    height: 40px;
+}
+
+.page-struktur .org-stage-connector.is-core-fields::after {
+    content: "";
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    top: 12px;
+    border-top: 1.5px dashed rgba(33, 92, 63, 0.32);
 }
 
 .page-struktur .org-node-card-circle {
@@ -6673,7 +6630,6 @@ body.quiz-active .premium-fab-container {
 
 .page-struktur .org-node-card-circle .org-node-media img {
     border-radius: 999px;
-    object-position: center 28%;
 }
 
 .page-struktur .org-node-card-circle .org-node-content {
@@ -6719,10 +6675,6 @@ body.quiz-active .premium-fab-container {
     border-radius: 0;
 }
 
-.page-struktur .org-node-card-field .org-node-media img {
-    object-position: center 28%;
-}
-
 .page-struktur .org-node-card-field .org-node-content {
     padding: 14px 15px 15px;
 }
@@ -6735,117 +6687,6 @@ body.quiz-active .premium-fab-container {
 .page-struktur .org-node-card-field .org-node-meta {
     margin-top: 5px;
     font-size: 13px;
-}
-
-.page-struktur .org-fields-toggle {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    min-height: 44px;
-    border-radius: 12px;
-    border: 1px solid rgba(31, 91, 63, 0.2);
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(240, 247, 243, 0.94));
-    color: #1f5a3e;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-}
-
-.page-struktur .org-field-stage.is-collapsed .org-field-grid {
-    display: none;
-}
-
-.page-struktur .org-empty-state.premium-empty {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 12px;
-    border-style: solid;
-    background: linear-gradient(160deg, #fbfdfc 0%, #f3f8f5 100%);
-}
-
-.page-struktur .org-empty-state.premium-empty i {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #1f5a3e;
-    background: rgba(224, 241, 232, 0.88);
-}
-
-.page-struktur .org-empty-state.premium-empty strong {
-    display: block;
-    color: #122116;
-    font-size: 15px;
-    margin-bottom: 2px;
-}
-
-.page-struktur .org-empty-state.premium-empty span {
-    color: #5d6962;
-    font-size: 13px;
-}
-
-.page-struktur .org-structure-premium.is-skeleton {
-    pointer-events: none;
-}
-
-.page-struktur .org-node-skeleton-circle,
-.page-struktur .org-node-skeleton-field,
-.page-struktur .org-stage-label .skeleton-line {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(100deg, rgba(226, 236, 231, 0.45) 20%, rgba(246, 250, 248, 0.95) 50%, rgba(226, 236, 231, 0.45) 80%);
-    background-size: 220% 100%;
-    animation: orgSkeletonPulse 1.45s linear infinite;
-}
-
-.page-struktur .org-node-skeleton-circle {
-    width: 156px;
-    height: 156px;
-    border-radius: 50%;
-}
-
-.page-struktur .org-node-skeleton-circle.is-leader {
-    width: 192px;
-    height: 192px;
-}
-
-.page-struktur .org-node-skeleton-field {
-    height: 190px;
-    border-radius: 16px;
-}
-
-.page-struktur .org-stage-label .skeleton-line {
-    border-radius: 999px;
-}
-
-.page-struktur .org-stage-label .skeleton-title {
-    width: 210px;
-    height: 20px;
-}
-
-.page-struktur .org-stage-label .skeleton-subtitle {
-    width: 280px;
-    height: 14px;
-}
-
-.page-struktur .org-stage-connector.skeleton-connector {
-    opacity: 0.25;
-    border-radius: 999px;
-    background: repeating-linear-gradient(to bottom, rgba(37, 96, 67, 0.5) 0 5px, rgba(37, 96, 67, 0.18) 5px 11px);
-}
-
-@keyframes orgSkeletonPulse {
-    0% {
-        background-position: 120% 0;
-    }
-    100% {
-        background-position: -120% 0;
-    }
 }
 
 @media (max-width: 1080px) {
@@ -6873,8 +6714,8 @@ body.quiz-active .premium-fab-container {
         height: 24px;
     }
 
-    .page-struktur .org-stage-connector .org-connector-svg {
-        width: 100%;
+    .page-struktur .org-stage-connector.is-core-fields::after {
+        display: none;
     }
 
     .page-struktur .org-node-card-circle {
@@ -6883,10 +6724,6 @@ body.quiz-active .premium-fab-container {
 
     .page-struktur .org-node-card-circle .org-node-content {
         text-align: center;
-    }
-
-    .page-struktur .org-fields-toggle {
-        display: inline-flex;
     }
 }
 
@@ -6911,10 +6748,5 @@ body.quiz-active .premium-fab-container {
 
     .page-struktur .org-field-grid {
         grid-template-columns: 1fr;
-    }
-
-    .page-struktur .org-empty-state.premium-empty {
-        grid-template-columns: 1fr;
-        justify-items: flex-start;
     }
 }
