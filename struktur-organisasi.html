@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -17,7 +17,7 @@
     <!-- styles moved to styles/style.css -->
     <link rel="stylesheet" href="/app/css/profile.css"></head>
 
-<body class="page-struktur org-v4">
+<body class="page-struktur">
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-content">
             <picture><img src="/ipm%20(2).png" alt="Loading..." class="loading-logo">
@@ -63,12 +63,12 @@
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <!-- Main Container -->
-    <main class="main-container org-main">
+    <main class="main-container">
         <section class="org-hero" aria-labelledby="orgHeroTitle">
             <p class="org-kicker">Struktur Resmi Organisasi</p>
             <h1 class="org-hero-title" id="orgHeroTitle">Struktur Organisasi</h1>
-            <p class="org-hero-subtitle">Susunan kepemimpinan, officer inti, dan bidang ditampilkan berurutan agar
-                mudah dibaca.</p>
+            <p class="org-hero-subtitle">Susunan bidang, anggota, dan program kerja ditampilkan secara hierarkis agar
+                mudah dipahami.</p>
             <div class="org-hero-stats" aria-label="Ringkasan organisasi">
                 <article class="org-stat">
                     <span class="org-stat-value" id="heroTotalBidang">0</span>
@@ -85,119 +85,94 @@
             </div>
         </section>
 
-        <section id="viewBidangGrid" class="org-hierarchy-shell" aria-labelledby="orgHierarchyTitle">
-            <header class="org-shell-head">
-                <h2 id="orgHierarchyTitle">Susunan Struktur</h2>
-                <p>Urutan organisasi: pemimpin utama, officer inti, lalu seluruh bidang pelaksana.</p>
+        <section id="viewBidangGrid" class="org-chart-view" aria-labelledby="orgChartHeading">
+            <div class="org-section-head">
+                <h2 id="orgChartHeading">Susunan Bidang</h2>
+                <p>Pilih kartu bidang untuk melihat susunan anggota dan program kerja secara detail.</p>
+            </div>
+            <div class="org-chart-canvas" id="orgChartCanvas">
+                <div class="org-chart-tiers" id="bidangGrid"></div>
+            </div>
+        </section>
+
+        <section id="viewDetail" class="org-detail-workspace" aria-live="polite">
+            <header class="detail-header">
+                <button class="back-btn" id="backToGridBtn" type="button" aria-label="Kembali ke struktur bidang">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="detail-header-info">
+                    <h2 class="detail-title" id="detailBidangTitle" tabindex="-1"></h2>
+                    <div class="detail-meta">
+                        <span id="detailMemberCount"></span>
+                        <span id="detailProgramCount"></span>
+                    </div>
+                </div>
             </header>
-
-            <section class="org-tree-desktop" id="orgTreeDesktop" aria-label="Struktur Organisasi Desktop">
-                <div class="org-skeleton-row">
-                    <div class="org-skeleton-card is-large"></div>
-                    <div class="org-skeleton-card"></div>
-                    <div class="org-skeleton-card"></div>
-                </div>
+            <nav class="detail-segment" role="tablist" aria-label="Konten detail bidang">
+                <button class="segment-btn active" id="detailSegmentAnggota" type="button" role="tab"
+                    aria-selected="true" data-segment="anggota">
+                    Susunan Anggota
+                </button>
+                <button class="segment-btn" id="detailSegmentProgram" type="button" role="tab" aria-selected="false"
+                    data-segment="program">
+                    Program Kerja
+                </button>
+            </nav>
+            <section class="detail-panel active" id="detailPanelAnggota" role="tabpanel"
+                aria-labelledby="detailSegmentAnggota">
+                <div id="leadershipSection"></div>
+                <div id="membersSection"></div>
             </section>
-
-            <section class="org-flow-mobile" id="orgFlowMobile" aria-label="Struktur Organisasi Mobile">
-                <div class="org-skeleton-stack">
-                    <div class="org-skeleton-card is-large"></div>
-                    <div class="org-skeleton-card"></div>
-                    <div class="org-skeleton-card"></div>
-                    <div class="org-skeleton-card"></div>
-                </div>
+            <section class="detail-panel" id="detailPanelProgram" role="tabpanel" aria-labelledby="detailSegmentProgram"
+                hidden>
+                <div class="program-list" id="programList"></div>
             </section>
         </section>
-    </main>
 
-    <div class="division-detail-overlay" id="divisionDetailOverlay" hidden>
-        <div class="division-detail-shell" id="divisionDetailShell" role="dialog" aria-modal="true"
-            aria-labelledby="detailBidangTitle">
-            <button class="division-detail-close" id="divisionDetailCloseBtn" type="button"
-                aria-label="Tutup detail bidang">
-                <i class="fas fa-times"></i>
+        <section class="org-feedback-card" id="orgFeedbackSection" aria-labelledby="orgFeedbackTitle" hidden>
+            <div class="org-feedback-head">
+                <h2 id="orgFeedbackTitle">Kritik &amp; Saran Program Kerja</h2>
+                <p>Masukan kamu akan dipakai untuk meningkatkan kualitas program kerja pada bidang yang sedang dibuka.
+                </p>
+            </div>
+            <button type="button" class="org-feedback-trigger" id="orgFeedbackToggleBtn" aria-expanded="false"
+                aria-controls="orgFeedbackPanel">
+                <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                <span>Kirim Kritik &amp; Saran Program Kerja</span>
             </button>
-
-            <section id="viewDetail" class="org-detail-workspace" aria-live="polite">
-                <header class="detail-header">
-                    <button class="back-btn" id="backToGridBtn" type="button" aria-label="Kembali ke struktur bidang">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="detail-header-info">
-                        <h2 class="detail-title" id="detailBidangTitle" tabindex="-1"></h2>
-                        <p class="detail-description" id="detailBidangDescription"></p>
-                        <div class="detail-meta">
-                            <span id="detailMemberCount"></span>
-                            <span id="detailProgramCount"></span>
+            <div class="org-feedback-panel" id="orgFeedbackPanel" hidden>
+                <form id="orgFeedbackForm" class="org-feedback-form">
+                    <div class="org-feedback-row">
+                        <div class="org-feedback-field">
+                            <label for="orgFeedbackName">Nama (opsional)</label>
+                            <input type="text" id="orgFeedbackName" maxlength="80" placeholder="Nama kamu">
+                        </div>
+                        <div class="org-feedback-field">
+                            <label for="orgFeedbackContact">Kontak (opsional)</label>
+                            <input type="text" id="orgFeedbackContact" maxlength="120" placeholder="WA / Email / IG">
                         </div>
                     </div>
-                </header>
-                <nav class="detail-segment" role="tablist" aria-label="Konten detail bidang">
-                    <button class="segment-btn active" id="detailSegmentAnggota" type="button" role="tab"
-                        aria-selected="true" data-segment="anggota">
-                        Susunan Anggota
-                    </button>
-                    <button class="segment-btn" id="detailSegmentProgram" type="button" role="tab" aria-selected="false"
-                        data-segment="program">
-                        Program Kerja
-                    </button>
-                </nav>
-                <section class="detail-panel active" id="detailPanelAnggota" role="tabpanel"
-                    aria-labelledby="detailSegmentAnggota">
-                    <div id="leadershipSection"></div>
-                    <div id="membersSection"></div>
-                </section>
-                <section class="detail-panel" id="detailPanelProgram" role="tabpanel"
-                    aria-labelledby="detailSegmentProgram" hidden>
-                    <div class="program-list" id="programList"></div>
-                </section>
-            </section>
-
-            <section class="org-feedback-card" id="orgFeedbackSection" aria-labelledby="orgFeedbackTitle" hidden>
-                <div class="org-feedback-head">
-                    <h2 id="orgFeedbackTitle">Kritik &amp; Saran Program Kerja</h2>
-                    <p>Masukan kamu akan dipakai untuk meningkatkan kualitas program kerja pada bidang yang sedang
-                        dibuka.</p>
-                </div>
-                <button type="button" class="org-feedback-trigger" id="orgFeedbackToggleBtn" aria-expanded="false"
-                    aria-controls="orgFeedbackPanel">
-                    <i class="fas fa-comment-dots" aria-hidden="true"></i>
-                    <span>Kirim Kritik &amp; Saran Program Kerja</span>
-                </button>
-                <div class="org-feedback-panel" id="orgFeedbackPanel" hidden>
-                    <form id="orgFeedbackForm" class="org-feedback-form">
-                        <div class="org-feedback-row">
-                            <div class="org-feedback-field">
-                                <label for="orgFeedbackName">Nama (opsional)</label>
-                                <input type="text" id="orgFeedbackName" maxlength="80" placeholder="Nama kamu">
-                            </div>
-                            <div class="org-feedback-field">
-                                <label for="orgFeedbackContact">Kontak (opsional)</label>
-                                <input type="text" id="orgFeedbackContact" maxlength="120" placeholder="WA / Email / IG">
-                            </div>
-                        </div>
-                        <div class="org-feedback-field">
-                            <label for="orgFeedbackSubject">Topik Program Kerja</label>
-                            <input type="text" id="orgFeedbackSubject" maxlength="140"
-                                placeholder="Contoh: Program kaderisasi perlu timeline lebih jelas">
-                        </div>
-                        <div class="org-feedback-field">
-                            <label for="orgFeedbackMessage">Pesan</label>
-                            <textarea id="orgFeedbackMessage" rows="4" maxlength="2000"
-                                placeholder="Tulis kritik/saran program kerja secara spesifik agar mudah ditindaklanjuti admin."
-                                required></textarea>
-                        </div>
-                        <div class="org-feedback-actions">
-                            <button type="submit" class="btn-submit-feedback" id="orgFeedbackSubmitBtn">
-                                <i class="fas fa-paper-plane"></i> Kirim
-                            </button>
-                            <span class="org-feedback-status" id="orgFeedbackStatus" aria-live="polite"></span>
-                        </div>
-                    </form>
-                </div>
-            </section>
-        </div>
-    </div>
+                    <div class="org-feedback-field">
+                        <label for="orgFeedbackSubject">Topik Program Kerja</label>
+                        <input type="text" id="orgFeedbackSubject" maxlength="140"
+                            placeholder="Contoh: Program kaderisasi perlu timeline lebih jelas">
+                    </div>
+                    <div class="org-feedback-field">
+                        <label for="orgFeedbackMessage">Pesan</label>
+                        <textarea id="orgFeedbackMessage" rows="4" maxlength="2000"
+                            placeholder="Tulis kritik/saran program kerja secara spesifik agar mudah ditindaklanjuti admin."
+                            required></textarea>
+                    </div>
+                    <div class="org-feedback-actions">
+                        <button type="submit" class="btn-submit-feedback" id="orgFeedbackSubmitBtn">
+                            <i class="fas fa-paper-plane"></i> Kirim
+                        </button>
+                        <span class="org-feedback-status" id="orgFeedbackStatus" aria-live="polite"></span>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
 
     <!-- Detail Anggota Modal -->
     <div class="anggota-detail-overlay" id="anggotaDetailOverlay">
