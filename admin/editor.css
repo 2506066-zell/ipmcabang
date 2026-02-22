@@ -840,7 +840,7 @@ body.page-editor.body-no-scroll {
 
 /* --- Reading Measure Parity (Editor vs Public Article) --- */
 .page-editor {
-    --editor-reading-gutter: clamp(7px, 2.4vw, 10px);
+    --editor-reading-gutter: clamp(4px, 1.4vw, 7px);
     --editor-reading-measure: 100%;
     --editor-reading-paragraph-gap: clamp(19px, 4.8vw, 23px);
     --editor-heading-gap-top: clamp(30px, 7.4vw, 42px);
@@ -877,7 +877,7 @@ body.page-editor.body-no-scroll {
     .page-editor .editor-surface.pro-article {
         max-width: var(--editor-reading-measure);
         margin: 0 auto;
-        padding: 6px var(--editor-reading-gutter) 18px;
+        padding: 5px var(--editor-reading-gutter) 18px;
         font-size: clamp(1rem, 1.35vw, 1.045rem);
         line-height: 1.82;
         text-rendering: optimizeLegibility;
@@ -893,7 +893,7 @@ body.page-editor.body-no-scroll {
     }
 
     .page-editor .editor-live-preview .article-detail {
-        padding: 6px var(--editor-reading-gutter) 18px;
+        padding: 5px var(--editor-reading-gutter) 18px;
     }
 
     .page-editor .editor-live-preview .article-content-body,
