@@ -2,6 +2,8 @@ const ArticleModel = require('../models/ArticleModel');
 const { json, parseJsonBody, cacheHeaders } = require('../api/_util');
 const { requireAdminAuth } = require('../api/_auth');
 
+const MAX_ARTICLE_IMAGE_BYTES = 250 * 1024;
+
 function sanitizePlainText(value, max = 255) {
     return String(value || '')
         .replace(/[\u0000-\u001F\u007F]/g, ' ')
@@ -31,6 +33,20 @@ function sanitizeArticleHtml(value) {
         .replace(/\s(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi, ' $1="#"')
         .replace(/\s(href|src)\s*=\s*(['"])\s*data:(?!image\/)[\s\S]*?\2/gi, ' $1="#"')
         .trim();
+}
+
+function estimateImageBytes(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return 0;
+
+    const match = raw.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)$/);
+    if (match && match[1]) {
+        // Base64 payload size estimation.
+        return Math.floor((match[1].length * 3) / 4);
+    }
+
+    // Non-data URL images are references, not payload-heavy request bodies.
+    return 0;
 }
 
 class ArticleController {
@@ -89,11 +105,8 @@ class ArticleController {
         if (!body.title) return json(res, 400, { status: 'error', message: 'Title is required' });
         if (!body.content) return json(res, 400, { status: 'error', message: 'Content is required' });
 
-        // Image validation (Size check should be done on client, but here we check payload size roughly)
-        // Check if body.image is base64 and too large? Vercel has 4.5MB payload limit, so explicit check:
-        if (body.image && body.image.length > 200000) { // ~150KB base64 encoded is approx 200KB string
-            // 150 * 1024 * 1.33 = ~204KB. So 200,000 chars is safe limit.
-            return json(res, 400, { status: 'error', message: 'Image too large (Max 150KB)' });
+        if (estimateImageBytes(body.image) > MAX_ARTICLE_IMAGE_BYTES) {
+            return json(res, 400, { status: 'error', message: 'Image too large (Max 250KB)' });
         }
 
         try {
@@ -119,8 +132,8 @@ class ArticleController {
         const id = body.id || req.query.id;
         if (!id) return json(res, 400, { status: 'error', message: 'ID required' });
 
-        if (body.image && body.image.length > 200000) {
-            return json(res, 400, { status: 'error', message: 'Image too large (Max 150KB)' });
+        if (estimateImageBytes(body.image) > MAX_ARTICLE_IMAGE_BYTES) {
+            return json(res, 400, { status: 'error', message: 'Image too large (Max 250KB)' });
         }
 
         try {
