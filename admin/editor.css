@@ -861,8 +861,8 @@ body.page-editor.body-no-scroll {
 .page-editor .editor-live-preview {
     --editor-font-body-current: var(--reading-font-body);
     --editor-font-ui-current: var(--reading-font-ui);
-    --editor-font-size-mobile-current: clamp(1rem, 1.35vw, 1.045rem);
-    --editor-line-height-mobile-current: 1.82;
+    --editor-font-size-mobile-current: clamp(1.03rem, 1.5vw, 1.08rem);
+    --editor-line-height-mobile-current: 1.84;
     --editor-paragraph-gap-current: var(--editor-reading-paragraph-gap);
 }
 
@@ -893,8 +893,8 @@ body.page-editor.body-no-scroll {
 
 .page-editor .editor-surface.font-scale-md,
 .page-editor .editor-live-preview.font-scale-md {
-    --editor-font-size-mobile-current: clamp(1rem, 1.35vw, 1.045rem);
-    --editor-line-height-mobile-current: 1.82;
+    --editor-font-size-mobile-current: clamp(1.03rem, 1.5vw, 1.08rem);
+    --editor-line-height-mobile-current: 1.84;
     --editor-paragraph-gap-current: var(--editor-reading-paragraph-gap);
 }
 

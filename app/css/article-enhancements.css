@@ -1136,8 +1136,8 @@ body.page-articles-unified.reading-mode {
         width: 100%;
         max-width: none;
         margin: 0;
-        font-size: clamp(1rem, 1.35vw, 1.045rem);
-        line-height: 1.82;
+        font-size: clamp(1.03rem, 1.5vw, 1.08rem);
+        line-height: 1.84;
         text-rendering: optimizeLegibility;
         font-kerning: normal;
         font-feature-settings: "kern" 1, "liga" 1, "clig" 1;
@@ -1225,5 +1225,36 @@ body.page-articles-unified.reading-mode {
 
     body.page-articles-unified.reading-mode .article-content-body h3 {
         font-size: clamp(1.25rem, 0.34vw + 1.12rem, 1.4rem);
+    }
+}
+
+/* --- Ultra-Compact Mobile Edge Patch (force-remove parent gutters) --- */
+@media (max-width: 767.98px) {
+    body.page-articles-unified.reading-mode .main-content {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    body.page-articles-unified.reading-mode .main-content > .container.article-layout-container {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    body.page-articles-unified.reading-mode #article-detail-view.articles-main-col,
+    body.page-articles-unified.reading-mode #article-detail-content {
+        width: 100%;
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    body.page-articles-unified.reading-mode #article-detail-content .article-detail,
+    body.page-articles-unified.reading-mode #article-detail-container .article-detail {
+        padding-left: clamp(5px, 1.6vw, 8px);
+        padding-right: clamp(5px, 1.6vw, 8px);
     }
 }
