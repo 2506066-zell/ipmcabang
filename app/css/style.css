@@ -6337,4 +6337,719 @@ body.quiz-active .premium-fab-container {
     }
 }
 
+/* ==================== Struktur Organisasi Refactor v4 ==================== */
+.page-struktur.org-v4 {
+    --org-bg: #f1f4f2;
+    --org-surface: rgba(255, 255, 255, 0.82);
+    --org-surface-strong: #ffffff;
+    --org-border: rgba(23, 54, 39, 0.16);
+    --org-muted: #5f6e65;
+    --org-text: #132017;
+    --org-primary: #22573f;
+    --org-shadow-lg: 0 22px 54px rgba(12, 29, 20, 0.12);
+    --org-shadow-md: 0 14px 28px rgba(12, 29, 20, 0.09);
+    --org-shadow-sm: 0 8px 18px rgba(12, 29, 20, 0.07);
+    --org-radius-xl: 20px;
+    --org-radius-lg: 16px;
+    --org-radius-md: 12px;
+    --org-line: rgba(34, 87, 63, 0.26);
+}
+
+.page-struktur.org-v4 {
+    background: radial-gradient(circle at top right, #f6f8f6 0%, #eef3ef 50%, #edf2ef 100%);
+    color: var(--org-text);
+    overflow-x: hidden;
+}
+
+.page-struktur.org-v4 .org-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 22px 20px 120px;
+}
+
+.page-struktur.org-v4 .org-hero {
+    margin-bottom: 18px;
+    padding: 24px;
+    border-radius: var(--org-radius-xl);
+    border: 1px solid var(--org-border);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 248, 245, 0.9) 100%);
+    box-shadow: var(--org-shadow-sm);
+    backdrop-filter: blur(9px);
+}
+
+.page-struktur.org-v4 .org-kicker {
+    margin: 0 0 8px;
+    color: var(--org-primary);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.page-struktur.org-v4 .org-hero-title {
+    margin: 0;
+    color: #101b14;
+    font-size: clamp(30px, 4vw, 44px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+}
+
+.page-struktur.org-v4 .org-hero-subtitle {
+    margin: 10px 0 0;
+    max-width: 760px;
+    color: var(--org-muted);
+    font-size: 15px;
+    line-height: 1.68;
+}
+
+.page-struktur.org-v4 .org-hero-stats {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.page-struktur.org-v4 .org-stat {
+    border: 1px solid rgba(25, 59, 42, 0.13);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.page-struktur.org-v4 .org-stat-value {
+    display: block;
+    color: #163325;
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 770;
+}
+
+.page-struktur.org-v4 .org-stat-label {
+    display: block;
+    margin-top: 4px;
+    color: #607066;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.page-struktur.org-v4 #viewBidangGrid {
+    display: block;
+}
+
+.page-struktur.org-v4 .org-hierarchy-shell {
+    border: 1px solid var(--org-border);
+    border-radius: var(--org-radius-xl);
+    background: var(--org-surface);
+    box-shadow: var(--org-shadow-md);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+}
+
+.page-struktur.org-v4 .org-shell-head h2 {
+    margin: 0;
+    font-size: clamp(22px, 2.4vw, 30px);
+    line-height: 1.15;
+    color: #132118;
+}
+
+.page-struktur.org-v4 .org-shell-head p {
+    margin: 8px 0 0;
+    color: var(--org-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.page-struktur.org-v4 .org-tree-desktop {
+    margin-top: 18px;
+    display: block;
+}
+
+.page-struktur.org-v4 .org-flow-mobile {
+    display: none;
+}
+
+.page-struktur.org-v4 .org-tree-section {
+    position: relative;
+}
+
+.page-struktur.org-v4 .org-tree-section+.org-tree-section {
+    margin-top: 14px;
+}
+
+.page-struktur.org-v4 .org-level-title {
+    margin: 0 0 10px;
+    color: #24533f;
+    font-size: 12px;
+    font-weight: 760;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.page-struktur.org-v4 .level-leader .org-level-title,
+.page-struktur.org-v4 .level-core .org-level-title {
+    text-align: center;
+}
+
+.page-struktur.org-v4 .org-tree-leader-center {
+    display: grid;
+    justify-content: center;
+}
+
+.page-struktur.org-v4 .org-tree-core-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 360px));
+    justify-content: center;
+    gap: 18px;
+    padding-top: 18px;
+}
+
+.page-struktur.org-v4 .org-tree-core-row::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 26%;
+    right: 26%;
+    height: 2px;
+    background: var(--org-line);
+    border-radius: 999px;
+}
+
+.page-struktur.org-v4 .org-tree-core-row .org-tree-card::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 12px;
+    background: var(--org-line);
+    border-radius: 999px;
+}
+
+.page-struktur.org-v4 .org-tree-division-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding-top: 20px;
+}
+
+.page-struktur.org-v4 .org-tree-division-grid::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 8%;
+    right: 8%;
+    height: 2px;
+    background: var(--org-line);
+    border-radius: 999px;
+}
+
+.page-struktur.org-v4 .org-tree-division-grid .org-tree-card::before {
+    content: '';
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 13px;
+    background: var(--org-line);
+    border-radius: 999px;
+}
+
+.page-struktur.org-v4 .org-connector-line {
+    width: 2px;
+    height: 30px;
+    margin: 0 auto;
+    border-radius: 999px;
+    background: var(--org-line);
+}
+
+.page-struktur.org-v4 .org-tree-card {
+    position: relative;
+    width: 100%;
+    border: 1px solid rgba(22, 53, 38, 0.16);
+    border-radius: var(--org-radius-lg);
+    background: var(--org-surface-strong);
+    box-shadow: var(--org-shadow-sm);
+    cursor: pointer;
+    text-align: left;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.page-struktur.org-v4 .org-tree-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--org-shadow-md);
+    border-color: rgba(22, 53, 38, 0.24);
+}
+
+.page-struktur.org-v4 .org-tree-card:focus-visible,
+.page-struktur.org-v4 .org-open-detail-btn:focus-visible,
+.page-struktur.org-v4 .org-accordion-trigger:focus-visible {
+    outline: 3px solid rgba(35, 94, 66, 0.28);
+    outline-offset: 2px;
+}
+
+.page-struktur.org-v4 .org-tree-card.is-leader {
+    max-width: 470px;
+    box-shadow: var(--org-shadow-lg);
+}
+
+.page-struktur.org-v4 .org-tree-card.is-leader .org-card-title {
+    font-size: 34px;
+}
+
+.page-struktur.org-v4 .org-tree-card.is-core .org-card-title {
+    font-size: 28px;
+}
+
+.page-struktur.org-v4 .org-tree-card.is-division .org-card-title {
+    font-size: 24px;
+}
+
+.page-struktur.org-v4 .org-card-media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(140deg, #e8efea 0%, #dfe8e2 100%);
+    overflow: hidden;
+}
+
+.page-struktur.org-v4 .org-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.page-struktur.org-v4 .org-card-media.no-image img {
+    display: none;
+}
+
+.page-struktur.org-v4 .org-card-fallback {
+    position: absolute;
+    inset: 0;
+    display: none;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 26px;
+    font-weight: 780;
+    background: linear-gradient(145deg, #2a6348 0%, #1f4f39 100%);
+}
+
+.page-struktur.org-v4 .org-card-media.no-image .org-card-fallback,
+.page-struktur.org-v4 .org-accordion-media.no-image .org-card-fallback {
+    display: grid;
+}
+
+.page-struktur.org-v4 .org-card-body {
+    padding: 14px 14px 12px;
+}
+
+.page-struktur.org-v4 .org-card-title {
+    margin: 0;
+    color: #111d15;
+    line-height: 1.17;
+    letter-spacing: -0.01em;
+}
+
+.page-struktur.org-v4 .org-card-meta {
+    margin: 7px 0 0;
+    color: #5f6d64;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.page-struktur.org-v4 .org-skeleton-row,
+.page-struktur.org-v4 .org-skeleton-stack {
+    display: grid;
+    gap: 12px;
+}
+
+.page-struktur.org-v4 .org-skeleton-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.page-struktur.org-v4 .org-skeleton-card {
+    min-height: 120px;
+    border-radius: 14px;
+    border: 1px solid rgba(25, 59, 42, 0.14);
+    background: linear-gradient(90deg, #f3f7f4 25%, #e9f0eb 40%, #f3f7f4 62%);
+    background-size: 240% 100%;
+    animation: orgShimmer 1.25s linear infinite;
+}
+
+.page-struktur.org-v4 .org-skeleton-card.is-large {
+    min-height: 170px;
+}
+
+@keyframes orgShimmer {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -120% 0;
+    }
+}
+
+.page-struktur.org-v4 .division-detail-overlay {
+    position: fixed;
+    inset: 0;
+    padding: 20px;
+    background: rgba(10, 19, 14, 0.52);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.24s ease, visibility 0.24s ease;
+    z-index: 1200;
+    display: flex;
+}
+
+.page-struktur.org-v4 .division-detail-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.page-struktur.org-v4 .division-detail-shell {
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid rgba(22, 52, 38, 0.16);
+    box-shadow: 0 24px 64px rgba(9, 20, 14, 0.28);
+    transform: translateY(18px) scale(0.98);
+    opacity: 0;
+    transition: transform 0.26s ease, opacity 0.26s ease;
+    overflow: hidden;
+}
+
+.page-struktur.org-v4 .division-detail-overlay.active .division-detail-shell {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.page-struktur.org-v4 .division-detail-shell.is-modal {
+    margin: auto;
+    max-width: 940px;
+    max-height: min(88vh, 900px);
+    border-radius: 18px;
+    overflow-y: auto;
+}
+
+.page-struktur.org-v4 .division-detail-shell.is-sheet {
+    margin: auto 0 0;
+    max-height: min(90vh, 940px);
+    border-radius: 20px 20px 0 0;
+    overflow-y: auto;
+}
+
+.page-struktur.org-v4 .division-detail-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(20, 48, 35, 0.16);
+    background: rgba(255, 255, 255, 0.92);
+    color: #1d4b35;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 4;
+}
+
+.page-struktur.org-v4 .division-detail-close:hover {
+    background: #f1f6f3;
+}
+
+.page-struktur.org-v4 #viewDetail {
+    display: block !important;
+    margin-top: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 20px;
+}
+
+.page-struktur.org-v4 .detail-header {
+    padding-right: 56px;
+}
+
+.page-struktur.org-v4 .detail-title {
+    font-size: clamp(26px, 2.6vw, 38px);
+}
+
+.page-struktur.org-v4 .detail-description {
+    margin: 8px 0 0;
+    color: #59665f;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 680px;
+}
+
+.page-struktur.org-v4 .org-feedback-card {
+    margin: 0 20px 20px;
+    border-radius: 14px;
+}
+
+.page-struktur.org-v4 .hierarchy-section {
+    border-radius: 12px;
+}
+
+.page-struktur.org-v4 .program-list {
+    gap: 12px;
+}
+
+.page-struktur.org-v4 .org-empty-state {
+    border: 1px dashed rgba(32, 92, 61, 0.36);
+    border-radius: 12px;
+    background: #f9fcfa;
+    padding: 16px;
+    font-size: 14px;
+    color: #5c685f;
+    font-weight: 600;
+}
+
+.page-struktur.org-v4 .org-mobile-stage {
+    display: grid;
+    gap: 10px;
+}
+
+.page-struktur.org-v4 .org-mobile-step,
+.page-struktur.org-v4 .org-mobile-root {
+    display: grid;
+    gap: 8px;
+}
+
+.page-struktur.org-v4 .org-mobile-connector {
+    width: 2px;
+    height: 14px;
+    margin-left: 22px;
+    border-radius: 999px;
+    background: var(--org-line);
+}
+
+.page-struktur.org-v4 .org-mobile-accordion {
+    display: grid;
+    gap: 8px;
+}
+
+.page-struktur.org-v4 .org-accordion-heading {
+    margin: 0;
+    color: #23523f;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 760;
+}
+
+.page-struktur.org-v4 .org-accordion-item {
+    border: 1px solid rgba(23, 56, 40, 0.16);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: var(--org-shadow-sm);
+    overflow: hidden;
+}
+
+.page-struktur.org-v4 .org-accordion-trigger {
+    width: 100%;
+    min-height: 52px;
+    border: 0;
+    background: transparent;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 10px;
+    padding: 12px;
+    align-items: center;
+    text-align: left;
+    cursor: pointer;
+}
+
+.page-struktur.org-v4 .org-accordion-trigger i {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    color: #335f49;
+    font-size: 13px;
+    transition: transform 0.2s ease;
+}
+
+.page-struktur.org-v4 .org-accordion-item.is-open .org-accordion-trigger i {
+    transform: rotate(180deg);
+}
+
+.page-struktur.org-v4 .org-accordion-title {
+    color: #132117;
+    font-size: 17px;
+    font-weight: 730;
+    line-height: 1.25;
+}
+
+.page-struktur.org-v4 .org-accordion-meta {
+    color: #5f6d64;
+    font-size: 13px;
+}
+
+.page-struktur.org-v4 .org-accordion-panel {
+    border-top: 1px solid rgba(24, 59, 42, 0.12);
+    padding: 10px 12px 12px;
+}
+
+.page-struktur.org-v4 .org-accordion-preview {
+    display: grid;
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 10px;
+}
+
+.page-struktur.org-v4 .org-accordion-media {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #e6eee9 0%, #dde7e1 100%);
+    min-height: 104px;
+}
+
+.page-struktur.org-v4 .org-accordion-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.page-struktur.org-v4 .org-accordion-content p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #5b6960;
+}
+
+.page-struktur.org-v4 .org-open-detail-btn {
+    margin-top: 10px;
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(34, 87, 63, 0.25);
+    background: #edf5f0;
+    color: #204f39;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.page-struktur.org-v4 .org-open-detail-btn:hover {
+    background: #e5f0ea;
+}
+
+@media (max-width: 1140px) {
+    .page-struktur.org-v4 .org-tree-division-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .page-struktur.org-v4 .org-tree-card.is-leader .org-card-title {
+        font-size: 30px;
+    }
+}
+
+@media (max-width: 860px) {
+    .page-struktur.org-v4 .org-tree-core-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding-top: 0;
+    }
+
+    .page-struktur.org-v4 .org-tree-core-row::before,
+    .page-struktur.org-v4 .org-tree-core-row .org-tree-card::before {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .page-struktur.org-v4 .org-main {
+        padding: 16px 14px 106px;
+    }
+
+    .page-struktur.org-v4 .org-hero,
+    .page-struktur.org-v4 .org-hierarchy-shell {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .page-struktur.org-v4 .org-hero-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .page-struktur.org-v4 .org-tree-desktop {
+        display: none;
+    }
+
+    .page-struktur.org-v4 .org-flow-mobile {
+        display: block;
+        margin-top: 14px;
+    }
+
+    .page-struktur.org-v4 .org-tree-card.is-mobile .org-card-title {
+        font-size: 22px;
+    }
+
+    .page-struktur.org-v4 .org-tree-card.is-mobile.is-leader .org-card-title {
+        font-size: 26px;
+    }
+
+    .page-struktur.org-v4 .division-detail-overlay {
+        padding: 0;
+    }
+
+    .page-struktur.org-v4 .division-detail-close {
+        top: 10px;
+        right: 10px;
+    }
+
+    .page-struktur.org-v4 #viewDetail {
+        padding: 14px;
+    }
+
+    .page-struktur.org-v4 .org-feedback-card {
+        margin: 0 14px 14px;
+        padding: 14px;
+    }
+
+    .page-struktur.org-v4 .detail-header {
+        padding-right: 50px;
+    }
+
+    .page-struktur.org-v4 .detail-title {
+        font-size: 24px;
+    }
+
+    .page-struktur.org-v4 .detail-segment {
+        margin-bottom: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-struktur.org-v4 .org-card-body {
+        padding: 12px;
+    }
+
+    .page-struktur.org-v4 .org-tree-card.is-mobile .org-card-title {
+        font-size: 20px;
+    }
+
+    .page-struktur.org-v4 .detail-title {
+        font-size: 21px;
+    }
+
+    .page-struktur.org-v4 .segment-btn {
+        font-size: 12px;
+        padding: 0 8px;
+    }
+
+    .page-struktur.org-v4 .org-accordion-preview {
+        grid-template-columns: 86px minmax(0, 1fr);
+    }
+}
+
 

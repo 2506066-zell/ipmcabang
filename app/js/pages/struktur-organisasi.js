@@ -13,12 +13,15 @@
 
   const TOP_CODES = new Set(['ketuaumum', 'ketuautama']);
   const CORE_CODES = new Set(['sekretaris', 'bendahara']);
+  const DETAIL_ANIMATION_MS = 260;
 
   const state = {
     bidang: [],
+    hierarchy: { leader: null, core: [], divisions: [] },
     currentBidangCode: '',
     currentSegment: 'anggota',
-    lastFocusedNode: null
+    accordionOpenCode: '',
+    lastTrigger: null
   };
 
   const els = {};
@@ -134,6 +137,43 @@
     };
   }
 
+  function findLeaderIndex(sorted) {
+    const idx = sorted.findIndex((item) => {
+      const code = normalizeCode(item.code);
+      return TOP_CODES.has(code) || code.includes('ketuaumum');
+    });
+    return idx >= 0 ? idx : 0;
+  }
+
+  function classifyHierarchy(bidangList) {
+    const sorted = [...bidangList].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    if (!sorted.length) {
+      return { leader: null, core: [], divisions: [] };
+    }
+
+    const leader = sorted[findLeaderIndex(sorted)] || null;
+    const withoutLeader = sorted.filter((item) => item !== leader);
+    const preferredCore = withoutLeader.filter((item) => {
+      const code = normalizeCode(item.code);
+      return CORE_CODES.has(code) || code.includes('sekretaris') || code.includes('bendahara');
+    });
+    const dedupCore = [];
+    preferredCore.forEach((item) => {
+      if (!dedupCore.includes(item)) dedupCore.push(item);
+    });
+
+    const core = dedupCore.slice(0, 2);
+    if (core.length < 2) {
+      withoutLeader.forEach((item) => {
+        if (core.length >= 2) return;
+        if (!core.includes(item)) core.push(item);
+      });
+    }
+
+    const divisions = withoutLeader.filter((item) => !core.includes(item));
+    return { leader, core, divisions };
+  }
+
   async function fetchOrganizationData() {
     try {
       const res = await fetch('/api/organization', { method: 'GET', headers: { Accept: 'application/json' } });
@@ -165,6 +205,15 @@
     return '';
   }
 
+  function getBidangDescription(bidang) {
+    if (!bidang) return '';
+    return `Bidang ${bidang.name} mengelola ${bidang.members.length} anggota dengan ${bidang.programs.length} program kerja aktif.`;
+  }
+
+  function isMobileViewport() {
+    return window.matchMedia('(max-width: 760px)').matches;
+  }
+
   function hideLoadingOverlay() {
     if (!els.loadingOverlay) return;
     els.loadingOverlay.classList.add('hidden');
@@ -175,18 +224,18 @@
     const lazyImages = document.querySelectorAll('.lazy-load[data-src]');
     lazyImages.forEach((img) => {
       img.addEventListener('error', () => {
-        const media = img.closest('.org-node-media');
-        if (media) media.classList.add('no-image');
+        const parent = img.closest('.org-card-media, .org-accordion-media, .anggota-card-photo');
+        if (parent) parent.classList.add('no-image');
       }, { once: true });
     });
 
     if (!lazyImages.length || !('IntersectionObserver' in window)) {
       lazyImages.forEach((img) => {
-        const target = img;
-        if (target.dataset.src) target.src = target.dataset.src;
+        if (img.dataset.src) img.src = img.dataset.src;
       });
       return;
     }
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
@@ -196,36 +245,8 @@
         observer.unobserve(image);
       });
     });
-    lazyImages.forEach((image) => observer.observe(image));
-  }
 
-  function classifyBidangTiers(bidangList) {
-    const sorted = [...bidangList].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
-    if (!sorted.length) return { top: [], core: [], fields: [] };
-
-    let top = sorted.find((item) => {
-      const code = normalizeCode(item.code);
-      return TOP_CODES.has(code) || code.includes('ketuaumum');
-    }) || null;
-
-    if (!top) top = sorted[0];
-
-    let remaining = sorted.filter((item) => item !== top);
-    let core = remaining.filter((item) => {
-      const code = normalizeCode(item.code);
-      return CORE_CODES.has(code) || code.includes('sekretaris') || code.includes('bendahara');
-    });
-    remaining = remaining.filter((item) => !core.includes(item));
-
-    if (!core.length && remaining.length > 1) {
-      core = [remaining[0], remaining[1]];
-      remaining = remaining.slice(2);
-    } else if (core.length === 1 && remaining.length > 0) {
-      core = [core[0], remaining[0]];
-      remaining = remaining.slice(1);
-    }
-
-    return { top: top ? [top] : [], core, fields: remaining };
+    lazyImages.forEach((img) => observer.observe(img));
   }
 
   function renderOrgHeroSummary() {
@@ -238,7 +259,7 @@
     if (els.heroTotalProgram) els.heroTotalProgram.textContent = String(totalProgram);
   }
 
-  function createNodeCard(bidang) {
+  function renderCardMedia(bidang, extraClass) {
     const initials = bidang.name
       .split(/\s+/)
       .filter(Boolean)
@@ -246,66 +267,135 @@
       .join('')
       .toUpperCase()
       .slice(0, 3);
-    const media = `
-      <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
-      ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load">` : ''}
-    `;
-
+    const hasImage = Boolean(bidang.image_url);
     return `
-      <button type="button" class="org-node-card" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
-        <div class="org-node-media${bidang.image_url ? '' : ' no-image'}">
-          ${media}
-        </div>
-        <div class="org-node-content">
-          <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
-          <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
+      <div class="org-card-media ${extraClass || ''}${hasImage ? '' : ' no-image'}">
+        <div class="org-card-fallback">${escapeHtml(initials || 'IPM')}</div>
+        ${hasImage ? `<img data-src="${escapeHtml(bidang.image_url)}" class="lazy-load" alt="${escapeHtml(bidang.name)}">` : ''}
+      </div>
+    `;
+  }
+
+  function renderTreeCard(bidang, roleClass) {
+    return `
+      <button type="button" class="org-tree-card ${roleClass}" data-bidang-card="${escapeHtml(bidang.code)}" aria-label="Lihat detail ${escapeHtml(bidang.name)}">
+        ${renderCardMedia(bidang, '')}
+        <div class="org-card-body">
+          <h3 class="org-card-title">${escapeHtml(bidang.name)}</h3>
+          <p class="org-card-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
         </div>
       </button>
     `;
   }
 
-  function renderTierConnector(trackClass, cardsCount) {
-    return `${trackClass}${cardsCount > 1 ? ' is-multi' : ' is-single'}`;
-  }
+  function renderDesktopTree() {
+    if (!els.orgTreeDesktop) return;
+    const { leader, core, divisions } = state.hierarchy;
+    if (!leader) {
+      els.orgTreeDesktop.innerHTML = '<div class="org-empty-state">Data struktur organisasi belum tersedia.</div>';
+      return;
+    }
 
-  function renderOrgChartTier(title, subtitle, items, tierKey, hasParent) {
-    if (!items.length) return '';
-    const trackClass = renderTierConnector(`org-tier-track tier-${tierKey}`, items.length);
-    return `
-      <section class="org-tier org-tier-${tierKey}" data-parent="${hasParent ? 'true' : 'false'}">
-        <header class="org-tier-head">
-          <h2 class="org-tier-title">${escapeHtml(title)}</h2>
-          <p class="org-tier-subtitle">${escapeHtml(subtitle)}</p>
-        </header>
-        <div class="${trackClass}">
-          ${items.map((item) => createNodeCard(item)).join('')}
-        </div>
+    const coreHtml = core.length
+      ? `<div class="org-tree-core-row">${core.map((item) => renderTreeCard(item, 'is-core')).join('')}</div>`
+      : '<div class="org-empty-state">Officer inti belum diatur.</div>';
+
+    const divisionHtml = divisions.length
+      ? `<div class="org-tree-division-grid">${divisions.map((item) => renderTreeCard(item, 'is-division')).join('')}</div>`
+      : '<div class="org-empty-state">Bidang pelaksana belum diisi.</div>';
+
+    els.orgTreeDesktop.innerHTML = `
+      <section class="org-tree-section level-leader">
+        <h3 class="org-level-title">Pimpinan Utama</h3>
+        <div class="org-tree-leader-center">${renderTreeCard(leader, 'is-leader')}</div>
+      </section>
+      ${core.length ? '<div class="org-connector-line leader-to-core"></div>' : ''}
+      <section class="org-tree-section level-core">
+        <h3 class="org-level-title">Officer Inti</h3>
+        ${coreHtml}
+      </section>
+      ${divisions.length ? '<div class="org-connector-line core-to-division"></div>' : ''}
+      <section class="org-tree-section level-division">
+        <h3 class="org-level-title">Bidang Pelaksana</h3>
+        ${divisionHtml}
       </section>
     `;
   }
 
-  function renderOrgChartTiers() {
-    if (!els.bidangGrid) return;
-    if (!state.bidang.length) {
-      els.bidangGrid.innerHTML = '<div class="org-empty-state">Data struktur organisasi belum tersedia.</div>';
+  function renderMobileAccordionItem(bidang, expanded) {
+    return `
+      <article class="org-accordion-item ${expanded ? 'is-open' : ''}">
+        <button type="button" class="org-accordion-trigger" data-accordion-toggle="${escapeHtml(bidang.code)}" aria-expanded="${expanded ? 'true' : 'false'}">
+          <span class="org-accordion-title">${escapeHtml(bidang.name)}</span>
+          <span class="org-accordion-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</span>
+          <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="org-accordion-panel" ${expanded ? '' : 'hidden'}>
+          <div class="org-accordion-preview">
+            <div class="org-accordion-media${bidang.image_url ? '' : ' no-image'}">
+              <div class="org-card-fallback">${escapeHtml((bidang.name || 'IPM').slice(0, 2).toUpperCase())}</div>
+              ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" class="lazy-load" alt="${escapeHtml(bidang.name)}">` : ''}
+            </div>
+            <div class="org-accordion-content">
+              <p>${escapeHtml(getBidangDescription(bidang))}</p>
+              <button type="button" class="org-open-detail-btn" data-bidang-card="${escapeHtml(bidang.code)}">
+                Lihat Detail Bidang
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderMobileFlow() {
+    if (!els.orgFlowMobile) return;
+    const { leader, core, divisions } = state.hierarchy;
+    if (!leader) {
+      els.orgFlowMobile.innerHTML = '<div class="org-empty-state">Data struktur organisasi belum tersedia.</div>';
       return;
     }
 
-    const tiers = classifyBidangTiers(state.bidang);
-    const blocks = [];
+    const coreItems = core.map((item) => `
+      <div class="org-mobile-step">
+        <div class="org-mobile-connector"></div>
+        ${renderTreeCard(item, 'is-core is-mobile')}
+      </div>
+    `).join('');
 
-    if (tiers.top.length) {
-      blocks.push(renderOrgChartTier('Pimpinan Utama', 'Pengarah gerak organisasi', tiers.top, 'top', false));
-    }
-    if (tiers.core.length) {
-      blocks.push(renderOrgChartTier('Unsur Inti', 'Koordinasi utama organisasi', tiers.core, 'core', true));
-    }
-    if (tiers.fields.length) {
-      blocks.push(renderOrgChartTier('Bidang Pelaksana', 'Eksekusi program dan layanan kader', tiers.fields, 'fields', true));
-    }
+    const accordion = divisions.length
+      ? divisions.map((item) => renderMobileAccordionItem(item, state.accordionOpenCode === item.code)).join('')
+      : '<div class="org-empty-state">Bidang pelaksana belum diisi.</div>';
 
-    els.bidangGrid.innerHTML = blocks.join('');
+    els.orgFlowMobile.innerHTML = `
+      <section class="org-mobile-stage">
+        <h3 class="org-level-title">Alur Struktur Organisasi</h3>
+        <div class="org-mobile-root">
+          ${renderTreeCard(leader, 'is-leader is-mobile')}
+        </div>
+        ${coreItems}
+        <div class="org-mobile-connector"></div>
+        <section class="org-mobile-accordion">
+          <h4 class="org-accordion-heading">Bidang Pelaksana</h4>
+          ${accordion}
+        </section>
+      </section>
+    `;
+  }
+
+  function renderOrganizationTree() {
+    renderDesktopTree();
+    renderMobileFlow();
     setupLazyLoading();
+  }
+
+  function splitMembersByHierarchy(members) {
+    const sortedMembers = [...members].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    const leadership = sortedMembers
+      .filter((member) => isLeadershipRole(member.role_title))
+      .sort((a, b) => leadershipPriority(a.role_title) - leadershipPriority(b.role_title) || a.sort_order - b.sort_order || a.id - b.id);
+    const regular = sortedMembers.filter((member) => !isLeadershipRole(member.role_title));
+    return { leadership, regular, sortedMembers };
   }
 
   function createMemberCard(member, isLeadership) {
@@ -331,15 +421,6 @@
         </div>
       </article>
     `;
-  }
-
-  function splitMembersByHierarchy(members) {
-    const sortedMembers = [...members].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
-    const leadership = sortedMembers
-      .filter((member) => isLeadershipRole(member.role_title))
-      .sort((a, b) => leadershipPriority(a.role_title) - leadershipPriority(b.role_title) || a.sort_order - b.sort_order || a.id - b.id);
-    const regular = sortedMembers.filter((member) => !isLeadershipRole(member.role_title));
-    return { leadership, regular, sortedMembers };
   }
 
   function renderMemberSection(container, title, subtitle, members, options) {
@@ -383,19 +464,19 @@
     images.forEach((img) => {
       img.addEventListener('error', () => {
         if (img.parentElement) img.parentElement.classList.add('no-image');
-      });
+      }, { once: true });
     });
   }
 
-  function renderDetailMembers(selected) {
+  function renderDetailMembers(bidang) {
     if (!els.leadershipSection || !els.membersSection) return;
-    if (!selected.members.length) {
+    if (!bidang.members.length) {
       els.leadershipSection.innerHTML = '<div class="org-empty-state">Belum ada anggota di bidang ini.</div>';
       els.membersSection.innerHTML = '';
       return;
     }
 
-    const { leadership, regular, sortedMembers } = splitMembersByHierarchy(selected.members);
+    const { leadership, regular, sortedMembers } = splitMembersByHierarchy(bidang.members);
     if (!leadership.length) {
       renderMemberSection(
         els.leadershipSection,
@@ -405,7 +486,7 @@
         { sectionClass: 'is-team', leadership: false }
       );
       els.membersSection.innerHTML = '';
-      bindMemberCardEvents(selected);
+      bindMemberCardEvents(bidang);
       setupLazyLoading();
       return;
     }
@@ -430,23 +511,23 @@
       els.membersSection.innerHTML = '<div class="org-empty-state">Belum ada anggota tambahan pada bidang ini.</div>';
     }
 
-    bindMemberCardEvents(selected);
+    bindMemberCardEvents(bidang);
     setupLazyLoading();
   }
 
-  function renderPrograms(selected) {
+  function renderPrograms(bidang) {
     if (!els.programList) return;
     els.programList.innerHTML = '';
-    if (!selected.programs.length) {
+    if (!bidang.programs.length) {
       els.programList.innerHTML = '<div class="org-empty-state">Program kerja belum diisi.</div>';
       return;
     }
 
-    selected.programs.forEach((program) => {
+    bidang.programs.forEach((program) => {
       const card = document.createElement('article');
       const statusText = program.status === 'terlaksana' ? 'Terlaksana' : (program.status === 'rencana' ? 'Rencana' : 'Draft');
       card.className = 'program-card';
-      card.style.setProperty('--color-bidang', selected.color || '#4A7C5D');
+      card.style.setProperty('--color-bidang', bidang.color || '#4A7C5D');
       card.innerHTML = `
         <div class="program-card-head">
           <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
@@ -492,12 +573,12 @@
   }
 
   function toggleFeedbackVisibility() {
-    if (!els.orgFeedbackSection || !els.viewDetail || !els.viewDetail.classList.contains('active')) {
+    const detailOpen = !els.divisionDetailOverlay?.hidden && els.divisionDetailOverlay?.classList.contains('active');
+    if (!detailOpen) {
       if (els.orgFeedbackSection) els.orgFeedbackSection.hidden = true;
       setFeedbackPanelOpen(false);
       return;
     }
-
     const shouldShow = state.currentSegment === 'program';
     els.orgFeedbackSection.hidden = !shouldShow;
     if (!shouldShow) {
@@ -565,8 +646,8 @@
   function setDetailSegment(segment) {
     const target = segment === 'program' ? 'program' : 'anggota';
     state.currentSegment = target;
-
     const onAnggota = target === 'anggota';
+
     if (els.detailSegmentAnggota) {
       els.detailSegmentAnggota.classList.toggle('active', onAnggota);
       els.detailSegmentAnggota.setAttribute('aria-selected', onAnggota ? 'true' : 'false');
@@ -575,7 +656,6 @@
       els.detailSegmentProgram.classList.toggle('active', !onAnggota);
       els.detailSegmentProgram.setAttribute('aria-selected', onAnggota ? 'false' : 'true');
     }
-
     if (els.detailPanelAnggota) {
       els.detailPanelAnggota.classList.toggle('active', onAnggota);
       els.detailPanelAnggota.hidden = !onAnggota;
@@ -588,42 +668,62 @@
     toggleFeedbackVisibility();
   }
 
-  function showDetail(bidangCode, segment, triggerEl) {
-    state.currentBidangCode = bidangCode;
-    const selected = getCurrentBidang();
-    if (!selected) return;
+  function openDivisionDetail(bidangCode, triggerEl, preferredSegment) {
+    const bidang = state.bidang.find((item) => item.code === bidangCode);
+    if (!bidang || !els.divisionDetailOverlay || !els.divisionDetailShell) return;
 
-    state.lastFocusedNode = triggerEl && typeof triggerEl.focus === 'function' ? triggerEl : document.activeElement;
+    state.currentBidangCode = bidang.code;
+    state.lastTrigger = triggerEl && typeof triggerEl.focus === 'function' ? triggerEl : document.activeElement;
 
-    if (els.viewBidangGrid) els.viewBidangGrid.classList.add('hidden');
-    if (els.viewDetail) els.viewDetail.classList.add('active');
+    if (els.detailBidangTitle) els.detailBidangTitle.textContent = bidang.name;
+    if (els.detailBidangDescription) els.detailBidangDescription.textContent = getBidangDescription(bidang);
+    if (els.detailMemberCount) els.detailMemberCount.textContent = `${bidang.members.length} anggota`;
+    if (els.detailProgramCount) els.detailProgramCount.textContent = `${bidang.programs.length} program`;
 
-    if (els.detailBidangTitle) els.detailBidangTitle.textContent = selected.name;
-    if (els.detailMemberCount) els.detailMemberCount.textContent = `${selected.members.length} anggota`;
-    if (els.detailProgramCount) els.detailProgramCount.textContent = `${selected.programs.length} program`;
-
-    renderDetailMembers(selected);
-    renderPrograms(selected);
+    renderDetailMembers(bidang);
+    renderPrograms(bidang);
     syncFeedbackSubject();
-    setDetailSegment(segment || 'anggota');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setDetailSegment(preferredSegment || 'anggota');
 
-    if (els.detailBidangTitle) {
-      setTimeout(() => els.detailBidangTitle.focus(), 60);
-    }
+    const mobile = isMobileViewport();
+    els.divisionDetailShell.classList.toggle('is-sheet', mobile);
+    els.divisionDetailShell.classList.toggle('is-modal', !mobile);
+
+    els.divisionDetailOverlay.hidden = false;
+    requestAnimationFrame(() => {
+      els.divisionDetailOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+
+    setTimeout(() => {
+      if (els.detailBidangTitle) els.detailBidangTitle.focus();
+    }, 70);
   }
 
-  function backToBidang() {
-    if (els.viewDetail) els.viewDetail.classList.remove('active');
-    if (els.viewBidangGrid) els.viewBidangGrid.classList.remove('hidden');
-    state.currentBidangCode = '';
-    state.currentSegment = 'anggota';
-    toggleFeedbackVisibility();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  function closeDivisionDetail() {
+    if (!els.divisionDetailOverlay || els.divisionDetailOverlay.hidden) return;
+    els.divisionDetailOverlay.classList.remove('active');
+    setFeedbackPanelOpen(false);
+    if (els.orgFeedbackSection) els.orgFeedbackSection.hidden = true;
 
-    if (state.lastFocusedNode && typeof state.lastFocusedNode.focus === 'function') {
-      setTimeout(() => state.lastFocusedNode.focus(), 40);
-    }
+    window.setTimeout(() => {
+      els.divisionDetailOverlay.hidden = true;
+      document.body.style.overflow = '';
+      state.currentBidangCode = '';
+      state.currentSegment = 'anggota';
+      if (state.lastTrigger && typeof state.lastTrigger.focus === 'function') {
+        state.lastTrigger.focus();
+      }
+    }, DETAIL_ANIMATION_MS);
+  }
+
+  function toggleAccordion(code, triggerEl) {
+    const target = String(code || '').trim();
+    if (!target) return;
+    state.accordionOpenCode = state.accordionOpenCode === target ? '' : target;
+    renderMobileFlow();
+    setupLazyLoading();
+    if (triggerEl && typeof triggerEl.focus === 'function') triggerEl.focus();
   }
 
   function openAnggotaDetail(member, bidang) {
@@ -660,17 +760,15 @@
     }
 
     els.anggotaDetailName.textContent = member.full_name;
-    els.anggotaDetailRole.textContent = member.role_title;
+    els.anggotaDetailRole.textContent = member.role_title || 'Anggota';
     els.anggotaDetailBidang.textContent = bidang?.name || '-';
     els.anggotaDetailPosisi.textContent = member.role_title || '-';
-
     if (member.quote) {
       els.anggotaDetailQuote.textContent = `"${member.quote}"`;
       els.anggotaDetailQuote.style.display = 'block';
     } else {
       els.anggotaDetailQuote.style.display = 'none';
     }
-
     if (member.instagram_url) {
       els.anggotaInstagramBtn.href = member.instagram_url;
       els.anggotaDetailInstagram.style.display = 'block';
@@ -685,18 +783,63 @@
   function closeAnggotaDetail() {
     if (!els.anggotaDetailOverlay) return;
     els.anggotaDetailOverlay.classList.remove('active');
-    document.body.style.overflow = '';
+    if (!els.divisionDetailOverlay || els.divisionDetailOverlay.hidden) {
+      document.body.style.overflow = '';
+    }
   }
 
-  function handleNodeCardOpen(button, segment) {
-    const bidangCode = String(button.getAttribute('data-bidang') || '').trim();
-    if (!bidangCode) return;
-    showDetail(bidangCode, segment || 'anggota', button);
+  function bindHierarchyEvents() {
+    const onAction = (event) => {
+      const toggle = event.target.closest('[data-accordion-toggle]');
+      if (toggle) {
+        toggleAccordion(toggle.getAttribute('data-accordion-toggle'), toggle);
+        return;
+      }
+
+      const card = event.target.closest('[data-bidang-card]');
+      if (card) {
+        openDivisionDetail(String(card.getAttribute('data-bidang-card') || '').trim(), card, 'anggota');
+      }
+    };
+
+    if (els.orgTreeDesktop) {
+      els.orgTreeDesktop.addEventListener('click', onAction);
+      els.orgTreeDesktop.addEventListener('keydown', (event) => {
+        const card = event.target.closest('[data-bidang-card]');
+        if (!card) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDivisionDetail(String(card.getAttribute('data-bidang-card') || '').trim(), card, 'anggota');
+        }
+      });
+    }
+
+    if (els.orgFlowMobile) {
+      els.orgFlowMobile.addEventListener('click', onAction);
+      els.orgFlowMobile.addEventListener('keydown', (event) => {
+        const actionBtn = event.target.closest('[data-bidang-card], [data-accordion-toggle]');
+        if (!actionBtn) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          actionBtn.click();
+        }
+      });
+    }
   }
 
   function bindEvents() {
+    bindHierarchyEvents();
+
     if (els.backToGridBtn) {
-      els.backToGridBtn.addEventListener('click', backToBidang);
+      els.backToGridBtn.addEventListener('click', closeDivisionDetail);
+    }
+    if (els.divisionDetailCloseBtn) {
+      els.divisionDetailCloseBtn.addEventListener('click', closeDivisionDetail);
+    }
+    if (els.divisionDetailOverlay) {
+      els.divisionDetailOverlay.addEventListener('click', (event) => {
+        if (event.target === els.divisionDetailOverlay) closeDivisionDetail();
+      });
     }
 
     if (els.detailSegmentAnggota) {
@@ -712,25 +855,8 @@
         setFeedbackPanelOpen(!isOpen);
       });
     }
-
     if (els.orgFeedbackForm) {
       els.orgFeedbackForm.addEventListener('submit', submitFeedback);
-    }
-
-    if (els.bidangGrid) {
-      els.bidangGrid.addEventListener('click', (event) => {
-        const button = event.target.closest('.org-node-card[data-bidang]');
-        if (!button) return;
-        handleNodeCardOpen(button, 'anggota');
-      });
-
-      els.bidangGrid.addEventListener('keydown', (event) => {
-        const button = event.target.closest('.org-node-card[data-bidang]');
-        if (!button) return;
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        handleNodeCardOpen(button, 'anggota');
-      });
     }
 
     if (els.anggotaDetailOverlay) {
@@ -746,27 +872,36 @@
     }
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) {
+      if (event.key !== 'Escape') return;
+      if (els.anggotaDetailOverlay?.classList.contains('active')) {
         closeAnggotaDetail();
         return;
       }
-      if (event.key === 'Escape' && els.viewDetail?.classList.contains('active')) {
-        backToBidang();
+      if (!els.divisionDetailOverlay?.hidden) {
+        closeDivisionDetail();
       }
     });
   }
 
   async function init() {
     els.loadingOverlay = byId('loading-overlay');
+
     els.heroTotalBidang = byId('heroTotalBidang');
     els.heroTotalAnggota = byId('heroTotalAnggota');
     els.heroTotalProgram = byId('heroTotalProgram');
 
-    els.bidangGrid = byId('bidangGrid');
     els.viewBidangGrid = byId('viewBidangGrid');
+    els.orgTreeDesktop = byId('orgTreeDesktop');
+    els.orgFlowMobile = byId('orgFlowMobile');
+
+    els.divisionDetailOverlay = byId('divisionDetailOverlay');
+    els.divisionDetailShell = byId('divisionDetailShell');
+    els.divisionDetailCloseBtn = byId('divisionDetailCloseBtn');
+
     els.viewDetail = byId('viewDetail');
     els.backToGridBtn = byId('backToGridBtn');
     els.detailBidangTitle = byId('detailBidangTitle');
+    els.detailBidangDescription = byId('detailBidangDescription');
     els.detailMemberCount = byId('detailMemberCount');
     els.detailProgramCount = byId('detailProgramCount');
     els.detailSegmentAnggota = byId('detailSegmentAnggota');
@@ -801,13 +936,15 @@
     els.anggotaInstagramBtn = byId('anggotaInstagramBtn');
 
     bindEvents();
-    syncFeedbackSubject();
     setFeedbackPanelOpen(false);
     toggleFeedbackVisibility();
 
     state.bidang = await fetchOrganizationData();
+    state.hierarchy = classifyHierarchy(state.bidang);
+    state.accordionOpenCode = state.hierarchy.divisions[0]?.code || '';
+
     renderOrgHeroSummary();
-    renderOrgChartTiers();
+    renderOrganizationTree();
     hideLoadingOverlay();
   }
 
