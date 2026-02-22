@@ -1118,8 +1118,8 @@ body.page-articles-unified.reading-mode .premium-fab-container {
 
 /* --- Reading View Final Density Patch (Single Source Override) --- */
 body.page-articles-unified.reading-mode {
-    --reading-paper-bg: #f4efe3;
-    --reading-paper-bg-soft: #f8f3e8;
+    --reading-paper-bg: #f8f7f3;
+    --reading-paper-bg-soft: #fbfaf7;
     --reading-gutter: clamp(14px, 4.4vw, 18px);
     --reading-paragraph-gap: clamp(19px, 4.8vw, 23px);
     --reading-heading-gap-top: clamp(30px, 7.4vw, 42px);
