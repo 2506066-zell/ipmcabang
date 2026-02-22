@@ -1118,8 +1118,8 @@ body.page-articles-unified.reading-mode .premium-fab-container {
 
 /* --- Reading View Final Density Patch (Single Source Override) --- */
 body.page-articles-unified.reading-mode {
-    --reading-paper-bg: #f8f7f3;
-    --reading-paper-bg-soft: #fbfaf7;
+    --reading-paper-bg: #fcfcfb;
+    --reading-paper-bg-soft: #fdfdfc;
     --reading-gutter: clamp(14px, 4.4vw, 18px);
     --reading-paragraph-gap: clamp(19px, 4.8vw, 23px);
     --reading-heading-gap-top: clamp(30px, 7.4vw, 42px);
@@ -1133,7 +1133,7 @@ body.page-articles-unified.reading-mode .main-content {
 
 body.page-articles-unified.reading-mode #article-detail-content .article-detail,
 body.page-articles-unified.reading-mode #article-detail-container .article-detail {
-    background: linear-gradient(180deg, var(--reading-paper-bg) 0%, var(--reading-paper-bg-soft) 100%);
+    background: linear-gradient(180deg, var(--reading-paper-bg) 0%, var(--reading-paper-bg-soft) 60%);
 }
 
 @media (max-width: 767.98px) {
