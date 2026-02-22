@@ -1118,10 +1118,10 @@ body.page-articles-unified.reading-mode .premium-fab-container {
 
 /* --- Reading View Final Density Patch (Single Source Override) --- */
 body.page-articles-unified.reading-mode {
-    --reading-paper-bg: #fcfcfb;
-    --reading-paper-bg-soft: #fdfdfc;
+    --reading-paper-bg: #fdfdfd;
+    --reading-paper-bg-soft: #ffffff;
     --reading-gutter: clamp(14px, 4.4vw, 18px);
-    --reading-paragraph-gap: clamp(19px, 4.8vw, 23px);
+    --reading-paragraph-gap: clamp(12px, 3.2vw, 16px);
     --reading-heading-gap-top: clamp(30px, 7.4vw, 42px);
     --reading-heading-gap-bottom: clamp(12px, 3.1vw, 16px);
     background: var(--reading-paper-bg);
@@ -1133,7 +1133,7 @@ body.page-articles-unified.reading-mode .main-content {
 
 body.page-articles-unified.reading-mode #article-detail-content .article-detail,
 body.page-articles-unified.reading-mode #article-detail-container .article-detail {
-    background: linear-gradient(180deg, var(--reading-paper-bg) 0%, var(--reading-paper-bg-soft) 60%);
+    background: linear-gradient(180deg, var(--reading-paper-bg) 0%, var(--reading-paper-bg-soft) 35%);
 }
 
 @media (max-width: 767.98px) {
@@ -1149,7 +1149,7 @@ body.page-articles-unified.reading-mode #article-detail-container .article-detai
         max-width: none;
         margin: 0;
         font-size: clamp(1.095rem, 1.95vw, 1.145rem);
-        line-height: 1.84;
+        line-height: 1.6;
         text-rendering: optimizeLegibility;
         font-kerning: normal;
         font-feature-settings: "kern" 1, "liga" 1, "clig" 1;
@@ -1196,13 +1196,13 @@ body.page-articles-unified.reading-mode #article-detail-container .article-detai
 
     body.page-articles-unified.reading-mode .article-content-body ul,
     body.page-articles-unified.reading-mode .article-content-body ol {
-        margin-block: 19px;
+        margin-block: 14px;
         padding-left: 20px;
     }
 
     body.page-articles-unified.reading-mode .article-content-body li {
         margin-bottom: clamp(8px, 2.1vw, 10px);
-        line-height: 1.78;
+        line-height: 1.6;
     }
 
     body.page-articles-unified.reading-mode .article-content-body li:last-child {
@@ -1227,7 +1227,7 @@ body.page-articles-unified.reading-mode #article-detail-container .article-detai
         max-width: min(67ch, 100%);
         margin: 0 auto;
         font-size: clamp(1.08rem, 0.26vw + 1rem, 1.14rem);
-        line-height: 1.86;
+        line-height: 1.62;
         letter-spacing: 0.001em;
     }
 
