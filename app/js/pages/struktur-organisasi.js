@@ -18,7 +18,10 @@
     bidang: [],
     currentBidangCode: '',
     currentSegment: 'anggota',
-    lastFocusedNode: null
+    lastFocusedNode: null,
+    mobileFieldsExpanded: false,
+    mobileFieldAutoExpandHandler: null,
+    lastViewportMobile: false
   };
 
   const els = {};
@@ -198,6 +201,17 @@
     lazyImages.forEach((image) => observer.observe(image));
   }
 
+  function isHierarchyMobile() {
+    return window.matchMedia('(max-width: 780px)').matches;
+  }
+
+  function clearMobileFieldAutoExpand() {
+    if (state.mobileFieldAutoExpandHandler) {
+      window.removeEventListener('scroll', state.mobileFieldAutoExpandHandler);
+      state.mobileFieldAutoExpandHandler = null;
+    }
+  }
+
   function classifyBidangTiers() {
     const sorted = [...state.bidang];
     if (!sorted.length) return { top: [], core: [], fields: [] };
@@ -263,19 +277,95 @@
     `;
   }
 
-  function renderStageLabel(title, subtitle) {
+  function renderStageLabel(level, title, subtitle) {
     return `
       <header class="org-stage-label">
+        <span class="org-stage-level">LEVEL ${escapeHtml(level)}</span>
         <h2>${escapeHtml(title)}</h2>
         <p>${escapeHtml(subtitle)}</p>
       </header>
     `;
   }
 
+  function renderStageConnectorSVG(type) {
+    if (type === 'top-core') {
+      return `
+        <div class="org-stage-connector is-top-core" aria-hidden="true">
+          <svg class="org-connector-svg" viewBox="0 0 100 50" preserveAspectRatio="none" focusable="false">
+            <path d="M50 2 C50 12,50 24,50 48"></path>
+          </svg>
+        </div>
+      `;
+    }
+    return `
+      <div class="org-stage-connector is-core-fields" aria-hidden="true">
+        <svg class="org-connector-svg" viewBox="0 0 100 64" preserveAspectRatio="none" focusable="false">
+          <path d="M50 2 C50 14,50 22,50 30"></path>
+          <path d="M18 30 C30 30,40 30,50 30 C60 30,70 30,82 30"></path>
+          <path d="M18 30 C18 38,18 46,18 56"></path>
+          <path d="M82 30 C82 38,82 46,82 56"></path>
+          <path d="M50 30 C50 40,50 50,50 62"></path>
+        </svg>
+      </div>
+    `;
+  }
+
+  function renderOrgChartSkeleton() {
+    if (!els.bidangGrid) return;
+    els.bidangGrid.innerHTML = `
+      <div class="org-structure-premium is-skeleton" aria-hidden="true">
+        <section class="org-leadership-stage">
+          <div class="org-stage-label"><span class="org-stage-level skeleton-line"></span><span class="skeleton-line skeleton-title"></span><span class="skeleton-line skeleton-subtitle"></span></div>
+          <div class="org-leadership-track"><div class="org-node-skeleton-circle is-leader"></div></div>
+        </section>
+        <div class="org-stage-connector is-top-core skeleton-connector"></div>
+        <section class="org-core-stage">
+          <div class="org-core-track">
+            <div class="org-node-skeleton-circle"></div>
+            <div class="org-node-skeleton-circle"></div>
+          </div>
+        </section>
+        <div class="org-stage-connector is-core-fields skeleton-connector"></div>
+        <section class="org-field-stage">
+          <div class="org-field-grid">
+            <div class="org-node-skeleton-field"></div>
+            <div class="org-node-skeleton-field"></div>
+            <div class="org-node-skeleton-field"></div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function setMobileFieldsExpanded(expanded) {
+    state.mobileFieldsExpanded = !!expanded;
+    if (!els.bidangGrid) return;
+    const stage = els.bidangGrid.querySelector('.org-field-stage');
+    const grid = els.bidangGrid.querySelector('.org-field-grid');
+    const toggle = els.bidangGrid.querySelector('.org-fields-toggle[data-action="toggle-fields"]');
+    if (!stage || !grid || !toggle) return;
+    stage.classList.toggle('is-collapsed', !expanded);
+    grid.hidden = !expanded;
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    const label = toggle.querySelector('.org-fields-toggle-label');
+    if (label) label.textContent = expanded ? 'Sembunyikan bidang' : 'Tampilkan bidang';
+  }
+
+  function setupMobileFieldAutoExpand() {
+    clearMobileFieldAutoExpand();
+    if (!isHierarchyMobile() || state.mobileFieldsExpanded || !els.bidangGrid) return;
+    state.mobileFieldAutoExpandHandler = () => {
+      if (window.scrollY < 72) return;
+      setMobileFieldsExpanded(true);
+      clearMobileFieldAutoExpand();
+    };
+    window.addEventListener('scroll', state.mobileFieldAutoExpandHandler, { passive: true });
+  }
+
   function renderOrgChartTiers() {
     if (!els.bidangGrid) return;
     if (!state.bidang.length) {
-      els.bidangGrid.innerHTML = '<div class="org-empty-state">Data struktur organisasi belum tersedia.</div>';
+      els.bidangGrid.innerHTML = '<div class="org-empty-state premium-empty"><i class="fas fa-sitemap" aria-hidden="true"></i><div><strong>Struktur organisasi belum tersedia</strong><span>Admin belum menambahkan data susunan bidang.</span></div></div>';
       return;
     }
     const tiers = classifyBidangTiers();
@@ -284,37 +374,41 @@
     const fieldNodes = tiers.fields;
     const hasTopAndCore = Boolean(topNode && coreNodes.length);
     const hasCoreAndFields = Boolean(coreNodes.length && fieldNodes.length);
+    const onMobile = isHierarchyMobile();
+    const fieldsExpanded = !onMobile || state.mobileFieldsExpanded;
 
     els.bidangGrid.innerHTML = `
       <div class="org-structure-premium">
         ${topNode ? `
           <section class="org-leadership-stage">
-            ${renderStageLabel('Pimpinan Utama', 'Pengarah gerak organisasi')}
+            ${renderStageLabel('1', 'Pimpinan Utama', 'Pengarah gerak organisasi')}
             <div class="org-leadership-track">
               ${createNodeCard(topNode, 'leader')}
             </div>
           </section>
         ` : ''}
-        ${hasTopAndCore ? '<div class="org-stage-connector is-top-core" aria-hidden="true"></div>' : ''}
+        ${hasTopAndCore ? renderStageConnectorSVG('top-core') : ''}
         ${coreNodes.length ? `
           <section class="org-core-stage">
-            ${renderStageLabel('Unsur Inti', 'Koordinasi utama organisasi')}
+            ${renderStageLabel('2', 'Unsur Inti', 'Koordinasi utama organisasi')}
             <div class="org-core-track">
               ${coreNodes.map((item) => createNodeCard(item, 'core')).join('')}
             </div>
           </section>
         ` : ''}
-        ${hasCoreAndFields ? '<div class="org-stage-connector is-core-fields" aria-hidden="true"></div>' : ''}
+        ${hasCoreAndFields ? renderStageConnectorSVG('core-fields') : ''}
         ${fieldNodes.length ? `
-          <section class="org-field-stage">
-            ${renderStageLabel('Bidang Pelaksana', 'Eksekusi program dan layanan kader')}
-            <div class="org-field-grid">
+          <section class="org-field-stage${fieldsExpanded ? '' : ' is-collapsed'}">
+            ${renderStageLabel('3', 'Bidang Pelaksana', 'Eksekusi program dan layanan kader')}
+            ${onMobile ? `<button type="button" class="org-fields-toggle" data-action="toggle-fields" aria-expanded="${fieldsExpanded ? 'true' : 'false'}"><i class="fas fa-layer-group" aria-hidden="true"></i><span class="org-fields-toggle-label">${fieldsExpanded ? 'Sembunyikan bidang' : 'Tampilkan bidang'}</span></button>` : ''}
+            <div class="org-field-grid" ${fieldsExpanded ? '' : 'hidden'}>
               ${fieldNodes.map((item) => createNodeCard(item, 'field')).join('')}
             </div>
           </section>
         ` : ''}
       </div>
     `;
+    setupMobileFieldAutoExpand();
     setupLazyLoading();
   }
 
@@ -488,6 +582,7 @@
     state.lastFocusedNode = triggerEl && typeof triggerEl.focus === 'function' ? triggerEl : document.activeElement;
     if (els.viewBidangGrid) els.viewBidangGrid.classList.add('hidden');
     if (els.viewDetail) els.viewDetail.classList.add('active');
+    clearMobileFieldAutoExpand();
     if (els.detailBidangTitle) els.detailBidangTitle.textContent = bidang.name;
     if (els.detailMemberCount) els.detailMemberCount.textContent = `${bidang.members.length} anggota`;
     if (els.detailProgramCount) els.detailProgramCount.textContent = `${bidang.programs.length} program`;
@@ -503,6 +598,7 @@
     if (els.viewBidangGrid) els.viewBidangGrid.classList.remove('hidden');
     state.currentBidangCode = '';
     state.currentSegment = 'anggota';
+    setupMobileFieldAutoExpand();
     toggleFeedbackVisibility();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (state.lastFocusedNode && typeof state.lastFocusedNode.focus === 'function') {
@@ -629,6 +725,14 @@
     if (els.orgFeedbackForm) els.orgFeedbackForm.addEventListener('submit', submitFeedback);
     if (els.bidangGrid) {
       els.bidangGrid.addEventListener('click', (event) => {
+        const toggle = event.target.closest('.org-fields-toggle[data-action="toggle-fields"]');
+        if (toggle) {
+          const expanded = String(toggle.getAttribute('aria-expanded')) === 'true';
+          setMobileFieldsExpanded(!expanded);
+          if (expanded) setupMobileFieldAutoExpand();
+          else clearMobileFieldAutoExpand();
+          return;
+        }
         const card = event.target.closest('.org-node-card[data-bidang]');
         if (!card) return;
         showDetail(String(card.getAttribute('data-bidang') || '').trim(), card);
@@ -648,6 +752,18 @@
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) return closeAnggotaDetail();
       if (event.key === 'Escape' && els.viewDetail?.classList.contains('active')) return backToBidang();
+    });
+    window.addEventListener('resize', () => {
+      const mobileNow = isHierarchyMobile();
+      if (mobileNow === state.lastViewportMobile) return;
+      state.lastViewportMobile = mobileNow;
+      if (!mobileNow) {
+        setMobileFieldsExpanded(true);
+        clearMobileFieldAutoExpand();
+        return;
+      }
+      setMobileFieldsExpanded(false);
+      setupMobileFieldAutoExpand();
     });
   }
 
@@ -691,7 +807,9 @@
     els.anggotaDetailInstagram = byId('anggotaDetailInstagram');
     els.anggotaInstagramBtn = byId('anggotaInstagramBtn');
 
+    state.lastViewportMobile = isHierarchyMobile();
     bindEvents();
+    renderOrgChartSkeleton();
     state.bidang = await fetchOrganizationData();
     renderOrgHeroSummary();
     renderOrgChartTiers();
