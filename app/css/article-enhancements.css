@@ -473,6 +473,8 @@ body.reading-mode {
 }
 
 .page-articles-unified {
+    --reading-font-body: "Newsreader", Georgia, serif;
+    --reading-font-ui: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --reading-gutter: clamp(16px, 4.8vw, 24px);
     --reading-paragraph-gap: 1.28em;
     --reading-sticky-top: 84px;
@@ -518,6 +520,7 @@ body.reading-mode {
 
 .reading-kicker {
     margin: 0;
+    font-family: var(--reading-font-ui);
     font-size: 0.78rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -528,6 +531,7 @@ body.reading-mode {
 
 .detail-title {
     margin: 0;
+    font-family: var(--reading-font-ui);
     font-size: 1.82rem;
     line-height: 1.16;
     font-weight: 800;
@@ -537,6 +541,7 @@ body.reading-mode {
 
 .detail-dek {
     margin: 0;
+    font-family: var(--reading-font-ui);
     font-size: 1.02rem;
     line-height: 1.72;
     color: #475569;
@@ -547,6 +552,7 @@ body.reading-mode {
     display: flex;
     flex-wrap: wrap;
     gap: 9px;
+    font-family: var(--reading-font-ui);
 }
 
 .byline-item {
@@ -561,6 +567,7 @@ body.reading-mode {
     color: #334155;
     font-size: 0.81rem;
     font-weight: 650;
+    font-family: var(--reading-font-ui);
 }
 
 .byline-item i {
@@ -595,6 +602,7 @@ body.reading-mode {
     color: #64748b;
     font-size: 0.82rem;
     margin-bottom: 2px;
+    font-family: var(--reading-font-ui);
 }
 
 .reading-tools {
@@ -621,6 +629,7 @@ body.reading-mode {
     color: #1e293b;
     font-size: 0.8rem;
     font-weight: 700;
+    font-family: var(--reading-font-ui);
 }
 
 .reading-tools-actions {
@@ -639,6 +648,7 @@ body.reading-mode {
     font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
+    font-family: var(--reading-font-ui);
 }
 
 .reading-tool-btn.primary {
@@ -657,6 +667,7 @@ body.reading-mode {
 }
 
 .toc-title {
+    font-family: var(--reading-font-ui);
     font-size: 0.8rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -688,6 +699,7 @@ body.reading-mode {
     font-size: 0.88rem;
     line-height: 1.4;
     transition: background-color 0.16s ease, color 0.16s ease;
+    font-family: var(--reading-font-ui);
 }
 
 .toc-link:hover {
@@ -718,7 +730,7 @@ body.reading-mode {
 .article-content-body {
     max-width: min(72ch, 100%);
     margin: 0 auto;
-    font-family: "Merriweather", Georgia, serif;
+    font-family: var(--reading-font-body);
     font-size: 1.05rem;
     line-height: 1.9;
     letter-spacing: 0.002em;
@@ -743,6 +755,8 @@ body.reading-mode {
     margin: 1.9em 0 0.75em;
     line-height: 1.35;
     color: #0f172a;
+    font-family: var(--reading-font-ui);
+    letter-spacing: 0;
 }
 
 .article-content-body h2 {
@@ -1104,7 +1118,7 @@ body.page-articles-unified.reading-mode .premium-fab-container {
 
 /* --- Reading View Final Density Patch (Single Source Override) --- */
 body.page-articles-unified.reading-mode {
-    --reading-gutter: clamp(4px, 1.4vw, 7px);
+    --reading-gutter: clamp(2px, 0.8vw, 4px);
     --reading-paragraph-gap: clamp(19px, 4.8vw, 23px);
     --reading-heading-gap-top: clamp(30px, 7.4vw, 42px);
     --reading-heading-gap-bottom: clamp(12px, 3.1vw, 16px);
@@ -1115,7 +1129,7 @@ body.page-articles-unified.reading-mode {
     body.page-articles-unified.reading-mode #article-detail-container .article-detail {
         max-width: none;
         margin: 0;
-        padding: 5px var(--reading-gutter) 18px;
+        padding: 4px var(--reading-gutter) 18px;
     }
 
     body.page-articles-unified.reading-mode .article-content-body {

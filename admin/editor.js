@@ -3,6 +3,8 @@
 
     const SESSION_KEY = 'ipmquiz_admin_session';
     const DRAFT_KEY = 'ipmquiz_editor_draft';
+    const FONT_PRESET_KEY = 'ipmquiz_editor_font_preset';
+    const FONT_SCALE_KEY = 'ipmquiz_editor_font_scale';
     const MIN_WORD_COUNT = 120;
     const DEBOUNCE_MS = 250;
     const DOMAIN_WEIGHTS = {
@@ -84,7 +86,9 @@
         quality: null,
         coverMeta: null,
         lowGradeResolver: null,
-        pendingPaste: null
+        pendingPaste: null,
+        fontPreset: 'editorial',
+        fontScale: 'md'
     };
 
     const els = {
@@ -122,6 +126,8 @@
         qualityDetailsToggle: document.getElementById('quality-details-toggle'),
         qualityDetailsBody: document.getElementById('quality-details-body'),
         blockSelect: document.getElementById('editor-block-style'),
+        fontPresetSelect: document.getElementById('editor-font-preset'),
+        fontScaleSelect: document.getElementById('editor-font-scale'),
         templateSelect: document.getElementById('editor-template-select'),
         insertTemplateBtn: document.getElementById('editor-insert-template-btn'),
         normalizeBtn: document.getElementById('editor-normalize-btn'),
@@ -192,6 +198,64 @@
 
     function isMobileView() {
         return window.matchMedia('(max-width: 900px)').matches;
+    }
+
+    function normalizeFontPreset(value) {
+        const preset = String(value || '').toLowerCase().trim();
+        if (preset === 'modern' || preset === 'classic') return preset;
+        return 'editorial';
+    }
+
+    function applyEditorFontPreset(preset, persist = true) {
+        const normalized = normalizeFontPreset(preset);
+        state.fontPreset = normalized;
+        const classes = ['font-preset-editorial', 'font-preset-modern', 'font-preset-classic'];
+        const targetClass = `font-preset-${normalized}`;
+        const targets = [els.editorArea, els.livePreview];
+        targets.forEach((node) => {
+            if (!node || !node.classList) return;
+            classes.forEach((cls) => node.classList.remove(cls));
+            node.classList.add(targetClass);
+        });
+        if (els.fontPresetSelect) {
+            els.fontPresetSelect.value = normalized;
+        }
+        if (persist) {
+            try {
+                localStorage.setItem(FONT_PRESET_KEY, normalized);
+            } catch {
+                // ignore storage errors
+            }
+        }
+    }
+
+    function normalizeFontScale(value) {
+        const scale = String(value || '').toLowerCase().trim();
+        if (scale === 'sm' || scale === 'lg') return scale;
+        return 'md';
+    }
+
+    function applyEditorFontScale(scale, persist = true) {
+        const normalized = normalizeFontScale(scale);
+        state.fontScale = normalized;
+        const classes = ['font-scale-sm', 'font-scale-md', 'font-scale-lg'];
+        const targetClass = `font-scale-${normalized}`;
+        const targets = [els.editorArea, els.livePreview];
+        targets.forEach((node) => {
+            if (!node || !node.classList) return;
+            classes.forEach((cls) => node.classList.remove(cls));
+            node.classList.add(targetClass);
+        });
+        if (els.fontScaleSelect) {
+            els.fontScaleSelect.value = normalized;
+        }
+        if (persist) {
+            try {
+                localStorage.setItem(FONT_SCALE_KEY, normalized);
+            } catch {
+                // ignore storage errors
+            }
+        }
     }
 
     function setPane(pane) {
@@ -1545,6 +1609,18 @@
             });
         }
 
+        if (els.fontPresetSelect) {
+            els.fontPresetSelect.addEventListener('change', () => {
+                applyEditorFontPreset(els.fontPresetSelect.value, true);
+            });
+        }
+
+        if (els.fontScaleSelect) {
+            els.fontScaleSelect.addEventListener('change', () => {
+                applyEditorFontScale(els.fontScaleSelect.value, true);
+            });
+        }
+
         if (els.linkApplyBtn) els.linkApplyBtn.addEventListener('click', applyLink);
         if (els.linkCancelBtn) els.linkCancelBtn.addEventListener('click', closeAllPopovers);
         if (els.imageApplyBtn) els.imageApplyBtn.addEventListener('click', applyImageFromUrl);
@@ -1799,6 +1875,19 @@
         bindInputObservers();
         bindFormActions();
 
+        try {
+            state.fontPreset = normalizeFontPreset(localStorage.getItem(FONT_PRESET_KEY) || 'editorial');
+        } catch {
+            state.fontPreset = 'editorial';
+        }
+        applyEditorFontPreset(state.fontPreset, false);
+        try {
+            state.fontScale = normalizeFontScale(localStorage.getItem(FONT_SCALE_KEY) || 'md');
+        } catch {
+            state.fontScale = 'md';
+        }
+        applyEditorFontScale(state.fontScale, false);
+
         if (state.id) {
             await loadExistingArticle();
             updateAutosaveLabel('Mode edit artikel');
@@ -1812,6 +1901,8 @@
         updateWordAndStatus();
         runStructureLint();
         renderLivePreview();
+        applyEditorFontPreset(state.fontPreset, false);
+        applyEditorFontScale(state.fontScale, false);
         refreshToolbarState();
     }
 
