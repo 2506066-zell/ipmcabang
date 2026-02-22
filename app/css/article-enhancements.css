@@ -1178,3 +1178,64 @@ body.page-articles-unified.reading-mode .article-content-body li:last-child {
     }
 }
 
+
+/* --- Reading Density Tuning (Mojok-like Measure) --- */
+body.page-articles-unified.reading-mode {
+    --reading-gutter: clamp(20px, 5.8vw, 28px);
+    --reading-paragraph-gap: clamp(18px, 4.2vw, 22px);
+}
+
+@media (max-width: 767.98px) {
+    body.page-articles-unified.reading-mode #article-detail-content .article-detail,
+    body.page-articles-unified.reading-mode #article-detail-container .article-detail {
+        max-width: none;
+        margin: 0;
+        padding: 10px var(--reading-gutter) 18px;
+    }
+
+    body.page-articles-unified.reading-mode .article-content-body {
+        width: 100%;
+        max-width: min(31.5rem, 100%);
+        margin: 0 auto;
+        font-size: clamp(1.04rem, 1.55vw, 1.08rem);
+        line-height: 1.86;
+        color: #222;
+    }
+
+    body.page-articles-unified.reading-mode .article-content-body p {
+        margin-block: clamp(19px, 4.3vw, 22px);
+    }
+
+    body.page-articles-unified.reading-mode .article-content-body h2,
+    body.page-articles-unified.reading-mode .article-content-body h3,
+    body.page-articles-unified.reading-mode .article-content-body h4 {
+        margin-top: clamp(32px, 8vw, 42px);
+        margin-bottom: clamp(12px, 3vw, 16px);
+        line-height: 1.24;
+    }
+
+    body.page-articles-unified.reading-mode .article-content-body ul,
+    body.page-articles-unified.reading-mode .article-content-body ol {
+        margin-block: 18px;
+        padding-left: 20px;
+    }
+
+    body.page-articles-unified.reading-mode .article-content-body li {
+        margin-bottom: clamp(6px, 2vw, 10px);
+    }
+}
+
+@media (min-width: 768px) {
+    body.page-articles-unified.reading-mode #article-detail-content .article-detail,
+    body.page-articles-unified.reading-mode #article-detail-container .article-detail {
+        max-width: 680px;
+        margin: 0 auto;
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+    body.page-articles-unified.reading-mode .article-content-body {
+        max-width: min(68ch, 100%);
+        margin: 0 auto;
+    }
+}
