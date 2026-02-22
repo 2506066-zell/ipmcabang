@@ -840,7 +840,7 @@ body.page-editor.body-no-scroll {
 
 /* --- Reading Measure Parity (Editor vs Public Article) --- */
 .page-editor {
-    --editor-reading-gutter: clamp(10px, 3.2vw, 13px);
+    --editor-reading-gutter: clamp(7px, 2.4vw, 10px);
     --editor-reading-measure: 100%;
     --editor-reading-paragraph-gap: clamp(19px, 4.8vw, 23px);
     --editor-heading-gap-top: clamp(30px, 7.4vw, 42px);
@@ -877,9 +877,9 @@ body.page-editor.body-no-scroll {
     .page-editor .editor-surface.pro-article {
         max-width: var(--editor-reading-measure);
         margin: 0 auto;
-        padding: 8px var(--editor-reading-gutter) 18px;
-        font-size: clamp(1.06rem, 1.75vw, 1.12rem);
-        line-height: 1.84;
+        padding: 6px var(--editor-reading-gutter) 18px;
+        font-size: clamp(1rem, 1.35vw, 1.045rem);
+        line-height: 1.82;
         text-rendering: optimizeLegibility;
         font-kerning: normal;
         font-feature-settings: "kern" 1, "liga" 1, "clig" 1;
@@ -893,14 +893,14 @@ body.page-editor.body-no-scroll {
     }
 
     .page-editor .editor-live-preview .article-detail {
-        padding: 8px var(--editor-reading-gutter) 18px;
+        padding: 6px var(--editor-reading-gutter) 18px;
     }
 
     .page-editor .editor-live-preview .article-content-body,
     .page-editor .editor-live-preview .pro-article {
         max-width: var(--editor-reading-measure);
         margin: 0 auto;
-        line-height: 1.84;
+        line-height: 1.82;
     }
 
     .page-editor .editor-surface.pro-article p,
@@ -937,14 +937,14 @@ body.page-editor.body-no-scroll {
     .page-editor .editor-surface.pro-article h2,
     .page-editor .editor-live-preview .pro-article h2,
     .page-editor .editor-live-preview .article-content-body h2 {
-        font-size: clamp(1.36rem, 4.7vw, 1.56rem);
+        font-size: clamp(1.28rem, 4.2vw, 1.46rem);
         font-weight: 800;
     }
 
     .page-editor .editor-surface.pro-article h3,
     .page-editor .editor-live-preview .pro-article h3,
     .page-editor .editor-live-preview .article-content-body h3 {
-        font-size: clamp(1.2rem, 3.8vw, 1.34rem);
+        font-size: clamp(1.14rem, 3.35vw, 1.24rem);
         font-weight: 800;
     }
 
