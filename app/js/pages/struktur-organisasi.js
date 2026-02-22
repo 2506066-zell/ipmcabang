@@ -283,41 +283,119 @@
     return { leadership, regular, sorted };
   }
 
-  function createMemberCard(member, isLeadership) {
+  function buildMemberHierarchyModel(members) {
+    const { leadership, regular, sorted } = splitMembersByHierarchy(members);
+    const core = leadership.slice(0, 3);
+    const leadershipOrbit = leadership.slice(3).map((member) => ({ member, variant: 'leadership-orbit' }));
+    const regularOrbit = regular.map((member) => ({ member, variant: 'orbit' }));
+    const orbit = [...leadershipOrbit, ...regularOrbit];
+    return {
+      leadership,
+      regular,
+      sorted,
+      corePrimary: core[0] || null,
+      coreSupport: core.slice(1),
+      orbit,
+      mode: leadership.length ? 'leadership' : (sorted.length ? 'team' : 'empty'),
+      isCompact: orbit.length <= 2
+    };
+  }
+
+  function renderMemberNode(member, variant) {
+    const safeName = escapeHtml(member.full_name || 'Anggota');
+    const safeRole = escapeHtml(member.role_title || 'Anggota');
+    const safeQuote = escapeHtml(member.quote || 'Siap berkontribusi untuk bidang ini.');
     const initials = member.full_name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
+    const photoMarkup = member.photo_url
+      ? `<img data-src="${escapeHtml(member.photo_url)}" alt="${safeName}" class="lazy-load">`
+      : '';
     return `
-      <article class="anggota-card${isLeadership ? ' is-leadership' : ''}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${escapeHtml(member.full_name)}">
+      <article class="anggota-card member-ring-node member-ring-node-${escapeHtml(variant)}${variant.startsWith('core') || variant === 'leadership-orbit' ? ' is-leadership' : ''}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
         <div class="anggota-card-photo${member.photo_url ? '' : ' no-image'}">
-          <img data-src="${escapeHtml(member.photo_url)}" alt="${escapeHtml(member.full_name)}" class="lazy-load">
+          ${photoMarkup}
           <div class="anggota-card-avatar">${escapeHtml(initials || '?')}</div>
         </div>
         <div class="anggota-card-info">
-          <div class="anggota-card-name">${escapeHtml(member.full_name)}</div>
-          <div class="anggota-card-role">${escapeHtml(member.role_title || 'Anggota')}</div>
-          <div class="anggota-card-quote">${escapeHtml(member.quote || 'Siap berkontribusi untuk bidang ini.')}</div>
+          <div class="anggota-card-name">${safeName}</div>
+          <div class="anggota-card-role">${safeRole}</div>
+          <div class="anggota-card-quote">${safeQuote}</div>
           <div class="anggota-card-indicator"><i class="fas fa-chevron-right"></i></div>
         </div>
       </article>
     `;
   }
 
+  function renderMemberHierarchyRing(model) {
+    if (model.mode === 'empty') {
+      return {
+        leadershipHTML: '<div class="org-empty-state">Belum ada anggota di bidang ini.</div>',
+        membersHTML: ''
+      };
+    }
+    if (model.mode === 'team') {
+      const compactClass = model.sorted.length <= 2 ? ' is-compact' : '';
+      return {
+        leadershipHTML: `
+          <section class="hierarchy-section is-team member-hierarchy-shell">
+            <header class="hierarchy-heading">
+              <div class="hierarchy-title">Tim Bidang</div>
+              <div class="hierarchy-meta">${model.sorted.length} anggota</div>
+            </header>
+            <div class="member-ring-layout member-ring-layout-team">
+              <div class="member-ring-orbit${compactClass}">
+                ${model.sorted.map((member) => renderMemberNode(member, 'orbit')).join('')}
+              </div>
+            </div>
+          </section>
+        `,
+        membersHTML: ''
+      };
+    }
+    const compactClass = model.isCompact ? ' is-compact' : '';
+    const corePrimaryMarkup = model.corePrimary ? renderMemberNode(model.corePrimary, 'core-primary') : '';
+    const coreSupportMarkup = model.coreSupport.length
+      ? `<div class="member-ring-core-support">${model.coreSupport.map((member) => renderMemberNode(member, 'core-support')).join('')}</div>`
+      : '';
+    return {
+      leadershipHTML: `
+        <section class="hierarchy-section is-leadership member-hierarchy-shell">
+          <header class="hierarchy-heading">
+            <div class="hierarchy-title">Pimpinan Inti</div>
+            <div class="hierarchy-meta">${model.leadership.length} posisi</div>
+          </header>
+          <div class="member-ring-layout">
+            <div class="member-ring-core">
+              ${corePrimaryMarkup}
+              ${coreSupportMarkup}
+            </div>
+          </div>
+        </section>
+      `,
+      membersHTML: `
+        <section class="hierarchy-section is-regular member-hierarchy-shell">
+          <header class="hierarchy-heading">
+            <div class="hierarchy-title">Anggota Bidang</div>
+            <div class="hierarchy-meta">${model.orbit.length} anggota</div>
+          </header>
+          ${model.orbit.length
+        ? `<div class="member-ring-layout">
+                <div class="member-ring-connector" aria-hidden="true"></div>
+                <div class="member-ring-orbit${compactClass}">
+                  ${model.orbit.map((node) => renderMemberNode(node.member, node.variant)).join('')}
+                </div>
+              </div>`
+        : '<div class="org-empty-state">Belum ada anggota tambahan pada bidang ini.</div>'}
+        </section>
+      `
+    };
+  }
+
   function renderDetailMembers(bidang) {
     if (!els.leadershipSection || !els.membersSection) return;
-    if (!bidang.members.length) {
-      els.leadershipSection.innerHTML = '<div class="org-empty-state">Belum ada anggota di bidang ini.</div>';
-      els.membersSection.innerHTML = '';
-      return;
-    }
-    const { leadership, regular, sorted } = splitMembersByHierarchy(bidang.members);
-    if (leadership.length) {
-      els.leadershipSection.innerHTML = `<section class="hierarchy-section is-leadership"><header class="hierarchy-heading"><div class="hierarchy-title">Pimpinan Inti</div><div class="hierarchy-meta">${leadership.length} posisi</div></header><div class="anggota-grid">${leadership.map((m) => createMemberCard(m, true)).join('')}</div></section>`;
-      els.membersSection.innerHTML = regular.length
-        ? `<section class="hierarchy-section is-regular"><header class="hierarchy-heading"><div class="hierarchy-title">Anggota Bidang</div><div class="hierarchy-meta">${regular.length} anggota</div></header><div class="anggota-grid">${regular.map((m) => createMemberCard(m, false)).join('')}</div></section>`
-        : '<div class="org-empty-state">Belum ada anggota tambahan pada bidang ini.</div>';
-    } else {
-      els.leadershipSection.innerHTML = `<section class="hierarchy-section is-team"><header class="hierarchy-heading"><div class="hierarchy-title">Tim Bidang</div><div class="hierarchy-meta">${sorted.length} anggota</div></header><div class="anggota-grid">${sorted.map((m) => createMemberCard(m, false)).join('')}</div></section>`;
-      els.membersSection.innerHTML = '';
-    }
+    const model = buildMemberHierarchyModel(bidang.members || []);
+    const ring = renderMemberHierarchyRing(model);
+    els.leadershipSection.innerHTML = ring.leadershipHTML;
+    els.membersSection.innerHTML = ring.membersHTML;
     setupLazyLoading();
     bindMemberCardEvents(bidang);
   }

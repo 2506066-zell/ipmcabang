@@ -6336,3 +6336,161 @@ body.quiz-active .premium-fab-container {
         font-size: 13px;
     }
 }
+
+/* Struktur Organisasi - Susunan Anggota Hierarchy Ring v1 */
+.page-struktur .member-hierarchy-shell {
+    overflow: hidden;
+}
+
+.page-struktur .member-ring-layout {
+    position: relative;
+    width: 100%;
+}
+
+.page-struktur .member-ring-core {
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+    position: relative;
+}
+
+.page-struktur .member-ring-core-support {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+    padding-top: 18px;
+    position: relative;
+}
+
+.page-struktur .member-ring-core-support::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 16px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: repeating-linear-gradient(to bottom, rgba(31, 91, 63, 0.36) 0 5px, rgba(31, 91, 63, 0.12) 5px 10px);
+}
+
+.page-struktur .member-ring-core-support::after {
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    border-radius: 999px;
+    border-top: 1px dashed rgba(31, 91, 63, 0.28);
+}
+
+.page-struktur .member-ring-node {
+    border-radius: 16px;
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 252, 249, 0.88) 100%);
+    border: 1px solid rgba(28, 84, 56, 0.16);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    min-height: 124px;
+}
+
+.page-struktur .member-ring-node-core-primary {
+    width: min(100%, 560px);
+    border-color: rgba(29, 93, 62, 0.3);
+    box-shadow: 0 12px 24px rgba(20, 46, 32, 0.12);
+}
+
+.page-struktur .member-ring-node-core-support {
+    border-color: rgba(29, 93, 62, 0.2);
+}
+
+.page-struktur .member-ring-node-orbit {
+    box-shadow: 0 6px 14px rgba(20, 46, 32, 0.08);
+}
+
+.page-struktur .member-ring-node-leadership-orbit {
+    border-color: rgba(29, 93, 62, 0.24);
+    box-shadow: 0 8px 16px rgba(20, 46, 32, 0.1);
+}
+
+.page-struktur .member-ring-node .anggota-card-role {
+    background: rgba(236, 248, 241, 0.95);
+}
+
+.page-struktur .member-ring-connector {
+    width: 2px;
+    height: 30px;
+    margin: 0 auto 12px;
+    border-radius: 999px;
+    background: repeating-linear-gradient(to bottom, rgba(31, 91, 63, 0.36) 0 6px, rgba(31, 91, 63, 0.12) 6px 12px);
+}
+
+.page-struktur .member-ring-orbit {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    padding: 14px;
+    border: 1px dashed rgba(31, 91, 63, 0.25);
+    border-radius: 18px;
+    background: radial-gradient(circle at top, rgba(233, 244, 238, 0.6) 0%, rgba(255, 255, 255, 0.9) 62%);
+}
+
+.page-struktur .member-ring-orbit.is-compact {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.page-struktur .member-ring-layout-team .member-ring-orbit {
+    border-style: solid;
+}
+
+@media (max-width: 980px) {
+    .page-struktur .member-ring-core-support {
+        grid-template-columns: 1fr;
+    }
+
+    .page-struktur .member-ring-core-support::after {
+        left: 16%;
+        right: 16%;
+    }
+
+    .page-struktur .member-ring-orbit {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .page-struktur .member-ring-layout {
+        padding: 0;
+    }
+
+    .page-struktur .member-ring-core-support::after {
+        display: none;
+    }
+
+    .page-struktur .member-ring-node,
+    .page-struktur .member-ring-node-core-primary,
+    .page-struktur .member-ring-node-core-support {
+        width: 100%;
+    }
+
+    .page-struktur .member-ring-orbit {
+        border-radius: 14px;
+        padding: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .page-struktur .member-ring-orbit,
+    .page-struktur .member-ring-orbit.is-compact {
+        grid-template-columns: 1fr;
+    }
+
+    .page-struktur .member-ring-node {
+        min-height: 112px;
+    }
+}
