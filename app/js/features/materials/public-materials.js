@@ -43,14 +43,52 @@ export async function initPublicMaterials() {
 
         emptyState.classList.add('hidden');
         grid.innerHTML = materials.map(mat => {
+            const thumbUrl = resolveMaterialThumbnail(mat);
+            const thumbMarkup = thumbUrl
+                ? `<img src="${thumbUrl}" alt="${escapeHtml(mat.title)}" class="materi-thumb" loading="lazy" decoding="async">`
+                : `<div class="materi-thumb materi-thumb-fallback"><i class="fas fa-file-pdf"></i></div>`;
+
             return `
                 <div class="materi-card">
-                    <a href="${mat.file_url}" target="_blank" rel="noopener noreferrer" class="materi-title-link" title="${escapeHtml(mat.title)}">
-                        ${escapeHtml(mat.title)}
+                    <a href="${mat.file_url}" target="_blank" rel="noopener noreferrer" class="materi-card-link" title="${escapeHtml(mat.title)}">
+                        <div class="materi-thumb-wrap">
+                            ${thumbMarkup}
+                        </div>
+                        <h3 class="materi-title-link">${escapeHtml(mat.title)}</h3>
                     </a>
                 </div>
             `;
         }).join('');
+    }
+
+    function resolveMaterialThumbnail(material) {
+        const explicit = String(material?.thumbnail || '').trim();
+        if (explicit) return explicit;
+
+        const fileUrl = String(material?.file_url || '').trim();
+        if (!fileUrl) return '';
+
+        const driveId = extractGoogleDriveFileId(fileUrl);
+        if (!driveId) return '';
+        return `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w1200`;
+    }
+
+    function extractGoogleDriveFileId(url) {
+        const raw = String(url || '').trim();
+        if (!raw) return '';
+
+        const byPath = raw.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (byPath && byPath[1]) return byPath[1];
+
+        try {
+            const parsed = new URL(raw);
+            const fromQuery = parsed.searchParams.get('id');
+            if (fromQuery) return fromQuery;
+        } catch {
+            return '';
+        }
+
+        return '';
     }
 
     function escapeHtml(text) {

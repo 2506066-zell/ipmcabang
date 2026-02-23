@@ -24,10 +24,7 @@
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 14px;
-            padding: 16px 18px;
-            min-height: 92px;
-            display: flex;
-            align-items: center;
+            overflow: hidden;
             box-shadow: 0 8px 20px rgba(2, 6, 23, 0.05);
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
@@ -38,15 +35,49 @@
             box-shadow: 0 12px 24px rgba(2, 6, 23, 0.08);
         }
 
+        .materi-card-link {
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            width: 100%;
+            height: 100%;
+            color: inherit;
+        }
+
+        .materi-thumb-wrap {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            border-bottom: 1px solid #eef2f7;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        .materi-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .materi-thumb-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0b8a42;
+            font-size: 2.1rem;
+            background: linear-gradient(180deg, #f3f8f4 0%, #edf6ef 100%);
+        }
+
         .materi-title-link {
             width: 100%;
-            text-decoration: none;
             color: #0f172a;
-            font-size: 1.08rem;
-            line-height: 1.45;
+            font-size: 1.02rem;
+            line-height: 1.42;
             font-weight: 800;
             letter-spacing: 0.01em;
             overflow-wrap: anywhere;
+            margin: 0;
+            padding: 13px 14px 14px;
         }
 
         .materi-title-link:hover {
@@ -65,13 +96,13 @@
                 grid-template-columns: 1fr;
             }
 
-            .materi-card {
-                min-height: 84px;
-                padding: 14px 16px;
+            .materi-thumb-wrap {
+                aspect-ratio: 16 / 9;
             }
 
             .materi-title-link {
-                font-size: 1.02rem;
+                font-size: 0.99rem;
+                padding: 12px 12px 13px;
             }
         }
     </style>
@@ -176,7 +207,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>    <script type="module">
-        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=2';
+        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=3';
         document.addEventListener('DOMContentLoaded', initPublicMaterials);
     </script>
 </body>
