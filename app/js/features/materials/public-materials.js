@@ -43,26 +43,11 @@ export async function initPublicMaterials() {
 
         emptyState.classList.add('hidden');
         grid.innerHTML = materials.map(mat => {
-            const icon = mat.file_type === 'pdf' ? 'fa-file-pdf' : (mat.file_type === 'ebook' ? 'fa-book-open' : 'fa-file-alt');
-            const thumb = mat.thumbnail ? `<img src="${mat.thumbnail}" alt="${mat.title}" class="materi-thumb" loading="lazy" decoding="async">` : `<div class="materi-thumb"><i class="fas ${icon}"></i></div>`;
-
             return `
                 <div class="materi-card">
-                    <span class="type-badge">${mat.file_type}</span>
-                    ${thumb}
-                    <div class="materi-info">
-                        <h3>${escapeHtml(mat.title)}</h3>
-                        <p>${escapeHtml(mat.description || 'Tidak ada deskripsi.')}</p>
-                        <div class="materi-meta">
-                            <span><i class="fas fa-user-edit"></i> ${escapeHtml(mat.author || 'Tim IPM')}</span>
-                            <span><i class="fas fa-tag"></i> ${escapeHtml(mat.category)}</span>
-                        </div>
-                    </div>
-                    <div class="materi-footer">
-                        <a href="${mat.file_url}" target="_blank" class="btn-download">
-                            <i class="fas fa-download"></i> Unduh
-                        </a>
-                    </div>
+                    <a href="${mat.file_url}" target="_blank" rel="noopener noreferrer" class="materi-title-link" title="${escapeHtml(mat.title)}">
+                        ${escapeHtml(mat.title)}
+                    </a>
                 </div>
             `;
         }).join('');

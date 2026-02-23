@@ -21,111 +21,57 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .materi-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 24px;
-            transition: all 0.3s ease;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 18px;
+            min-height: 92px;
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-            position: relative;
-            overflow: hidden;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(2, 6, 23, 0.05);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
         .materi-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+            border-color: #0b8a42;
+            box-shadow: 0 12px 24px rgba(2, 6, 23, 0.08);
         }
 
-        .materi-thumb {
+        .materi-title-link {
             width: 100%;
-            aspect-ratio: 3/4;
-            background: #1a2a1a;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: var(--accent-primary);
-            object-fit: cover;
-        }
-
-        .materi-info h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-
-        .materi-info p {
-            font-size: 0.85rem;
-            color: #aaa;
-            line-height: 1.5;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .materi-meta {
-            display: flex;
-            gap: 12px;
-            font-size: 0.75rem;
-            color: #888;
-        }
-
-        .materi-footer {
-            margin-top: auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn-download {
-            background: var(--accent-primary);
-            color: #000;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            font-weight: 600;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
+            color: #0f172a;
+            font-size: 1.08rem;
+            line-height: 1.45;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            overflow-wrap: anywhere;
         }
 
-        .btn-download:hover {
-            transform: scale(1.05);
-            filter: brightness(1.1);
-        }
-
-        .type-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(0, 0, 0, 0.6);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
+        .materi-title-link:hover {
+            color: #0b8a42;
         }
 
         .materi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-            margin-top: 32px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+            margin-top: 20px;
         }
 
         @media (max-width: 600px) {
             .materi-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .materi-card {
+                min-height: 84px;
+                padding: 14px 16px;
+            }
+
+            .materi-title-link {
+                font-size: 1.02rem;
             }
         }
     </style>
@@ -180,11 +126,11 @@
     <main class="main-content" style="padding-top:80px; padding-bottom:100px;">
         <div class="container">
             <h1 class="page-title">Materi & E-Book</h1>
-            <p style="color: #aaa; margin-bottom: 30px;">Download panduan, modul, dan buku elektronik seputar Ikatan
+            <p style="color: #475569; margin-bottom: 20px;">Download panduan, modul, dan buku elektronik seputar Ikatan
                 Pelajar Muhammadiyah.</p>
 
             <div class="articles-toolbar"
-                style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px;">
+                style="background: #ffffff; border:1px solid #e2e8f0; padding: 14px; border-radius: 14px;">
                 <div class="search-wrapper">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="mat-search" placeholder="Cari materi...">
@@ -230,7 +176,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>    <script type="module">
-        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js';
+        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=2';
         document.addEventListener('DOMContentLoaded', initPublicMaterials);
     </script>
 </body>

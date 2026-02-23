@@ -1,8 +1,7 @@
-// Logic for Materials Management (Ebooks & PDFs)
+// Logic for Materials Management (URL-based, no file upload)
 export function initMaterials(state, els, api) {
     console.log('[Materials] Initializing...');
 
-    // UI Elements
     const list = document.getElementById('materials-list');
     const searchInput = document.getElementById('material-search');
     const addBtn = document.getElementById('add-material-btn');
@@ -21,142 +20,81 @@ export function initMaterials(state, els, api) {
     const inpFileUrl = document.getElementById('mat-file-url');
     const inpThumbnail = document.getElementById('mat-thumbnail');
     const inpActive = document.getElementById('mat-active');
+    const thumbPreview = document.getElementById('mat-thumb-preview');
+    const generateThumbBtn = document.getElementById('mat-generate-thumb-btn');
 
-    // Close Buttons
     const closeBtn = document.getElementById('mat-close-btn');
     const cancelBtn = document.getElementById('mat-cancel-btn');
 
-    // Upload UI Elements
-    const fileZone = document.getElementById('mat-file-zone');
-    const fileInput = document.getElementById('mat-file-input');
-    const fileStatus = document.getElementById('mat-file-status');
-    const fileNameDisplay = fileStatus.querySelector('.file-name');
-    const removeFileBtn = fileStatus.querySelector('.btn-remove-file');
-
-    const thumbZone = document.getElementById('mat-thumb-zone');
-    const thumbInput = document.getElementById('mat-thumb-input');
-    const thumbPreview = document.getElementById('mat-thumb-preview');
-    const thumbPlaceholder = thumbZone.querySelector('.upload-placeholder');
-
-    const progressContainer = document.getElementById('upload-progress-container');
-    const progressBar = document.getElementById('upload-progress-bar');
-    const progressPercent = document.getElementById('upload-percent');
-    const progressText = document.getElementById('upload-status-text');
-
-    let currentFile = null;
-    let currentThumb = null;
     let currentPage = 1;
     let totalPages = 1;
 
-    // --- Upload Handlers ---
-
-    fileZone.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => handleFileSelect(e.target.files[0]);
-
-    thumbZone.onclick = () => thumbInput.click();
-    thumbInput.onchange = (e) => handleThumbSelect(e.target.files[0]);
-
-    // Drag & Drop
-    [fileZone, thumbZone].forEach(zone => {
-        zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('drag-over'); };
-        zone.ondragleave = () => zone.classList.remove('drag-over');
-        zone.ondrop = (e) => {
-            e.preventDefault();
-            zone.classList.remove('drag-over');
-            const file = e.dataTransfer.files[0];
-            if (zone.id === 'mat-file-zone') handleFileSelect(file);
-            else handleThumbSelect(file);
-        };
-    });
-
-    function handleFileSelect(file) {
-        if (!file) return;
-        if (file.size > 5 * 1024 * 1024) return alert('File terlalu besar! Maksimal 5MB.');
-        currentFile = file;
-        fileNameDisplay.textContent = file.name;
-        fileStatus.classList.remove('hidden');
-        fileZone.querySelector('.upload-placeholder').classList.add('hidden');
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
     }
 
-    removeFileBtn.onclick = (e) => {
-        e.stopPropagation();
-        currentFile = null;
-        fileStatus.classList.add('hidden');
-        fileZone.querySelector('.upload-placeholder').classList.remove('hidden');
-        fileInput.value = '';
-    };
-
-    async function handleThumbSelect(file) {
-        if (!file) return;
-        if (!file.type.startsWith('image/')) return alert('Hanya file gambar!');
-
-        // UI Preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            thumbPreview.src = e.target.result;
-            thumbPreview.classList.remove('hidden');
-            thumbPlaceholder.classList.add('hidden');
-        };
-        reader.readAsDataURL(file);
-
-        // Compression
-        currentThumb = await compressImage(file);
+    function setThumbPreview(url) {
+        if (!thumbPreview) return;
+        const clean = String(url || '').trim();
+        if (!clean) {
+            thumbPreview.classList.add('hidden');
+            thumbPreview.removeAttribute('src');
+            return;
+        }
+        thumbPreview.src = clean;
+        thumbPreview.classList.remove('hidden');
     }
 
-    async function compressImage(file) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.src = URL.createObjectURL(file);
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                const max = 800;
-                if (width > height && width > max) { height *= max / width; width = max; }
-                else if (height > max) { width *= max / height; height = max; }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
-            };
-        });
+    function extractGoogleDriveFileId(url) {
+        const raw = String(url || '').trim();
+        if (!raw) return '';
+
+        const byPath = raw.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (byPath && byPath[1]) return byPath[1];
+
+        try {
+            const parsed = new URL(raw);
+            const fromQuery = parsed.searchParams.get('id');
+            if (fromQuery) return fromQuery;
+        } catch {
+            return '';
+        }
+
+        return '';
     }
 
-    async function uploadToCloud(file, type = 'file') {
-        if (!file) return null;
+    function deriveThumbnailFromFileUrl(fileUrl) {
+        const driveId = extractGoogleDriveFileId(fileUrl);
+        if (!driveId) return '';
+        return `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w1200`;
+    }
 
-        progressContainer.classList.remove('hidden');
-        progressText.textContent = `Mengunggah ${type === 'thumb' ? 'sampul' : 'materi'}...`;
+    function tryAutoGenerateThumbnail(force = false) {
+        if (!inpFileUrl || !inpThumbnail) return;
+        const fileUrl = String(inpFileUrl.value || '').trim();
+        const currentThumb = String(inpThumbnail.value || '').trim();
+        const autoThumb = deriveThumbnailFromFileUrl(fileUrl);
 
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/upload');
-            const token = localStorage.getItem('adminToken');
-            if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-            xhr.setRequestHeader('x-filename', file.name || `upload-${Date.now()}.${type === 'thumb' ? 'jpg' : 'pdf'}`);
+        if (!autoThumb) {
+            if (force && window.Toast) {
+                Toast.show('URL bukan Google Drive yang didukung untuk auto-thumbnail.', 'warning');
+            }
+            return;
+        }
 
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const pct = Math.round((e.loaded / e.total) * 100);
-                    progressBar.style.width = pct + '%';
-                    progressPercent.textContent = pct + '%';
-                }
-            };
+        const canFill = force || !currentThumb || inpThumbnail.dataset.autoThumb === '1';
+        if (!canFill) return;
 
-            xhr.onload = () => {
-                let res = null;
-                try {
-                    res = JSON.parse(xhr.responseText || '{}');
-                } catch (e) {
-                    res = { error: xhr.responseText || 'Upload gagal' };
-                }
-                if (xhr.status >= 200 && xhr.status < 300 && res && res.url) resolve(res.url);
-                else reject(new Error(res?.error || 'Upload gagal'));
-            };
-            xhr.onerror = () => reject(new Error('Network error'));
-            xhr.send(file);
-        });
+        inpThumbnail.value = autoThumb;
+        inpThumbnail.dataset.autoThumb = '1';
+        setThumbPreview(autoThumb);
+        if (force && window.Toast) {
+            Toast.show('Thumbnail berhasil digenerate dari Google Drive.', 'success');
+        }
     }
 
     async function loadMaterials(page = 1) {
@@ -169,7 +107,6 @@ export function initMaterials(state, els, api) {
             if (q) url += `&search=${encodeURIComponent(q)}`;
 
             const data = await api.apiAdminVercel('GET', url);
-
             if (data.status === 'success') {
                 currentPage = data.page;
                 totalPages = Math.ceil(data.total / 10) || 1;
@@ -178,7 +115,7 @@ export function initMaterials(state, els, api) {
             }
         } catch (e) {
             console.error(e);
-            list.innerHTML = `<div style="text-align:center; color:red">Gagal memuat: ${e.message}</div>`;
+            list.innerHTML = `<div style="text-align:center; color:red">Gagal memuat: ${escapeHtml(e.message)}</div>`;
         }
     }
 
@@ -192,23 +129,29 @@ export function initMaterials(state, els, api) {
             <div class="list-item">
                 <div class="list-item-header">
                     <span class="item-title" style="font-size:1.1rem">${escapeHtml(mat.title)}</span>
-                    <span class="item-badge" style="background:#0f172a; color:#fff;">${escapeHtml(mat.file_type.toUpperCase())}</span>
+                    <span class="item-badge" style="background:#0f172a; color:#fff;">${escapeHtml(String(mat.file_type || 'other').toUpperCase())}</span>
                 </div>
                 <div style="font-size:0.85rem; color:#666; margin-bottom:8px;">
-                    <i class="fas fa-folder"></i> ${escapeHtml(mat.category)} &nbsp;•&nbsp; 
+                    <i class="fas fa-folder"></i> ${escapeHtml(mat.category)} &nbsp;•&nbsp;
                     <i class="fas fa-user"></i> ${escapeHtml(mat.author || 'Tim IPM')} &nbsp;•&nbsp;
                     <i class="fas fa-circle ${mat.active ? 'text-success' : 'text-muted'}" style="font-size:8px"></i> ${mat.active ? 'Aktif' : 'Draft'}
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                     <button class="btn btn-secondary btn-sm edit-btn" data-id="${mat.id}"><i class="fas fa-edit"></i> Edit</button>
-                     <button class="btn btn-secondary btn-sm del-btn" style="color:red; border-color:red" data-id="${mat.id}"><i class="fas fa-trash"></i> Hapus</button>
-                     ${mat.file_url ? `<a href="${mat.file_url}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Buka File</a>` : `<span class="btn btn-secondary btn-sm" style="opacity:0.6; cursor:not-allowed;"><i class="fas fa-file"></i> File belum ada</span>`}
+                    <button class="btn btn-secondary btn-sm edit-btn" data-id="${mat.id}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-secondary btn-sm del-btn" style="color:red; border-color:red" data-id="${mat.id}">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                    ${mat.file_url
+                        ? `<a href="${mat.file_url}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm"><i class="fas fa-link"></i> Buka URL</a>`
+                        : `<span class="btn btn-secondary btn-sm" style="opacity:0.6; cursor:not-allowed;"><i class="fas fa-file"></i> URL belum ada</span>`}
                 </div>
             </div>
         `).join('');
 
-        list.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => openEdit(b.dataset.id));
-        list.querySelectorAll('.del-btn').forEach(b => b.onclick = () => handleDelete(b.dataset.id));
+        list.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = () => openEdit(btn.dataset.id));
+        list.querySelectorAll('.del-btn').forEach(btn => btn.onclick = () => handleDelete(btn.dataset.id));
     }
 
     function updatePagination() {
@@ -217,8 +160,18 @@ export function initMaterials(state, els, api) {
         if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
     }
 
+    function resetFormState() {
+        form?.reset();
+        if (inpId) inpId.value = '';
+        if (inpThumbnail) {
+            inpThumbnail.dataset.autoThumb = '';
+        }
+        setThumbPreview('');
+    }
+
     function openModal(title = 'Tambah Materi') {
-        document.getElementById('material-modal-title').textContent = title;
+        const titleEl = document.getElementById('material-modal-title');
+        if (titleEl) titleEl.textContent = title;
         modal.classList.remove('hidden');
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -229,22 +182,14 @@ export function initMaterials(state, els, api) {
         modal.classList.remove('active');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
-        form.reset();
-        inpId.value = '';
-
-        // Reset Upload Previews
-        currentFile = null;
-        currentThumb = null;
-        fileStatus.classList.add('hidden');
-        fileZone.querySelector('.upload-placeholder').classList.remove('hidden');
-        thumbPreview.classList.add('hidden');
-        thumbPlaceholder.classList.remove('hidden');
-        progressContainer.classList.add('hidden');
-        progressBar.style.width = '0%';
+        resetFormState();
         if (!fromPop && window.__uiBack) window.__uiBack.requestClose('admin-material');
     }
 
-    addBtn.onclick = () => openModal();
+    async function fetchSingle(id) {
+        const data = await api.apiAdminVercel('GET', '/api/admin/materials?action=listMaterials');
+        return data.materials?.find(m => String(m.id) === String(id));
+    }
 
     async function openEdit(id) {
         try {
@@ -252,18 +197,20 @@ export function initMaterials(state, els, api) {
             if (!mat) return;
 
             inpId.value = mat.id;
-            inpTitle.value = mat.title;
+            inpTitle.value = mat.title || '';
             inpDesc.value = mat.description || '';
             inpFileType.value = mat.file_type || 'pdf';
             inpCategory.value = mat.category || 'Umum';
             inpFileUrl.value = mat.file_url || '';
             inpThumbnail.value = mat.thumbnail || '';
-            inpActive.checked = mat.active;
+            inpActive.checked = !!mat.active;
 
             if (mat.thumbnail) {
-                thumbPreview.src = mat.thumbnail;
-                thumbPreview.classList.remove('hidden');
-                thumbPlaceholder.classList.add('hidden');
+                inpThumbnail.dataset.autoThumb = '0';
+                setThumbPreview(mat.thumbnail);
+            } else {
+                inpThumbnail.dataset.autoThumb = '1';
+                tryAutoGenerateThumbnail(false);
             }
 
             openModal('Edit Materi');
@@ -272,15 +219,10 @@ export function initMaterials(state, els, api) {
         }
     }
 
-    async function fetchSingle(id) {
-        const data = await api.apiAdminVercel('GET', `/api/admin/materials?action=listMaterials`);
-        return data.materials?.find(m => m.id == id);
-    }
-
     async function handleDelete(id) {
         if (!confirm('Yakin hapus materi ini?')) return;
         try {
-            await api.apiAdminVercel('POST', `/api/admin/materials?action=deleteMaterial`, { id });
+            await api.apiAdminVercel('POST', '/api/admin/materials?action=deleteMaterial', { id });
             loadMaterials(currentPage);
             if (window.Toast) Toast.show('Materi berhasil dihapus', 'success');
         } catch (e) {
@@ -291,11 +233,16 @@ export function initMaterials(state, els, api) {
     form.onsubmit = async (e) => {
         e.preventDefault();
 
-        if (!inpTitle.value.trim()) {
+        const title = String(inpTitle.value || '').trim();
+        const fileUrl = String(inpFileUrl.value || '').trim();
+        if (!title) {
             alert('Judul materi wajib diisi.');
             return;
         }
-        // File upload bersifat opsional
+        if (!fileUrl) {
+            alert('URL materi wajib diisi.');
+            return;
+        }
 
         const btn = document.getElementById('mat-save-btn');
         const oldHtml = btn.innerHTML;
@@ -303,27 +250,20 @@ export function initMaterials(state, els, api) {
         btn.disabled = true;
 
         try {
-            // Step 1: Handle Uploads if Any
-            let fileUrl = inpFileUrl.value.trim();
-            let thumbUrl = inpThumbnail.value.trim();
-
-            if (currentFile) {
-                fileUrl = await uploadToCloud(currentFile, 'file');
-            }
-            if (currentThumb) {
-                thumbUrl = await uploadToCloud(currentThumb, 'thumb');
+            let thumbUrl = String(inpThumbnail.value || '').trim();
+            if (!thumbUrl) {
+                thumbUrl = deriveThumbnailFromFileUrl(fileUrl);
             }
 
-            // Step 2: Save metadata
             const payload = {
                 id: inpId.value || undefined,
-                title: inpTitle.value,
-                description: inpDesc.value,
-                file_type: inpFileType.value,
-                category: inpCategory.value,
+                title,
+                description: String(inpDesc.value || '').trim(),
+                file_type: String(inpFileType.value || 'pdf').trim(),
+                category: String(inpCategory.value || 'Umum').trim(),
                 file_url: fileUrl,
                 thumbnail: thumbUrl,
-                active: inpActive.checked
+                active: !!inpActive.checked
             };
 
             await api.apiAdminVercel('POST', '/api/admin/materials?action=upsertMaterial', payload);
@@ -338,17 +278,25 @@ export function initMaterials(state, els, api) {
         }
     };
 
+    addBtn.onclick = () => {
+        resetFormState();
+        openModal('Tambah Materi');
+    };
     closeBtn.onclick = closeModal;
     cancelBtn.onclick = closeModal;
+
+    inpFileUrl?.addEventListener('change', () => tryAutoGenerateThumbnail(false));
+    inpFileUrl?.addEventListener('blur', () => tryAutoGenerateThumbnail(false));
+    inpThumbnail?.addEventListener('input', () => {
+        inpThumbnail.dataset.autoThumb = '0';
+        setThumbPreview(inpThumbnail.value);
+    });
+    generateThumbBtn?.addEventListener('click', () => tryAutoGenerateThumbnail(true));
+
     if (window.__uiBack) window.__uiBack.register('admin-material', closeModal);
     if (searchInput) searchInput.oninput = api.debounce(() => loadMaterials(1), 500);
     if (prevBtn) prevBtn.onclick = () => loadMaterials(currentPage - 1);
     if (nextBtn) nextBtn.onclick = () => loadMaterials(currentPage + 1);
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
 
     loadMaterials();
 }
