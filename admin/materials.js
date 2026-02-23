@@ -14,6 +14,7 @@ export function initMaterials(state, els, api) {
     // Modal Inputs
     const inpId = document.getElementById('mat-id');
     const inpTitle = document.getElementById('mat-title');
+    const titleHint = document.getElementById('mat-title-hint');
     const inpDesc = document.getElementById('mat-desc');
     const inpFileType = document.getElementById('mat-file-type');
     const inpCategory = document.getElementById('mat-category');
@@ -48,6 +49,67 @@ export function initMaterials(state, els, api) {
         }
         thumbPreview.src = clean;
         thumbPreview.classList.remove('hidden');
+    }
+
+    function setTitleHint(message, tone = 'muted') {
+        if (!titleHint) return;
+        titleHint.textContent = message;
+        titleHint.className = 'small';
+        if (tone === 'success') {
+            titleHint.style.color = '#16a34a';
+        } else if (tone === 'warning') {
+            titleHint.style.color = '#f59e0b';
+        } else if (tone === 'error') {
+            titleHint.style.color = '#ef4444';
+        } else {
+            titleHint.className = 'small muted';
+            titleHint.style.color = '';
+        }
+    }
+
+    function prettifyFileName(rawName) {
+        const clean = String(rawName || '')
+            .trim()
+            .replace(/\.[a-zA-Z0-9]{2,5}$/i, '')
+            .replace(/[_\-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        if (!clean) return '';
+
+        return clean
+            .split(' ')
+            .map((word) => {
+                if (!word) return '';
+                if (/^[A-Z0-9]{2,}$/.test(word)) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            })
+            .join(' ');
+    }
+
+    function extractTitleFromFileUrl(url) {
+        const raw = String(url || '').trim();
+        if (!raw) return '';
+
+        try {
+            const parsed = new URL(raw);
+            const fromParams = ['title', 'filename', 'file', 'name']
+                .map(key => parsed.searchParams.get(key))
+                .find(Boolean);
+            if (fromParams) {
+                const pretty = prettifyFileName(decodeURIComponent(fromParams));
+                if (pretty) return pretty;
+            }
+
+            const lastSegment = decodeURIComponent((parsed.pathname || '').split('/').filter(Boolean).pop() || '');
+            if (/\.[a-zA-Z0-9]{2,5}$/i.test(lastSegment)) {
+                const pretty = prettifyFileName(lastSegment);
+                if (pretty) return pretty;
+            }
+        } catch {
+            return '';
+        }
+
+        return '';
     }
 
     function extractGoogleDriveFileId(url) {
@@ -154,6 +216,26 @@ export function initMaterials(state, els, api) {
         }
     }
 
+    function tryAutoFillTitleFromUrl(force = false) {
+        if (!inpTitle || !inpFileUrl) return;
+        const currentTitle = String(inpTitle.value || '').trim();
+        const autoTitleFlag = inpTitle.dataset.autoTitle === '1';
+        const canAutofill = force || !currentTitle || autoTitleFlag;
+        if (!canAutofill) return;
+
+        const derived = extractTitleFromFileUrl(inpFileUrl.value);
+        if (!derived) {
+            if (force) {
+                setTitleHint('Nama file tidak terdeteksi dari URL ini. Isi judul manual.', 'warning');
+            }
+            return;
+        }
+
+        inpTitle.value = derived;
+        inpTitle.dataset.autoTitle = '1';
+        setTitleHint('Judul terisi otomatis dari nama file URL.', 'success');
+    }
+
     async function loadMaterials(page = 1) {
         if (!list) return;
         list.innerHTML = '<div style="text-align:center; padding:20px;">Memuat...</div>';
@@ -220,6 +302,10 @@ export function initMaterials(state, els, api) {
     function resetFormState() {
         form?.reset();
         if (inpId) inpId.value = '';
+        if (inpTitle) {
+            inpTitle.dataset.autoTitle = '1';
+            setTitleHint('Judul bisa terisi otomatis dari nama file pada URL materi.', 'muted');
+        }
         if (inpThumbnail) {
             inpThumbnail.dataset.autoThumb = '';
         }
@@ -256,6 +342,7 @@ export function initMaterials(state, els, api) {
 
             inpId.value = mat.id;
             inpTitle.value = mat.title || '';
+            inpTitle.dataset.autoTitle = mat.title ? '0' : '1';
             inpDesc.value = mat.description || '';
             inpFileType.value = mat.file_type || 'pdf';
             inpCategory.value = mat.category || 'Umum';
@@ -263,6 +350,11 @@ export function initMaterials(state, els, api) {
             inpThumbnail.value = mat.thumbnail || '';
             inpActive.checked = !!mat.active;
             updateFileUrlHint();
+            if (!mat.title) {
+                tryAutoFillTitleFromUrl(false);
+            } else {
+                setTitleHint('Judul manual aktif. Ubah URL tidak akan menimpa judul ini.', 'muted');
+            }
 
             if (mat.thumbnail) {
                 inpThumbnail.dataset.autoThumb = '0';
@@ -345,13 +437,24 @@ export function initMaterials(state, els, api) {
     addBtn.onclick = () => {
         resetFormState();
         openModal('Tambah Materi');
+        tryAutoFillTitleFromUrl(false);
     };
     closeBtn.onclick = closeModal;
     cancelBtn.onclick = closeModal;
 
     inpFileUrl?.addEventListener('input', () => updateFileUrlHint());
-    inpFileUrl?.addEventListener('change', () => tryAutoGenerateThumbnail(false));
-    inpFileUrl?.addEventListener('blur', () => tryAutoGenerateThumbnail(false));
+    inpFileUrl?.addEventListener('change', () => {
+        tryAutoFillTitleFromUrl(false);
+        tryAutoGenerateThumbnail(false);
+    });
+    inpFileUrl?.addEventListener('blur', () => {
+        tryAutoFillTitleFromUrl(false);
+        tryAutoGenerateThumbnail(false);
+    });
+    inpTitle?.addEventListener('input', () => {
+        inpTitle.dataset.autoTitle = '0';
+        setTitleHint('Judul manual aktif. Otomatisasi judul dimatikan untuk field ini.', 'muted');
+    });
     inpThumbnail?.addEventListener('input', () => {
         inpThumbnail.dataset.autoThumb = '0';
         setThumbPreview(inpThumbnail.value);
