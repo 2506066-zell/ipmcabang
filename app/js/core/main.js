@@ -42,6 +42,51 @@
 
     window.__uiBack = uiBack;
 
+    // Premium boot animation for public pages that include #loading-overlay.
+    (() => {
+        const overlay = document.getElementById('loading-overlay');
+        if (!overlay || overlay.dataset.bootInit === '1') return;
+        overlay.dataset.bootInit = '1';
+
+        const minVisibleMs = 560;
+        const maxWaitMs = 3000;
+        const startedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        let finalized = false;
+
+        const elapsed = () => {
+            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            return now - startedAt;
+        };
+
+        const closeOverlay = () => {
+            if (overlay.classList.contains('boot-leave')) return;
+            overlay.classList.remove('show');
+            overlay.classList.add('boot-leave');
+            document.body.classList.remove('app-entering');
+            setTimeout(() => {
+                overlay.classList.remove('boot-leave');
+            }, 420);
+        };
+
+        const finalizeBoot = () => {
+            if (finalized) return;
+            finalized = true;
+            const wait = Math.max(0, minVisibleMs - elapsed());
+            setTimeout(closeOverlay, wait);
+        };
+
+        document.body.classList.add('app-entering');
+        requestAnimationFrame(() => overlay.classList.add('show'));
+
+        if (document.readyState === 'complete') {
+            finalizeBoot();
+        } else {
+            window.addEventListener('load', finalizeBoot, { once: true });
+        }
+
+        setTimeout(finalizeBoot, maxWaitMs);
+    })();
+
 
     const hamburgerMenu = document.getElementById('hamburger-menu');
     const mobileNav = document.getElementById('mobile-nav');

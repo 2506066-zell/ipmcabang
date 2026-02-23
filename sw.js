@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v28';
+const STATIC_CACHE = 'static-v29';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -24,6 +24,8 @@ const STATIC_ASSETS = [
   '/help.html',
   '/struktur-organisasi.html',
   '/offline.html',
+  '/install',
+  '/install.html',
   '/admin/offline.html',
   '/styles/style.css',
   '/styles/home-dynamic.css',
@@ -49,7 +51,7 @@ const STATIC_ASSETS = [
   '/scripts/public-articles.js',
   '/scripts/public-materials.js',
   '/app/js/core/main.js',
-  '/app/js/core/main.js?v=12',
+  '/app/js/core/main.js?v=13',
   '/app/js/core/profile.js',
   '/app/js/core/install-header.js',
   '/app/js/core/toast.js',
@@ -72,7 +74,9 @@ const STATIC_ASSETS = [
   '/admin/editor.css',
   '/ipm%20(2).png',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/icons/icon-192-maskable.png',
+  '/icons/icon-512-maskable.png'
 ];
 
 self.addEventListener('install', (event) => {
