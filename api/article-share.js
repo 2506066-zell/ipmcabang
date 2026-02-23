@@ -4,6 +4,7 @@ const { applySecurityHeaders } = require('./_util');
 const FALLBACK_IMAGE = '/ipm%20(2).png';
 const DEFAULT_OG_WIDTH = '1200';
 const DEFAULT_OG_HEIGHT = '630';
+const HOOK_SUMMARY_TOKEN_REGEX = /<!--\s*HOOK_SUMMARY:([\s\S]*?)-->/gi;
 
 function escapeHtml(value) {
   return String(value || '')
@@ -21,6 +22,24 @@ function stripHtml(value) {
     .trim();
 }
 
+function extractHookSummaryFromContent(contentHtml) {
+  let summary = '';
+  const content = String(contentHtml || '').replace(HOOK_SUMMARY_TOKEN_REGEX, (match, encoded) => {
+    if (!summary) {
+      try {
+        summary = decodeURIComponent(String(encoded || '').trim());
+      } catch {
+        summary = String(encoded || '').trim();
+      }
+    }
+    return '';
+  });
+  return {
+    summary: String(summary || '').replace(/\s+/g, ' ').trim(),
+    content: String(content || '').trim()
+  };
+}
+
 function getOrigin(req) {
   const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
@@ -28,7 +47,8 @@ function getOrigin(req) {
 }
 
 function buildDescription(article) {
-  const source = article.summary || article.excerpt || article.content || '';
+  const embedded = extractHookSummaryFromContent(article.content || '');
+  const source = article.summary || article.excerpt || embedded.summary || embedded.content || '';
   const plain = stripHtml(source);
   if (!plain) return 'Baca artikel terbaru dari PC IPM Panawuan.';
   if (plain.length <= 180) return plain;

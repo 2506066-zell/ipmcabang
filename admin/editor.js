@@ -7,6 +7,7 @@
     const FONT_SCALE_KEY = 'ipmquiz_editor_font_scale';
     const MIN_WORD_COUNT = 120;
     const DEBOUNCE_MS = 250;
+    const HOOK_SUMMARY_TOKEN_REGEX = /<!--\s*HOOK_SUMMARY:([\s\S]*?)-->/gi;
     const DOMAIN_WEIGHTS = {
         structure: 45,
         readability: 35,
@@ -95,6 +96,9 @@
         form: document.getElementById('article-form'),
         inpId: document.getElementById('art-id'),
         inpTitle: document.getElementById('art-title'),
+        inpSummary: document.getElementById('art-summary'),
+        inpSummaryStatus: document.getElementById('art-summary-status'),
+        inpSummaryCount: document.getElementById('art-summary-count'),
         inpAuthor: document.getElementById('art-author'),
         inpCategory: document.getElementById('art-category'),
         inpDate: document.getElementById('art-date'),
@@ -350,6 +354,53 @@
         return String(text || '').replace(/\s+/g, ' ').trim();
     }
 
+    function extractHookSummaryFromContent(contentHtml) {
+        let summary = '';
+        const content = String(contentHtml || '').replace(HOOK_SUMMARY_TOKEN_REGEX, (match, encoded) => {
+            if (!summary) {
+                try {
+                    summary = decodeURIComponent(String(encoded || '').trim());
+                } catch {
+                    summary = String(encoded || '').trim();
+                }
+            }
+            return '';
+        });
+        return {
+            summary: normalizeTextValue(summary),
+            content: String(content || '').trim()
+        };
+    }
+
+    function injectHookSummaryIntoContent(contentHtml, summaryText) {
+        const cleanSummary = normalizeTextValue(summaryText);
+        const baseContent = String(contentHtml || '').replace(HOOK_SUMMARY_TOKEN_REGEX, '').trim();
+        if (!cleanSummary) return baseContent;
+        return `<!--HOOK_SUMMARY:${encodeURIComponent(cleanSummary)}-->\n${baseContent}`;
+    }
+
+    function normalizeCompareText(text) {
+        return normalizeTextValue(text)
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function isHookSummaryDuplicate(summary, intro) {
+        const s = normalizeCompareText(summary);
+        const i = normalizeCompareText(intro);
+        if (!s || !i) return false;
+        if (s === i) return true;
+        if (i.startsWith(s) && s.length >= Math.max(50, Math.floor(i.length * 0.65))) return true;
+        if (s.startsWith(i) && i.length >= Math.max(50, Math.floor(s.length * 0.65))) return true;
+        return false;
+    }
+
+    function getSummaryValue() {
+        return normalizeTextValue(els.inpSummary ? els.inpSummary.value : '');
+    }
+
     function statusWeight(status) {
         if (status === 'pass') return 1;
         if (status === 'warning') return 0.5;
@@ -567,6 +618,7 @@
     function evaluateSeoReadiness(meta) {
         const items = [];
         const title = normalizeTextValue(els.inpTitle ? els.inpTitle.value : '');
+        const summary = getSummaryValue();
         const coverImage = normalizeTextValue(els.inpBase64 ? els.inpBase64.value : '');
         const intro = meta.paragraphs.length ? normalizeTextValue(meta.paragraphs[0].textContent || '') : '';
         const coverMime = getCoverMimeFromSource(coverImage);
@@ -612,6 +664,30 @@
             title.length >= 36,
             'Panjang judul sudah baik untuk snippet.',
             'Pertimbangkan judul 36+ karakter agar snippet lebih informatif.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Hook summary terisi',
+            summary.length >= 50,
+            'Hook summary siap dipakai sebagai teaser artikel.',
+            'Isi hook summary minimal 50 karakter agar teaser artikel lebih kuat.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Hook summary tidak duplikat paragraf awal',
+            !summary || !isHookSummaryDuplicate(summary, intro),
+            'Hook summary sudah berbeda dari paragraf pembuka.',
+            'Hook summary masih mirip paragraf pembuka. Buat versi ringkas yang berbeda.',
+            { severity: 'warning' }
+        ));
+        items.push(createCheckItem(
+            'SEO & Share',
+            'Panjang hook summary ideal',
+            !summary || (summary.length >= 80 && summary.length <= 220),
+            'Panjang hook summary sudah ideal untuk hook pembaca.',
+            'Panjang hook summary idealnya 80-220 karakter.',
             { severity: 'warning' }
         ));
         items.push(createCheckItem(
@@ -1093,15 +1169,50 @@
     }
 
     function getRawArticleForPreview() {
+        const summary = getSummaryValue();
         return {
             id: els.inpId ? els.inpId.value : '',
             title: els.inpTitle ? els.inpTitle.value : '',
+            summary,
+            excerpt: summary,
             author: els.inpAuthor ? els.inpAuthor.value : '',
             category: els.inpCategory ? els.inpCategory.value : 'Umum',
             publish_date: els.inpDate && els.inpDate.value ? new Date(els.inpDate.value).toISOString() : new Date().toISOString(),
             image: els.inpBase64 ? els.inpBase64.value : '',
             content: sanitizeHtml(els.editorArea ? els.editorArea.innerHTML : '')
         };
+    }
+
+    function renderSummaryIndicator() {
+        if (!els.inpSummaryStatus && !els.inpSummaryCount) return;
+        const summary = getSummaryValue();
+        const rawContent = els.editorArea ? els.editorArea.innerHTML : '';
+        const meta = getContentAnalysis(rawContent);
+        const intro = meta.paragraphs.length ? normalizeTextValue(meta.paragraphs[0].textContent || '') : '';
+        const isDup = isHookSummaryDuplicate(summary, intro);
+
+        if (els.inpSummaryCount) {
+            els.inpSummaryCount.textContent = `${summary.length} karakter`;
+        }
+        if (!els.inpSummaryStatus) return;
+
+        els.inpSummaryStatus.className = 'editor-summary-status';
+        if (!summary) {
+            els.inpSummaryStatus.textContent = 'Kosong: dek tidak akan tampil di halaman baca.';
+            return;
+        }
+        if (summary.length < 50) {
+            els.inpSummaryStatus.classList.add('warn');
+            els.inpSummaryStatus.textContent = 'Terlalu pendek: sarankan minimal 50 karakter.';
+            return;
+        }
+        if (isDup) {
+            els.inpSummaryStatus.classList.add('warn');
+            els.inpSummaryStatus.textContent = 'Mirip paragraf awal: ganti agar tidak terasa teks dobel.';
+            return;
+        }
+        els.inpSummaryStatus.classList.add('ok');
+        els.inpSummaryStatus.textContent = 'Hook summary siap: tampil sebagai dek di atas artikel.';
     }
 
     function setupPreviewToc(root, prefix) {
@@ -1164,6 +1275,10 @@
 
         const article = getRawArticleForPreview();
         const vm = renderer.buildArticleViewModel(article, { url: '/articles' });
+        const summary = getSummaryValue();
+        const meta = getContentAnalysis(article.content || '');
+        const intro = meta.paragraphs.length ? normalizeTextValue(meta.paragraphs[0].textContent || '') : '';
+        vm.dek = summary && !isHookSummaryDuplicate(summary, intro) ? summary : '';
         const html = renderer.renderArticleDetailHTML(vm, {
             includeBackLink: false,
             showReadingTools: true,
@@ -1237,6 +1352,7 @@
         renderQualityScoreCard(quality);
         renderLintPanel(quality.errors, quality.warnings);
         updateQualityHeaderStatus(quality);
+        renderSummaryIndicator();
         return state.lint;
     }
 
@@ -1244,6 +1360,7 @@
         if (state.id) return;
         const payload = {
             title: els.inpTitle ? els.inpTitle.value : '',
+            summary: els.inpSummary ? els.inpSummary.value : '',
             author: els.inpAuthor ? els.inpAuthor.value : '',
             category: els.inpCategory ? els.inpCategory.value : 'Umum',
             publishDate: els.inpDate ? els.inpDate.value : '',
@@ -1266,11 +1383,13 @@
                 localStorage.removeItem(DRAFT_KEY);
                 return;
             }
+            const extracted = extractHookSummaryFromContent(draft.content || '');
             if (els.inpTitle) els.inpTitle.value = draft.title || '';
+            if (els.inpSummary) els.inpSummary.value = draft.summary || extracted.summary || '';
             if (els.inpAuthor) els.inpAuthor.value = draft.author || '';
             if (els.inpCategory) els.inpCategory.value = draft.category || 'Umum';
             if (els.inpDate && draft.publishDate) els.inpDate.value = draft.publishDate;
-            if (els.editorArea) els.editorArea.innerHTML = draft.content || '';
+            if (els.editorArea) els.editorArea.innerHTML = extracted.content || '';
             if (els.inpBase64 && draft.image) {
                 els.inpBase64.value = draft.image;
                 if (els.previewDiv) {
@@ -1754,11 +1873,13 @@
             const data = await fetchJson(`/api/articles?id=${state.id}`);
             if (data.status !== 'success' || !data.article) throw new Error('Artikel tidak ditemukan');
             const article = data.article;
+            const extracted = extractHookSummaryFromContent(article.content || '');
             if (els.inpId) els.inpId.value = article.id || '';
             if (els.inpTitle) els.inpTitle.value = article.title || '';
+            if (els.inpSummary) els.inpSummary.value = article.summary || article.excerpt || extracted.summary || '';
             if (els.inpAuthor) els.inpAuthor.value = article.author || '';
             if (els.inpCategory) els.inpCategory.value = article.category || 'Umum';
-            if (els.editorArea) els.editorArea.innerHTML = sanitizeHtml(article.content || '');
+            if (els.editorArea) els.editorArea.innerHTML = sanitizeHtml(extracted.content || '');
             if (els.inpDate) {
                 const date = new Date(article.publish_date || Date.now());
                 date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
@@ -1782,13 +1903,17 @@
         const publishIso = els.inpDate && els.inpDate.value
             ? new Date(els.inpDate.value).toISOString()
             : new Date().toISOString();
+        const summary = getSummaryValue();
 
+        const sanitizedContent = sanitizeHtml(els.editorArea ? els.editorArea.innerHTML : '');
         return {
             id: els.inpId ? els.inpId.value : '',
             title: els.inpTitle ? els.inpTitle.value.trim() : '',
+            summary,
+            excerpt: summary,
             author: els.inpAuthor ? els.inpAuthor.value.trim() : '',
             category: els.inpCategory ? els.inpCategory.value : 'Umum',
-            content: sanitizeHtml(els.editorArea ? els.editorArea.innerHTML : ''),
+            content: injectHookSummaryIntoContent(sanitizedContent, summary),
             image: els.inpBase64 ? els.inpBase64.value : '',
             publish_date: publishIso
         };
@@ -1853,7 +1978,7 @@
     }
 
     function bindInputObservers() {
-        const fields = [els.inpTitle, els.inpAuthor, els.inpCategory, els.inpDate, els.editorArea];
+        const fields = [els.inpTitle, els.inpSummary, els.inpAuthor, els.inpCategory, els.inpDate, els.editorArea];
         fields.forEach((field) => {
             if (!field) return;
             field.addEventListener('input', handleEditorContentChange);

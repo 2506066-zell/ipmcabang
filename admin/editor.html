@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="admin.css">
     <link rel="stylesheet" href="/app/css/editorial.css">
     <link rel="stylesheet" href="/app/css/article-enhancements.css?v=20260222n">
-    <link rel="stylesheet" href="editor.css?v=20260222n">
+    <link rel="stylesheet" href="editor.css?v=20260222p">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="page-editor">
@@ -64,6 +64,20 @@
                         <label for="art-title" class="editor-label">Judul</label>
                         <input type="text" id="art-title" class="editor-title-input" required
                             placeholder="Tulis judul artikel di sini..." autofocus>
+                    </div>
+
+                    <div class="editor-block editor-summary-block">
+                        <label for="art-summary" class="editor-label">Hook Summary (Dek)</label>
+                        <textarea
+                            id="art-summary"
+                            class="editor-summary-input"
+                            rows="3"
+                            placeholder="Tulis ringkasan 1-2 kalimat untuk teaser di atas artikel..."
+                        ></textarea>
+                        <div class="editor-summary-meta">
+                            <small id="art-summary-status" class="editor-summary-status">Kosong: dek tidak akan tampil di halaman baca.</small>
+                            <small id="art-summary-count" class="editor-summary-count">0 karakter</small>
+                        </div>
                     </div>
 
                     <div class="editor-meta-row">
@@ -318,7 +332,7 @@
 
     <script src="../scripts/toast.js"></script>
     <script src="/app/js/features/articles/article-renderer-shared.js"></script>
-    <script src="editor.js?v=20260222b" defer></script>
+    <script src="editor.js?v=20260222c" defer></script>
 
     <div id="low-grade-confirm-modal" class="editor-modal" hidden aria-hidden="true">
         <div class="editor-modal-backdrop" data-dismiss="true"></div>

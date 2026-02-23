@@ -3,6 +3,7 @@ const LOCAL_ARTICLE_FALLBACK = '/ipm%20(2).png';
 const LIST_SCROLL_KEY = 'ipm_articles_list_scroll';
 const LIST_FOCUS_KEY = 'ipm_articles_list_focus';
 const JSONLD_ID = 'article-jsonld';
+const HOOK_SUMMARY_TOKEN_REGEX = /<!--\s*HOOK_SUMMARY:([\s\S]*?)-->/gi;
 
 let listInitialized = false;
 let detailCleanupFns = [];
@@ -41,6 +42,65 @@ function stripHtml(html) {
     const div = document.createElement('div');
     div.innerHTML = html || '';
     return (div.textContent || div.innerText || '').trim();
+}
+
+function normalizeCompareText(text) {
+    return String(text || '')
+        .toLowerCase()
+        .replace(/[^\w\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function getFirstParagraphText(contentHtml) {
+    const source = String(contentHtml || '').trim();
+    if (!source) return '';
+    const fallbackSentence = (text) => {
+        const plain = stripHtml(text);
+        if (!plain) return '';
+        const parts = plain.split(/[.!?]\s+/).filter(Boolean);
+        return parts[0] || plain;
+    };
+    if (typeof DOMParser === 'undefined') {
+        return fallbackSentence(source);
+    }
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(source, 'text/html');
+    const firstP = doc.body ? doc.body.querySelector('p') : null;
+    if (firstP) return normalizeTextValue(firstP.textContent || '');
+    return fallbackSentence(source);
+}
+
+function normalizeTextValue(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
+function extractHookSummaryFromContent(contentHtml) {
+    let summary = '';
+    const content = String(contentHtml || '').replace(HOOK_SUMMARY_TOKEN_REGEX, (match, encoded) => {
+        if (!summary) {
+            try {
+                summary = decodeURIComponent(String(encoded || '').trim());
+            } catch {
+                summary = String(encoded || '').trim();
+            }
+        }
+        return '';
+    });
+    return {
+        summary: normalizeTextValue(summary),
+        content: String(content || '').trim()
+    };
+}
+
+function isDekDuplicateWithIntro(dekText, introText) {
+    const dek = normalizeCompareText(dekText);
+    const intro = normalizeCompareText(introText);
+    if (!dek || !intro) return false;
+    if (dek === intro) return true;
+    if (intro.startsWith(dek) && dek.length >= Math.max(50, Math.floor(intro.length * 0.65))) return true;
+    if (dek.startsWith(intro) && intro.length >= Math.max(50, Math.floor(dek.length * 0.65))) return true;
+    return false;
 }
 
 function slugifyText(text) {
@@ -533,7 +593,12 @@ function initDetailPage(id, slug) {
             return data.article;
         })
         .then((article) => {
-            article.content = sanitizeArticle(article.content);
+            const extracted = extractHookSummaryFromContent(article.content || '');
+            if (!String(article.summary || article.excerpt || '').trim() && extracted.summary) {
+                article.summary = extracted.summary;
+                article.excerpt = extracted.summary;
+            }
+            article.content = sanitizeArticle(extracted.content || article.content);
             syncPreferredArticleUrl(article);
             renderDetail(container, article);
             updateSEO(article);
@@ -595,7 +660,11 @@ function syncPreferredArticleUrl(article) {
 }
 
 function buildDetailDek(article) {
-    return String(article?.summary || article?.excerpt || '').trim();
+    const explicitDek = String(article?.summary || article?.excerpt || '').trim();
+    if (!explicitDek) return '';
+    const firstParagraph = getFirstParagraphText(article?.content || '');
+    if (isDekDuplicateWithIntro(explicitDek, firstParagraph)) return '';
+    return explicitDek;
 }
 
 function renderDetail(container, article) {
@@ -605,10 +674,7 @@ function renderDetail(container, article) {
 
     if (renderer && typeof renderer.buildArticleViewModel === 'function' && typeof renderer.renderArticleDetailHTML === 'function') {
         const vm = renderer.buildArticleViewModel({ ...article, content: article.content }, { url: articleUrl });
-        // Avoid duplicate intro: only show dek if editor provides explicit summary/excerpt.
-        if (!String(article?.summary || article?.excerpt || '').trim()) {
-            vm.dek = '';
-        }
+        vm.dek = buildDetailDek(article);
         const core = renderer.renderArticleDetailHTML(vm, {
             includeBackLink: true,
             backHref: '/articles',
