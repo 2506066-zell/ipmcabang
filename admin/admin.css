@@ -1234,6 +1234,13 @@ textarea:focus {
     background: rgba(15, 23, 42, 0.8);
 }
 
+/* Keep mobile native picker readable (Android/iOS may render light popup). */
+select option,
+select optgroup {
+    color: #0f172a;
+    background: #ffffff;
+}
+
 /* === BUTTONS === */
 .btn {
     display: inline-flex;

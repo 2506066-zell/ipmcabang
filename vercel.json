@@ -32,6 +32,11 @@
       "source": "/articles.html",
       "destination": "/articles",
       "permanent": true
+    },
+    {
+      "source": "/install.html",
+      "destination": "/install",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -42,6 +47,10 @@
     {
       "source": "/articles",
       "destination": "/articles.html"
+    },
+    {
+      "source": "/install",
+      "destination": "/install.html"
     },
     {
       "source": "/api/article-share",

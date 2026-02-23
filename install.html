@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#006400">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Instal Aplikasi | PC IPM Panawuan</title>
+  <link rel="icon" href="/ipm%20(2).png">
+  <style>
+    :root {
+      --bg: #f5f7f6;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: #e2e8f0;
+      --brand: #166534;
+      --brand-dark: #14532d;
+      --ok-bg: #f0fdf4;
+      --ok-line: #bbf7d0;
+      --ok-text: #166534;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      padding: max(16px, env(safe-area-inset-top, 0px)) 14px max(18px, env(safe-area-inset-bottom, 0px));
+    }
+
+    .shell {
+      width: min(680px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-left img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 3px;
+    }
+
+    .brand-title {
+      min-width: 0;
+    }
+
+    .brand-title strong {
+      display: block;
+      font-size: 0.97rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-title span {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      min-height: 38px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.3rem, 4.2vw, 1.75rem);
+      line-height: 1.25;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.96rem;
+    }
+
+    .meta {
+      margin-top: 10px;
+      font-size: 0.83rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .platform {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button,
+    a.btn {
+      min-height: 46px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      padding: 0 14px;
+      font-size: 0.94rem;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      border-color: var(--brand-dark);
+      color: #fff;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f8fafc;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    .ok {
+      margin-top: 10px;
+      padding: 11px 12px;
+      border: 1px solid var(--ok-line);
+      border-radius: 12px;
+      background: var(--ok-bg);
+      color: var(--ok-text);
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .steps h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .steps-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      background: #fff;
+    }
+
+    .step strong {
+      display: block;
+      font-size: 0.86rem;
+      margin-bottom: 6px;
+    }
+
+    .step ol {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.87rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (min-width: 720px) {
+      .card {
+        padding: 16px;
+      }
+
+      .actions {
+        grid-template-columns: 1fr auto;
+      }
+
+      .steps-list {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card brand">
+      <div class="brand-left">
+        <img src="/ipm%20(2).png" alt="Logo IPM">
+        <div class="brand-title">
+          <strong>PC IPM Panawuan</strong>
+          <span>Instalasi Aplikasi Resmi</span>
+        </div>
+      </div>
+      <a class="back-link" href="/">Kembali</a>
+    </section>
+
+    <section class="card">
+      <h1>Install aplikasi ke layar utama</h1>
+      <p class="lead">Akses informasi organisasi lebih cepat tanpa buka browser berulang. Instalasi dilakukan langsung dari browser resmi.</p>
+      <p class="meta">Tidak perlu APK eksternal. Aman, ringan, dan dapat diperbarui otomatis.</p>
+
+      <p id="platformText" class="platform">Mendeteksi perangkat...</p>
+
+      <div class="actions">
+        <button id="installBtn" class="btn-primary" disabled>Install Aplikasi</button>
+        <a class="btn btn-secondary" href="/help.html">Panduan Lengkap</a>
+      </div>
+
+      <div id="hintBox" class="status" role="status" aria-live="polite">Mempersiapkan tombol install...</div>
+      <div id="okMsg" class="ok hidden">Instalasi berhasil. Aplikasi sudah tersedia di layar utama perangkat Anda.</div>
+    </section>
+
+    <section class="card steps">
+      <h2>Langkah Install</h2>
+      <div class="steps-list">
+        <article class="step">
+          <strong>Android (Chrome/Edge)</strong>
+          <ol>
+            <li>Tap tombol <b>Install Aplikasi</b>.</li>
+            <li>Konfirmasi instalasi dari browser.</li>
+            <li>Ikon aplikasi muncul di layar utama.</li>
+          </ol>
+        </article>
+        <article class="step">
+          <strong>iPhone/iPad (Safari)</strong>
+          <ol>
+            <li>Tap tombol <b>Share</b> di Safari.</li>
+            <li>Pilih <b>Add to Home Screen</b>.</li>
+            <li>Tap <b>Add</b>.</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const installBtn = document.getElementById('installBtn');
+      const hintBox = document.getElementById('hintBox');
+      const okMsg = document.getElementById('okMsg');
+      const platformText = document.getElementById('platformText');
+      let deferredPrompt = null;
+
+      const isStandalone = () => (
+        window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
+      ) || window.navigator.standalone === true;
+
+      const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+      const isAndroid = () => /android/i.test(navigator.userAgent || '');
+
+      function setHint(text) {
+        hintBox.textContent = text;
+      }
+
+      function setPlatformLabel() {
+        if (isIOS()) {
+          platformText.textContent = 'Perangkat terdeteksi: iOS';
+          return;
+        }
+        if (isAndroid()) {
+          platformText.textContent = 'Perangkat terdeteksi: Android';
+          return;
+        }
+        platformText.textContent = 'Perangkat terdeteksi: Desktop/Other';
+      }
+
+      function readyToInstall() {
+        installBtn.disabled = false;
+        setHint('Tombol siap. Tap "Install Aplikasi", lalu konfirmasi pada dialog browser.');
+      }
+
+      function showIOSHint() {
+        installBtn.disabled = true;
+        setHint('Untuk iPhone/iPad gunakan Safari:\n1. Tap Share\n2. Pilih "Add to Home Screen"\n3. Tap "Add".');
+      }
+
+      function showFallbackHint() {
+        installBtn.disabled = true;
+        setHint('Tombol install belum tersedia. Gunakan Chrome/Edge terbaru dan refresh halaman ini.');
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        readyToInstall();
+      });
+
+      window.addEventListener('appinstalled', () => {
+        okMsg.classList.remove('hidden');
+        installBtn.disabled = true;
+        setHint('Instalasi selesai. Aplikasi siap dibuka dari layar utama.');
+        deferredPrompt = null;
+      });
+
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt || installBtn.disabled) return;
+        installBtn.disabled = true;
+        deferredPrompt.prompt();
+        try {
+          await deferredPrompt.userChoice;
+        } catch {}
+        deferredPrompt = null;
+      });
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+
+      setPlatformLabel();
+      if (isStandalone()) {
+        okMsg.classList.remove('hidden');
+        installBtn.disabled = true;
+        setHint('Aplikasi sudah terpasang pada perangkat ini.');
+      } else if (isIOS()) {
+        showIOSHint();
+      } else {
+        showFallbackHint();
+      }
+    })();
+  </script>
+</body>
+</html>

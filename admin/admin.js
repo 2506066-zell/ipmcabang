@@ -1,6 +1,6 @@
 (() => {
     const DEFAULT_API_URL = '/api';
-    const MODULE_VER = '15';
+    const MODULE_VER = '16';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
@@ -582,6 +582,8 @@
                         setStatus
                     });
                     state.organizationInitialized = true;
+                } else if (typeof window.__adminOrganizationReload === 'function') {
+                    window.__adminOrganizationReload();
                 }
             }).catch(err => console.error('[Admin] Failed to load organization module:', err));
         }

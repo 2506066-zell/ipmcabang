@@ -41,6 +41,11 @@ export function initOrganization(state, els, api) {
 
     function renderBidangOptions() {
         if (!bidangFilter) return;
+        if (!localState.bidang.length) {
+            bidangFilter.innerHTML = '<option value="" disabled selected>Belum ada data bidang</option>';
+            localState.selectedBidangCode = '';
+            return;
+        }
         const current = localState.selectedBidangCode;
         bidangFilter.innerHTML = localState.bidang.map(b => (
             `<option value="${api.escapeHtml(String(b.code || ''))}">${api.escapeHtml(String(b.name || 'Bidang'))}</option>`
@@ -198,6 +203,9 @@ export function initOrganization(state, els, api) {
     }
 
     async function loadSnapshot() {
+        if (bidangFilter) {
+            bidangFilter.innerHTML = '<option value="" disabled selected>Memuat bidang...</option>';
+        }
         api.showLoader('Memuat struktur organisasi...');
         try {
             const data = await api.apiAdminVercel('GET', '/api/admin/organization?action=snapshot');
@@ -213,6 +221,9 @@ export function initOrganization(state, els, api) {
         } catch (e) {
             console.error('[Organization] load failed:', e);
             setLocalStatus(`Gagal memuat: ${e.message || 'error'}`, 'error');
+            if (bidangFilter) {
+                bidangFilter.innerHTML = '<option value="" disabled selected>Gagal memuat bidang</option>';
+            }
             if (membersList) membersList.innerHTML = '<div class="small muted">Gagal memuat anggota.</div>';
             if (programsList) programsList.innerHTML = '<div class="small muted">Gagal memuat program kerja.</div>';
         } finally {
@@ -398,5 +409,6 @@ export function initOrganization(state, els, api) {
     }
 
     bindEvents();
+    window.__adminOrganizationReload = loadSnapshot;
     loadSnapshot();
 }
