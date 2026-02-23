@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayScore = formatScore(p.score);
             const avatarUrl = getAvatarUrl(p);
             const avatarMarkup = avatarUrl
-                ? `<img src="${avatarUrl}" alt="${safeName}">`
+                ? `<img src="${avatarUrl}" alt="${safeName}" loading="lazy" decoding="async">`
                 : `<span class="avatar-char">${getInitial(displayName)}</span>`;
 
             podiumItem.innerHTML = `
@@ -357,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayTime = formatTime(p.time_spent);
             const avatarUrl = getAvatarUrl(p);
             const avatarMarkup = avatarUrl
-                ? `<img src="${avatarUrl}" alt="${safeName}">`
+                ? `<img src="${avatarUrl}" alt="${safeName}" loading="lazy" decoding="async">`
                 : `<span class="avatar-char">${getInitial(displayName)}</span>`;
 
             const item = document.createElement('div');
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="rank-pimpinan" title="${displayPimpinan}">${displayPimpinan}</div>
                     <div class="rank-meta">${formatDate(p.ts || p.timestamp)}</div>
-                    ${item.classList.contains('is-me') && index > 0 ? `<div class="rank-motivation-text"><small>Selisih ${formatScore((restData[index - 1] || allData[2]).score - p.score)} poin ke posisi #${rank - 1}</small> <a href="quiz.html" class="cta-mini">Ejar!</a></div>` : ''}
+                    ${item.classList.contains('is-me') && index > 0 ? `<div class="rank-motivation-text"><small>Selisih ${formatScore((restData[index - 1] || allData[2]).score - p.score)} poin ke posisi #${rank - 1}</small> <a href="quiz-gamified.html" class="cta-mini">Ejar!</a></div>` : ''}
                 </div>
                 <div class="rank-score-box">
                     <div class="rank-score">${displayScore}</div>
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add Global CTA at bottom
         const ctaParams = document.createElement('div');
         ctaParams.className = 'ranking-footer-cta';
-        ctaParams.innerHTML = '<button onclick="window.location.href=\'quiz.html\'" class="btn-shine">Tantang Pemain Lain</button>';
+        ctaParams.innerHTML = '<button onclick="window.location.href=\'quiz-gamified.html\'" class="btn-shine">Tantang Pemain Lain</button>';
         rankingList.appendChild(ctaParams);
     }
 
@@ -501,3 +501,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cleanup on page unload (optional but good practice)
     window.addEventListener('beforeunload', () => clearTimeout(pollTimeout));
 });
+

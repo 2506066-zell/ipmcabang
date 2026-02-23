@@ -34,6 +34,21 @@
       "permanent": true
     },
     {
+      "source": "/quiz",
+      "destination": "/quiz-gamified.html",
+      "permanent": true
+    },
+    {
+      "source": "/quiz.html",
+      "destination": "/quiz-gamified.html",
+      "permanent": true
+    },
+    {
+      "source": "/article.html",
+      "destination": "/articles",
+      "permanent": true
+    },
+    {
       "source": "/install.html",
       "destination": "/install",
       "permanent": true

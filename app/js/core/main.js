@@ -1,4 +1,4 @@
-ï»¿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
 
     const uiBack = (() => {
         const state = { current: null, closers: {} };
@@ -44,8 +44,25 @@
 
     // Premium boot animation for public pages that include #loading-overlay.
     (() => {
+        const isStandalone = (
+            window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
+        ) || window.navigator.standalone === true;
+
+        if (!document.body.classList.contains('page-home')) return;
+
+        // In installed PWA, keep only subtle content entrance (no extra overlay).
+        if (isStandalone) {
+            document.body.classList.add('app-entering');
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    document.body.classList.remove('app-entering');
+                }, 360);
+            });
+            return;
+        }
+
         const overlay = document.getElementById('loading-overlay');
-        if (!overlay || overlay.dataset.bootInit === '1') return;
+        if (!overlay || overlay.dataset.bootInit === '1' || overlay.classList.contains('hidden')) return;
         overlay.dataset.bootInit = '1';
 
         const minVisibleMs = 560;
@@ -410,7 +427,7 @@
                     const end = schedule.end_time ? new Date(schedule.end_time).getTime() : 0;
                     if (!end || end <= now) {
                         setStateText('Sedang berlangsung');
-                        subEl.textContent = endLabel ? `Status: Sedang berlangsung â€¢ Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+                        subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
                         return;
                     }
                     const diff = Math.max(0, end - now);
@@ -420,14 +437,14 @@
                     const minutes = Math.floor((totalSeconds % 3600) / 60);
                     const seconds = totalSeconds % 60;
                     timerEl.innerHTML = renderSegments(days, hours, minutes, seconds);
-                    subEl.textContent = endLabel ? `Status: Sedang berlangsung â€¢ Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+                    subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
                     return;
                 }
 
                 const start = schedule.start_time ? new Date(schedule.start_time).getTime() : 0;
                 if (!start || start <= now) {
                     setStateText('Mulai sekarang');
-                    subEl.textContent = startLabel ? `Status: Mulai sekarang â€¢ Mulai: ${startLabel}` : 'Status: Mulai sekarang';
+                    subEl.textContent = startLabel ? `Status: Mulai sekarang • Mulai: ${startLabel}` : 'Status: Mulai sekarang';
                     return;
                 }
                 const diff = Math.max(0, start - now);
@@ -437,7 +454,7 @@
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 timerEl.innerHTML = renderSegments(days, hours, minutes, seconds);
-                subEl.textContent = startLabel ? `Status: Akan dimulai â€¢ Mulai: ${startLabel}` : 'Status: Akan dimulai';
+                subEl.textContent = startLabel ? `Status: Akan dimulai • Mulai: ${startLabel}` : 'Status: Akan dimulai';
             };
 
             update();
@@ -826,7 +843,7 @@
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = startLabel ? `Status: Akan dimulai â€¢ Mulai: ${startLabel}` : 'Status: Akan dimulai';
+            programCountdownSub.textContent = startLabel ? `Status: Akan dimulai • Mulai: ${startLabel}` : 'Status: Akan dimulai';
             programCountdown.hidden = false;
             return;
         }
@@ -839,13 +856,13 @@
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = endLabel ? `Status: Sedang berlangsung â€¢ Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+            programCountdownSub.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
             programCountdown.hidden = false;
             return;
         }
 
         programCountdownTimer.textContent = 'Selesai';
-        programCountdownSub.textContent = endLabel ? `Status: Selesai â€¢ Berakhir: ${endLabel}` : 'Status: Selesai';
+        programCountdownSub.textContent = endLabel ? `Status: Selesai • Berakhir: ${endLabel}` : 'Status: Selesai';
         programCountdown.hidden = false;
     };
 
@@ -1027,7 +1044,7 @@
     const activeDoc = window.location.pathname;
     const isPublicPage = activeDoc.includes('index.html') ||
         isArticlesPagePath(activeDoc) ||
-        activeDoc.includes('quiz.html') ||
+        activeDoc.includes('quiz-gamified.html') ||
         activeDoc.includes('ranking.html') ||
         activeDoc.endsWith('/');
 
@@ -1039,7 +1056,7 @@
             <button class="fab-main" id="fab-main"><i class="fas fa-plus"></i></button>
             <div class="fab-options">
                 <a href="ranking.html" class="fab-option" data-label="Peringkat"><i class="fas fa-trophy"></i></a>
-                <a href="quiz.html" class="fab-option" data-label="Ikuti Kuis"><i class="fas fa-gamepad"></i></a>
+                <a href="quiz-gamified.html" class="fab-option" data-label="Ikuti Kuis"><i class="fas fa-gamepad"></i></a>
                 <a href="help.html" class="fab-option" data-label="Bantuan"><i class="fas fa-question"></i></a>
             </div>
         `;
@@ -1134,3 +1151,4 @@
         });
     });
 })();
+

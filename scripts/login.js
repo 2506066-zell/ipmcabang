@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const FORM_ID = 'login-form';
   const USER_SESSION_KEY = 'ipmquiz_user_session';
   const USER_USERNAME_KEY = 'ipmquiz_user_username';
@@ -66,7 +66,7 @@
       try {
         await autoSubscribePush(token);
       } catch {}
-      window.location.href = 'quiz.html';
+      window.location.href = 'quiz-gamified.html';
     })
     .catch((e) => {
       const msg = (e && e.message && /username|password|salah|unauthorized/i.test(e.message))
@@ -133,5 +133,6 @@
     });
   }
 })();
+
 
 

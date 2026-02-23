@@ -664,7 +664,7 @@ async function handleResetSet(req, res) {
                 sendToUser(u.user_id, {
                     title: 'Kuis Di-reset',
                     body: msg,
-                    url: '/quiz.html'
+                    url: '/quiz-gamified.html'
                 }).catch(() => {});
             }
         }
@@ -748,3 +748,4 @@ module.exports = async (req, res) => {
         return json(res, 500, { status: 'error', message: String(e.message || e) });
     }
 };
+

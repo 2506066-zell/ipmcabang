@@ -44,7 +44,7 @@ export async function initPublicMaterials() {
         emptyState.classList.add('hidden');
         grid.innerHTML = materials.map(mat => {
             const icon = mat.file_type === 'pdf' ? 'fa-file-pdf' : (mat.file_type === 'ebook' ? 'fa-book-open' : 'fa-file-alt');
-            const thumb = mat.thumbnail ? `<img src="${mat.thumbnail}" alt="${mat.title}" class="materi-thumb">` : `<div class="materi-thumb"><i class="fas ${icon}"></i></div>`;
+            const thumb = mat.thumbnail ? `<img src="${mat.thumbnail}" alt="${mat.title}" class="materi-thumb" loading="lazy" decoding="async">` : `<div class="materi-thumb"><i class="fas ${icon}"></i></div>`;
 
             return `
                 <div class="materi-card">

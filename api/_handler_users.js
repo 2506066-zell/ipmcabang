@@ -80,7 +80,7 @@ async function handleResetAttempt(req, res) {
         sendToUser(userId, {
             title: 'Kuis Di-reset',
             body: msg,
-            url: '/quiz.html'
+            url: '/quiz-gamified.html'
         }).catch(() => {});
     } catch (e) { }
     await query`DELETE FROM results WHERE user_id=${userId} AND quiz_set=${quizSet}`;
@@ -173,3 +173,4 @@ module.exports = async (req, res) => {
         return json(res, 500, { status: 'error', message: String(e.message || e) });
     }
 };
+

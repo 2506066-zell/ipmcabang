@@ -365,7 +365,7 @@ function initListPage() {
             card.style.animationDelay = `${index * 0.08}s`;
             card.innerHTML = `
                 <div class="card-thumbnail">
-                    <img src="${safeThumb}" alt="${safeTitle}" onload="this.classList.add('loaded')" onerror="this.onerror=null;this.src='${LOCAL_ARTICLE_FALLBACK}'">
+                    <img src="${safeThumb}" alt="${safeTitle}" loading="lazy" decoding="async" fetchpriority="low" onload="this.classList.add('loaded')" onerror="this.onerror=null;this.src='${LOCAL_ARTICLE_FALLBACK}'">
                     <span class="card-category-badge">${safeCategory}</span>
                 </div>
                 <div class="card-content">
@@ -433,6 +433,35 @@ function initListPage() {
     listInitialized = true;
 }
 
+function setupSidebarThumbLazy(scope) {
+    const root = scope || document;
+    const thumbs = [...root.querySelectorAll('.sidebar-item-thumb[data-bg]')];
+    if (!thumbs.length) return;
+
+    const applyBg = (el) => {
+        const raw = String(el.getAttribute('data-bg') || '').trim();
+        if (!raw) return;
+        const safe = raw.replace(/[\r\n"\\]/g, '');
+        el.style.backgroundImage = `url("${safe}")`;
+        el.removeAttribute('data-bg');
+    };
+
+    if (!('IntersectionObserver' in window)) {
+        thumbs.forEach(applyBg);
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            applyBg(entry.target);
+            observer.unobserve(entry.target);
+        });
+    }, { rootMargin: '180px 0px' });
+
+    thumbs.forEach((el) => observer.observe(el));
+}
+
 async function initSidebar() {
     const latestList = document.getElementById('latest-articles-list');
     const categoriesList = document.getElementById('categories-list');
@@ -443,13 +472,14 @@ async function initSidebar() {
         if (data.status === 'success' && latestList) {
             latestList.innerHTML = (data.articles || []).map((art) => `
                 <a href="${getArticlePath(art)}" class="sidebar-item">
-                    <div class="sidebar-item-thumb" style="background-image: url('${escapeHtml(sanitizeUrl(art.image, LOCAL_ARTICLE_FALLBACK))}')"></div>
+                    <div class="sidebar-item-thumb" data-bg="${escapeHtml(sanitizeUrl(art.image, LOCAL_ARTICLE_FALLBACK))}"></div>
                     <div class="sidebar-item-info">
                         <h4 class="sidebar-item-title">${escapeHtml(art.title || 'Tanpa Judul')}</h4>
                         <span class="sidebar-item-date">${formatDate(art.publish_date, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </div>
                 </a>
             `).join('');
+            setupSidebarThumbLazy(latestList);
         }
     } catch (e) {
         console.error('Failed to load latest articles sidebar', e);
@@ -565,9 +595,7 @@ function syncPreferredArticleUrl(article) {
 }
 
 function buildDetailDek(article) {
-    const provided = String(article?.summary || article?.excerpt || '').trim();
-    if (provided) return provided;
-    return getExcerptFromContent(article?.content, 210);
+    return String(article?.summary || article?.excerpt || '').trim();
 }
 
 function renderDetail(container, article) {
@@ -577,6 +605,10 @@ function renderDetail(container, article) {
 
     if (renderer && typeof renderer.buildArticleViewModel === 'function' && typeof renderer.renderArticleDetailHTML === 'function') {
         const vm = renderer.buildArticleViewModel({ ...article, content: article.content }, { url: articleUrl });
+        // Avoid duplicate intro: only show dek if editor provides explicit summary/excerpt.
+        if (!String(article?.summary || article?.excerpt || '').trim()) {
+            vm.dek = '';
+        }
         const core = renderer.renderArticleDetailHTML(vm, {
             includeBackLink: true,
             backHref: '/articles',
@@ -878,7 +910,7 @@ async function renderRecommendations(current) {
             return `
                 <a class="rec-card no-transition" href="${getArticlePath(a)}">
                     <div class="rec-thumb">
-                        <img src="${escapeHtml(thumb)}" alt="${safeTitle}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${LOCAL_ARTICLE_FALLBACK}'">
+                        <img src="${escapeHtml(thumb)}" alt="${safeTitle}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='${LOCAL_ARTICLE_FALLBACK}'">
                     </div>
                     <div class="rec-body">
                         <div class="rec-card-title">${safeTitle}</div>

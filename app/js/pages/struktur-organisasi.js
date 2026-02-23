@@ -182,6 +182,8 @@
 
     if (!lazyImages.length || !('IntersectionObserver' in window)) {
       lazyImages.forEach((img) => {
+        img.loading = 'lazy';
+        img.decoding = 'async';
         if (img.dataset.src) img.src = img.dataset.src;
       });
       return;
@@ -190,6 +192,8 @@
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
         const image = entry.target;
+        image.loading = 'lazy';
+        image.decoding = 'async';
         if (image.dataset.src) image.src = image.dataset.src;
         image.classList.remove('lazy-load');
         observer.unobserve(image);
@@ -239,7 +243,7 @@
           <div class="org-node-circle-media">
             <div class="org-node-media${bidang.image_url ? '' : ' no-image'}">
               <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
-              ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load">` : ''}
+              ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
             </div>
           </div>
           <div class="org-node-content">
@@ -253,7 +257,7 @@
       <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
         <div class="org-node-media${bidang.image_url ? '' : ' no-image'}">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
-          ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load">` : ''}
+          ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
         </div>
         <div class="org-node-content">
           <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
@@ -349,7 +353,7 @@
     const safeQuote = escapeHtml(member.quote || 'Siap berkontribusi untuk bidang ini.');
     const initials = member.full_name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
     const photoMarkup = member.photo_url
-      ? `<img data-src="${escapeHtml(member.photo_url)}" alt="${safeName}" class="lazy-load">`
+      ? `<img data-src="${escapeHtml(member.photo_url)}" alt="${safeName}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">`
       : '';
     return `
       <article class="anggota-card member-ring-node member-ring-node-${escapeHtml(variant)}${variant.startsWith('core') || variant === 'leadership-orbit' ? ' is-leadership' : ''}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
@@ -577,6 +581,7 @@
       const img = document.createElement('img');
       img.src = member.photo_url;
       img.alt = `Foto ${member.full_name}`;
+      img.decoding = 'async';
       img.onerror = () => {
         els.anggotaDetailHeader.innerHTML = '';
         const avatar = document.createElement('div');

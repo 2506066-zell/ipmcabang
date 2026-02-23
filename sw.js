@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v29';
+const STATIC_CACHE = 'static-v34';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -16,7 +16,7 @@ const STATIC_ASSETS = [
   '/articles.html',
   '/profile/',
   '/profile/index.html',
-  '/quiz.html',
+  '/quiz-gamified.html',
   '/materi.html',
   '/ranking.html',
   '/login.html',
@@ -27,12 +27,6 @@ const STATIC_ASSETS = [
   '/install',
   '/install.html',
   '/admin/offline.html',
-  '/styles/style.css',
-  '/styles/home-dynamic.css',
-  '/styles/profile.css',
-  '/styles/article-enhancements.css',
-  '/styles/quiz-enhancements.css',
-  '/styles/ranking.css',
   '/app/css/style.css',
   '/app/css/home-dynamic.css',
   '/app/css/profile.css',
@@ -44,19 +38,14 @@ const STATIC_ASSETS = [
   '/app/css/quiz-react.css',
   '/app/css/quiz-react.css?v=20',
   '/app/css/style.css?v=2',
-  '/scripts/main.js',
-  '/scripts/profile.js',
-  '/scripts/install-header.js',
   '/scripts/toast.js',
-  '/scripts/public-articles.js',
-  '/scripts/public-materials.js',
   '/app/js/core/main.js',
-  '/app/js/core/main.js?v=13',
+  '/app/js/core/main.js?v=16',
   '/app/js/core/profile.js',
   '/app/js/core/install-header.js',
   '/app/js/core/toast.js',
   '/app/js/features/articles/public-articles.js',
-  '/app/js/features/articles/public-articles.js?v=14',
+  '/app/js/features/articles/public-articles.js?v=16',
   '/app/js/features/articles/article-renderer-shared.js',
   '/app/js/features/articles/article-renderer-shared.js?v=2',
   '/app/js/features/materials/public-materials.js',
@@ -66,7 +55,6 @@ const STATIC_ASSETS = [
   '/app/js/pages/quiz.js?v=5',
   '/app/js/pages/ranking.js',
   '/app/js/pages/struktur-organisasi.js',
-  '/quiz.js',
   '/ranking.js',
   '/scripts/login.js',
   '/scripts/register.js',
@@ -323,5 +311,6 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
 
 
