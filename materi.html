@@ -9,9 +9,19 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="description" content="Pusat unduhan materi, ebook, dan dokumen organisasi IPM Panawuan.">
+    <meta name="description" content="Perpustakaan Digital PC IPM Panawuan: kumpulan modul, ebook, dan dokumen organisasi dalam satu halaman.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Perpustakaan Digital - PC IPM Panawuan">
+    <meta property="og:description" content="Akses kumpulan modul, ebook, dan dokumen organisasi IPM Panawuan.">
+    <meta property="og:image" content="/images/bidang/umum.jpeg">
+    <meta property="og:image:alt" content="Perpustakaan Digital PC IPM Panawuan">
+    <meta property="og:url" content="/materi">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Perpustakaan Digital - PC IPM Panawuan">
+    <meta name="twitter:description" content="Akses kumpulan modul, ebook, dan dokumen organisasi IPM Panawuan.">
+    <meta name="twitter:image" content="/images/bidang/umum.jpeg">
 
-    <title>Materi & E-Book - PC IPM Panawuan</title>
+    <title>Perpustakaan Digital - PC IPM Panawuan</title>
     <link rel="icon" href="/ipm%20(2).png">
 
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
@@ -91,6 +101,37 @@
             margin-top: 20px;
         }
 
+        .library-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .library-share-btn {
+            border: 1px solid #0b8a42;
+            background: #ffffff;
+            color: #0b8a42;
+            border-radius: 10px;
+            min-height: 44px;
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .library-share-btn:hover {
+            background: #0b8a42;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
         @media (max-width: 600px) {
             .materi-grid {
                 grid-template-columns: 1fr;
@@ -100,6 +141,16 @@
                 font-size: 0.99rem;
                 padding: 12px 12px 13px;
             }
+
+            .library-header {
+                flex-direction: column;
+                align-items: stretch;
+                margin-bottom: 16px;
+            }
+
+            .library-share-btn {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -107,12 +158,12 @@
 <body class="page-articles-unified">
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay">
-        <div class="loading-content">
-            <div class="scanner-container">
-                <img src="ipm%20(2).png" alt="Loading..." class="loading-logo">
-                <div class="scanner"></div>
-            </div>
-            <p id="loading-text">Memuat Materi...</p>
+            <div class="loading-content">
+                <div class="scanner-container">
+                    <img src="ipm%20(2).png" alt="Loading..." class="loading-logo">
+                    <div class="scanner"></div>
+                </div>
+            <p id="loading-text">Memuat Perpustakaan Digital...</p>
         </div>
     </div>
 
@@ -143,7 +194,7 @@
             <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur
                     Organisasi</a></li>
             <li><a href="/articles" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
-            <li><a href="materi.html" class="mobile-nav-link active"><i class="fas fa-book"></i> Materi</a></li>
+            <li><a href="materi.html" class="mobile-nav-link active"><i class="fas fa-book"></i> Perpustakaan</a></li>
             <li><a href="quiz-gamified.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
             <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
         </ul>
@@ -152,15 +203,22 @@
 
     <main class="main-content" style="padding-top:80px; padding-bottom:100px;">
         <div class="container">
-            <h1 class="page-title">Materi & E-Book</h1>
-            <p style="color: #475569; margin-bottom: 20px;">Download panduan, modul, dan buku elektronik seputar Ikatan
-                Pelajar Muhammadiyah.</p>
+            <div class="library-header">
+                <div>
+                    <h1 class="page-title">Perpustakaan Digital</h1>
+                    <p style="color: #475569; margin-bottom: 0;">Akses panduan, modul, dan buku elektronik seputar Ikatan
+                        Pelajar Muhammadiyah.</p>
+                </div>
+                <button type="button" id="library-share-btn" class="library-share-btn" aria-label="Bagikan Perpustakaan Digital">
+                    <i class="fas fa-share-nodes"></i> Bagikan
+                </button>
+            </div>
 
             <div class="articles-toolbar"
                 style="background: #ffffff; border:1px solid #e2e8f0; padding: 14px; border-radius: 14px;">
                 <div class="search-wrapper">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" id="mat-search" placeholder="Cari materi...">
+                    <input type="text" id="mat-search" placeholder="Cari koleksi...">
                 </div>
                 <div class="filter-wrapper">
                     <select id="mat-category-select">
@@ -180,7 +238,7 @@
             <div id="empty-state" class="hidden" style="text-align:center; padding:60px 20px;">
                 <i class="fas fa-folder-open"
                     style="font-size:4rem; color:rgba(255,255,255,0.1); margin-bottom:20px;"></i>
-                <p style="color:#888;">Materi tidak ditemukan.</p>
+                <p style="color:#888;">Koleksi tidak ditemukan.</p>
             </div>
         </div>
     </main>
@@ -194,7 +252,7 @@
         <div class="bottom-nav-inner">
             <a href="index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
             <a href="/articles"><i class="fas fa-newspaper"></i><span>Artikel</span></a>
-            <a href="materi.html" class="active"><i class="fas fa-book"></i><span>Materi</span></a>
+            <a href="materi.html" class="active"><i class="fas fa-book"></i><span>Perpustakaan</span></a>
             <a href="quiz-gamified.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
         </div>
     </nav>
@@ -204,7 +262,40 @@
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>    <script type="module">
         import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=5';
-        document.addEventListener('DOMContentLoaded', initPublicMaterials);
+
+        function initLibraryShare() {
+            const shareBtn = document.getElementById('library-share-btn');
+            if (!shareBtn) return;
+
+            const shareData = {
+                title: 'Perpustakaan Digital - PC IPM Panawuan',
+                text: 'Kunjungi Perpustakaan Digital PC IPM Panawuan untuk akses modul, ebook, dan dokumen.',
+                url: window.location.href
+            };
+
+            shareBtn.addEventListener('click', async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share(shareData);
+                        return;
+                    } catch (err) {
+                        if (err && err.name === 'AbortError') return;
+                    }
+                }
+
+                try {
+                    await navigator.clipboard.writeText(shareData.url);
+                    if (window.Toast) window.Toast.show('Link perpustakaan disalin.', 'success');
+                } catch {
+                    window.prompt('Salin link ini:', shareData.url);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initPublicMaterials();
+            initLibraryShare();
+        });
     </script>
 </body>
 
