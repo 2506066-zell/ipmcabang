@@ -1,5 +1,6 @@
 // public-materials.js
 export async function initPublicMaterials() {
+    const DEFAULT_MATERIAL_THUMBNAIL = '/images/materials/material-placeholder.svg';
     const grid = document.getElementById('materi-grid');
     const searchInput = document.getElementById('mat-search');
     const categorySelect = document.getElementById('mat-category-select');
@@ -44,9 +45,8 @@ export async function initPublicMaterials() {
         emptyState.classList.add('hidden');
         grid.innerHTML = materials.map(mat => {
             const thumbUrl = resolveMaterialThumbnail(mat);
-            const thumbMarkup = thumbUrl
-                ? `<img src="${thumbUrl}" alt="${escapeHtml(mat.title)}" class="materi-thumb" loading="lazy" decoding="async">`
-                : `<div class="materi-thumb materi-thumb-fallback"><i class="fas fa-file-pdf"></i></div>`;
+            const safeThumb = thumbUrl || DEFAULT_MATERIAL_THUMBNAIL;
+            const thumbMarkup = `<img src="${safeThumb}" alt="${escapeHtml(mat.title)}" class="materi-thumb" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${DEFAULT_MATERIAL_THUMBNAIL}'">`;
 
             return `
                 <div class="materi-card">
@@ -79,6 +79,8 @@ export async function initPublicMaterials() {
 
         const byPath = raw.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (byPath && byPath[1]) return byPath[1];
+        const byDocsPath = raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (byDocsPath && byDocsPath[1]) return byDocsPath[1];
 
         try {
             const parsed = new URL(raw);

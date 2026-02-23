@@ -1,6 +1,7 @@
 // Logic for Materials Management (URL-based, no file upload)
 export function initMaterials(state, els, api) {
     console.log('[Materials] Initializing...');
+    const DEFAULT_MATERIAL_THUMBNAIL = '/images/materials/material-placeholder.svg';
 
     const list = document.getElementById('materials-list');
     const searchInput = document.getElementById('material-search');
@@ -47,6 +48,10 @@ export function initMaterials(state, els, api) {
             thumbPreview.removeAttribute('src');
             return;
         }
+        thumbPreview.onerror = () => {
+            thumbPreview.onerror = null;
+            thumbPreview.src = DEFAULT_MATERIAL_THUMBNAIL;
+        };
         thumbPreview.src = clean;
         thumbPreview.classList.remove('hidden');
     }
@@ -119,6 +124,9 @@ export function initMaterials(state, els, api) {
         const byPath = raw.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (byPath && byPath[1]) return byPath[1];
 
+        const byDocsPath = raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (byDocsPath && byDocsPath[1]) return byDocsPath[1];
+
         try {
             const parsed = new URL(raw);
             const fromQuery = parsed.searchParams.get('id');
@@ -130,10 +138,58 @@ export function initMaterials(state, els, api) {
         return '';
     }
 
-    function deriveThumbnailFromFileUrl(fileUrl) {
+    function buildDriveThumbnailCandidates(fileUrl) {
         const driveId = extractGoogleDriveFileId(fileUrl);
-        if (!driveId) return '';
-        return `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w1200`;
+        if (!driveId) return [];
+        const encId = encodeURIComponent(driveId);
+        return [
+            `https://drive.google.com/thumbnail?id=${encId}&sz=w1200`,
+            `https://drive.google.com/thumbnail?authuser=0&id=${encId}&sz=w1200`,
+            `https://drive.google.com/thumbnail?id=${encId}&sz=w1000`,
+            `https://lh3.googleusercontent.com/d/${encId}=w1200`
+        ];
+    }
+
+    function deriveThumbnailFromFileUrl(fileUrl) {
+        return buildDriveThumbnailCandidates(fileUrl)[0] || '';
+    }
+
+    function probeImage(url, timeoutMs = 3500) {
+        return new Promise((resolve) => {
+            if (!url) {
+                resolve(false);
+                return;
+            }
+            const img = new Image();
+            let settled = false;
+            const timer = window.setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                resolve(false);
+            }, timeoutMs);
+            img.onload = () => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timer);
+                resolve(true);
+            };
+            img.onerror = () => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timer);
+                resolve(false);
+            };
+            img.src = url;
+        });
+    }
+
+    async function resolveThumbnailFromFileUrl(fileUrl) {
+        const candidates = buildDriveThumbnailCandidates(fileUrl);
+        for (const candidate of candidates) {
+            const ok = await probeImage(candidate);
+            if (ok) return candidate;
+        }
+        return candidates[0] || '';
     }
 
     function setFileUrlHint(message, tone = 'muted') {
@@ -188,19 +244,30 @@ export function initMaterials(state, els, api) {
         return assessed;
     }
 
-    function tryAutoGenerateThumbnail(force = false) {
+    async function tryAutoGenerateThumbnail(force = false) {
         if (!inpFileUrl || !inpThumbnail) return;
         const assessed = updateFileUrlHint();
         const fileUrl = String(inpFileUrl.value || '').trim();
         const currentThumb = String(inpThumbnail.value || '').trim();
-        const autoThumb = deriveThumbnailFromFileUrl(fileUrl);
+        let autoThumb = '';
+
+        try {
+            autoThumb = await resolveThumbnailFromFileUrl(fileUrl);
+        } catch {
+            autoThumb = deriveThumbnailFromFileUrl(fileUrl);
+        }
 
         if (!autoThumb) {
             if (force && window.Toast) {
                 const msg = assessed.state === 'invalid'
                     ? 'Format URL tidak valid.'
-                    : 'URL bukan Google Drive yang didukung untuk auto-thumbnail.';
-                Toast.show(msg, 'warning');
+                    : 'Thumbnail Drive tidak tersedia. Menggunakan thumbnail standar.';
+                window.Toast.show(msg, 'warning');
+            }
+            if (force) {
+                inpThumbnail.value = DEFAULT_MATERIAL_THUMBNAIL;
+                inpThumbnail.dataset.autoThumb = '1';
+                setThumbPreview(DEFAULT_MATERIAL_THUMBNAIL);
             }
             return;
         }
@@ -212,7 +279,7 @@ export function initMaterials(state, els, api) {
         inpThumbnail.dataset.autoThumb = '1';
         setThumbPreview(autoThumb);
         if (force && window.Toast) {
-            Toast.show('Thumbnail berhasil digenerate dari Google Drive.', 'success');
+            window.Toast.show('Thumbnail berhasil digenerate dari Google Drive.', 'success');
         }
     }
 
@@ -361,7 +428,7 @@ export function initMaterials(state, els, api) {
                 setThumbPreview(mat.thumbnail);
             } else {
                 inpThumbnail.dataset.autoThumb = '1';
-                tryAutoGenerateThumbnail(false);
+                void tryAutoGenerateThumbnail(false);
             }
 
             openModal('Edit Materi');
@@ -375,7 +442,7 @@ export function initMaterials(state, els, api) {
         try {
             await api.apiAdminVercel('POST', '/api/admin/materials?action=deleteMaterial', { id });
             loadMaterials(currentPage);
-            if (window.Toast) Toast.show('Materi berhasil dihapus', 'success');
+            if (window.Toast) window.Toast.show('Materi berhasil dihapus', 'success');
         } catch (e) {
             alert('Gagal hapus: ' + e.message);
         }
@@ -408,7 +475,10 @@ export function initMaterials(state, els, api) {
         try {
             let thumbUrl = String(inpThumbnail.value || '').trim();
             if (!thumbUrl) {
-                thumbUrl = deriveThumbnailFromFileUrl(fileUrl);
+                thumbUrl = await resolveThumbnailFromFileUrl(fileUrl);
+            }
+            if (!thumbUrl) {
+                thumbUrl = DEFAULT_MATERIAL_THUMBNAIL;
             }
 
             const payload = {
@@ -425,7 +495,7 @@ export function initMaterials(state, els, api) {
             await api.apiAdminVercel('POST', '/api/admin/materials?action=upsertMaterial', payload);
             closeModal();
             loadMaterials(currentPage);
-            if (window.Toast) Toast.show('Materi berhasil disimpan!', 'success');
+            if (window.Toast) window.Toast.show('Materi berhasil disimpan!', 'success');
         } catch (err) {
             alert('Error: ' + err.message);
         } finally {
@@ -445,11 +515,11 @@ export function initMaterials(state, els, api) {
     inpFileUrl?.addEventListener('input', () => updateFileUrlHint());
     inpFileUrl?.addEventListener('change', () => {
         tryAutoFillTitleFromUrl(false);
-        tryAutoGenerateThumbnail(false);
+        void tryAutoGenerateThumbnail(false);
     });
     inpFileUrl?.addEventListener('blur', () => {
         tryAutoFillTitleFromUrl(false);
-        tryAutoGenerateThumbnail(false);
+        void tryAutoGenerateThumbnail(false);
     });
     inpTitle?.addEventListener('input', () => {
         inpTitle.dataset.autoTitle = '0';
@@ -459,7 +529,7 @@ export function initMaterials(state, els, api) {
         inpThumbnail.dataset.autoThumb = '0';
         setThumbPreview(inpThumbnail.value);
     });
-    generateThumbBtn?.addEventListener('click', () => tryAutoGenerateThumbnail(true));
+    generateThumbBtn?.addEventListener('click', () => void tryAutoGenerateThumbnail(true));
 
     if (window.__uiBack) window.__uiBack.register('admin-material', closeModal);
     if (searchInput) searchInput.oninput = api.debounce(() => loadMaterials(1), 500);
