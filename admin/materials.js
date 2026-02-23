@@ -18,6 +18,7 @@ export function initMaterials(state, els, api) {
     const inpFileType = document.getElementById('mat-file-type');
     const inpCategory = document.getElementById('mat-category');
     const inpFileUrl = document.getElementById('mat-file-url');
+    const fileUrlHint = document.getElementById('mat-file-url-hint');
     const inpThumbnail = document.getElementById('mat-thumbnail');
     const inpActive = document.getElementById('mat-active');
     const thumbPreview = document.getElementById('mat-thumb-preview');
@@ -73,15 +74,71 @@ export function initMaterials(state, els, api) {
         return `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w1200`;
     }
 
+    function setFileUrlHint(message, tone = 'muted') {
+        if (!fileUrlHint) return;
+        fileUrlHint.textContent = message;
+        fileUrlHint.className = 'small';
+        if (tone === 'success') {
+            fileUrlHint.style.color = '#16a34a';
+        } else if (tone === 'warning') {
+            fileUrlHint.style.color = '#f59e0b';
+        } else if (tone === 'error') {
+            fileUrlHint.style.color = '#ef4444';
+        } else {
+            fileUrlHint.className = 'small muted';
+            fileUrlHint.style.color = '';
+        }
+    }
+
+    function isValidHttpUrl(value) {
+        try {
+            const parsed = new URL(String(value || '').trim());
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    }
+
+    function assessFileUrl(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return { state: 'empty', driveId: '' };
+        if (!isValidHttpUrl(raw)) return { state: 'invalid', driveId: '' };
+        const driveId = extractGoogleDriveFileId(raw);
+        if (driveId) return { state: 'drive', driveId };
+        return { state: 'generic', driveId: '' };
+    }
+
+    function updateFileUrlHint() {
+        const assessed = assessFileUrl(inpFileUrl?.value);
+        if (assessed.state === 'empty') {
+            setFileUrlHint('Gunakan URL Google Drive agar thumbnail PDF bisa ter-generate otomatis.', 'muted');
+            return assessed;
+        }
+        if (assessed.state === 'invalid') {
+            setFileUrlHint('Format URL tidak valid. Gunakan link lengkap mulai dari https://', 'error');
+            return assessed;
+        }
+        if (assessed.state === 'drive') {
+            setFileUrlHint('URL Google Drive valid. Thumbnail PDF bisa digenerate otomatis.', 'success');
+            return assessed;
+        }
+        setFileUrlHint('URL valid, tapi bukan Google Drive. Isi thumbnail manual jika perlu.', 'warning');
+        return assessed;
+    }
+
     function tryAutoGenerateThumbnail(force = false) {
         if (!inpFileUrl || !inpThumbnail) return;
+        const assessed = updateFileUrlHint();
         const fileUrl = String(inpFileUrl.value || '').trim();
         const currentThumb = String(inpThumbnail.value || '').trim();
         const autoThumb = deriveThumbnailFromFileUrl(fileUrl);
 
         if (!autoThumb) {
             if (force && window.Toast) {
-                Toast.show('URL bukan Google Drive yang didukung untuk auto-thumbnail.', 'warning');
+                const msg = assessed.state === 'invalid'
+                    ? 'Format URL tidak valid.'
+                    : 'URL bukan Google Drive yang didukung untuk auto-thumbnail.';
+                Toast.show(msg, 'warning');
             }
             return;
         }
@@ -167,6 +224,7 @@ export function initMaterials(state, els, api) {
             inpThumbnail.dataset.autoThumb = '';
         }
         setThumbPreview('');
+        setFileUrlHint('Gunakan URL Google Drive agar thumbnail PDF bisa ter-generate otomatis.', 'muted');
     }
 
     function openModal(title = 'Tambah Materi') {
@@ -204,6 +262,7 @@ export function initMaterials(state, els, api) {
             inpFileUrl.value = mat.file_url || '';
             inpThumbnail.value = mat.thumbnail || '';
             inpActive.checked = !!mat.active;
+            updateFileUrlHint();
 
             if (mat.thumbnail) {
                 inpThumbnail.dataset.autoThumb = '0';
@@ -235,12 +294,17 @@ export function initMaterials(state, els, api) {
 
         const title = String(inpTitle.value || '').trim();
         const fileUrl = String(inpFileUrl.value || '').trim();
+        const assessedUrl = assessFileUrl(fileUrl);
         if (!title) {
             alert('Judul materi wajib diisi.');
             return;
         }
         if (!fileUrl) {
             alert('URL materi wajib diisi.');
+            return;
+        }
+        if (assessedUrl.state === 'invalid') {
+            alert('Format URL materi tidak valid. Gunakan link lengkap mulai dari https://');
             return;
         }
 
@@ -285,6 +349,7 @@ export function initMaterials(state, els, api) {
     closeBtn.onclick = closeModal;
     cancelBtn.onclick = closeModal;
 
+    inpFileUrl?.addEventListener('input', () => updateFileUrlHint());
     inpFileUrl?.addEventListener('change', () => tryAutoGenerateThumbnail(false));
     inpFileUrl?.addEventListener('blur', () => tryAutoGenerateThumbnail(false));
     inpThumbnail?.addEventListener('input', () => {
@@ -298,5 +363,6 @@ export function initMaterials(state, els, api) {
     if (prevBtn) prevBtn.onclick = () => loadMaterials(currentPage - 1);
     if (nextBtn) nextBtn.onclick = () => loadMaterials(currentPage + 1);
 
+    updateFileUrlHint();
     loadMaterials();
 }

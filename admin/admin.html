@@ -1181,7 +1181,7 @@
                     <div class="form-group">
                         <label>URL Materi (Wajib)</label>
                         <input type="url" id="mat-file-url" placeholder="Tempel URL Google Drive/URL eksternal PDF" required>
-                        <small class="small muted">Upload file ke server dinonaktifkan untuk menjaga performa server.</small>
+                        <small id="mat-file-url-hint" class="small muted" aria-live="polite">Gunakan URL Google Drive agar thumbnail PDF bisa ter-generate otomatis.</small>
                     </div>
                     <div class="form-group">
                         <label>Thumbnail / Sampul</label>
@@ -1246,7 +1246,7 @@
         })();
     </script>
     <script src="../scripts/toast.js"></script>
-    <script src="admin.js?v=17" defer></script>
+    <script src="admin.js?v=18" defer></script>
 </body>
 
 </html>
