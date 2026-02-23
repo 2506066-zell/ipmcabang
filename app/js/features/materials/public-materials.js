@@ -1,6 +1,7 @@
 // public-materials.js
 export async function initPublicMaterials() {
     const DEFAULT_MATERIAL_THUMBNAIL = '/images/materials/material-placeholder.svg';
+    const PAGE_SIZE = 100;
     const grid = document.getElementById('materi-grid');
     const searchInput = document.getElementById('mat-search');
     const categorySelect = document.getElementById('mat-category-select');
@@ -14,17 +15,32 @@ export async function initPublicMaterials() {
         try {
             const q = searchInput.value || '';
             const cat = categorySelect.value || 'all';
-            let url = `/api/materials?page=1&size=50`;
-            if (q) url += `&search=${encodeURIComponent(q)}`;
-            if (cat !== 'all') url += `&category=${encodeURIComponent(cat)}`;
+            const params = new URLSearchParams();
+            params.set('size', String(PAGE_SIZE));
+            if (q) params.set('search', q);
+            if (cat !== 'all') params.set('category', cat);
 
-            const res = await fetch(url);
-            const data = await res.json();
+            let page = 1;
+            let collected = [];
+            let total = null;
 
-            if (data.status === 'success') {
-                materials = data.materials || [];
-                render();
+            while (true) {
+                params.set('page', String(page));
+                const res = await fetch(`/api/materials?${params.toString()}`);
+                const data = await res.json();
+                if (data.status !== 'success') break;
+
+                const chunk = Array.isArray(data.materials) ? data.materials : [];
+                collected = collected.concat(chunk);
+                total = Number(data.total ?? total ?? chunk.length);
+                if (!chunk.length || collected.length >= total) break;
+
+                page += 1;
+                if (page > 50) break; // guard agar tidak loop tak terbatas
             }
+
+            materials = collected;
+            render();
         } catch (e) {
             console.error('Fetch error:', e);
             if (window.Toast) Toast.show('Gagal memuat materi', 'error');
