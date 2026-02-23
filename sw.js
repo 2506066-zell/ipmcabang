@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v35';
+const STATIC_CACHE = 'static-v36';
 const RUNTIME_CACHE = 'runtime-v1';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
@@ -47,7 +47,7 @@ const STATIC_ASSETS = [
   '/app/js/features/articles/public-articles.js',
   '/app/js/features/articles/public-articles.js?v=17',
   '/app/js/features/articles/article-renderer-shared.js',
-  '/app/js/features/articles/article-renderer-shared.js?v=2',
+  '/app/js/features/articles/article-renderer-shared.js?v=3',
   '/app/js/features/materials/public-materials.js',
   '/app/js/features/quiz/quiz-react.js',
   '/app/js/features/quiz/quiz-react.js?v=22',

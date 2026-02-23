@@ -2,7 +2,7 @@
     'use strict';
 
     const LOCAL_ARTICLE_FALLBACK = '/ipm%20(2).png';
-    const ALLOWED_TAGS = new Set(['p', 'h2', 'h3', 'strong', 'em', 'b', 'i', 'a', 'ul', 'ol', 'li', 'blockquote', 'img', 'br', 'hr']);
+    const ALLOWED_TAGS = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'b', 'i', 'a', 'ul', 'ol', 'li', 'blockquote', 'img', 'br', 'hr']);
     const VOID_TAGS = new Set(['img', 'br', 'hr']);
     const ALIGNMENT_TAGS = new Set(['p', 'h2', 'h3', 'li', 'blockquote']);
     const ALIGNMENT_VALUES = new Set(['left', 'center', 'right', 'justify']);
@@ -160,22 +160,32 @@
             .replace(/\n{3,}/g, '\n\n')
             .trim();
 
+        const postDoc = parser.parseFromString(html, 'text/html');
+        if (!postDoc.body) return html;
+
+        // Normalize heading levels to editorial-safe set.
+        postDoc.querySelectorAll('h4, h5, h6').forEach((node) => {
+            const h3 = postDoc.createElement('h3');
+            h3.innerHTML = node.innerHTML;
+            const align = node.getAttribute('data-align');
+            if (align && ALIGNMENT_VALUES.has(String(align).toLowerCase())) {
+                h3.setAttribute('data-align', String(align).toLowerCase());
+            }
+            node.parentNode.replaceChild(h3, node);
+        });
         if (options.removeHeadingOne) {
-            const postDoc = parser.parseFromString(html, 'text/html');
-            if (!postDoc.body) return html;
-            postDoc.querySelectorAll('h1').forEach((h1) => {
+            postDoc.querySelectorAll('h1').forEach((node) => {
                 const h2 = postDoc.createElement('h2');
-                h2.innerHTML = h1.innerHTML;
-                const align = h1.getAttribute('data-align');
+                h2.innerHTML = node.innerHTML;
+                const align = node.getAttribute('data-align');
                 if (align && ALIGNMENT_VALUES.has(String(align).toLowerCase())) {
                     h2.setAttribute('data-align', String(align).toLowerCase());
                 }
-                h1.parentNode.replaceChild(h2, h1);
+                node.parentNode.replaceChild(h2, node);
             });
-            return postDoc.body.innerHTML.trim();
         }
 
-        return html;
+        return postDoc.body.innerHTML.trim();
     }
 
     function estimateReadMinutes(rawHtml) {

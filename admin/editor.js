@@ -147,6 +147,7 @@
         moreToolsBtn: document.getElementById('editor-more-tools-btn'),
         moreToolsPanel: document.getElementById('editor-more-tools-panel'),
         pasteChoicePopover: document.getElementById('editor-paste-choice-popover'),
+        pastePlainBtn: document.getElementById('editor-paste-plain-btn'),
         pasteCleanBtn: document.getElementById('editor-paste-clean-btn'),
         pasteKeepBtn: document.getElementById('editor-paste-keep-btn'),
         pasteCancelBtn: document.getElementById('editor-paste-cancel-btn'),
@@ -872,17 +873,54 @@
             .join('');
     }
 
+    function htmlToPlainText(rawHtml, fallbackText) {
+        const html = String(rawHtml || '').trim();
+        if (!html) return String(fallbackText || '');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        if (!doc.body) return String(fallbackText || '');
+        return normalizeTextValue(doc.body.textContent || fallbackText || '');
+    }
+
     function cleanPastedHtml(rawHtml, fallbackText) {
         const renderer = getRenderer();
+        const html = String(rawHtml || '').trim();
+        const plainFallback = toSemanticParagraphs(fallbackText);
+        if (!html) return plainFallback;
+
         const parser = new DOMParser();
-        const doc = parser.parseFromString(String(rawHtml || ''), 'text/html');
-        if (!doc.body) return toSemanticParagraphs(fallbackText);
-        const plain = (doc.body.textContent || '').trim();
-        if (!plain) return '';
+        const doc = parser.parseFromString(html, 'text/html');
+        if (!doc.body) return plainFallback;
+
+        // Normalize heading levels from pasted docs before sanitizer.
+        doc.body.querySelectorAll('h1').forEach((node) => {
+            const h2 = doc.createElement('h2');
+            h2.innerHTML = node.innerHTML;
+            node.replaceWith(h2);
+        });
+        doc.body.querySelectorAll('h4, h5, h6').forEach((node) => {
+            const h3 = doc.createElement('h3');
+            h3.innerHTML = node.innerHTML;
+            node.replaceWith(h3);
+        });
+
+        // Clean mode: keep semantic structure, drop media links/images to avoid noisy imports.
+        doc.body.querySelectorAll('img').forEach((img) => img.remove());
+        doc.body.querySelectorAll('a').forEach((anchor) => {
+            const span = doc.createElement('span');
+            span.textContent = anchor.textContent || '';
+            anchor.replaceWith(span);
+        });
+
         if (renderer && typeof renderer.sanitizeArticleHTML === 'function') {
-            return renderer.sanitizeArticleHTML(toSemanticParagraphs(plain), { removeHeadingOne: true });
+            const sanitized = renderer.sanitizeArticleHTML(doc.body.innerHTML, { removeHeadingOne: true });
+            if (normalizeTextValue((renderer.stripHtml ? renderer.stripHtml(sanitized) : sanitized).trim())) {
+                return sanitized;
+            }
         }
-        return toSemanticParagraphs(plain);
+
+        const plain = (doc.body.textContent || '').trim();
+        return plain ? toSemanticParagraphs(plain) : plainFallback;
     }
 
     function closeAllPopovers() {
@@ -1053,6 +1091,8 @@
         let payload = '';
         if (mode === 'keep') {
             payload = sanitizeHtml(html || toSemanticParagraphs(text));
+        } else if (mode === 'plain') {
+            payload = toSemanticParagraphs(htmlToPlainText(html, text));
         } else {
             payload = cleanPastedHtml(html, text);
         }
@@ -1093,6 +1133,8 @@
             restoreSelection();
             if (mode === 'keep') {
                 execCommand('insertHTML', sanitizeHtml(payload.html || toSemanticParagraphs(payload.text)));
+            } else if (mode === 'plain') {
+                execCommand('insertHTML', toSemanticParagraphs(htmlToPlainText(payload.html, payload.text)));
             } else {
                 execCommand('insertHTML', cleanPastedHtml(payload.html, payload.text));
             }
@@ -1145,8 +1187,12 @@
         case 'unlink':
             removeActiveLink();
             return;
+        case 'pastePlainNow':
+            runClipboardPaste('plain');
+            return;
+        case 'pasteBalancedNow':
         case 'pasteCleanNow':
-            runClipboardPaste('clean');
+            runClipboardPaste('balanced');
             return;
         case 'pasteKeepNow':
             runClipboardPaste('keep');
@@ -1743,7 +1789,8 @@
         if (els.linkApplyBtn) els.linkApplyBtn.addEventListener('click', applyLink);
         if (els.linkCancelBtn) els.linkCancelBtn.addEventListener('click', closeAllPopovers);
         if (els.imageApplyBtn) els.imageApplyBtn.addEventListener('click', applyImageFromUrl);
-        if (els.pasteCleanBtn) els.pasteCleanBtn.addEventListener('click', () => applyPendingPaste('clean'));
+        if (els.pastePlainBtn) els.pastePlainBtn.addEventListener('click', () => applyPendingPaste('plain'));
+        if (els.pasteCleanBtn) els.pasteCleanBtn.addEventListener('click', () => applyPendingPaste('balanced'));
         if (els.pasteKeepBtn) els.pasteKeepBtn.addEventListener('click', () => applyPendingPaste('keep'));
         if (els.pasteCancelBtn) els.pasteCancelBtn.addEventListener('click', closePasteChoicePopover);
         if (els.imageUploadBtn && els.inlineImageInput) {

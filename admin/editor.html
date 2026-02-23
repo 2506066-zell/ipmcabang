@@ -265,8 +265,11 @@
                                 <button type="button" class="tool-btn tool-btn-text" data-action="unlink" title="Hapus tautan">
                                     <i class="fas fa-unlink"></i> Hapus tautan
                                 </button>
-                                <button type="button" class="tool-btn tool-btn-text" data-action="pasteCleanNow" title="Paste bersih dari clipboard">
-                                    <i class="fas fa-broom"></i> Paste bersih
+                                <button type="button" class="tool-btn tool-btn-text" data-action="pastePlainNow" title="Paste polos dari clipboard">
+                                    <i class="fas fa-file-lines"></i> Paste polos
+                                </button>
+                                <button type="button" class="tool-btn tool-btn-text" data-action="pasteBalancedNow" title="Paste bersihkan aman dari clipboard">
+                                    <i class="fas fa-broom"></i> Paste bersihkan aman
                                 </button>
                                 <button type="button" class="tool-btn tool-btn-text" data-action="pasteKeepNow" title="Paste pertahankan format dasar">
                                     <i class="fas fa-paste"></i> Paste pertahankan
@@ -276,10 +279,11 @@
 
                         <div id="editor-paste-choice-popover" class="editor-popover editor-paste-choice" hidden>
                             <p class="editor-popover-label">Mode Paste</p>
-                            <p class="editor-paste-desc">Pilih cara menempelkan konten dari Word/Docs.</p>
+                            <p class="editor-paste-desc">Pilih cara menempelkan konten dari Word/Docs sesuai kebutuhan.</p>
                             <div class="editor-popover-actions editor-paste-actions">
-                                <button type="button" class="btn btn-primary btn-sm" id="editor-paste-clean-btn">Bersihkan format</button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="editor-paste-keep-btn">Pertahankan format dasar</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="editor-paste-plain-btn">Polos (teks saja)</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="editor-paste-clean-btn">Bersihkan aman</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="editor-paste-keep-btn">Pertahankan format</button>
                                 <button type="button" class="btn btn-ghost btn-sm" id="editor-paste-cancel-btn">Batal</button>
                             </div>
                         </div>
@@ -331,8 +335,8 @@
     </div>
 
     <script src="../scripts/toast.js"></script>
-    <script src="/app/js/features/articles/article-renderer-shared.js"></script>
-    <script src="editor.js?v=20260222c" defer></script>
+    <script src="/app/js/features/articles/article-renderer-shared.js?v=3"></script>
+    <script src="editor.js?v=20260222e" defer></script>
 
     <div id="low-grade-confirm-modal" class="editor-modal" hidden aria-hidden="true">
         <div class="editor-modal-backdrop" data-dismiss="true"></div>
