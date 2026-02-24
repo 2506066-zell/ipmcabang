@@ -30,22 +30,182 @@
     <link rel="stylesheet" href="/app/css/article-enhancements.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .materi-card {
+        .page-library {
+            --library-gutter: 10px;
+            --library-grid-gap: 10px;
+            --library-card-radius: 12px;
+        }
+
+        .page-library .main-content.library-main-content {
+            padding-top: 12px;
+            padding-right: var(--library-gutter);
+            padding-left: var(--library-gutter);
+            padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .page-library .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .page-library .library-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .page-library .library-heading {
+            min-width: 0;
+        }
+
+        .page-library .library-header .page-title {
+            margin: 0;
+            display: inline-block;
+            font-size: 1.48rem;
+            line-height: 1.14;
+            letter-spacing: -0.01em;
+        }
+
+        .page-library .library-header .page-title::after {
+            width: 44px;
+            height: 3px;
+            bottom: -6px;
+        }
+
+        .page-library .library-subtitle {
+            margin: 10px 0 0;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.42;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .page-library .library-share-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #0b8a42;
+            background: #ffffff;
+            color: #0b8a42;
+            border-radius: 10px;
+            padding: 0;
+            font-weight: 700;
+            font-size: 0.92rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .page-library .library-share-btn:hover {
+            background: #0b8a42;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .page-library .library-share-btn .library-share-label {
+            display: none;
+        }
+
+        .page-library .articles-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 132px;
+            gap: 8px;
+            margin-bottom: 12px;
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 14px;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 2px 10px rgba(2, 6, 23, 0.04);
+        }
+
+        .page-library .search-wrapper,
+        .page-library .filter-wrapper {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .page-library .search-wrapper {
+            position: relative;
+        }
+
+        .page-library .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+            font-size: 0.9rem;
+        }
+
+        .page-library #mat-search,
+        .page-library #mat-category-select {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #dbe4ee;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 0.88rem;
+            line-height: 1.2;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .page-library #mat-search {
+            padding: 0 11px 0 35px;
+        }
+
+        .page-library #mat-category-select {
+            padding: 0 34px 0 10px;
+        }
+
+        .page-library #mat-search:focus,
+        .page-library #mat-category-select:focus {
+            outline: none;
+            border-color: #0b8a42;
+            box-shadow: 0 0 0 3px rgba(11, 138, 66, 0.12);
+            background: #ffffff;
+        }
+
+        .page-library .materi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--library-grid-gap);
+            margin-top: 0;
+        }
+
+        .page-library .materi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--library-card-radius);
             overflow: hidden;
-            box-shadow: 0 8px 20px rgba(2, 6, 23, 0.05);
+            box-shadow: 0 2px 9px rgba(2, 6, 23, 0.04);
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
-        .materi-card:hover {
-            transform: translateY(-2px);
-            border-color: #0b8a42;
-            box-shadow: 0 12px 24px rgba(2, 6, 23, 0.08);
+        .page-library .materi-card:hover {
+            border-color: #bbdcc8;
+            box-shadow: 0 8px 18px rgba(2, 6, 23, 0.08);
+            transform: translateY(-1px);
         }
 
-        .materi-card-link {
+        .page-library .materi-card:active {
+            transform: translateY(0);
+        }
+
+        .page-library .materi-card-link {
             display: flex;
             flex-direction: column;
             text-decoration: none;
@@ -54,108 +214,185 @@
             color: inherit;
         }
 
-        .materi-thumb-wrap {
+        .page-library .materi-thumb-wrap {
             width: 100%;
             aspect-ratio: 3 / 4;
             border-bottom: 1px solid #eef2f7;
-            background: #f8fafc;
+            background: #f5f7fa;
             overflow: hidden;
         }
 
-        .materi-thumb {
+        .page-library .materi-thumb {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            object-position: center;
             display: block;
+            background: #f5f7fa;
         }
 
-        .materi-thumb-fallback {
+        .page-library .materi-thumb-fallback {
             display: flex;
             align-items: center;
             justify-content: center;
             color: #0b8a42;
-            font-size: 2.4rem;
+            font-size: 2rem;
             background: linear-gradient(180deg, #f3f8f4 0%, #edf6ef 100%);
         }
 
-        .materi-title-link {
+        .page-library .materi-title-link {
             width: 100%;
             color: #0f172a;
-            font-size: 1.02rem;
-            line-height: 1.42;
-            font-weight: 800;
-            letter-spacing: 0.01em;
+            font-size: 0.83rem;
+            line-height: 1.35;
+            font-weight: 700;
+            letter-spacing: 0;
             overflow-wrap: anywhere;
             margin: 0;
-            padding: 13px 14px 14px;
+            padding: 8px 8px 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-clamp: 2;
+            overflow: hidden;
+            min-height: calc((0.83rem * 1.35 * 2) + 18px);
         }
 
-        .materi-title-link:hover {
+        .page-library .materi-title-link:hover {
             color: #0b8a42;
         }
 
-        .materi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 14px;
-            margin-top: 20px;
+        .page-library .materi-card-skeleton {
+            pointer-events: none;
+            box-shadow: none;
         }
 
-        .library-header {
+        .page-library .materi-skeleton-body {
+            padding: 8px 8px 10px;
+        }
+
+        .page-library .materi-skeleton-line {
+            position: relative;
+            overflow: hidden;
+            background: #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .page-library .materi-skeleton-line::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+            animation: materiShimmer 1.25s infinite;
+        }
+
+        .page-library .materi-skeleton-thumb {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        .page-library .materi-skeleton-title {
+            height: 14px;
+            width: 88%;
+            margin-bottom: 8px;
+        }
+
+        .page-library .materi-skeleton-subtitle {
+            height: 12px;
+            width: 62%;
+        }
+
+        @keyframes materiShimmer {
+            to {
+                transform: translateX(100%);
+            }
+        }
+
+        .page-library .materi-load-more {
             display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .library-share-btn {
-            border: 1px solid #0b8a42;
-            background: #ffffff;
-            color: #0b8a42;
-            border-radius: 10px;
-            min-height: 44px;
-            padding: 10px 14px;
-            font-weight: 700;
-            font-size: 0.92rem;
-            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+            justify-content: center;
+            gap: 9px;
+            color: #64748b;
+            font-size: 0.84rem;
+            margin: 12px 0 2px;
         }
 
-        .library-share-btn:hover {
-            background: #0b8a42;
-            color: #ffffff;
-            transform: translateY(-1px);
+        .hidden {
+            display: none !important;
         }
 
-        @media (max-width: 600px) {
-            .materi-grid {
+        @media (max-width: 359px) {
+            .page-library .articles-toolbar {
                 grid-template-columns: 1fr;
             }
+        }
 
-            .materi-title-link {
-                font-size: 0.99rem;
-                padding: 12px 12px 13px;
+        @media (min-width: 640px) {
+            .page-library {
+                --library-gutter: 12px;
+                --library-grid-gap: 12px;
             }
 
-            .library-header {
-                flex-direction: column;
-                align-items: stretch;
-                margin-bottom: 16px;
+            .page-library .library-header {
+                margin-bottom: 14px;
             }
 
-            .library-share-btn {
-                justify-content: center;
+            .page-library .library-header .page-title {
+                font-size: 1.8rem;
+            }
+
+            .page-library .library-subtitle {
+                font-size: 0.93rem;
+            }
+
+            .page-library .library-share-btn {
+                width: auto;
+                min-width: 44px;
+                height: 40px;
+                padding: 0 12px;
+            }
+
+            .page-library .library-share-btn .library-share-label {
+                display: inline;
+            }
+
+            .page-library .articles-toolbar {
+                grid-template-columns: minmax(0, 1fr) 170px;
+                padding: 12px;
+            }
+
+            .page-library .materi-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .page-library .materi-title-link {
+                font-size: 0.87rem;
+            }
+        }
+
+        @media (min-width: 900px) {
+            .page-library .materi-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .page-library {
+                --library-gutter: 16px;
+                --library-grid-gap: 14px;
+            }
+
+            .page-library .materi-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
             }
         }
     </style>
 </head>
 
-<body class="page-articles-unified">
+<body class="page-articles-unified page-library">
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay">
             <div class="loading-content">
@@ -201,21 +438,20 @@
     </nav>
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
-    <main class="main-content" style="padding-top:80px; padding-bottom:100px;">
+    <main class="main-content library-main-content">
         <div class="container">
             <div class="library-header">
-                <div>
+                <div class="library-heading">
                     <h1 class="page-title">Perpustakaan Digital</h1>
-                    <p style="color: #475569; margin-bottom: 0;">Akses panduan, modul, dan buku elektronik seputar Ikatan
+                    <p class="library-subtitle">Akses panduan, modul, dan buku elektronik seputar Ikatan
                         Pelajar Muhammadiyah.</p>
                 </div>
                 <button type="button" id="library-share-btn" class="library-share-btn" aria-label="Bagikan Perpustakaan Digital">
-                    <i class="fas fa-share-nodes"></i> Bagikan
+                    <i class="fas fa-share-nodes"></i><span class="library-share-label">Bagikan</span>
                 </button>
             </div>
 
-            <div class="articles-toolbar"
-                style="background: #ffffff; border:1px solid #e2e8f0; padding: 14px; border-radius: 14px;">
+            <div class="articles-toolbar">
                 <div class="search-wrapper">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="mat-search" placeholder="Cari koleksi...">
@@ -235,7 +471,12 @@
                 <!-- Data will be injected here -->
             </div>
 
-            <div id="empty-state" class="hidden" style="text-align:center; padding:60px 20px;">
+            <div id="materi-load-more-sentinel" class="materi-load-more" hidden>
+                <span class="scanner-dot" aria-hidden="true"></span>
+                <span>Memuat koleksi lainnya...</span>
+            </div>
+
+            <div id="empty-state" hidden style="text-align:center; padding:60px 20px;">
                 <i class="fas fa-folder-open"
                     style="font-size:4rem; color:rgba(255,255,255,0.1); margin-bottom:20px;"></i>
                 <p style="color:#888;">Koleksi tidak ditemukan.</p>
@@ -261,7 +502,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>    <script type="module">
-        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=5';
+        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=7';
 
         function initLibraryShare() {
             const shareBtn = document.getElementById('library-share-btn');
