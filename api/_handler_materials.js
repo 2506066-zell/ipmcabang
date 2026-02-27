@@ -1,9 +1,65 @@
 const { query, rawQuery } = require('./_db');
-const { json } = require('./_util');
+const { json, parseJsonBody } = require('./_util');
+const { getSessionUser } = require('./_auth');
 
 module.exports = async (req, res) => {
     try {
         req.query = req.query || {};
+        const action = String(req.query.action || '').trim();
+
+        if (action === 'lastRead') {
+            if (req.method === 'GET') {
+                const user = await getSessionUser(req);
+                if (!user) return json(res, 200, { status: 'success', last_read: null });
+
+                const row = (await query`
+                    SELECT material_key, title, url, file_type, thumbnail, page, total_pages, updated_at
+                    FROM material_last_reads
+                    WHERE user_id=${user.id}
+                    LIMIT 1
+                `).rows[0] || null;
+
+                return json(res, 200, { status: 'success', last_read: row });
+            }
+
+            if (req.method === 'POST') {
+                const user = await getSessionUser(req);
+                if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+
+                const body = parseJsonBody(req);
+                const title = String(body.title || '').trim();
+                const url = String(body.url || '').trim();
+                const materialKey = String(body.key || '').trim();
+                const fileType = String(body.file_type || '').trim();
+                const thumbnail = String(body.thumbnail || '').trim();
+                const page = Math.max(0, Number(body.page) || 0);
+                const totalPages = Math.max(0, Number(body.total_pages) || 0);
+
+                if (!title || !url) {
+                    return json(res, 400, { status: 'error', message: 'title dan url wajib diisi' });
+                }
+
+                await query`
+                    INSERT INTO material_last_reads (user_id, material_key, title, url, file_type, thumbnail, page, total_pages, updated_at)
+                    VALUES (${user.id}, ${materialKey}, ${title}, ${url}, ${fileType}, ${thumbnail}, ${page}, ${totalPages}, NOW())
+                    ON CONFLICT (user_id)
+                    DO UPDATE SET
+                        material_key = EXCLUDED.material_key,
+                        title = EXCLUDED.title,
+                        url = EXCLUDED.url,
+                        file_type = EXCLUDED.file_type,
+                        thumbnail = EXCLUDED.thumbnail,
+                        page = EXCLUDED.page,
+                        total_pages = EXCLUDED.total_pages,
+                        updated_at = NOW()
+                `;
+
+                return json(res, 200, { status: 'success' });
+            }
+
+            return json(res, 405, { status: 'error', message: 'Method not allowed' });
+        }
+
         if (req.method !== 'GET') return json(res, 405, { status: 'error', message: 'Method not allowed' });
 
         const category = req.query.category ? String(req.query.category).trim() : '';
