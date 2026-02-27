@@ -7,6 +7,9 @@ export async function initPublicMaterials() {
     const LOAD_MORE_BATCH_SIZE = 8;
     const PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
     const PDFJS_WORKER_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const PDF_LOAD_TIMEOUT_MS = 8000;
+    const PDF_MAX_DEVICE_PIXEL_RATIO = 1.5;
+    const PDF_RANGE_CHUNK_SIZE = 256 * 1024;
 
     const grid = document.getElementById('materi-grid');
     const searchInput = document.getElementById('mat-search');
@@ -22,7 +25,6 @@ export async function initPublicMaterials() {
 
     const readerModal = document.getElementById('material-reader-modal');
     const readerTitle = document.getElementById('material-reader-title');
-    const readerTimer = document.getElementById('material-reader-timer');
     const readerCloseBtn = document.getElementById('material-reader-close-btn');
     const readerOpenTabLink = document.getElementById('material-reader-open-tab');
     const readerFrame = document.getElementById('material-reader-frame');
@@ -45,7 +47,6 @@ export async function initPublicMaterials() {
     let thumbObserver = null;
     let loadMoreObserver = null;
     let pdfJsLoadPromise = null;
-    let readTickerId = null;
     let lastRead = loadLastRead();
 
     const readerState = {
@@ -61,13 +62,6 @@ export async function initPublicMaterials() {
         isRendering: false,
         queuedPage: 0,
         renderTask: null
-    };
-
-    const readSession = {
-        startedAt: 0,
-        accumulatedMs: 0,
-        lastResumeAt: 0,
-        paused: true
     };
 
     function setOverlayLoading(show, text) {
@@ -288,6 +282,9 @@ export async function initPublicMaterials() {
 
     function setupReader() {
         if (!grid) return;
+        if (window.__uiBack && window.__uiBack.register) {
+            window.__uiBack.register('material-reader', closeMaterialReader);
+        }
 
         grid.addEventListener('click', (event) => {
             const link = event.target.closest('a.materi-card-link');
@@ -365,10 +362,6 @@ export async function initPublicMaterials() {
                 openMaterialReader(candidate, { resumePage: lastRead.page });
             });
         }
-
-        document.addEventListener('visibilitychange', syncReadSessionWithVisibility);
-        window.addEventListener('focus', syncReadSessionWithVisibility);
-        window.addEventListener('blur', syncReadSessionWithVisibility);
     }
 
     function openMaterialReader(material, options = {}) {
@@ -396,13 +389,12 @@ export async function initPublicMaterials() {
         if (readerFallbackLink) readerFallbackLink.href = rawUrl;
 
         showReaderModal();
-        startReadSession();
 
         if (driveId) {
             const previewUrl = `https://drive.google.com/file/d/${encodeURIComponent(driveId)}/preview`;
             showIframeMode(previewUrl);
             if (options.resumePage && window.Toast) {
-                Toast.show(`Lanjut baca dari sesi terakhir (${formatReadDuration(lastRead?.seconds || 0)}).`, 'success');
+                Toast.show('Lanjut baca materi terakhir.', 'success');
             }
             return;
         }
@@ -421,13 +413,19 @@ export async function initPublicMaterials() {
         readerModal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('material-reader-open');
         readerState.open = true;
+        if (window.__uiBack && window.__uiBack.open) {
+            window.__uiBack.open('material-reader');
+        }
     }
 
-    function closeMaterialReader() {
+    function closeMaterialReader(fromPop) {
         if (!readerModal || !readerState.open) return;
+        if (!fromPop && window.__uiBack && window.__uiBack.requestClose) {
+            window.__uiBack.requestClose('material-reader');
+            return;
+        }
 
         persistLastRead();
-        stopReadSession();
 
         readerModal.hidden = true;
         readerModal.setAttribute('aria-hidden', 'true');
@@ -465,11 +463,12 @@ export async function initPublicMaterials() {
             clearPdfState();
             const loadingTask = window.pdfjsLib.getDocument({
                 url,
-                withCredentials: false
+                withCredentials: false,
+                rangeChunkSize: PDF_RANGE_CHUNK_SIZE
             });
             const pdfDoc = await withTimeout(
                 loadingTask.promise,
-                10000,
+                PDF_LOAD_TIMEOUT_MS,
                 () => {
                     try {
                         if (typeof loadingTask.destroy === 'function') loadingTask.destroy();
@@ -481,7 +480,7 @@ export async function initPublicMaterials() {
             readerState.pdfDoc = pdfDoc;
             readerState.totalPages = Number(pdfDoc.numPages || 0);
             readerState.pageNumber = Math.min(Math.max(Number(resumePage) || 1, 1), readerState.totalPages || 1);
-            readerState.scale = 1.1;
+            readerState.scale = await resolveInitialPdfScale(pdfDoc, readerState.pageNumber);
             updatePdfControls();
             await queuePdfRender(readerState.pageNumber);
             setPdfLoadingState(false, '');
@@ -490,10 +489,30 @@ export async function initPublicMaterials() {
             }
         } catch (err) {
             console.warn('PDF viewer load failed:', err);
-            const timeoutMessage = err && err.message === 'PDF_LOAD_TIMEOUT'
-                ? 'PDF terlalu lama dimuat. Kemungkinan link file bermasalah atau server sumber lambat.'
-                : 'PDF tidak bisa dimuat di aplikasi. Kemungkinan link belum public, file tidak ditemukan, atau CORS belum terbuka.';
-            showFallbackMode(timeoutMessage);
+            if (err && err.message === 'PDF_LOAD_TIMEOUT') {
+                showIframeMode(url);
+                if (window.Toast) Toast.show('Mode cepat aktif karena PDF terlalu lama dimuat.', 'warning');
+                return;
+            }
+            showFallbackMode('PDF tidak bisa dimuat di aplikasi. Kemungkinan link belum public, file tidak ditemukan, atau CORS belum terbuka.');
+        }
+    }
+
+    async function resolveInitialPdfScale(pdfDoc, pageNumber) {
+        if (!pdfDoc || !pdfCanvas) return 1;
+
+        try {
+            const page = await pdfDoc.getPage(pageNumber);
+            const baseViewport = page.getViewport({ scale: 1 });
+            const canvasWrap = pdfCanvas.parentElement;
+            const wrapWidth = Number(canvasWrap?.clientWidth || 0);
+            if (!wrapWidth || !baseViewport.width) return 1;
+
+            const usableWidth = Math.max(240, wrapWidth - 24);
+            const fitScale = usableWidth / baseViewport.width;
+            return Math.min(1.1, Math.max(0.78, Number(fitScale.toFixed(2))));
+        } catch {
+            return 1;
         }
     }
 
@@ -616,115 +635,13 @@ export async function initPublicMaterials() {
             return;
         }
 
-        const viewedAtText = formatRelativeDate(lastRead.viewed_at);
-        const durationText = formatReadDuration(Number(lastRead.seconds || 0));
         const pageText = Number(lastRead.page || 0) > 0
             ? `Hal. ${Number(lastRead.page)}`
             : 'Posisi belum tercatat';
 
         lastReadTitle.textContent = String(linkedMaterial.title || lastRead.title || 'Materi');
-        lastReadMeta.textContent = `${viewedAtText} | ${durationText} | ${pageText}`;
+        lastReadMeta.textContent = `Terakhir dibaca | ${pageText}`;
         lastReadCard.hidden = false;
-    }
-
-    function formatRelativeDate(timestamp) {
-        const ms = Number(timestamp || 0);
-        if (!ms) return 'Baru saja';
-        const now = Date.now();
-        const diff = Math.max(0, now - ms);
-        const minute = 60 * 1000;
-        const hour = 60 * minute;
-        const day = 24 * hour;
-        if (diff < minute) return 'Baru saja';
-        if (diff < hour) return `${Math.floor(diff / minute)} menit lalu`;
-        if (diff < day) return `${Math.floor(diff / hour)} jam lalu`;
-        return new Date(ms).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-    }
-
-    function formatReadDuration(totalSeconds) {
-        const sec = Math.max(0, Number(totalSeconds) || 0);
-        const hour = Math.floor(sec / 3600);
-        const min = Math.floor((sec % 3600) / 60);
-        const rem = sec % 60;
-        if (hour > 0) return `${hour}j ${String(min).padStart(2, '0')}m`;
-        return `${min}m ${String(rem).padStart(2, '0')}d`;
-    }
-
-    function formatTimerClock(ms) {
-        const totalSec = Math.floor(Math.max(0, ms) / 1000);
-        const min = Math.floor(totalSec / 60);
-        const sec = totalSec % 60;
-        return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-    }
-
-    function startReadSession() {
-        readSession.startedAt = Date.now();
-        readSession.accumulatedMs = 0;
-        readSession.lastResumeAt = 0;
-        readSession.paused = true;
-        syncReadSessionWithVisibility();
-
-        if (readTickerId) window.clearInterval(readTickerId);
-        readTickerId = window.setInterval(() => {
-            updateReaderTimerUI();
-        }, 1000);
-        updateReaderTimerUI();
-    }
-
-    function stopReadSession() {
-        pauseReadSession();
-        if (readTickerId) {
-            window.clearInterval(readTickerId);
-            readTickerId = null;
-        }
-        readSession.startedAt = 0;
-        readSession.accumulatedMs = 0;
-        readSession.lastResumeAt = 0;
-        readSession.paused = true;
-        updateReaderTimerUI();
-    }
-
-    function shouldCountReadTime() {
-        return Boolean(readerState.open)
-            && document.visibilityState === 'visible'
-            && document.hasFocus();
-    }
-
-    function syncReadSessionWithVisibility() {
-        if (!readerState.open) return;
-        if (shouldCountReadTime()) {
-            resumeReadSession();
-        } else {
-            pauseReadSession();
-        }
-    }
-
-    function resumeReadSession() {
-        if (!readSession.startedAt || !readSession.paused) return;
-        readSession.lastResumeAt = Date.now();
-        readSession.paused = false;
-    }
-
-    function pauseReadSession() {
-        if (!readSession.startedAt || readSession.paused) return;
-        const now = Date.now();
-        if (readSession.lastResumeAt) {
-            readSession.accumulatedMs += Math.max(0, now - readSession.lastResumeAt);
-        }
-        readSession.lastResumeAt = 0;
-        readSession.paused = true;
-    }
-
-    function getCurrentSessionMs() {
-        if (!readSession.startedAt) return 0;
-        if (readSession.paused || !readSession.lastResumeAt) return readSession.accumulatedMs;
-        return readSession.accumulatedMs + Math.max(0, Date.now() - readSession.lastResumeAt);
-    }
-
-    function updateReaderTimerUI() {
-        if (!readerTimer) return;
-        const ms = getCurrentSessionMs();
-        readerTimer.textContent = formatTimerClock(ms);
     }
 
     function persistLastRead() {
@@ -732,17 +649,22 @@ export async function initPublicMaterials() {
         const title = readerState.activeTitle;
         if (!url || !title) return;
 
-        const seconds = Math.max(0, Math.floor(getCurrentSessionMs() / 1000));
+        const hasPdfDoc = Boolean(readerState.pdfDoc);
+        let page = 0;
+        if (hasPdfDoc) {
+            page = Number(readerState.pageNumber || 0);
+        } else if (lastRead && lastRead.key === (readerState.activeKey || url)) {
+            page = Number(lastRead.page || 0);
+        }
+
         const payload = {
             key: readerState.activeKey || url,
             title,
             url,
             file_type: String(readerState.activeMaterial?.file_type || 'pdf'),
             thumbnail: String(readerState.activeMaterial?.thumbnail || ''),
-            page: Number(readerState.pageNumber || 1),
-            total_pages: Number(readerState.totalPages || 0),
-            seconds,
-            viewed_at: Date.now()
+            page,
+            total_pages: hasPdfDoc ? Number(readerState.totalPages || 0) : Number(lastRead?.total_pages || 0)
         };
         lastRead = payload;
         saveLastRead(payload);
@@ -765,6 +687,19 @@ export async function initPublicMaterials() {
             });
 
         return pdfJsLoadPromise;
+    }
+
+    function schedulePdfJsWarmup() {
+        if (window.pdfjsLib || pdfJsLoadPromise) return;
+        const run = () => {
+            void ensurePdfJsReady();
+        };
+
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(() => run(), { timeout: 1800 });
+        } else {
+            window.setTimeout(run, 1200);
+        }
     }
 
     function loadScriptOnce(src) {
@@ -815,7 +750,9 @@ export async function initPublicMaterials() {
         try {
             const page = await readerState.pdfDoc.getPage(pageNumber);
             const viewport = page.getViewport({ scale: readerState.scale });
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            const ratioCap = isMobile ? 1.2 : PDF_MAX_DEVICE_PIXEL_RATIO;
+            const ratio = Math.min(Math.max(window.devicePixelRatio || 1, 1), ratioCap);
             const context = pdfCanvas.getContext('2d');
             if (!context) throw new Error('Canvas context unavailable');
 
@@ -831,6 +768,7 @@ export async function initPublicMaterials() {
                 viewport
             });
             await readerState.renderTask.promise;
+            persistLastRead();
             setPdfLoadingState(false, '');
         } catch (err) {
             if (!err || err.name !== 'RenderingCancelledException') {
@@ -963,7 +901,7 @@ export async function initPublicMaterials() {
 
     setupReader();
     renderLastReadCard();
-    updateReaderTimerUI();
+    schedulePdfJsWarmup();
 
     if (searchInput) {
         let timeout = null;

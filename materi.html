@@ -438,18 +438,6 @@
             align-items: center;
         }
 
-        .page-library .material-reader-timer {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #334155;
-            background: #eef2f7;
-            border: 1px solid #dbe4ee;
-            border-radius: 8px;
-            padding: 7px 9px;
-            line-height: 1;
-            white-space: nowrap;
-        }
-
         .page-library .material-reader-action {
             border: 1px solid #dbe4ee;
             background: #ffffff;
@@ -683,10 +671,6 @@
                 width: 100%;
             }
 
-            .page-library .material-reader-timer {
-                display: none;
-            }
-
             .page-library .material-pdf-toolbar {
                 gap: 6px;
             }
@@ -805,7 +789,6 @@
             <header class="material-reader-head">
                 <h2 id="material-reader-title">Baca Materi</h2>
                 <div class="material-reader-actions">
-                    <span id="material-reader-timer" class="material-reader-timer">00:00</span>
                     <a id="material-reader-open-tab" class="material-reader-action" href="#" target="_blank" rel="noopener noreferrer">Tab Baru</a>
                     <button type="button" id="material-reader-close-btn" class="material-reader-action">Tutup</button>
                 </div>
@@ -851,7 +834,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>    <script type="module">
-        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=8';
+        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=10';
 
         function initLibraryShare() {
             const shareBtn = document.getElementById('library-share-btn');
