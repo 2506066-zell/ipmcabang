@@ -448,9 +448,9 @@ export async function initPublicMaterials() {
 
         if (isPdfResource(rawUrl, material?.file_type)) {
             if (driveId) {
-                const directPdfUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(driveId)}`;
+                const proxiedPdfUrl = `/api/materials-file?id=${encodeURIComponent(driveId)}`;
                 const previewUrl = `https://drive.google.com/file/d/${encodeURIComponent(driveId)}/preview`;
-                void showPdfMode(directPdfUrl, options.resumePage, previewUrl);
+                void showPdfMode(proxiedPdfUrl, options.resumePage, previewUrl);
                 return;
             }
             void showPdfMode(rawUrl, options.resumePage);
@@ -836,6 +836,9 @@ export async function initPublicMaterials() {
             page = Math.max(1, Number(readerState.pageNumber || 1));
         } else if (lastRead && lastRead.key === (readerState.activeKey || url)) {
             page = Number(lastRead.page || 0);
+        }
+        if (!page && isPdfResource(url, readerState.activeMaterial?.file_type)) {
+            page = Math.max(1, Number(lastRead?.page || 1));
         }
 
         const payload = {

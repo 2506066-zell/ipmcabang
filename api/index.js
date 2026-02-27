@@ -13,6 +13,7 @@ const routes = {
   'organization': require('./_handler_organization'),
   'articles': require('./_handler_articles'),
   'materials': require('./_handler_materials'),
+  'materials-file': require('./_handler_material_file'),
   'questions': require('./_handler_questions'),
   'results': require('./_handler_results'),
   'users': require('./_handler_users'),
