@@ -466,7 +466,17 @@ export async function initPublicMaterials() {
                 url,
                 withCredentials: false
             });
-            const pdfDoc = await loadingTask.promise;
+            const pdfDoc = await withTimeout(
+                loadingTask.promise,
+                10000,
+                () => {
+                    try {
+                        if (typeof loadingTask.destroy === 'function') loadingTask.destroy();
+                    } catch {
+                        // noop
+                    }
+                }
+            );
             readerState.pdfDoc = pdfDoc;
             readerState.totalPages = Number(pdfDoc.numPages || 0);
             readerState.pageNumber = Math.min(Math.max(Number(resumePage) || 1, 1), readerState.totalPages || 1);
@@ -479,8 +489,31 @@ export async function initPublicMaterials() {
             }
         } catch (err) {
             console.warn('PDF viewer load failed:', err);
-            showFallbackMode('PDF tidak bisa dimuat di aplikasi. Kemungkinan link belum public atau CORS belum terbuka.');
+            const timeoutMessage = err && err.message === 'PDF_LOAD_TIMEOUT'
+                ? 'PDF terlalu lama dimuat. Kemungkinan link file bermasalah atau server sumber lambat.'
+                : 'PDF tidak bisa dimuat di aplikasi. Kemungkinan link belum public, file tidak ditemukan, atau CORS belum terbuka.';
+            showFallbackMode(timeoutMessage);
         }
+    }
+
+    function withTimeout(promise, timeoutMs, onTimeout) {
+        let timeoutId = null;
+        return new Promise((resolve, reject) => {
+            timeoutId = window.setTimeout(() => {
+                if (typeof onTimeout === 'function') onTimeout();
+                reject(new Error('PDF_LOAD_TIMEOUT'));
+            }, Math.max(1000, Number(timeoutMs) || 10000));
+
+            Promise.resolve(promise)
+                .then((value) => {
+                    if (timeoutId) window.clearTimeout(timeoutId);
+                    resolve(value);
+                })
+                .catch((error) => {
+                    if (timeoutId) window.clearTimeout(timeoutId);
+                    reject(error);
+                });
+        });
     }
 
     function showFallbackMode(message) {
