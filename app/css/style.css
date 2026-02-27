@@ -4812,6 +4812,32 @@ body.quiz-active .premium-fab-container {
 .header-icon.install-app-btn:hover {
     opacity: 1;
 }
+.header-icon.profile-icon-btn.is-login-state {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid rgba(29, 141, 39, 0.28);
+    border-radius: 999px;
+    background: #e9f5ec;
+    color: #1d8d27;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+}
+
+.header-icon.profile-icon-btn.is-login-state:hover {
+    background: #dff0e4;
+    color: #166e1e;
+}
+
+@media (max-width: 480px) {
+    .header-icon.profile-icon-btn.is-login-state {
+        padding: 5px 9px;
+        font-size: 0.72rem;
+    }
+}
 
 /* ==================== Struktur Organisasi Redesign v2 ==================== */
 .page-struktur .page-subtitle {
@@ -6797,6 +6823,10 @@ body.quiz-active .premium-fab-container {
     .page-struktur .org-node-card-circle .org-node-content {
         text-align: center;
     }
+
+    .page-struktur .org-field-grid {
+        gap: 12px;
+    }
 }
 
 @media (max-width: 560px) {
@@ -6829,5 +6859,48 @@ body.quiz-active .premium-fab-container {
 
     .page-struktur .org-field-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .page-struktur .org-node-card-field {
+        border-radius: 14px;
+        box-shadow: 0 5px 12px rgba(21, 45, 32, 0.08);
+        grid-template-rows: auto 1fr;
+    }
+
+    .page-struktur .org-node-card-field .org-node-media {
+        height: 102px;
+        background: linear-gradient(160deg, #f1f4f2 0%, #e6ece8 100%);
+    }
+
+    .page-struktur .org-node-card-field .org-node-media img {
+        object-fit: contain;
+        object-position: center center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .page-struktur .org-node-card-field .org-node-content {
+        padding: 10px 10px 11px;
+        display: grid;
+        align-content: start;
+        gap: 4px;
+    }
+
+    .page-struktur .org-node-card-field .org-node-name {
+        font-size: 15px;
+        line-height: 1.25;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .page-struktur .org-node-card-field .org-node-meta {
+        margin-top: 0;
+        font-size: 11px;
+        line-height: 1.35;
     }
 }

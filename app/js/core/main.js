@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+ï»¿document.addEventListener('DOMContentLoaded', () => {
 
     const uiBack = (() => {
         const state = { current: null, closers: {} };
@@ -157,6 +157,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const ARTICLE_SEEN_KEY = 'ipm_last_seen_article_ts';
     const getSession = () => sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
     const getUsername = () => sessionStorage.getItem(USER_USERNAME_KEY) || localStorage.getItem(USER_USERNAME_KEY) || '';
+    function syncProfileHeaderButton(btn) {
+        if (!btn) return;
+        const session = String(getSession() || '').trim();
+        const username = String(getUsername() || '').trim();
+        const isLoggedIn = !!session;
+
+        btn.classList.toggle('is-login-state', !isLoggedIn);
+        btn.classList.toggle('is-profile-state', isLoggedIn);
+
+        if (!isLoggedIn) {
+            btn.setAttribute('aria-label', 'Login');
+            btn.title = 'Login';
+            btn.textContent = 'Login';
+            return;
+        }
+
+        btn.setAttribute('aria-label', 'Profil');
+        btn.title = username ? `Profil ${username}` : 'Profil';
+        btn.innerHTML = '<i class="fas fa-user" aria-hidden="true"></i>';
+    }
     function isArticlesPagePath(pathname) {
         const path = String(pathname || '');
         return path.includes('articles.html') || path === '/articles' || path.startsWith('/articles/');
@@ -184,16 +204,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.type = 'button';
         btn.id = 'profile-header-btn';
         btn.className = 'header-icon profile-icon-btn';
-        btn.setAttribute('aria-label', 'Profil');
-        const icon = document.createElement('i');
-        icon.className = 'fas fa-user';
-        btn.appendChild(icon);
+        syncProfileHeaderButton(btn);
         const anchor = headerRight.querySelector('#hamburger-menu');
         if (anchor) headerRight.insertBefore(btn, anchor);
         else headerRight.appendChild(btn);
-
-        const username = String(getUsername() || '').trim();
-        if (username) btn.title = `Profil ${username}`;
 
         btn.addEventListener('click', () => {
             const session = getSession();
@@ -206,6 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.warn('[Profile] Modal belum siap');
             }
+        });
+
+        window.addEventListener('storage', () => {
+            syncProfileHeaderButton(btn);
         });
     }
 
@@ -427,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const end = schedule.end_time ? new Date(schedule.end_time).getTime() : 0;
                     if (!end || end <= now) {
                         setStateText('Sedang berlangsung');
-                        subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+                        subEl.textContent = endLabel ? `Status: Sedang berlangsung ï¿½ Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
                         return;
                     }
                     const diff = Math.max(0, end - now);
@@ -437,14 +455,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const minutes = Math.floor((totalSeconds % 3600) / 60);
                     const seconds = totalSeconds % 60;
                     timerEl.innerHTML = renderSegments(days, hours, minutes, seconds);
-                    subEl.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+                    subEl.textContent = endLabel ? `Status: Sedang berlangsung ï¿½ Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
                     return;
                 }
 
                 const start = schedule.start_time ? new Date(schedule.start_time).getTime() : 0;
                 if (!start || start <= now) {
                     setStateText('Mulai sekarang');
-                    subEl.textContent = startLabel ? `Status: Mulai sekarang • Mulai: ${startLabel}` : 'Status: Mulai sekarang';
+                    subEl.textContent = startLabel ? `Status: Mulai sekarang ï¿½ Mulai: ${startLabel}` : 'Status: Mulai sekarang';
                     return;
                 }
                 const diff = Math.max(0, start - now);
@@ -454,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 timerEl.innerHTML = renderSegments(days, hours, minutes, seconds);
-                subEl.textContent = startLabel ? `Status: Akan dimulai • Mulai: ${startLabel}` : 'Status: Akan dimulai';
+                subEl.textContent = startLabel ? `Status: Akan dimulai ï¿½ Mulai: ${startLabel}` : 'Status: Akan dimulai';
             };
 
             update();
@@ -843,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = startLabel ? `Status: Akan dimulai • Mulai: ${startLabel}` : 'Status: Akan dimulai';
+            programCountdownSub.textContent = startLabel ? `Status: Akan dimulai ï¿½ Mulai: ${startLabel}` : 'Status: Akan dimulai';
             programCountdown.hidden = false;
             return;
         }
@@ -856,13 +874,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = endLabel ? `Status: Sedang berlangsung • Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+            programCountdownSub.textContent = endLabel ? `Status: Sedang berlangsung ï¿½ Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
             programCountdown.hidden = false;
             return;
         }
 
         programCountdownTimer.textContent = 'Selesai';
-        programCountdownSub.textContent = endLabel ? `Status: Selesai • Berakhir: ${endLabel}` : 'Status: Selesai';
+        programCountdownSub.textContent = endLabel ? `Status: Selesai ï¿½ Berakhir: ${endLabel}` : 'Status: Selesai';
         programCountdown.hidden = false;
     };
 
