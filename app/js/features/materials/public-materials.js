@@ -10,8 +10,6 @@ export async function initPublicMaterials() {
     const PDF_LOAD_TIMEOUT_MS = 8000;
     const PDF_MAX_DEVICE_PIXEL_RATIO = 1.5;
     const PDF_RANGE_CHUNK_SIZE = 256 * 1024;
-    const USER_SESSION_KEY = 'ipmquiz_user_session';
-    const USER_USERNAME_KEY = 'ipmquiz_user_username';
 
     const grid = document.getElementById('materi-grid');
     const searchInput = document.getElementById('mat-search');
@@ -49,9 +47,6 @@ export async function initPublicMaterials() {
     let thumbObserver = null;
     let loadMoreObserver = null;
     let pdfJsLoadPromise = null;
-    let syncLastReadTimerId = null;
-    let syncLastReadPendingPayload = null;
-    let syncLastReadBusy = false;
     let lastRead = loadLastRead();
 
     const readerState = {
@@ -68,46 +63,6 @@ export async function initPublicMaterials() {
         queuedPage: 0,
         renderTask: null
     };
-
-    function getStored(key) {
-        try {
-            return String(sessionStorage.getItem(key) || localStorage.getItem(key) || '').trim();
-        } catch {
-            return '';
-        }
-    }
-
-    function getSessionToken() {
-        return getStored(USER_SESSION_KEY);
-    }
-
-    function getUsername() {
-        return getStored(USER_USERNAME_KEY);
-    }
-
-    function getScopedLastReadKey() {
-        const normalizedUser = getUsername().toLowerCase().replace(/[^a-z0-9._-]/g, '_');
-        if (!normalizedUser) return `${LAST_READ_STORAGE_KEY}_guest`;
-        return `${LAST_READ_STORAGE_KEY}_${normalizedUser}`;
-    }
-
-    function normalizeLastReadPayload(payload) {
-        if (!payload || typeof payload !== 'object') return null;
-        const url = sanitizeMaterialUrl(payload.url || '');
-        const title = String(payload.title || '').trim();
-        if (!url || !title) return null;
-
-        return {
-            key: String(payload.key || url),
-            title,
-            url,
-            file_type: String(payload.file_type || 'pdf'),
-            thumbnail: String(payload.thumbnail || ''),
-            page: Math.max(0, Number(payload.page) || 0),
-            total_pages: Math.max(0, Number(payload.total_pages) || 0),
-            updated_at_ms: Math.max(0, Number(payload.updated_at_ms) || 0)
-        };
-    }
 
     function setOverlayLoading(show, text) {
         if (!loader) return;
@@ -331,17 +286,6 @@ export async function initPublicMaterials() {
             window.__uiBack.register('material-reader', closeMaterialReader);
         }
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState !== 'hidden') return;
-            if (!readerState.open) return;
-            persistLastRead({ skipRemote: true });
-        });
-
-        window.addEventListener('pagehide', () => {
-            if (!readerState.open) return;
-            persistLastRead({ skipRemote: true });
-        });
-
         grid.addEventListener('click', (event) => {
             const link = event.target.closest('a.materi-card-link');
             if (!link || !grid.contains(link)) return;
@@ -409,13 +353,13 @@ export async function initPublicMaterials() {
             lastReadResumeBtn.addEventListener('click', () => {
                 if (!lastRead || !lastRead.url) return;
                 const candidate = findMaterialByUrl(lastRead.url);
-                const target = candidate || {
-                    title: lastRead.title,
-                    file_url: lastRead.url,
-                    file_type: lastRead.file_type,
-                    thumbnail: lastRead.thumbnail
-                };
-                openMaterialReader(target, { resumePage: lastRead.page });
+                if (!candidate) {
+                    clearLastRead();
+                    renderLastReadCard();
+                    if (window.Toast) Toast.show('Materi terakhir sudah tidak tersedia.', 'warning');
+                    return;
+                }
+                openMaterialReader(candidate, { resumePage: lastRead.page });
             });
         }
     }
@@ -446,23 +390,17 @@ export async function initPublicMaterials() {
 
         showReaderModal();
 
-        if (isPdfResource(rawUrl, material?.file_type)) {
-            if (driveId) {
-                const directPdfUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(driveId)}`;
-                const previewUrl = `https://drive.google.com/file/d/${encodeURIComponent(driveId)}/preview`;
-                void showPdfMode(directPdfUrl, options.resumePage, previewUrl);
-                return;
-            }
-            void showPdfMode(rawUrl, options.resumePage);
-            return;
-        }
-
         if (driveId) {
             const previewUrl = `https://drive.google.com/file/d/${encodeURIComponent(driveId)}/preview`;
             showIframeMode(previewUrl);
             if (options.resumePage && window.Toast) {
                 Toast.show('Lanjut baca materi terakhir.', 'success');
             }
+            return;
+        }
+
+        if (isPdfResource(rawUrl, material?.file_type)) {
+            void showPdfMode(rawUrl, options.resumePage);
             return;
         }
 
@@ -511,7 +449,7 @@ export async function initPublicMaterials() {
         if (readerFrame) readerFrame.src = src;
     }
 
-    async function showPdfMode(url, resumePage, iframeFallbackSrc = '') {
+    async function showPdfMode(url, resumePage) {
         setReaderMode('pdf');
         setPdfLoadingState(true, 'Memuat PDF...');
 
@@ -552,13 +490,8 @@ export async function initPublicMaterials() {
         } catch (err) {
             console.warn('PDF viewer load failed:', err);
             if (err && err.message === 'PDF_LOAD_TIMEOUT') {
-                showIframeMode(iframeFallbackSrc || url);
+                showIframeMode(url);
                 if (window.Toast) Toast.show('Mode cepat aktif karena PDF terlalu lama dimuat.', 'warning');
-                return;
-            }
-            if (iframeFallbackSrc) {
-                showIframeMode(iframeFallbackSrc);
-                if (window.Toast) Toast.show('PDF direct gagal, dialihkan ke mode preview.', 'warning');
                 return;
             }
             showFallbackMode('PDF tidak bisa dimuat di aplikasi. Kemungkinan link belum public, file tidak ditemukan, atau CORS belum terbuka.');
@@ -647,140 +580,30 @@ export async function initPublicMaterials() {
     }
 
     function loadLastRead() {
-        const scopedKey = getScopedLastReadKey();
-        const legacyKey = LAST_READ_STORAGE_KEY;
-
         try {
-            const scopedRaw = localStorage.getItem(scopedKey);
-            if (scopedRaw) {
-                const normalized = normalizeLastReadPayload(JSON.parse(scopedRaw));
-                if (normalized) return normalized;
-            }
-
-            const legacyRaw = localStorage.getItem(legacyKey);
-            if (!legacyRaw) return null;
-            const legacy = normalizeLastReadPayload(JSON.parse(legacyRaw));
-            if (!legacy) return null;
-
-            localStorage.setItem(scopedKey, JSON.stringify(legacy));
-            return legacy;
+            const raw = localStorage.getItem(LAST_READ_STORAGE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') return null;
+            if (!parsed.url || !parsed.title) return null;
+            return parsed;
         } catch {
             return null;
         }
     }
 
-    function saveLastRead(payload, options = {}) {
-        const normalized = normalizeLastReadPayload(payload);
-        if (!normalized) return;
-        const localPayload = {
-            ...normalized,
-            updated_at_ms: normalized.updated_at_ms || Date.now()
-        };
-        const scopedKey = getScopedLastReadKey();
-
+    function saveLastRead(payload) {
         try {
-            localStorage.setItem(scopedKey, JSON.stringify(localPayload));
+            localStorage.setItem(LAST_READ_STORAGE_KEY, JSON.stringify(payload));
         } catch {
             // noop
         }
-
-        if (options.skipRemote) return;
-        scheduleLastReadSync(localPayload);
     }
 
     function clearLastRead() {
         lastRead = null;
         try {
-            localStorage.removeItem(getScopedLastReadKey());
-        } catch {
-            // noop
-        }
-    }
-
-    function scheduleLastReadSync(payload) {
-        const token = getSessionToken();
-        if (!token) return;
-
-        syncLastReadPendingPayload = payload;
-        if (syncLastReadTimerId) window.clearTimeout(syncLastReadTimerId);
-        syncLastReadTimerId = window.setTimeout(() => {
-            void flushLastReadSync();
-        }, 900);
-    }
-
-    async function flushLastReadSync() {
-        if (syncLastReadBusy || !syncLastReadPendingPayload) return;
-        const token = getSessionToken();
-        if (!token) return;
-
-        const payload = syncLastReadPendingPayload;
-        syncLastReadPendingPayload = null;
-        syncLastReadBusy = true;
-
-        try {
-            await fetch('/api/materials?action=lastRead', {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-        } catch {
-            syncLastReadPendingPayload = payload;
-        } finally {
-            syncLastReadBusy = false;
-            if (syncLastReadPendingPayload) {
-                if (syncLastReadTimerId) window.clearTimeout(syncLastReadTimerId);
-                syncLastReadTimerId = window.setTimeout(() => {
-                    void flushLastReadSync();
-                }, 1400);
-            }
-        }
-    }
-
-    async function hydrateLastReadFromServer() {
-        const token = getSessionToken();
-        if (!token) return;
-
-        try {
-            const res = await fetch('/api/materials?action=lastRead', {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            const data = await res.json();
-            if (data.status !== 'success') return;
-
-            const remoteRaw = data.last_read;
-            if (!remoteRaw) return;
-
-            const normalizedRemote = normalizeLastReadPayload({
-                key: remoteRaw.material_key || remoteRaw.key || remoteRaw.url,
-                title: remoteRaw.title,
-                url: remoteRaw.url,
-                file_type: remoteRaw.file_type,
-                thumbnail: remoteRaw.thumbnail,
-                page: remoteRaw.page,
-                total_pages: remoteRaw.total_pages,
-                updated_at_ms: remoteRaw.updated_at ? Date.parse(remoteRaw.updated_at) : 0
-            });
-            if (!normalizedRemote) return;
-
-            const localTs = Number(lastRead?.updated_at_ms || 0);
-            const remoteTs = Number(normalizedRemote.updated_at_ms || 0);
-
-            if (!lastRead || remoteTs >= localTs) {
-                lastRead = normalizedRemote;
-                saveLastRead(normalizedRemote, { skipRemote: true });
-                renderLastReadCard();
-                return;
-            }
-
-            scheduleLastReadSync(lastRead);
+            localStorage.removeItem(LAST_READ_STORAGE_KEY);
         } catch {
             // noop
         }
@@ -807,12 +630,8 @@ export async function initPublicMaterials() {
 
         const linkedMaterial = findMaterialByUrl(lastRead.url);
         if (!linkedMaterial) {
-            const pageTextBeforeData = Number(lastRead.page || 0) > 0
-                ? `Hal. ${Number(lastRead.page)}`
-                : 'Posisi belum tercatat';
-            lastReadTitle.textContent = String(lastRead.title || 'Materi');
-            lastReadMeta.textContent = `Terakhir dibaca | ${pageTextBeforeData}`;
-            lastReadCard.hidden = false;
+            clearLastRead();
+            lastReadCard.hidden = true;
             return;
         }
 
@@ -825,7 +644,7 @@ export async function initPublicMaterials() {
         lastReadCard.hidden = false;
     }
 
-    function persistLastRead(options = {}) {
+    function persistLastRead() {
         const url = readerState.activeUrl;
         const title = readerState.activeTitle;
         if (!url || !title) return;
@@ -833,7 +652,7 @@ export async function initPublicMaterials() {
         const hasPdfDoc = Boolean(readerState.pdfDoc);
         let page = 0;
         if (hasPdfDoc) {
-            page = Math.max(1, Number(readerState.pageNumber || 1));
+            page = Number(readerState.pageNumber || 0);
         } else if (lastRead && lastRead.key === (readerState.activeKey || url)) {
             page = Number(lastRead.page || 0);
         }
@@ -845,11 +664,10 @@ export async function initPublicMaterials() {
             file_type: String(readerState.activeMaterial?.file_type || 'pdf'),
             thumbnail: String(readerState.activeMaterial?.thumbnail || ''),
             page,
-            total_pages: hasPdfDoc ? Number(readerState.totalPages || 0) : Number(lastRead?.total_pages || 0),
-            updated_at_ms: Date.now()
+            total_pages: hasPdfDoc ? Number(readerState.totalPages || 0) : Number(lastRead?.total_pages || 0)
         };
         lastRead = payload;
-        saveLastRead(payload, { skipRemote: !!options.skipRemote });
+        saveLastRead(payload);
         renderLastReadCard();
     }
 
@@ -1084,7 +902,6 @@ export async function initPublicMaterials() {
     setupReader();
     renderLastReadCard();
     schedulePdfJsWarmup();
-    void hydrateLastReadFromServer();
 
     if (searchInput) {
         let timeout = null;

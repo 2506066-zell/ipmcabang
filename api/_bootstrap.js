@@ -219,21 +219,6 @@ async function ensureSchema() {
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
 
-  await query`CREATE TABLE IF NOT EXISTS material_last_reads (
-    id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    material_key TEXT,
-    title TEXT NOT NULL,
-    url TEXT NOT NULL,
-    file_type TEXT,
-    thumbnail TEXT,
-    page INT DEFAULT 0,
-    total_pages INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE (user_id)
-  )`;
-
   await query`CREATE TABLE IF NOT EXISTS system_settings (
     key TEXT PRIMARY KEY,
     value TEXT,
@@ -370,7 +355,6 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_materials_active ON materials(active)`;
   await query`CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category)`;
-  await query`CREATE INDEX IF NOT EXISTS idx_material_last_reads_user ON material_last_reads(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_feedback_messages_status_created ON feedback_messages(status, created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_feedback_messages_created ON feedback_messages(created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_feedback_messages_source_ip_created ON feedback_messages(source_ip, created_at DESC)`;
