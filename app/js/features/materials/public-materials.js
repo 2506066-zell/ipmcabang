@@ -355,12 +355,13 @@ export async function initPublicMaterials() {
         if (lastReadResumeBtn) {
             lastReadResumeBtn.addEventListener('click', () => {
                 if (!lastRead || !lastRead.url) return;
-                const candidate = findMaterialByUrl(lastRead.url) || {
-                    title: lastRead.title || 'Materi',
-                    file_url: lastRead.url,
-                    file_type: lastRead.file_type || 'pdf',
-                    thumbnail: lastRead.thumbnail || ''
-                };
+                const candidate = findMaterialByUrl(lastRead.url);
+                if (!candidate) {
+                    clearLastRead();
+                    renderLastReadCard();
+                    if (window.Toast) Toast.show('Materi terakhir sudah tidak tersedia.', 'warning');
+                    return;
+                }
                 openMaterialReader(candidate, { resumePage: lastRead.page });
             });
         }
@@ -580,6 +581,15 @@ export async function initPublicMaterials() {
         }
     }
 
+    function clearLastRead() {
+        lastRead = null;
+        try {
+            localStorage.removeItem(LAST_READ_STORAGE_KEY);
+        } catch {
+            // noop
+        }
+    }
+
     function buildMaterialKey(material) {
         const safeUrl = sanitizeMaterialUrl(material?.file_url || '');
         if (safeUrl) return safeUrl;
@@ -599,13 +609,20 @@ export async function initPublicMaterials() {
             return;
         }
 
+        const linkedMaterial = findMaterialByUrl(lastRead.url);
+        if (!linkedMaterial) {
+            clearLastRead();
+            lastReadCard.hidden = true;
+            return;
+        }
+
         const viewedAtText = formatRelativeDate(lastRead.viewed_at);
         const durationText = formatReadDuration(Number(lastRead.seconds || 0));
         const pageText = Number(lastRead.page || 0) > 0
             ? `Hal. ${Number(lastRead.page)}`
             : 'Posisi belum tercatat';
 
-        lastReadTitle.textContent = String(lastRead.title || 'Materi');
+        lastReadTitle.textContent = String(linkedMaterial.title || lastRead.title || 'Materi');
         lastReadMeta.textContent = `${viewedAtText} | ${durationText} | ${pageText}`;
         lastReadCard.hidden = false;
     }
