@@ -6767,14 +6767,15 @@ body.quiz-active .premium-fab-container {
 }
 
 @media (max-width: 780px) {
-    .page-struktur .org-leadership-track,
-    .page-struktur .org-core-track {
-        justify-content: stretch;
+    .page-struktur .org-leadership-track {
+        justify-content: center;
     }
 
     .page-struktur .org-core-track {
-        grid-template-columns: 1fr;
-        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: center;
+        align-items: start;
+        gap: 12px;
     }
 
     .page-struktur .org-stage-connector {
@@ -6799,6 +6800,10 @@ body.quiz-active .premium-fab-container {
 }
 
 @media (max-width: 560px) {
+    .page-struktur .org-core-track {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+
     .page-struktur .org-node-card-circle .org-node-circle-media {
         width: 148px;
         height: 148px;
@@ -6813,8 +6818,13 @@ body.quiz-active .premium-fab-container {
         font-size: 22px;
     }
 
+    .page-struktur .org-node-card-circle.is-core .org-node-circle-media {
+        width: 132px;
+        height: 132px;
+    }
+
     .page-struktur .org-node-card-circle.is-core .org-node-name {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .page-struktur .org-field-grid {

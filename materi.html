@@ -130,6 +130,70 @@
             box-shadow: 0 2px 10px rgba(2, 6, 23, 0.04);
         }
 
+        .page-library .material-last-read {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border: 1px solid #d7e4dd;
+            background: linear-gradient(135deg, #f3faf6 0%, #eef7f2 100%);
+        }
+
+        .page-library .material-last-read-copy {
+            min-width: 0;
+            display: grid;
+            gap: 4px;
+        }
+
+        .page-library .material-last-read-kicker {
+            margin: 0;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #0b8a42;
+            font-weight: 700;
+        }
+
+        .page-library .material-last-read-title {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.35;
+            font-weight: 700;
+            color: #0f172a;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            line-clamp: 1;
+            overflow: hidden;
+        }
+
+        .page-library .material-last-read-meta {
+            margin: 0;
+            font-size: 0.79rem;
+            color: #475569;
+        }
+
+        .page-library .material-last-read-btn {
+            border: 1px solid #0b8a42;
+            background: #0b8a42;
+            color: #ffffff;
+            border-radius: 9px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+            padding: 9px 11px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .page-library .material-last-read-btn:hover {
+            background: #097438;
+            border-color: #097438;
+        }
+
         .page-library .search-wrapper,
         .page-library .filter-wrapper {
             width: 100%;
@@ -320,6 +384,199 @@
             margin: 12px 0 2px;
         }
 
+        .page-library.material-reader-open {
+            overflow: hidden;
+        }
+
+        .page-library .material-reader-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1300;
+            display: grid;
+            place-items: center;
+            padding: 14px;
+            background: rgba(5, 12, 8, 0.72);
+            backdrop-filter: blur(2px);
+        }
+
+        .page-library .material-reader-dialog {
+            width: min(1080px, 100%);
+            height: min(88vh, 960px);
+            background: #ffffff;
+            border-radius: 14px;
+            border: 1px solid rgba(15, 23, 42, 0.14);
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            overflow: hidden;
+            box-shadow: 0 22px 44px rgba(15, 23, 42, 0.3);
+        }
+
+        .page-library .material-reader-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+            background: #f8fafc;
+        }
+
+        .page-library #material-reader-title {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            color: #0f172a;
+            max-width: 65%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .page-library .material-reader-actions {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .page-library .material-reader-timer {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #334155;
+            background: #eef2f7;
+            border: 1px solid #dbe4ee;
+            border-radius: 8px;
+            padding: 7px 9px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .page-library .material-reader-action {
+            border: 1px solid #dbe4ee;
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 9px;
+            font-size: 0.79rem;
+            font-weight: 650;
+            line-height: 1;
+            padding: 8px 10px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .page-library .material-reader-action:hover {
+            border-color: #0b8a42;
+            color: #0b8a42;
+        }
+
+        .page-library .material-reader-panel {
+            position: relative;
+            min-height: 0;
+            background: #e2e8f0;
+        }
+
+        .page-library .material-reader-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #e2e8f0;
+        }
+
+        .page-library .material-reader-fallback {
+            height: 100%;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            padding: 20px;
+            gap: 12px;
+            color: #334155;
+            background: #f8fafc;
+        }
+
+        .page-library .material-reader-fallback p {
+            margin: 0;
+            max-width: 420px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .page-library .material-pdf-shell {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            height: 100%;
+            min-height: 0;
+            background: #e2e8f0;
+        }
+
+        .page-library .material-pdf-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 10px;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+
+        .page-library .material-pdf-btn {
+            min-width: 34px;
+            height: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            color: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .page-library .material-pdf-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .page-library .material-pdf-page-info {
+            min-width: 72px;
+            text-align: center;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .page-library .material-pdf-canvas-wrap {
+            position: relative;
+            overflow: auto;
+            min-height: 0;
+            padding: 12px;
+            display: grid;
+            justify-items: center;
+            align-items: start;
+            background: linear-gradient(180deg, #f1f5f9 0%, #dbe4ee 100%);
+        }
+
+        .page-library .material-pdf-canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.2);
+            background: #ffffff;
+        }
+
+        .page-library .material-pdf-loading {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 12px;
+            padding: 7px 11px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 650;
+            color: #0f172a;
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+            z-index: 2;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -387,6 +644,52 @@
 
             .page-library .materi-grid {
                 grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-library .material-reader-modal {
+                padding: 0;
+            }
+
+            .page-library .material-reader-dialog {
+                width: 100%;
+                height: 100dvh;
+                max-height: 100dvh;
+                border-radius: 0;
+                border: 0;
+            }
+
+            .page-library #material-reader-title {
+                max-width: 54%;
+                font-size: 0.86rem;
+            }
+
+            .page-library .material-reader-action {
+                padding: 7px 9px;
+                font-size: 0.75rem;
+            }
+
+            .page-library .material-last-read {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .page-library .material-last-read-btn {
+                width: 100%;
+            }
+
+            .page-library .material-reader-timer {
+                display: none;
+            }
+
+            .page-library .material-pdf-toolbar {
+                gap: 6px;
+            }
+
+            .page-library .material-pdf-btn {
+                min-width: 30px;
+                height: 28px;
             }
         }
     </style>
@@ -467,6 +770,15 @@
                 </div>
             </div>
 
+            <section id="material-last-read-card" class="material-last-read" hidden>
+                <div class="material-last-read-copy">
+                    <p class="material-last-read-kicker">Terakhir Dibaca</p>
+                    <h2 id="material-last-read-title" class="material-last-read-title"></h2>
+                    <p id="material-last-read-meta" class="material-last-read-meta"></p>
+                </div>
+                <button type="button" id="material-last-read-resume-btn" class="material-last-read-btn">Lanjut Baca</button>
+            </section>
+
             <div id="materi-grid" class="materi-grid">
                 <!-- Data will be injected here -->
             </div>
@@ -483,6 +795,39 @@
             </div>
         </div>
     </main>
+
+    <div id="material-reader-modal" class="material-reader-modal" hidden aria-hidden="true">
+        <div class="material-reader-dialog" role="dialog" aria-modal="true" aria-labelledby="material-reader-title">
+            <header class="material-reader-head">
+                <h2 id="material-reader-title">Baca Materi</h2>
+                <div class="material-reader-actions">
+                    <span id="material-reader-timer" class="material-reader-timer">00:00</span>
+                    <a id="material-reader-open-tab" class="material-reader-action" href="#" target="_blank" rel="noopener noreferrer">Tab Baru</a>
+                    <button type="button" id="material-reader-close-btn" class="material-reader-action">Tutup</button>
+                </div>
+            </header>
+            <section class="material-reader-panel">
+                <div id="material-pdf-shell" class="material-pdf-shell" hidden>
+                    <div class="material-pdf-toolbar">
+                        <button type="button" id="material-pdf-prev" class="material-pdf-btn" aria-label="Halaman sebelumnya">&#9664;</button>
+                        <span id="material-pdf-page-info" class="material-pdf-page-info">- / -</span>
+                        <button type="button" id="material-pdf-next" class="material-pdf-btn" aria-label="Halaman berikutnya">&#9654;</button>
+                        <button type="button" id="material-pdf-zoom-out" class="material-pdf-btn" aria-label="Perkecil">-</button>
+                        <button type="button" id="material-pdf-zoom-in" class="material-pdf-btn" aria-label="Perbesar">+</button>
+                    </div>
+                    <div class="material-pdf-canvas-wrap">
+                        <div id="material-pdf-loading" class="material-pdf-loading" hidden>Memuat PDF...</div>
+                        <canvas id="material-pdf-canvas" class="material-pdf-canvas" aria-label="Konten PDF"></canvas>
+                    </div>
+                </div>
+                <iframe id="material-reader-frame" class="material-reader-frame" title="Reader materi" loading="lazy" hidden></iframe>
+                <div id="material-reader-fallback" class="material-reader-fallback" hidden>
+                    <p id="material-reader-fallback-text">Materi tidak dapat dimuat di dalam aplikasi.</p>
+                    <a id="material-reader-fallback-link" class="material-reader-action" href="#" target="_blank" rel="noopener noreferrer">Buka di Tab Baru</a>
+                </div>
+            </section>
+        </div>
+    </div>
 
     <footer class="public-footer">
         <p class="footer-text">© 2026 Ikatan Pelajar Muhammadiyah - PC Panawuan</p>
@@ -502,7 +847,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>    <script type="module">
-        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=7';
+        import { initPublicMaterials } from '/app/js/features/materials/public-materials.js?v=8';
 
         function initLibraryShare() {
             const shareBtn = document.getElementById('library-share-btn');

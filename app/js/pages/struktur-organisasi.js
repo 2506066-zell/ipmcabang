@@ -41,6 +41,35 @@
       .replace(/[^a-z0-9]/g, '');
   }
 
+  function isTopBidang(item) {
+    const code = normalizeCode(item?.code);
+    const name = normalizeCode(item?.name);
+    return TOP_CODES.has(code) || code.includes('ketuaumum') || name.includes('ketuaumum');
+  }
+
+  function isCoreBidang(item) {
+    const code = normalizeCode(item?.code);
+    const name = normalizeCode(item?.name);
+    return CORE_CODES.has(code)
+      || code.includes('sekretaris')
+      || code.includes('bendahara')
+      || name.includes('sekretaris')
+      || name.includes('bendahara');
+  }
+
+  function coreBidangPriority(item) {
+    const code = normalizeCode(item?.code);
+    const name = normalizeCode(item?.name);
+    const signature = `${code} ${name}`;
+    if (signature.includes('sekretaris')) return 10;
+    if (signature.includes('bendahara')) return 20;
+    return 100;
+  }
+
+  function bidangSortPriority(a, b) {
+    return a.sort_order - b.sort_order || a.id - b.id;
+  }
+
   function escapeHtml(value) {
     return String(value || '')
       .replace(/&/g, '&amp;')
@@ -206,17 +235,15 @@
     const sorted = [...state.bidang];
     if (!sorted.length) return { top: [], core: [], fields: [] };
 
-    let top = sorted.find((item) => {
-      const code = normalizeCode(item.code);
-      return TOP_CODES.has(code) || code.includes('ketuaumum');
-    }) || sorted[0];
+    let top = sorted.find((item) => isTopBidang(item)) || sorted[0];
 
     const remain = sorted.filter((item) => item !== top);
-    let core = remain.filter((item) => {
-      const code = normalizeCode(item.code);
-      return CORE_CODES.has(code) || code.includes('sekretaris') || code.includes('bendahara');
-    });
-    const fields = remain.filter((item) => !core.includes(item));
+    let core = remain
+      .filter((item) => isCoreBidang(item))
+      .sort((a, b) => coreBidangPriority(a) - coreBidangPriority(b) || bidangSortPriority(a, b));
+    const fields = remain
+      .filter((item) => !core.includes(item))
+      .sort((a, b) => bidangSortPriority(a, b));
     if (!core.length && fields.length >= 2) {
       core = [fields.shift(), fields.shift()];
     } else if (core.length === 1 && fields.length >= 1) {
