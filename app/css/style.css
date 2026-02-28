@@ -1351,43 +1351,55 @@ main {
 }
 
 /* --- Login Screen --- */
-.login-screen {
+.page-auth {
+    min-height: 100dvh;
+    padding-top: 0;
+}
+
+.page-auth .login-screen {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 24px 16px;
     background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
 }
 
-.login-card {
+.page-auth.keyboard-open .login-screen {
+    align-items: flex-start;
+    padding-top: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+.page-auth .login-card {
     background: #ffffff;
-    padding: 40px 30px;
-    border-radius: 16px;
+    padding: 32px 24px 22px;
+    border-radius: 18px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     text-align: center;
 }
 
-.login-card h1 {
+.page-auth .login-card h1 {
     font-size: 24px;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     color: #333;
 }
 
-.login-card p {
+.page-auth .login-card p {
     font-size: 14px;
     color: #777;
-    margin-bottom: 30px;
+    margin-bottom: 22px;
 }
 
-.input-group {
+.page-auth .input-group {
     margin-bottom: 20px;
     text-align: left;
 }
 
-.input-group label {
+.page-auth .input-group label {
     display: block;
     font-size: 13px;
     font-weight: 600;
@@ -1395,38 +1407,87 @@ main {
     margin-bottom: 8px;
 }
 
-.input-group input {
+.page-auth .input-group input,
+.page-auth .input-group select {
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
+    line-height: 1.35;
     transition: border-color 0.2s, box-shadow 0.2s;
+    background: #ffffff;
+    color: #1f2937;
 }
 
-.input-group select {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    background: #fff;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.input-group input:focus {
+.page-auth .input-group input:focus,
+.page-auth .input-group select:focus {
     outline: none;
     border-color: #4a7c5d;
     box-shadow: 0 0 0 3px rgba(74, 124, 93, 0.1);
 }
 
-.input-group select:focus {
-    outline: none;
-    border-color: #4a7c5d;
-    box-shadow: 0 0 0 3px rgba(74, 124, 93, 0.1);
+.page-auth .input-group input::placeholder {
+    color: #9ca3af;
 }
 
-.btn-login {
+.page-auth .input-hint {
+    font-size: 12px;
+    color: #667085;
+    display: block;
+    margin-top: 6px;
+    line-height: 1.45;
+}
+
+.page-auth .field-error {
+    display: block;
+    margin-top: 6px;
+    min-height: 16px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #b42318;
+}
+
+.page-auth .field-error[hidden] {
+    display: none;
+}
+
+.page-auth .input-group input.is-invalid,
+.page-auth .input-group select.is-invalid {
+    border-color: #d92d20;
+    box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.12);
+}
+
+.page-auth .input-group input.is-invalid:focus,
+.page-auth .input-group select.is-invalid:focus {
+    border-color: #d92d20;
+    box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.16);
+}
+
+.page-auth .remember-row {
+    margin-top: -2px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.page-auth .remember-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.page-auth .remember-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #4a7c5d;
+}
+
+.page-auth .btn-login {
     width: 100%;
     padding: 14px;
     background: #4a7c5d;
@@ -1437,36 +1498,56 @@ main {
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s;
+    min-height: 48px;
 }
 
-.btn-login:hover {
+.page-auth .btn-login:hover {
     background: #3d6a4f;
 }
 
-#login-error {
-    color: #d93025;
+.page-auth .btn-login:focus-visible {
+    outline: 3px solid rgba(74, 124, 93, 0.24);
+    outline-offset: 2px;
+}
+
+.page-auth .btn-login:disabled {
+    opacity: 0.72;
+    cursor: not-allowed;
+}
+
+.page-auth .form-message {
+    margin-top: 12px;
+    margin-bottom: 0;
     font-size: 13px;
-    margin-top: 15px;
-    display: none;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.page-auth .form-message.error {
+    color: #b42318;
+}
+
+.page-auth .form-message.success {
+    color: #027a48;
 }
 
 /* --- Login Extras --- */
-.login-card .logo {
+.page-auth .login-card .logo {
     width: 80px;
     height: auto;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
-.password-wrapper {
+.page-auth .password-wrapper {
     position: relative;
     width: 100%;
 }
 
-.password-wrapper input {
+.page-auth .password-wrapper input {
     padding-right: 40px !important;
 }
 
-.password-toggle {
+.page-auth .password-toggle {
     position: absolute;
     right: 0;
     top: 0;
@@ -1482,25 +1563,70 @@ main {
     transition: color 0.2s;
 }
 
-.password-toggle:hover {
+.page-auth .password-toggle:hover {
     color: #4a7c5d;
 }
 
-.register-link {
+.page-auth .register-link {
     margin-top: 24px;
     text-align: center;
     font-size: 14px;
     color: #666;
 }
 
-.register-link a {
+.page-auth .register-link a {
     color: #4a7c5d;
     text-decoration: none;
     font-weight: 600;
 }
 
-.register-link a:hover {
+.page-auth .register-link a:hover {
     text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+    .page-auth .login-screen {
+        padding: 10px 10px 12px;
+    }
+
+    .page-auth .login-card {
+        max-width: 100%;
+        padding: 22px 14px 16px;
+        border-radius: 14px;
+    }
+
+    .page-auth .login-card .logo {
+        width: 64px;
+        margin-bottom: 10px;
+    }
+
+    .page-auth .login-card h1 {
+        font-size: 20px;
+    }
+
+    .page-auth .login-card p {
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+
+    .page-auth .input-group {
+        margin-bottom: 14px;
+    }
+
+    .page-auth .input-group input,
+    .page-auth .input-group select {
+        padding: 11px 12px;
+        font-size: 14px;
+    }
+
+    .page-auth .btn-login {
+        min-height: 46px;
+        font-size: 15px;
+    }
+
+    .page-auth.keyboard-open .login-card {
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
 }
 
 /* --- Dashboard Layout --- */
@@ -3469,6 +3595,38 @@ body.page-quiz {
 
 .page-struktur .anggota-card-photo.no-image .anggota-card-avatar {
     opacity: 1;
+}
+
+@keyframes orgImageSkeletonShimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.page-struktur .org-node-media.is-loading:not(.no-image)::before,
+.page-struktur .anggota-card-photo.is-loading:not(.no-image)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80%);
+    animation: orgImageSkeletonShimmer 1.2s ease-in-out infinite;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.page-struktur .org-node-media.is-loading:not(.no-image) img,
+.page-struktur .anggota-card-photo.is-loading:not(.no-image) img {
+    opacity: 0;
+}
+
+.page-struktur .org-node-media.is-loaded img,
+.page-struktur .anggota-card-photo.is-loaded img {
+    opacity: 1;
+    transition: opacity 0.24s ease;
 }
 
 .page-struktur .anggota-card-photo img {
@@ -6875,10 +7033,14 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-media img {
-        object-fit: contain;
+        object-fit: cover;
         object-position: center center;
         width: 100%;
         height: 100%;
+    }
+
+    .page-struktur .org-node-card-field .org-node-media.is-portrait img {
+        object-position: center top;
     }
 
     .page-struktur .org-node-card-field .org-node-content {

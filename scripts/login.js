@@ -1,11 +1,23 @@
 (() => {
   const FORM_ID = 'login-form';
+  const SUBMIT_BTN_ID = 'login-submit-btn';
   const USER_SESSION_KEY = 'ipmquiz_user_session';
   const USER_USERNAME_KEY = 'ipmquiz_user_username';
   const API_BASE = '/api/auth/login';
+  const FIELD_CONFIG = {
+    username: { inputId: 'username', errorId: 'username-field-error' },
+    password: { inputId: 'password', errorId: 'password-field-error' }
+  };
+
   function qs(id) { return document.getElementById(id); }
+
   function storeSession(token, username, remember) {
     try {
+      sessionStorage.removeItem(USER_SESSION_KEY);
+      localStorage.removeItem(USER_SESSION_KEY);
+      sessionStorage.removeItem(USER_USERNAME_KEY);
+      localStorage.removeItem(USER_USERNAME_KEY);
+
       if (remember) {
         localStorage.setItem(USER_SESSION_KEY, token);
         localStorage.setItem(USER_USERNAME_KEY, username);
@@ -15,33 +27,95 @@
       }
     } catch {}
   }
-  function togglePassword() {
-    const input = qs('password');
-    if (!input) return;
-    input.type = input.type === 'password' ? 'text' : 'password';
-  }
-  function showError(msg) {
-    const err = qs('error-message');
-    if (err) {
-      err.textContent = msg || '';
-      err.style.display = msg ? 'block' : 'none';
+
+  function setFieldError(fieldKey, message) {
+    const config = FIELD_CONFIG[fieldKey];
+    if (!config) return;
+    const input = qs(config.inputId);
+    const error = qs(config.errorId);
+    if (input) {
+      input.classList.toggle('is-invalid', !!message);
+      input.setAttribute('aria-invalid', message ? 'true' : 'false');
+    }
+    if (error) {
+      error.textContent = message || '';
+      error.hidden = !message;
     }
   }
+
+  function clearFieldError(fieldKey) {
+    setFieldError(fieldKey, '');
+  }
+
+  function clearAllFieldErrors() {
+    Object.keys(FIELD_CONFIG).forEach(clearFieldError);
+  }
+
+  function focusField(fieldKey) {
+    const config = FIELD_CONFIG[fieldKey];
+    const input = config ? qs(config.inputId) : null;
+    if (input) input.focus();
+  }
+
+  function validateForm() {
+    const username = String(qs('username')?.value || '').trim();
+    const password = String(qs('password')?.value || '');
+    let firstInvalidField = '';
+
+    clearAllFieldErrors();
+
+    if (!username) {
+      setFieldError('username', 'Username wajib diisi.');
+      firstInvalidField = firstInvalidField || 'username';
+    }
+    if (!password) {
+      setFieldError('password', 'Password wajib diisi.');
+      firstInvalidField = firstInvalidField || 'password';
+    } else if (password.length < 6) {
+      setFieldError('password', 'Password minimal 6 karakter.');
+      firstInvalidField = firstInvalidField || 'password';
+    }
+
+    if (firstInvalidField) {
+      focusField(firstInvalidField);
+      return null;
+    }
+
+    return { username, password };
+  }
+
+  function showError(msg, type = 'error') {
+    const err = qs('error-message');
+    if (!err) return;
+    err.textContent = msg || '';
+    err.classList.remove('success', 'error');
+    if (msg) err.classList.add(type === 'success' ? 'success' : 'error');
+    err.hidden = !msg;
+  }
+
+  function setSubmitting(isSubmitting) {
+    const submitBtn = qs(SUBMIT_BTN_ID);
+    if (!submitBtn) return;
+    submitBtn.disabled = !!isSubmitting;
+    submitBtn.textContent = isSubmitting ? 'Memproses...' : 'Masuk';
+  }
+
   function onSubmit(e) {
     e.preventDefault();
-    const unameEl = qs('username');
-    const passEl = qs('password');
     const rememberEl = qs('remember-me');
-    const err = qs('error-message');
-    const username = String(unameEl && unameEl.value || '').trim();
-    const password = String(passEl && passEl.value || '');
+    const credentials = validateForm();
+    const username = String(credentials?.username || '');
+    const password = String(credentials?.password || '');
     const remember = !!(rememberEl && rememberEl.checked);
-    if (!username || !password) {
-      showError('Username dan password wajib diisi.');
-      if (window.Toast) Toast.show('Lengkapi username dan password.', 'info');
+
+    if (!credentials) {
+      showError('');
+      if (window.Toast) Toast.show('Periksa data login yang ditandai.', 'info');
       return;
     }
+
     showError('');
+    setSubmitting(true);
     if (window.AppLoader) AppLoader.show('Masuk...');
     fetch(API_BASE, {
       method: 'POST',
@@ -56,6 +130,7 @@
       if (!res.ok || data.status !== 'success') throw new Error(data.message || ('HTTP '+res.status));
       const token = String(data.session || '');
       const uname = String(data.username || username);
+      if (!token) throw new Error('Sesi login tidak valid.');
       storeSession(token, uname, remember);
       try {
         const storage = remember ? localStorage : sessionStorage;
@@ -73,21 +148,37 @@
         ? 'Username atau password salah.'
         : 'Gagal masuk. Periksa koneksi lalu coba lagi.';
       showError(msg);
+      if (/username|password|salah|unauthorized/i.test(String(e && e.message || ''))) {
+        setFieldError('password', 'Periksa lagi username atau password.');
+        focusField('password');
+      }
       if (window.Toast) Toast.show(msg, 'error');
     })
     .finally(() => {
+      setSubmitting(false);
       if (window.AppLoader) AppLoader.hide();
     });
   }
+
   document.addEventListener('DOMContentLoaded', () => {
     const form = qs(FORM_ID);
-    const toggle = qs('toggle-password');
-    if (toggle) toggle.addEventListener('click', togglePassword);
     if (form) form.addEventListener('submit', onSubmit);
+    const usernameInput = qs('username');
+    const passwordInput = qs('password');
+    if (usernameInput) {
+      usernameInput.addEventListener('input', () => {
+        clearFieldError('username');
+      });
+    }
+    if (passwordInput) {
+      passwordInput.addEventListener('input', () => {
+        clearFieldError('password');
+      });
+    }
     const flash = sessionStorage.getItem('ipmquiz_flash');
     if (flash) {
       sessionStorage.removeItem('ipmquiz_flash');
-      showError(flash);
+      showError(flash, 'success');
       if (window.Toast) Toast.show(flash, 'info');
     }
   });

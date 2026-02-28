@@ -200,12 +200,55 @@
     els.loadingOverlay.style.display = 'none';
   }
 
+  function applyFieldCardImageOrientation(img) {
+    if (!img) return;
+    const media = img.closest('.org-node-card-field .org-node-media');
+    if (!media) return;
+    const width = Number(img.naturalWidth || 0);
+    const height = Number(img.naturalHeight || 0);
+    const isPortrait = width > 0 && height > width;
+    media.classList.toggle('is-portrait', isPortrait);
+  }
+
+  function setImageContainerState(img, stateName) {
+    if (!img) return;
+    const media = img.closest('.org-node-media, .anggota-card-photo');
+    if (!media) return;
+
+    media.classList.remove('is-loading', 'is-loaded');
+    if (stateName === 'loading') media.classList.add('is-loading');
+    if (stateName === 'loaded') media.classList.add('is-loaded');
+  }
+
   function setupLazyLoading() {
     const lazyImages = document.querySelectorAll('.lazy-load[data-src]');
+    const handleImageLoaded = (img) => {
+      if (!img) return;
+      setImageContainerState(img, 'loaded');
+      applyFieldCardImageOrientation(img);
+    };
+
+    const queueImageReadyCheck = (img) => {
+      if (!img) return;
+      if (img.complete && Number(img.naturalWidth || 0) > 0) {
+        handleImageLoaded(img);
+        return;
+      }
+      img.addEventListener('load', () => {
+        handleImageLoaded(img);
+      }, { once: true });
+    };
+
     lazyImages.forEach((img) => {
+      setImageContainerState(img, 'loading');
       img.addEventListener('error', () => {
         const media = img.closest('.org-node-media, .anggota-card-photo');
-        if (media) media.classList.add('no-image');
+        if (media) {
+          media.classList.remove('is-loading', 'is-loaded');
+          media.classList.add('no-image');
+        }
+        const fieldMedia = img.closest('.org-node-card-field .org-node-media');
+        if (fieldMedia) fieldMedia.classList.remove('is-portrait');
       }, { once: true });
     });
 
@@ -214,6 +257,9 @@
         img.loading = 'lazy';
         img.decoding = 'async';
         if (img.dataset.src) img.src = img.dataset.src;
+        img.classList.remove('lazy-load');
+        img.removeAttribute('data-src');
+        queueImageReadyCheck(img);
       });
       return;
     }
@@ -224,7 +270,9 @@
         image.loading = 'lazy';
         image.decoding = 'async';
         if (image.dataset.src) image.src = image.dataset.src;
+        queueImageReadyCheck(image);
         image.classList.remove('lazy-load');
+        image.removeAttribute('data-src');
         observer.unobserve(image);
       });
     });
@@ -268,7 +316,7 @@
       return `
         <button type="button" class="org-node-card org-node-card-circle ${nodeVariant === 'leader' ? 'is-leader' : 'is-core'}" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
           <div class="org-node-circle-media">
-            <div class="org-node-media${bidang.image_url ? '' : ' no-image'}">
+            <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}">
               <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
               ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
             </div>
@@ -282,7 +330,7 @@
     }
     return `
       <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
-        <div class="org-node-media${bidang.image_url ? '' : ' no-image'}">
+        <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
         </div>
@@ -384,7 +432,7 @@
       : '';
     return `
       <article class="anggota-card member-ring-node member-ring-node-${escapeHtml(variant)}${variant.startsWith('core') || variant === 'leadership-orbit' ? ' is-leadership' : ''}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
-        <div class="anggota-card-photo${member.photo_url ? '' : ' no-image'}">
+        <div class="anggota-card-photo${member.photo_url ? ' is-loading' : ' no-image'}">
           ${photoMarkup}
           <div class="anggota-card-avatar">${escapeHtml(initials || '?')}</div>
         </div>

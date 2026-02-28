@@ -9,37 +9,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Kuis IPM</title>
     <link rel="icon" href="/ipm%20(2).png">
-    <link rel="stylesheet" href="/app/css/style.css">
+    <link rel="stylesheet" href="/app/css/style.css?v=5">
     <link rel="stylesheet" href="/app/css/profile.css">    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
+<body class="page-auth page-login">
     <div class="login-screen">
         <div class="login-card">
             <div class="login-header">
                 <img src="ipm%20(2).png" alt="Logo IPM" class="logo">
-                <h1>Login Kuis</h1>
-                <p>Silakan masuk untuk memulai kuis.</p>
+                <h1>Masuk Akun</h1>
+                <p>Gunakan username dan password yang sudah terdaftar.</p>
             </div>
-            <form id="login-form">
+            <form id="login-form" novalidate>
                 <div class="input-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required placeholder="Masukkan username">
+                    <input type="text" id="username" name="username" required placeholder="Masukkan username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" aria-describedby="username-field-error">
+                    <small id="username-field-error" class="field-error" role="status" aria-live="polite" hidden></small>
                 </div>
                 <div class="input-group">
                     <label for="password">Password</label>
                     <div class="password-wrapper">
-                        <input type="password" id="password" name="password" required placeholder="Masukkan password">
-                        <button type="button" id="toggle-password" class="password-toggle" aria-label="Tampilkan/Sembunyikan password"><i class="fas fa-eye"></i></button>
+                        <input type="password" id="password" name="password" required minlength="6" placeholder="Masukkan password" autocomplete="current-password" enterkeyhint="done" aria-describedby="password-hint password-field-error">
+                        <button type="button" id="toggle-password" class="password-toggle" aria-label="Tampilkan password" aria-pressed="false" aria-controls="password"><i class="fas fa-eye"></i></button>
                     </div>
-                    <small class="input-hint" style="font-size:12px; color:#666; display:block; margin-top:4px;">Minimal 6 karakter.</small>
+                    <small id="password-hint" class="input-hint">Minimal 6 karakter.</small>
+                    <small id="password-field-error" class="field-error" role="status" aria-live="polite" hidden></small>
                 </div>
-                <button type="submit" class="btn-login">Masuk</button>
-                <p id="error-message" class="error-message" style="color:red; font-size:13px; margin-top:10px; display:none;"></p>
-                <div class="input-group" style="margin-top:16px; margin-bottom:0;">
-                    <label style="display:flex;align-items:center;gap:8px; font-weight:400; cursor:pointer;">
-                        <input type="checkbox" id="remember-me" style="width:auto; margin:0;"> Ingat saya
+                <div class="remember-row">
+                    <label for="remember-me" class="remember-label">
+                        <input type="checkbox" id="remember-me"> Ingat saya
                     </label>
                 </div>
+                <button type="submit" class="btn-login" id="login-submit-btn">Masuk</button>
+                <p id="error-message" class="form-message error" role="alert" aria-live="polite" hidden></p>
+                <small class="input-hint">Lupa password? Hubungi admin untuk reset akun.</small>
             </form>
             <div class="register-link">
                 <p>Belum punya akun? <a href="register.html">Daftar di sini</a></p>
@@ -49,7 +52,8 @@
     <script src="scripts/loader.js" defer></script>
     <script src="/app/js/core/toast.js" defer></script>
     <script src="scripts/navguard.js" defer></script>
-    <script src="scripts/login.js" defer></script>    <script src="/app/js/core/profile.js" defer></script>
+    <script src="scripts/auth-ui.js?v=3" defer></script>
+    <script src="scripts/login.js?v=4" defer></script>    <script src="/app/js/core/profile.js" defer></script>
 </body>
 </html>
 

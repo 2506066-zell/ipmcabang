@@ -10,6 +10,7 @@ export async function initPublicMaterials() {
     const PDF_LOAD_TIMEOUT_MS = 8000;
     const PDF_MAX_DEVICE_PIXEL_RATIO = 1.5;
     const PDF_RANGE_CHUNK_SIZE = 256 * 1024;
+    const READER_BACK_CONFIRM_WINDOW_MS = 1800;
 
     const grid = document.getElementById('materi-grid');
     const searchInput = document.getElementById('mat-search');
@@ -61,7 +62,10 @@ export async function initPublicMaterials() {
         scale: 1.1,
         isRendering: false,
         queuedPage: 0,
-        renderTask: null
+        renderTask: null,
+        backConfirmArmed: false,
+        backConfirmTimer: null,
+        pendingProgrammaticClose: false
     };
 
     function setOverlayLoading(show, text) {
@@ -420,12 +424,21 @@ export async function initPublicMaterials() {
 
     function closeMaterialReader(fromPop) {
         if (!readerModal || !readerState.open) return;
+        const isFromHistoryPop = !!fromPop;
+
+        if (isFromHistoryPop && shouldArmBackConfirm()) {
+            armBackConfirmAndKeepReaderOpen();
+            return;
+        }
+
         if (!fromPop && window.__uiBack && window.__uiBack.requestClose) {
+            readerState.pendingProgrammaticClose = true;
             window.__uiBack.requestClose('material-reader');
             return;
         }
 
         persistLastRead();
+        resetBackConfirmState();
 
         readerModal.hidden = true;
         readerModal.setAttribute('aria-hidden', 'true');
@@ -435,6 +448,63 @@ export async function initPublicMaterials() {
         if (readerFrame) readerFrame.src = 'about:blank';
         clearPdfState();
         setReaderMode('iframe');
+    }
+
+    function isMobileViewport() {
+        try {
+            return window.matchMedia('(max-width: 768px)').matches;
+        } catch {
+            return false;
+        }
+    }
+
+    function shouldArmBackConfirm() {
+        if (!readerState.open) return false;
+        if (!isMobileViewport()) return false;
+        if (readerState.pendingProgrammaticClose) {
+            readerState.pendingProgrammaticClose = false;
+            return false;
+        }
+        if (readerState.backConfirmArmed) {
+            readerState.backConfirmArmed = false;
+            if (readerState.backConfirmTimer) {
+                window.clearTimeout(readerState.backConfirmTimer);
+                readerState.backConfirmTimer = null;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    function armBackConfirmAndKeepReaderOpen() {
+        readerState.backConfirmArmed = true;
+        if (readerState.backConfirmTimer) {
+            window.clearTimeout(readerState.backConfirmTimer);
+        }
+        readerState.backConfirmTimer = window.setTimeout(() => {
+            readerState.backConfirmArmed = false;
+            readerState.backConfirmTimer = null;
+        }, READER_BACK_CONFIRM_WINDOW_MS);
+
+        if (window.Toast) {
+            Toast.show('Tekan sekali lagi untuk menutup reader.', 'info');
+        }
+
+        window.setTimeout(() => {
+            if (!readerState.open) return;
+            if (window.__uiBack && window.__uiBack.open) {
+                window.__uiBack.open('material-reader');
+            }
+        }, 0);
+    }
+
+    function resetBackConfirmState() {
+        readerState.pendingProgrammaticClose = false;
+        readerState.backConfirmArmed = false;
+        if (readerState.backConfirmTimer) {
+            window.clearTimeout(readerState.backConfirmTimer);
+            readerState.backConfirmTimer = null;
+        }
     }
 
     function setReaderMode(mode) {
