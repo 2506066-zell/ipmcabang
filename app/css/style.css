@@ -7098,9 +7098,9 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-media {
-        width: 64%;
-        height: 98px;
-        border-radius: 16px 0 0 0;
+        width: 100%;
+        height: 118px;
+        border-radius: 16px 16px 0 0;
         background: linear-gradient(160deg, #f1f4f2 0%, #e6ece8 100%);
         display: grid;
         place-items: center;
@@ -7160,6 +7160,6 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-media {
-        width: 70%;
+        width: 100%;
     }
 }
