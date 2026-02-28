@@ -1,4 +1,5 @@
 (function () {
+  const ORG_MEDIA_VERSION = '20260228-1';
   const FALLBACK_BIDANG = [
     { code: 'ketuaUmum', name: 'Ketua Umum', image_url: '/images/bidang/anwar.jpeg', color: '#2C5F4F' },
     { code: 'sekretaris', name: 'Sekretaris', image_url: '/images/bidang/sekretaris.jpg', color: '#4A7C5D' },
@@ -41,8 +42,17 @@
     const raw = String(value || '').trim();
     if (!raw) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
-    if (raw.startsWith('/')) return raw;
-    return `/${raw.replace(/^\.?\//, '')}`;
+    const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\.?\//, '')}`;
+    if (!normalized.startsWith('/images/')) return normalized;
+
+    const hashIndex = normalized.indexOf('#');
+    const pathWithQuery = hashIndex >= 0 ? normalized.slice(0, hashIndex) : normalized;
+    const hash = hashIndex >= 0 ? normalized.slice(hashIndex) : '';
+    const [pathname, query = ''] = pathWithQuery.split('?');
+    const params = new URLSearchParams(query);
+    params.set('v', ORG_MEDIA_VERSION);
+    const qs = params.toString();
+    return `${pathname}${qs ? `?${qs}` : ''}${hash}`;
   }
 
   function normalizeCode(value) {
