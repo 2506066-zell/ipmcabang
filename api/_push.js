@@ -1,5 +1,8 @@
 const webpush = require('web-push');
 const { query } = require('./_db');
+const PUSH_SEND_CONCURRENCY = Math.max(1, Number(process.env.PUSH_SEND_CONCURRENCY || 20));
+const PUSH_TTL_SECONDS = Math.max(30, Number(process.env.PUSH_TTL_SECONDS || 300));
+const PUSH_TIMEOUT_MS = Math.max(3000, Number(process.env.PUSH_TIMEOUT_MS || 10000));
 
 function getVapid() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
@@ -22,7 +25,11 @@ async function saveSubscription({ endpoint, keys, user_id }) {
     INSERT INTO push_subscriptions (endpoint, p256dh, auth, user_id)
     VALUES (${endpoint}, ${keys.p256dh}, ${keys.auth}, ${user_id || null})
     ON CONFLICT (endpoint)
-    DO UPDATE SET p256dh=EXCLUDED.p256dh, auth=EXCLUDED.auth, user_id=EXCLUDED.user_id, updated_at=NOW()
+    DO UPDATE SET
+      p256dh=EXCLUDED.p256dh,
+      auth=EXCLUDED.auth,
+      user_id=COALESCE(EXCLUDED.user_id, push_subscriptions.user_id),
+      updated_at=NOW()
   `;
   return true;
 }
@@ -38,24 +45,38 @@ async function sendToSubscriptions(subs, payload) {
   const body = JSON.stringify(payload || {});
   let sent = 0;
   let failed = 0;
-  for (const s of subs) {
-    const sub = {
-      endpoint: s.endpoint,
-      keys: {
-        p256dh: s.p256dh,
-        auth: s.auth
-      }
-    };
-    try {
-      await webpush.sendNotification(sub, body);
-      sent++;
-    } catch (e) {
-      failed++;
-      if (e.statusCode === 404 || e.statusCode === 410) {
-        await removeSubscription(s.endpoint);
+  let index = 0;
+  const workerCount = Math.min(PUSH_SEND_CONCURRENCY, subs.length || 0);
+
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const i = index++;
+      if (i >= subs.length) return;
+      const s = subs[i];
+      const sub = {
+        endpoint: s.endpoint,
+        keys: {
+          p256dh: s.p256dh,
+          auth: s.auth
+        }
+      };
+      try {
+        await webpush.sendNotification(sub, body, {
+          TTL: PUSH_TTL_SECONDS,
+          urgency: 'high',
+          timeout: PUSH_TIMEOUT_MS
+        });
+        sent++;
+      } catch (e) {
+        failed++;
+        if (e.statusCode === 404 || e.statusCode === 410) {
+          await removeSubscription(s.endpoint);
+        }
       }
     }
-  }
+  });
+
+  await Promise.all(workers);
   return { sent, failed };
 }
 

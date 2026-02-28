@@ -168,6 +168,10 @@
       "destination": "/api/upload"
     },
     {
+      "source": "/api/push",
+      "destination": "/api/index?segment=push"
+    },
+    {
       "source": "/api/cron/notifications",
       "destination": "/api/index?segment=admin&action=runScheduledNotifications"
     },
@@ -179,7 +183,7 @@
   "crons": [
     {
       "path": "/api/cron/notifications",
-      "schedule": "0 3 * * *"
+      "schedule": "*/5 * * * *"
     }
   ]
 }

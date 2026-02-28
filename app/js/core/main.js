@@ -672,7 +672,7 @@
                 });
             }
 
-            await fetch('/api/push?action=subscribe', {
+            const subscribeRes = await fetch('/api/push?action=subscribe', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -680,9 +680,16 @@
                 },
                 body: JSON.stringify({ subscription })
             });
+            if (!subscribeRes.ok) throw new Error(`Subscribe gagal (${subscribeRes.status})`);
+            const subscribeData = await subscribeRes.json().catch(() => ({}));
+            if (subscribeData.status && subscribeData.status !== 'success') {
+                throw new Error(subscribeData.message || 'Subscribe gagal');
+            }
             pushState.subscribed = true;
             await updatePushUI();
-        } catch {}
+        } catch {
+            if (window.Toast) Toast.show('Gagal mengaktifkan notifikasi. Coba lagi.', 'error');
+        }
         finally {
             pushState.inFlight = false;
         }
