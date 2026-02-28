@@ -6763,21 +6763,22 @@ body.quiz-active .premium-fab-container {
 .page-struktur .org-stage-label {
     text-align: center;
     display: grid;
-    gap: 4px;
+    gap: 5px;
 }
 
 .page-struktur .org-stage-label h2 {
     margin: 0;
-    font-size: 20px;
-    font-weight: 780;
-    color: #15241a;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #102016;
 }
 
 .page-struktur .org-stage-label p {
     margin: 0;
     font-size: 13px;
-    color: #5f6e65;
-    font-weight: 550;
+    color: #5a6960;
+    font-weight: 560;
 }
 
 .page-struktur .org-leadership-stage,
@@ -6785,6 +6786,14 @@ body.quiz-active .premium-fab-container {
 .page-struktur .org-field-stage {
     display: grid;
     gap: 12px;
+}
+
+.page-struktur .org-field-stage {
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(28, 84, 56, 0.12);
+    background: linear-gradient(175deg, rgba(245, 249, 246, 0.95) 0%, rgba(237, 244, 239, 0.92) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 10px 24px rgba(20, 46, 32, 0.08);
 }
 
 .page-struktur .org-leadership-track {
@@ -6909,39 +6918,73 @@ body.quiz-active .premium-fab-container {
 }
 
 .page-struktur .org-node-card-field {
-    border: 1px solid rgba(28, 84, 56, 0.14);
+    border: 1px solid rgba(28, 84, 56, 0.12);
     border-radius: 18px;
-    background: #ffffff;
-    box-shadow: 0 8px 16px rgba(21, 45, 32, 0.08);
+    background: linear-gradient(165deg, #f6f8f7 0%, #eef2ef 100%);
+    box-shadow: 0 8px 16px rgba(21, 45, 32, 0.09);
     overflow: hidden;
     padding: 0;
     text-align: left;
     min-height: 100%;
-    display: grid;
+    display: block;
 }
 
 .page-struktur .org-node-card-field:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 22px rgba(21, 45, 32, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(21, 45, 32, 0.12);
 }
 
 .page-struktur .org-node-card-field .org-node-media {
-    height: 130px;
-    border-radius: 0;
+    --field-focus-y: 50%;
+    width: 62%;
+    height: 126px;
+    border-radius: 18px 0 0 0;
+    background: linear-gradient(160deg, #edf2ef 0%, #e1e8e3 100%);
+}
+
+.page-struktur .org-node-card-field .org-node-media img {
+    object-fit: cover;
+    object-position: center var(--field-focus-y, 50%);
+}
+
+.page-struktur .org-node-card-field .org-node-media.is-portrait img {
+    object-fit: cover;
+    object-position: center var(--field-focus-y, 30%);
+}
+
+.page-struktur .org-node-card-field .org-node-media.is-portrait {
+    background: linear-gradient(160deg, #edf2ef 0%, #e1e8e3 100%);
+}
+
+.page-struktur .org-node-card-field .org-node-media.no-image {
+    background: linear-gradient(145deg, #dbe3de 0%, #cfd8d2 100%);
+}
+
+.page-struktur .org-node-card-field .org-node-media.no-image .org-node-fallback {
+    width: 70px;
+    height: 70px;
+    font-size: 40px;
 }
 
 .page-struktur .org-node-card-field .org-node-content {
-    padding: 14px 15px 15px;
+    padding: 12px 15px 14px;
+    background: transparent;
+    color: #0f172a;
 }
 
 .page-struktur .org-node-card-field .org-node-name {
-    font-size: clamp(19px, 1.7vw, 23px);
-    line-height: 1.22;
+    font-size: clamp(17px, 1.55vw, 22px);
+    line-height: 1.18;
+    color: #0f172a;
+    font-weight: 780;
 }
 
 .page-struktur .org-node-card-field .org-node-meta {
-    margin-top: 5px;
-    font-size: 13px;
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: #55636f;
+    font-weight: 640;
 }
 
 @media (max-width: 1080px) {
@@ -6985,6 +7028,11 @@ body.quiz-active .premium-fab-container {
     .page-struktur .org-field-grid {
         gap: 12px;
     }
+
+    .page-struktur .org-field-stage {
+        padding: 13px;
+        border-radius: 18px;
+    }
 }
 
 @media (max-width: 560px) {
@@ -7017,18 +7065,42 @@ body.quiz-active .premium-fab-container {
 
     .page-struktur .org-field-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
+        gap: 11px;
         align-items: stretch;
     }
 
+    .page-struktur .org-field-stage {
+        padding: 12px;
+        border-radius: 16px;
+        background: linear-gradient(175deg, rgba(244, 248, 245, 0.95) 0%, rgba(235, 242, 237, 0.94) 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 8px 18px rgba(18, 43, 30, 0.12);
+    }
+
+    .page-struktur .org-stage-label {
+        gap: 3px;
+        margin-bottom: 2px;
+    }
+
+    .page-struktur .org-stage-label h2 {
+        font-size: 18px;
+    }
+
+    .page-struktur .org-stage-label p {
+        font-size: 12px;
+        color: #617066;
+    }
+
     .page-struktur .org-node-card-field {
-        border-radius: 14px;
-        box-shadow: 0 5px 12px rgba(21, 45, 32, 0.08);
-        grid-template-rows: auto 1fr;
+        border-radius: 16px;
+        box-shadow: 0 6px 14px rgba(21, 45, 32, 0.1);
+        border-color: rgba(29, 72, 52, 0.16);
+        background: linear-gradient(168deg, #f7faf8 0%, #edf2ef 100%);
     }
 
     .page-struktur .org-node-card-field .org-node-media {
-        height: 108px;
+        width: 64%;
+        height: 98px;
+        border-radius: 16px 0 0 0;
         background: linear-gradient(160deg, #f1f4f2 0%, #e6ece8 100%);
         display: grid;
         place-items: center;
@@ -7036,30 +7108,36 @@ body.quiz-active .premium-fab-container {
 
     .page-struktur .org-node-card-field .org-node-media img {
         object-fit: cover;
-        object-position: center center;
+        object-position: center var(--field-focus-y, 50%);
         width: 100%;
         height: 100%;
     }
 
     .page-struktur .org-node-card-field .org-node-media.is-portrait img {
-        object-fit: contain;
-        object-position: center center;
+        object-fit: cover;
+        object-position: center var(--field-focus-y, 30%);
     }
 
     .page-struktur .org-node-card-field .org-node-media.is-portrait {
-        background: radial-gradient(circle at 50% 45%, #f8fbf9 0%, #ebf1ed 100%);
+        background: linear-gradient(160deg, #f1f4f2 0%, #e6ece8 100%);
+    }
+
+    .page-struktur .org-node-card-field .org-node-media.no-image .org-node-fallback {
+        width: 56px;
+        height: 56px;
+        font-size: 30px;
     }
 
     .page-struktur .org-node-card-field .org-node-content {
-        padding: 10px 10px 11px;
+        padding: 10px 11px 12px;
         display: grid;
         align-content: start;
-        gap: 4px;
+        gap: 3px;
     }
 
     .page-struktur .org-node-card-field .org-node-name {
-        font-size: 15px;
-        line-height: 1.25;
+        font-size: 14px;
+        line-height: 1.22;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
@@ -7069,7 +7147,19 @@ body.quiz-active .premium-fab-container {
 
     .page-struktur .org-node-card-field .org-node-meta {
         margin-top: 0;
-        font-size: 11px;
+        font-size: 11.5px;
         line-height: 1.35;
+        color: #566373;
+        font-weight: 620;
+    }
+}
+
+@media (max-width: 340px) {
+    .page-struktur .org-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-struktur .org-node-card-field .org-node-media {
+        width: 70%;
     }
 }

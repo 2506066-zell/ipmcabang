@@ -13,6 +13,16 @@
 
   const TOP_CODES = new Set(['ketuaumum', 'ketuautama']);
   const CORE_CODES = new Set(['sekretaris', 'bendahara']);
+  const FIELD_CARD_FOCUS_MAP = Object.freeze({
+    ipmawati: '60%',
+    advokasi: '34%',
+    perkaderan: '45%',
+    pengkajianilmu: '38%'
+  });
+  const FIELD_CARD_FOCUS_DEFAULTS = Object.freeze({
+    portrait: '30%',
+    landscape: '50%'
+  });
 
   const state = {
     bidang: [],
@@ -39,6 +49,23 @@
     return String(value || '')
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '');
+  }
+
+  function normalizeFocusPercent(value, fallback) {
+    const raw = String(value || '').trim();
+    const num = Number.parseFloat(raw.replace('%', ''));
+    if (!Number.isFinite(num)) return fallback;
+    const clamped = Math.min(100, Math.max(0, num));
+    return `${clamped}%`;
+  }
+
+  function resolveFieldImageFocusY(code, isPortrait) {
+    const normalizedCode = normalizeCode(code);
+    const defaultFocus = isPortrait
+      ? FIELD_CARD_FOCUS_DEFAULTS.portrait
+      : FIELD_CARD_FOCUS_DEFAULTS.landscape;
+    const fromMap = FIELD_CARD_FOCUS_MAP[normalizedCode];
+    return normalizeFocusPercent(fromMap, defaultFocus);
   }
 
   function isTopBidang(item) {
@@ -163,6 +190,30 @@
     };
   }
 
+  function mergeMissingBidangWithFallback(list) {
+    const normalizedList = Array.isArray(list) ? list : [];
+    const merged = [...normalizedList];
+    const existingCodes = new Set(merged.map((item) => normalizeCode(item?.code)));
+    let maxId = merged.reduce((max, item) => Math.max(max, Number(item?.id || 0)), 0);
+
+    FALLBACK_BIDANG.forEach((fallback, idx) => {
+      const normalizedFallbackCode = normalizeCode(fallback?.code);
+      if (!normalizedFallbackCode || existingCodes.has(normalizedFallbackCode)) return;
+
+      maxId += 1;
+      merged.push(normalizeBidang({
+        ...fallback,
+        id: maxId,
+        sort_order: Number(fallback?.sort_order || idx + 1) || idx + 1,
+        members: [],
+        programs: []
+      }, idx));
+      existingCodes.add(normalizedFallbackCode);
+    });
+
+    return merged.sort(bidangSortPriority);
+  }
+
   async function fetchOrganizationData() {
     try {
       const res = await fetch('/api/organization', { method: 'GET', headers: { Accept: 'application/json' } });
@@ -171,10 +222,15 @@
       if (data?.status !== 'success' || !Array.isArray(data?.bidang)) {
         throw new Error('Invalid response shape');
       }
-      return data.bidang.map(normalizeBidang).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+      const fromApi = data.bidang.map(normalizeBidang).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+      const merged = mergeMissingBidangWithFallback(fromApi);
+      if (merged.length !== fromApi.length) {
+        console.warn('[Struktur] API bidang tidak lengkap, fallback parsial ditambahkan.');
+      }
+      return merged;
     } catch (err) {
       console.warn('[Struktur] fallback data used:', err?.message || err);
-      return FALLBACK_BIDANG.map((item, idx) => normalizeBidang({ ...item, members: [], programs: [] }, idx));
+      return mergeMissingBidangWithFallback([]);
     }
   }
 
@@ -208,6 +264,8 @@
     const height = Number(img.naturalHeight || 0);
     const isPortrait = width > 0 && height > width;
     media.classList.toggle('is-portrait', isPortrait);
+    const bidangCode = String(media.dataset.bidangCode || '').trim();
+    media.style.setProperty('--field-focus-y', resolveFieldImageFocusY(bidangCode, isPortrait));
   }
 
   function setImageContainerState(img, stateName) {
@@ -311,10 +369,11 @@
 
   function createNodeCard(bidang, variant) {
     const initials = bidang.name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
+    const cardAria = `Buka detail ${bidang.name}, ${bidang.members.length} anggota, ${bidang.programs.length} program`;
     const nodeVariant = variant || 'field';
     if (nodeVariant === 'leader' || nodeVariant === 'core') {
       return `
-        <button type="button" class="org-node-card org-node-card-circle ${nodeVariant === 'leader' ? 'is-leader' : 'is-core'}" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
+        <button type="button" class="org-node-card org-node-card-circle ${nodeVariant === 'leader' ? 'is-leader' : 'is-core'}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
           <div class="org-node-circle-media">
             <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}">
               <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
@@ -328,9 +387,11 @@
         </button>
       `;
     }
+    const normalizedCode = normalizeCode(bidang.code);
+    const defaultFocusY = resolveFieldImageFocusY(normalizedCode, false);
     return `
-      <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="Buka detail ${escapeHtml(bidang.name)}">
-        <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}">
+      <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
+        <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}" data-bidang-code="${escapeHtml(normalizedCode)}" style="--field-focus-y: ${escapeHtml(defaultFocusY)};">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
         </div>
