@@ -7028,8 +7028,10 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-media {
-        height: 102px;
+        height: 108px;
         background: linear-gradient(160deg, #f1f4f2 0%, #e6ece8 100%);
+        display: grid;
+        place-items: center;
     }
 
     .page-struktur .org-node-card-field .org-node-media img {
@@ -7040,7 +7042,12 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-media.is-portrait img {
-        object-position: center top;
+        object-fit: contain;
+        object-position: center center;
+    }
+
+    .page-struktur .org-node-card-field .org-node-media.is-portrait {
+        background: radial-gradient(circle at 50% 45%, #f8fbf9 0%, #ebf1ed 100%);
     }
 
     .page-struktur .org-node-card-field .org-node-content {
