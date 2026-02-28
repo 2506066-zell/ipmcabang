@@ -7026,7 +7026,8 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-field-grid {
-        gap: 12px;
+        grid-template-columns: 1fr;
+        gap: 14px;
     }
 
     .page-struktur .org-field-stage {
@@ -7064,8 +7065,8 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-field-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 11px;
+        grid-template-columns: 1fr;
+        gap: 12px;
         align-items: stretch;
     }
 
@@ -7091,19 +7092,18 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field {
-        border-radius: 16px;
-        box-shadow: 0 6px 14px rgba(21, 45, 32, 0.1);
-        border-color: rgba(29, 72, 52, 0.16);
-        background: linear-gradient(168deg, #f7faf8 0%, #edf2ef 100%);
+        border-radius: 18px;
+        box-shadow: 0 8px 16px rgba(21, 45, 32, 0.09);
+        border-color: rgba(28, 84, 56, 0.12);
+        background: linear-gradient(165deg, #f6f8f7 0%, #eef2ef 100%);
     }
 
     .page-struktur .org-node-card-field .org-node-media {
-        width: 100%;
-        height: 118px;
-        border-radius: 16px 16px 0 0;
-        background: linear-gradient(160deg, #f1f4f2 0%, #e6ece8 100%);
-        display: grid;
-        place-items: center;
+        width: 62%;
+        max-width: 260px;
+        height: 126px;
+        border-radius: 18px 0 0 0;
+        background: linear-gradient(160deg, #edf2ef 0%, #e1e8e3 100%);
     }
 
     .page-struktur .org-node-card-field .org-node-media img {
@@ -7129,15 +7129,15 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-content {
-        padding: 10px 11px 12px;
+        padding: 12px 15px 14px;
         display: grid;
         align-content: start;
-        gap: 3px;
+        gap: 4px;
     }
 
     .page-struktur .org-node-card-field .org-node-name {
-        font-size: 14px;
-        line-height: 1.22;
+        font-size: 17px;
+        line-height: 1.2;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
@@ -7146,11 +7146,11 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-meta {
-        margin-top: 0;
-        font-size: 11.5px;
+        margin-top: 2px;
+        font-size: 12.5px;
         line-height: 1.35;
-        color: #566373;
-        font-weight: 620;
+        color: #55636f;
+        font-weight: 640;
     }
 }
 
@@ -7160,6 +7160,6 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-node-card-field .org-node-media {
-        width: 100%;
+        width: 62%;
     }
 }

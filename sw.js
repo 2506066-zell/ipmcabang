@@ -1,5 +1,5 @@
-const STATIC_CACHE = 'static-v36';
-const RUNTIME_CACHE = 'runtime-v1';
+const STATIC_CACHE = 'static-v37';
+const RUNTIME_CACHE = 'runtime-v2';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
   'https://cdnjs.cloudflare.com',
@@ -97,6 +97,12 @@ function isApiRequest(url) {
   return url.pathname.startsWith('/api/');
 }
 
+function isOrgMediaRequest(url) {
+  return url.pathname.startsWith('/images/bidang/')
+    || url.pathname.startsWith('/images/anggota/')
+    || url.pathname.startsWith('/images/struktur/');
+}
+
 function isCdnRequest(url) {
   return CDN_ORIGINS.includes(url.origin);
 }
@@ -166,6 +172,20 @@ async function networkFirst(request) {
   }
 }
 
+async function networkFirstWithCache(request) {
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) {
+      const cache = await caches.open(RUNTIME_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    return cached || caches.match('/offline.html');
+  }
+}
+
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -210,6 +230,11 @@ self.addEventListener('fetch', (event) => {
 
   if (isApiRequest(url)) {
     event.respondWith(networkFirst(request));
+    return;
+  }
+
+  if (isOrgMediaRequest(url)) {
+    event.respondWith(networkFirstWithCache(request));
     return;
   }
 
