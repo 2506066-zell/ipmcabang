@@ -6,7 +6,6 @@ const USERNAME_KEY = 'ipmquiz_user_username';
 const STORAGE_PREFIX = 'ipm_gamified_v1';
 const QUIZ_SHARE_TITLE = 'Tantangan Kuis IPM Panawuan';
 const QUIZ_SHARE_TEXT = 'Bisa tembus skor tertinggi? Coba kuisnya sekarang dan tantang temanmu.';
-const QUIZ_SHARE_IMAGE = '/images/bidang/pengkajianIlmu.jpeg';
 
 const xpForLevel = (level) => 100 + level * 50;
 
@@ -103,9 +102,9 @@ const toast = (message, type = 'info') => {
 };
 
 const questionCache = new Map();
-const QUESTION_ENTRY_MS = 420;
-const QUESTION_EXIT_START_MS = 340;
-const QUESTION_ADVANCE_MS = 640;
+const QUESTION_ENTRY_MS = 620;
+const QUESTION_EXIT_START_MS = 480;
+const QUESTION_ADVANCE_MS = 980;
 const vibrate = (pattern) => {
   try {
     if (navigator && typeof navigator.vibrate === 'function') {
@@ -694,12 +693,7 @@ function NextQuizCountdown({ nextQuiz }) {
       const hours = Math.floor((totalSeconds % 86400) / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
-      const parts = [];
-      parts.push(`${String(days).padStart(2, '0')}d`);
-      parts.push(`${String(hours).padStart(2, '0')}h`);
-      parts.push(`${String(minutes).padStart(2, '0')}m`);
-      parts.push(`${String(seconds).padStart(2, '0')}s`);
-      setTimeLeft(parts.join(' '));
+      setTimeLeft(`${days} hari ${hours} jam ${minutes} menit ${seconds} detik`);
     };
 
     update();
@@ -728,18 +722,10 @@ function NextQuizCountdown({ nextQuiz }) {
 function QuizShareCard({ onShare }) {
   return (
     <div className="quiz-share-card">
-      <div className="quiz-share-media">
-        <img src={QUIZ_SHARE_IMAGE} alt="Foto kegiatan IPM" loading="lazy" decoding="async" />
-      </div>
-      <div className="quiz-share-content">
-        <span className="quiz-share-eyebrow">Tantang Teman</span>
-        <h3>Buktikan Siapa Paling Tahu IPM</h3>
-        <p>Bagikan link kuis ini dan ajak temanmu adu skor sekarang.</p>
-        <button type="button" className="quiz-share-btn" onClick={onShare}>
-          <i className="fas fa-share-alt"></i>
-          <span>Share</span>
-        </button>
-      </div>
+      <button type="button" className="quiz-share-btn" onClick={onShare}>
+        <i className="fas fa-share-alt"></i>
+        <span>Share Kuis</span>
+      </button>
     </div>
   );
 }
