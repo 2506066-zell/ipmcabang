@@ -1138,10 +1138,12 @@
 (() => {
     const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
     const isProd = !isLocalhost && location.protocol === 'https:';
+    const SW_VERSION = '38';
+    const SW_URL = `/sw.js?v=${SW_VERSION}`;
 
     if (isProd && 'serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register(SW_URL)
                 .then((reg) => {
                     console.log('SW registered');
                     reg.update();

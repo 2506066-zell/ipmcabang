@@ -1,5 +1,5 @@
-const STATIC_CACHE = 'static-v37';
-const RUNTIME_CACHE = 'runtime-v2';
+const STATIC_CACHE = 'static-v38';
+const RUNTIME_CACHE = 'runtime-v3';
 const CDN_CACHE = 'cdn-v2';
 const CDN_ORIGINS = [
   'https://cdnjs.cloudflare.com',
@@ -36,7 +36,7 @@ const STATIC_ASSETS = [
   '/app/css/editorial.css',
   '/app/css/flip-clock.css',
   '/app/css/quiz-react.css',
-  '/app/css/quiz-react.css?v=20',
+  '/app/css/quiz-react.css?v=26',
   '/app/css/style.css?v=2',
   '/scripts/toast.js',
   '/app/js/core/main.js',
@@ -50,10 +50,11 @@ const STATIC_ASSETS = [
   '/app/js/features/articles/article-renderer-shared.js?v=3',
   '/app/js/features/materials/public-materials.js',
   '/app/js/features/quiz/quiz-react.js',
-  '/app/js/features/quiz/quiz-react.js?v=22',
+  '/app/js/features/quiz/quiz-react.js?v=27',
   '/app/js/pages/quiz.js',
-  '/app/js/pages/quiz.js?v=5',
+  '/app/js/pages/quiz.js?v=7',
   '/app/js/pages/ranking.js',
+  '/app/js/pages/ranking.js?v=3',
   '/app/js/pages/struktur-organisasi.js',
   '/ranking.js',
   '/scripts/login.js',
@@ -105,6 +106,22 @@ function isOrgMediaRequest(url) {
 
 function isCdnRequest(url) {
   return CDN_ORIGINS.includes(url.origin);
+}
+
+function isCriticalAssetRequest(request, url) {
+  if (request.mode === 'navigate') return false;
+  if (url.searchParams.has('v')) return true;
+
+  const dest = request.destination || '';
+  if (dest === 'script' || dest === 'style' || dest === 'worker' || dest === 'document') {
+    return true;
+  }
+
+  if (url.pathname.startsWith('/app/') || url.pathname.startsWith('/scripts/')) {
+    return true;
+  }
+
+  return false;
 }
 
 function shouldCacheApi(url, response) {
@@ -234,6 +251,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isOrgMediaRequest(url)) {
+    event.respondWith(networkFirstWithCache(request));
+    return;
+  }
+
+  // Keep app shell assets fresh so users see updates immediately.
+  if (isCriticalAssetRequest(request, url)) {
     event.respondWith(networkFirstWithCache(request));
     return;
   }
