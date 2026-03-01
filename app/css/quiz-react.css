@@ -961,20 +961,20 @@
 }
 
 .quiz-question.animate-in {
-  animation: quiz-cinematic-in 0.46s cubic-bezier(0.22, 0.8, 0.25, 1) both;
+  animation: quiz-cinematic-in 0.42s cubic-bezier(0.22, 0.8, 0.25, 1) both;
 }
 
 .quiz-question.animate-out {
   pointer-events: none;
-  animation: quiz-cinematic-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: quiz-cinematic-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .quiz-question.animate-out .quiz-question-body,
 .quiz-question.animate-out .quiz-options,
 .quiz-question.animate-out .quiz-feedback {
-  transition: opacity 0.24s var(--quiz-ease), transform 0.24s var(--quiz-ease);
-  opacity: 0;
-  transform: translateY(5px);
+  transition: opacity 0.18s var(--quiz-ease), transform 0.18s var(--quiz-ease);
+  opacity: 0.55;
+  transform: translateY(3px);
 }
 
 .quiz-question.is-urgent {
@@ -984,11 +984,11 @@
 }
 
 .quiz-question.is-urgent.animate-in {
-  animation: quiz-cinematic-in 0.46s cubic-bezier(0.22, 0.8, 0.25, 1) both;
+  animation: quiz-cinematic-in 0.42s cubic-bezier(0.22, 0.8, 0.25, 1) both;
 }
 
 .quiz-question.is-urgent.animate-out {
-  animation: quiz-cinematic-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: quiz-cinematic-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .quiz-question.is-urgent::after {
@@ -1327,7 +1327,7 @@ body.page-quiz .premium-fab-container {
 @keyframes quiz-cinematic-in {
   0% {
     opacity: 0;
-    transform: translateX(34px) scale(0.984);
+    transform: translateX(28px) scale(0.987);
   }
   62% {
     opacity: 1;
@@ -1345,8 +1345,8 @@ body.page-quiz .premium-fab-container {
     transform: translateX(0) scale(1);
   }
   100% {
-    opacity: 0;
-    transform: translateX(-28px) scale(0.988);
+    opacity: 0.55;
+    transform: translateX(-22px) scale(0.992);
   }
 }
 

@@ -102,9 +102,9 @@ const toast = (message, type = 'info') => {
 };
 
 const questionCache = new Map();
-const QUESTION_ENTRY_MS = 460;
-const QUESTION_EXIT_START_MS = 300;
-const QUESTION_ADVANCE_MS = 760;
+const QUESTION_ENTRY_MS = 430;
+const QUESTION_EXIT_START_MS = 240;
+const QUESTION_ADVANCE_MS = 560;
 const vibrate = (pattern) => {
   try {
     if (navigator && typeof navigator.vibrate === 'function') {
