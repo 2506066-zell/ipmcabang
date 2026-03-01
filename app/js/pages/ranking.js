@@ -15,9 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterButtons = document.querySelectorAll('.filter-btn');
     const rankToast = document.getElementById('rank-toast');
     const rankingPeriod = document.getElementById('ranking-period');
+    const shareRankingBtn = document.getElementById('share-ranking-btn');
+    const archiveSection = document.getElementById('archive-section');
+    const archiveMonthSelect = document.getElementById('archive-month-select');
+    const archiveMeta = document.getElementById('archive-meta');
+    const archiveEmpty = document.getElementById('archive-empty');
+    const archivePodium = document.getElementById('archive-podium');
+    const hallOfFameWrap = document.getElementById('hall-of-fame-wrap');
+    const hallOfFameEl = document.getElementById('hall-of-fame');
 
     // State
     let allData = [];
+    let currentViewData = [];
+    let archiveMonths = [];
+    const archiveCache = new Map();
     let previousRanks = new Map();
     const currentUser = (() => {
         try {
@@ -60,6 +71,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Number.isNaN(date.getTime())) return '-';
         return date.toLocaleDateString('id-ID');
     };
+    const formatYmLabel = (ym) => {
+        const raw = String(ym || '').trim();
+        const m = raw.match(/^(\d{4})-(\d{2})$/);
+        if (!m) return raw || '-';
+        const year = Number(m[1]);
+        const month = Number(m[2]);
+        if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return raw;
+        const d = new Date(Date.UTC(year, month - 1, 1));
+        return d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    };
 
     function showLoading(isLoading) {
         loadingIndicator.style.display = isLoading ? 'flex' : 'none';
@@ -77,6 +98,215 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const month = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         rankingPeriod.textContent = `Periode: ${month}`;
+    }
+
+    function updateShareButtonState() {
+        if (!shareRankingBtn) return;
+        const hasData = (Array.isArray(currentViewData) && currentViewData.length > 0) || (Array.isArray(allData) && allData.length > 0);
+        shareRankingBtn.disabled = !hasData;
+    }
+
+    async function shareTopRank() {
+        const source = (Array.isArray(currentViewData) && currentViewData.length > 0) ? currentViewData : allData;
+        const champion = Array.isArray(source) && source.length > 0 ? source[0] : null;
+
+        if (!champion) {
+            if (window.Toast) window.Toast.show('Belum ada data ranking untuk dibagikan.', 'info');
+            return;
+        }
+
+        const periodText = rankingPeriod ? rankingPeriod.textContent.replace('Periode:', '').trim() : '';
+        const periodLabel = periodText || new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        const championName = formatName(champion.username);
+        const championScore = formatScore(champion.score);
+        const championTime = formatTime(champion.time_spent);
+        const shareUrl = new URL('/ranking.html', window.location.origin).href;
+
+        const shareData = {
+            title: 'Juara #1 Ranking Kuis IPM Panawuan',
+            text: `Juara #1 periode ${periodLabel}: ${championName} dengan ${championScore} poin (${championTime} detik). Berani geser posisi ini?`,
+            url: shareUrl
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                return;
+            }
+
+            const fallbackText = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(fallbackText);
+                if (window.Toast) window.Toast.show('Info juara #1 berhasil disalin.', 'success');
+                return;
+            }
+
+            window.prompt('Salin info juara #1:', fallbackText);
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            if (window.Toast) window.Toast.show('Gagal membagikan ranking.', 'error');
+        }
+    }
+
+    function renderHallOfFame(rows) {
+        if (!hallOfFameWrap || !hallOfFameEl) return;
+        const items = Array.isArray(rows) ? rows : [];
+        if (!items.length) {
+            hallOfFameWrap.hidden = true;
+            hallOfFameEl.innerHTML = '';
+            return;
+        }
+
+        hallOfFameWrap.hidden = false;
+        hallOfFameEl.innerHTML = items.map((row, idx) => {
+            const username = escapeHtml(formatName(row.username));
+            const titles = formatScore(row.title_count || 0);
+            return `
+                <div class="hof-item">
+                    <span class="hof-pos">${idx + 1}</span>
+                    <span class="hof-name" title="${username}">${username}</span>
+                    <span class="hof-count">${titles} gelar</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderArchivePodium(rows, ym) {
+        if (!archiveSection || !archivePodium || !archiveMeta || !archiveEmpty) return;
+
+        const items = Array.isArray(rows) ? rows : [];
+        const map = new Map();
+        items.forEach((row) => {
+            const rank = Number(row.rank_position || row.rank || 0);
+            if (rank >= 1 && rank <= 3) map.set(rank, row);
+        });
+
+        archiveSection.style.display = 'block';
+        const label = formatYmLabel(ym);
+        archiveMeta.textContent = `Arsip periode ${label}`;
+        archiveEmpty.hidden = true;
+
+        const cards = [];
+        for (let rank = 1; rank <= 3; rank++) {
+            const row = map.get(rank) || null;
+            if (!row) {
+                cards.push(`
+                    <div class="archive-card rank-${rank} is-empty">
+                        <div class="archive-rank">Juara ${rank}</div>
+                        <div class="archive-name">Belum ada data</div>
+                        <div class="archive-pimpinan">-</div>
+                        <div class="archive-stats"><span class="archive-score">0 pts</span><span>0 detik</span></div>
+                    </div>
+                `);
+                continue;
+            }
+
+            const name = escapeHtml(formatName(row.username_snapshot || row.username));
+            const pimpinan = escapeHtml(formatPimpinan(row.pimpinan_snapshot || row.pimpinan));
+            const score = formatScore(row.score);
+            const timeSpent = formatTime(row.time_spent);
+            cards.push(`
+                <div class="archive-card rank-${rank}">
+                    <div class="archive-rank">Juara ${rank}</div>
+                    <div class="archive-name" title="${name}">${name}</div>
+                    <div class="archive-pimpinan" title="${pimpinan}">${pimpinan}</div>
+                    <div class="archive-stats"><span class="archive-score">${score} pts</span><span>${timeSpent} detik</span></div>
+                </div>
+            `);
+        }
+
+        archivePodium.innerHTML = cards.join('');
+    }
+
+    async function loadArchiveByYm(ym, force = false) {
+        if (!archiveSection || !archivePodium || !archiveMeta || !archiveEmpty) return;
+        const key = String(ym || '').trim();
+        if (!key) return;
+
+        if (!force && archiveCache.has(key)) {
+            renderArchivePodium(archiveCache.get(key), key);
+            return;
+        }
+
+        archiveMeta.textContent = `Memuat arsip ${formatYmLabel(key)}...`;
+
+        try {
+            const response = await fetch(`${API_URL}/results?mode=archive&ym=${encodeURIComponent(key)}`);
+            if (!response.ok) throw new Error(`Gagal memuat arsip (${response.status})`);
+            const payload = await response.json();
+            if (payload.status !== 'success') throw new Error(payload.message || 'Gagal memuat arsip');
+
+            const rows = Array.isArray(payload.archives) ? payload.archives : [];
+            archiveCache.set(key, rows);
+            if (!rows.length) {
+                archiveSection.style.display = 'block';
+                archivePodium.innerHTML = '';
+                archiveMeta.textContent = `Arsip periode ${formatYmLabel(key)}`;
+                archiveEmpty.hidden = false;
+                archiveEmpty.textContent = 'Belum ada juara tersimpan untuk periode ini.';
+                return;
+            }
+
+            renderArchivePodium(rows, key);
+        } catch (error) {
+            archiveSection.style.display = 'block';
+            archivePodium.innerHTML = '';
+            archiveMeta.textContent = 'Gagal memuat arsip bulanan.';
+            archiveEmpty.hidden = false;
+            archiveEmpty.textContent = error.message || 'Terjadi kesalahan saat memuat arsip.';
+        }
+    }
+
+    async function loadArchiveMonths(force = false) {
+        if (!archiveSection || !archiveMonthSelect || !archiveMeta || !archiveEmpty) return;
+
+        try {
+            const response = await fetch(`${API_URL}/results?mode=archiveMonths`);
+            if (!response.ok) throw new Error(`Gagal memuat daftar arsip (${response.status})`);
+            const payload = await response.json();
+            if (payload.status !== 'success') throw new Error(payload.message || 'Gagal memuat daftar arsip');
+
+            archiveMonths = Array.isArray(payload.months) ? payload.months : [];
+            renderHallOfFame(Array.isArray(payload.hall_of_fame) ? payload.hall_of_fame : []);
+
+            archiveSection.style.display = 'block';
+            if (!archiveMonths.length) {
+                archiveMonthSelect.innerHTML = '<option value="">Belum ada arsip</option>';
+                archiveMonthSelect.disabled = true;
+                archivePodium.innerHTML = '';
+                archiveMeta.textContent = 'Belum ada arsip bulanan.';
+                archiveEmpty.hidden = false;
+                archiveEmpty.textContent = 'Arsip akan otomatis muncul setiap pergantian bulan.';
+                return;
+            }
+
+            const selectedBefore = String(archiveMonthSelect.value || '').trim();
+            const selectedYm = archiveMonths.some(m => String(m.ym) === selectedBefore)
+                ? selectedBefore
+                : String(archiveMonths[0].ym || '');
+
+            archiveMonthSelect.disabled = false;
+            archiveMonthSelect.innerHTML = archiveMonths.map((m) => {
+                const ym = String(m.ym || '');
+                const label = formatYmLabel(ym);
+                const champ = escapeHtml(formatName(m.champion_name || ''));
+                const score = m.champion_score ? `${formatScore(m.champion_score)} pts` : '';
+                const suffix = champ ? ` - #1 ${champ}${score ? ` (${score})` : ''}` : '';
+                return `<option value="${escapeHtml(ym)}">${escapeHtml(label + suffix)}</option>`;
+            }).join('');
+            archiveMonthSelect.value = selectedYm;
+
+            await loadArchiveByYm(selectedYm, force);
+        } catch (error) {
+            archiveSection.style.display = 'block';
+            archiveMonthSelect.innerHTML = '<option value="">Gagal memuat arsip</option>';
+            archiveMonthSelect.disabled = true;
+            archivePodium.innerHTML = '';
+            archiveMeta.textContent = 'Gagal memuat daftar arsip.';
+            archiveEmpty.hidden = false;
+            archiveEmpty.textContent = error.message || 'Terjadi kesalahan saat memuat arsip.';
+            renderHallOfFame([]);
+        }
     }
 
     function showError(message) {
@@ -171,10 +401,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const empty = !Array.isArray(allData) || allData.length === 0;
                 document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
                 document.getElementById('main-content').style.display = empty ? 'none' : 'block';
+                currentViewData = empty ? [] : allData.slice();
 
                 if (!empty) {
                     // Apply current filter
                     handleFilterAndSearch();
+                } else {
+                    updateShareButtonState();
                 }
             }
 
@@ -428,6 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const empty = filteredData.length === 0;
+        currentViewData = filteredData;
 
         if (empty) {
             rankingList.innerHTML = `<div style="text-align:center; padding: 20px; color: #888;">Tidak ada data yang cocok.</div>`;
@@ -435,6 +669,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             renderPage(filteredData);
         }
+
+        updateShareButtonState();
     }
 
     function showRankToast(title, msg, type = 'normal') {
@@ -470,28 +706,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    if (archiveMonthSelect) {
+        archiveMonthSelect.addEventListener('change', () => {
+            const ym = String(archiveMonthSelect.value || '').trim();
+            if (!ym) return;
+            loadArchiveByYm(ym);
+        });
+    }
+
+    if (shareRankingBtn) {
+        shareRankingBtn.addEventListener('click', shareTopRank);
+    }
+
     const reloadBtn = document.getElementById('empty-reload');
     if (reloadBtn) reloadBtn.addEventListener('click', () => fetchRankingData());
 
     // Initial Load (Cache then Network)
     setRankingPeriod();
+    updateShareButtonState();
+    loadArchiveMonths().catch(() => {});
     try {
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
         if (cached && Array.isArray(cached.data) && (Date.now() - cached.t < 60000 * 5)) {
             allData = cached.data;
             if (allData.length > 0) {
                 renderPage(allData);
+                currentViewData = allData.slice();
                 document.getElementById('empty-state').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 showLoading(false);
+                updateShareButtonState();
             }
         }
     } catch { }
 
     // Smart Polling Implementation
     let pollTimeout;
+    let archiveRefreshCounter = 0;
     async function startPolling() {
         await fetchRankingData();
+        archiveRefreshCounter += 1;
+        if (archiveRefreshCounter % 20 === 0) {
+            await loadArchiveMonths(true);
+        }
         // Schedule next poll only after current finishes
         pollTimeout = setTimeout(startPolling, 30000);
     }

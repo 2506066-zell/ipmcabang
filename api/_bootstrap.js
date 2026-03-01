@@ -134,6 +134,22 @@ async function ensureSchema() {
     finished_at BIGINT,
     created_at TIMESTAMP DEFAULT NOW()
   )`;
+  await query`CREATE TABLE IF NOT EXISTS ranking_monthly_archive (
+    id SERIAL PRIMARY KEY,
+    ym TEXT NOT NULL,
+    rank_position INT NOT NULL,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    username_snapshot TEXT NOT NULL,
+    pimpinan_snapshot TEXT,
+    score INT DEFAULT 0,
+    total INT DEFAULT 0,
+    percent INT DEFAULT 0,
+    time_spent BIGINT DEFAULT 0,
+    quiz_set INT,
+    result_created_at TIMESTAMP,
+    archived_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (ym, rank_position)
+  )`;
   await query`CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id),
@@ -350,6 +366,8 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_questions_category ON questions(category)`;
   await query`CREATE INDEX IF NOT EXISTS idx_results_user_id ON results(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_results_quiz_set ON results(quiz_set)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_ranking_monthly_archive_ym ON ranking_monthly_archive(ym DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_ranking_monthly_archive_user_id ON ranking_monthly_archive(user_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)`;
   await query`CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`;

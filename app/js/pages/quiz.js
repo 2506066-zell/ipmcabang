@@ -821,6 +821,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const shareBtn = document.getElementById('share-btn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            const shareUrl = new URL('/quiz-gamified.html', window.location.origin).href;
+            const scoreText = (document.getElementById('score-text')?.textContent || '').trim();
+            const shareText = scoreText
+                ? `Skorku ${scoreText} di Kuis IPM Panawuan. Berani lewatin?`
+                : 'Lagi main Kuis IPM Panawuan. Berani adu skor?';
+
+            const shareData = {
+                title: 'Tantangan Kuis IPM Panawuan',
+                text: shareText,
+                url: shareUrl
+            };
+
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                    return;
+                }
+
+                const fallbackText = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(fallbackText);
+                    if (window.Toast) window.Toast.show('Link kuis disalin. Bagikan ke temanmu.', 'success');
+                    return;
+                }
+
+                window.prompt('Salin link kuis ini:', shareData.url);
+            } catch (error) {
+                if (error && error.name === 'AbortError') return;
+                if (window.Toast) window.Toast.show('Gagal membagikan link kuis.', 'error');
+            }
+        });
+    }
+
     const toggle = document.getElementById('quiz-instructions-toggle');
     const body = document.getElementById('quiz-instructions-body');
     if (toggle && body) {

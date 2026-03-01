@@ -4,6 +4,9 @@ const API_URL = '/api';
 const SESSION_KEY = 'ipmquiz_user_session';
 const USERNAME_KEY = 'ipmquiz_user_username';
 const STORAGE_PREFIX = 'ipm_gamified_v1';
+const QUIZ_SHARE_TITLE = 'Tantangan Kuis IPM Panawuan';
+const QUIZ_SHARE_TEXT = 'Bisa tembus skor tertinggi? Coba kuisnya sekarang dan tantang temanmu.';
+const QUIZ_SHARE_IMAGE = '/images/bidang/pengkajianIlmu.jpeg';
 
 const xpForLevel = (level) => 100 + level * 50;
 
@@ -100,6 +103,16 @@ const toast = (message, type = 'info') => {
 };
 
 const questionCache = new Map();
+const QUESTION_ENTRY_MS = 420;
+const QUESTION_EXIT_START_MS = 340;
+const QUESTION_ADVANCE_MS = 640;
+const vibrate = (pattern) => {
+  try {
+    if (navigator && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern);
+    }
+  } catch (e) {}
+};
 
 function useSession() {
   const [session, setSession] = useState('');
@@ -325,7 +338,7 @@ function QuizList({ sets, loading, error, onSelect, onReload, completedSets, res
   const completed = new Set(Array.isArray(completedSets) ? completedSets : []);
   const resetKeys = resetMap ? Object.keys(resetMap) : [];
   return (
-    <div className="quiz-card">
+    <div className="quiz-card quiz-list-card">
       <h3>Daftar Kuis</h3>
       {loading && (
         <div style={{ fontSize: '0.9rem', color: '#64748b' }}>Memuat daftar kuis...</div>
@@ -374,7 +387,7 @@ function QuizList({ sets, loading, error, onSelect, onReload, completedSets, res
         </div>
       )}
       {onReload && (
-        <button className="quiz-option" style={{ marginTop: 10 }} onClick={onReload}>
+        <button className="quiz-reload-btn" onClick={onReload}>
           Muat Ulang
         </button>
       )}
@@ -407,9 +420,12 @@ function QuizQuestion({
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackTone, setFeedbackTone] = useState('neutral');
   const [hasCorrect, setHasCorrect] = useState(false);
-  const [animate, setAnimate] = useState(false);
+  const [transitionPhase, setTransitionPhase] = useState('enter');
   const startedAt = useRef((initialProgress && initialProgress.startedAt) || Date.now());
   const confettiRef = useRef(null);
+  const enterTimeoutRef = useRef(null);
+  const exitTimeoutRef = useRef(null);
+  const advanceTimeoutRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -458,10 +474,22 @@ function QuizQuestion({
     setFeedbackText('');
     setFeedbackTone('neutral');
     setSelected(null);
-    setAnimate(true);
-    const t = setTimeout(() => setAnimate(false), 360);
-    return () => clearTimeout(t);
+    setTransitionPhase('enter');
+    if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current);
+    enterTimeoutRef.current = setTimeout(() => setTransitionPhase('idle'), QUESTION_ENTRY_MS);
+    return () => {
+      if (enterTimeoutRef.current) {
+        clearTimeout(enterTimeoutRef.current);
+        enterTimeoutRef.current = null;
+      }
+    };
   }, [index, questions, timerSeconds]);
+
+  useEffect(() => () => {
+    if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current);
+    if (exitTimeoutRef.current) clearTimeout(exitTimeoutRef.current);
+    if (advanceTimeoutRef.current) clearTimeout(advanceTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     if (loading || !questions[index]) return;
@@ -498,6 +526,7 @@ function QuizQuestion({
     const q = questions[index];
     if (!q || selected !== null) return;
     const chosenKey = choice || '';
+    if (choice) vibrate(10);
     setSelected(chosenKey);
     setAnswers(prev => ({ ...prev, [q.id]: chosenKey }));
 
@@ -507,6 +536,7 @@ function QuizQuestion({
       setFeedback(isCorrect ? 'correct' : 'wrong');
       setFeedbackText(isCorrect ? 'Jawaban benar! XP bertambah.' : 'Belum tepat, coba fokus di soal berikutnya.');
       setFeedbackTone(isCorrect ? 'positive' : 'negative');
+      vibrate(isCorrect ? [12, 40, 14] : [20, 40, 20]);
       onImmediateReward(isCorrect);
       if (onSound) onSound(isCorrect ? 'correct' : 'wrong');
       if (isCorrect) spawnConfetti();
@@ -516,7 +546,11 @@ function QuizQuestion({
       setFeedbackTone('neutral');
     }
 
-    setTimeout(() => {
+    if (exitTimeoutRef.current) clearTimeout(exitTimeoutRef.current);
+    if (advanceTimeoutRef.current) clearTimeout(advanceTimeoutRef.current);
+    exitTimeoutRef.current = setTimeout(() => setTransitionPhase('exit'), QUESTION_EXIT_START_MS);
+
+    advanceTimeoutRef.current = setTimeout(() => {
       if (index + 1 < questions.length) {
         setIndex(i => i + 1);
       } else {
@@ -528,7 +562,7 @@ function QuizQuestion({
           hasCorrect
         });
       }
-    }, 700);
+    }, QUESTION_ADVANCE_MS);
   };
 
   if (loading) {
@@ -550,10 +584,14 @@ function QuizQuestion({
   }
 
   const isUrgent = timer <= 10;
+  const isCritical = timer <= 5;
   const progress = questions.length ? Math.round(((index + 1) / questions.length) * 100) : 0;
+  const baseTimer = timerSeconds || 20;
+  const timerPct = Math.max(0, Math.min(100, Math.round((timer / baseTimer) * 100)));
+  const remainingQuestions = Math.max(0, questions.length - (index + 1));
 
   return (
-    <div className={`quiz-card quiz-question${animate ? ' animate' : ''}${isUrgent ? ' is-urgent' : ''}`}>
+    <div className={`quiz-card quiz-question${transitionPhase === 'enter' ? ' animate-in' : ''}${transitionPhase === 'exit' ? ' animate-out' : ''}${isUrgent ? ' is-urgent' : ''}`}>
       <div className="quiz-question-header">
         <div className="quiz-question-title">
           <span className="quiz-floating-icon" aria-hidden="true"><i className="fas fa-pen-to-square"></i></span>
@@ -574,7 +612,14 @@ function QuizQuestion({
           >
             <i className={`fas ${soundOn ? 'fa-volume-up' : 'fa-volume-mute'}`}></i>
           </button>
-          <span className={`quiz-timer${isUrgent ? ' is-urgent' : ''}`}><i className="fas fa-clock"></i> {timer}s</span>
+          <span
+            className={`quiz-timer${isUrgent ? ' is-urgent' : ''}${isCritical ? ' is-critical' : ''}`}
+            style={{ '--timer-progress': timerPct }}
+          >
+            <i className="fas fa-clock"></i>
+            <strong>{timer}s</strong>
+            <small>{isCritical ? 'cepat' : 'sisa waktu'}</small>
+          </span>
         </div>
       </div>
       <div className="quiz-progress-wrap" aria-hidden="true">
@@ -587,19 +632,33 @@ function QuizQuestion({
         <div className="xp-burst" key={xpBurst.id}>+{xpBurst.value} XP</div>
       )}
       <div className="confetti-layer" ref={confettiRef} aria-hidden="true"></div>
-      <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{q.question}</div>
-      <div className="quiz-options">
-        {q.options.map((opt) => {
+      <div className="quiz-question-body">
+        <div className="quiz-question-kicker">
+          <span className="quiz-kicker-chip"><i className="fas fa-lightbulb"></i> Fokus</span>
+          <span className="quiz-question-count">{remainingQuestions} soal lagi</span>
+        </div>
+        <h3 className="quiz-question-content">{q.question}</h3>
+      </div>
+      <div className={`quiz-options${feedback ? ' is-locked' : ''}`}>
+        {q.options.map((opt, idx) => {
           const isCorrect = feedback === 'correct' && opt.key === selected;
           const isWrong = feedback === 'wrong' && opt.key === selected;
           return (
             <button
-              key={opt.key}
+              key={`${q.id}-${opt.key}`}
+              type="button"
               className={`quiz-option${selected === opt.key && !feedback ? ' is-selected' : ''}${isCorrect ? ' correct' : ''}${isWrong ? ' wrong' : ''}`}
+              style={{ '--option-delay': `${idx * 50}ms` }}
+              disabled={selected !== null}
               onClick={() => handleAnswer(opt.key)}
             >
-              <strong style={{ marginRight: 8 }}>{opt.key.toUpperCase()}</strong>
-              {opt.label}
+              <span className="quiz-option-key">{opt.key.toUpperCase()}</span>
+              <span className="quiz-option-label">{opt.label}</span>
+              <span className="quiz-option-state" aria-hidden="true">
+                {isCorrect && <i className="fas fa-check"></i>}
+                {isWrong && <i className="fas fa-xmark"></i>}
+                {!isCorrect && !isWrong && <i className="fas fa-chevron-right"></i>}
+              </span>
             </button>
           );
         })}
@@ -666,7 +725,26 @@ function NextQuizCountdown({ nextQuiz }) {
   );
 }
 
-function QuizResult({ summary, onClose }) {
+function QuizShareCard({ onShare }) {
+  return (
+    <div className="quiz-share-card">
+      <div className="quiz-share-media">
+        <img src={QUIZ_SHARE_IMAGE} alt="Foto kegiatan IPM" loading="lazy" decoding="async" />
+      </div>
+      <div className="quiz-share-content">
+        <span className="quiz-share-eyebrow">Tantang Teman</span>
+        <h3>Buktikan Siapa Paling Tahu IPM</h3>
+        <p>Bagikan link kuis ini dan ajak temanmu adu skor sekarang.</p>
+        <button type="button" className="quiz-share-btn" onClick={onShare}>
+          <i className="fas fa-share-alt"></i>
+          <span>Share</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function QuizResult({ summary, onClose, onShare }) {
   if (!summary) return null;
   return (
     <div className="quiz-result-card">
@@ -691,6 +769,9 @@ function QuizResult({ summary, onClose }) {
       </div>
       <div className="quiz-result-actions">
         <button className="quiz-result-button primary" onClick={onClose}>Selesai</button>
+        <button className="quiz-result-button share" onClick={onShare}>
+          <i className="fas fa-share-alt"></i> Share
+        </button>
         <button className="quiz-result-button" onClick={onClose}>Tutup Ringkasan</button>
       </div>
     </div>
@@ -732,6 +813,34 @@ function App() {
 
   const closeActiveSet = useCallback(() => {
     setActiveSet(null);
+  }, []);
+
+  const shareQuiz = useCallback(async () => {
+    const shareUrl = new URL('/quiz-gamified.html', window.location.origin).href;
+    const shareData = {
+      title: QUIZ_SHARE_TITLE,
+      text: QUIZ_SHARE_TEXT,
+      url: shareUrl
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      const fallbackText = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(fallbackText);
+        toast('Link kuis disalin. Bagikan ke temanmu.', 'success');
+        return;
+      }
+
+      window.prompt('Salin link kuis ini:', shareData.url);
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      toast('Gagal membagikan link kuis.', 'error');
+    }
   }, []);
 
   useEffect(() => {
@@ -1029,6 +1138,7 @@ function App() {
       {!activeSet && (
         <div className="quiz-shell-top">
           <NextQuizCountdown nextQuiz={nextQuiz} />
+          <QuizShareCard onShare={shareQuiz} />
           <div className={`quiz-dashboard ${pulse.xp ? 'pulse-xp' : ''} ${pulse.streak ? 'pulse-streak' : ''} ${pulse.quest ? 'pulse-quest' : ''} ${pulse.badge ? 'pulse-badge' : ''}`}>
             <Dashboard profile={{ ...profile, __settings: settings }} questPop={questPop} questPulse={pulse.quest} />
           </div>
@@ -1036,7 +1146,7 @@ function App() {
       )}
       <div className="quiz-main">
         {!activeSet && resultSummary && (
-          <QuizResult summary={resultSummary} onClose={() => setResultSummary(null)} />
+          <QuizResult summary={resultSummary} onClose={() => setResultSummary(null)} onShare={shareQuiz} />
         )}
         {!activeSet && <QuizList
           sets={sets}

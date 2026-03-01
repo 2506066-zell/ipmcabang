@@ -10,7 +10,7 @@
     <title>Peringkat Kuis - IPM Panawuan</title>
     <link rel="icon" href="/ipm%20(2).png">
     <link rel="stylesheet" href="/app/css/style.css">
-    <link rel="stylesheet" href="/app/css/profile.css">    <link rel="stylesheet" href="/app/css/ranking.css">
+    <link rel="stylesheet" href="/app/css/profile.css">    <link rel="stylesheet" href="/app/css/ranking.css?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -67,7 +67,32 @@
                 <span id="ranking-period">Periode: </span>
             </div>
             <div class="reset-note">Skor direset otomatis setiap awal bulan.</div>
+            <button id="share-ranking-btn" class="ranking-share-btn" type="button" aria-label="Bagikan juara satu ranking">
+                <i class="fas fa-share-alt"></i> Share Juara #1
+            </button>
         </div>
+
+        <section id="archive-section" class="ranking-archive-section" style="display:none;">
+            <div class="archive-header">
+                <div>
+                    <h2>Arsip Juara Bulanan</h2>
+                    <p>Lihat juara 1-3 tiap bulan dan pantau siapa paling konsisten.</p>
+                </div>
+                <div class="archive-controls">
+                    <label for="archive-month-select" class="archive-label">Periode</label>
+                    <select id="archive-month-select" class="archive-select" disabled>
+                        <option value="">Belum ada arsip</option>
+                    </select>
+                </div>
+            </div>
+            <div id="archive-meta" class="archive-meta"></div>
+            <div id="archive-empty" class="archive-empty" hidden>Arsip akan muncul setelah reset bulanan pertama.</div>
+            <div id="archive-podium" class="archive-podium"></div>
+            <div id="hall-of-fame-wrap" class="hall-of-fame-wrap" hidden>
+                <h3>Hall of Fame</h3>
+                <div id="hall-of-fame" class="hall-of-fame-list"></div>
+            </div>
+        </section>
 
         <div id="loading-indicator" class="loading-indicator">
             <div class="loading-content">
@@ -136,7 +161,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js" defer></script>
     <script src="scripts/loader.js" defer></script>
-    <script src="/app/js/pages/ranking.js" defer></script>
+    <script src="/app/js/pages/ranking.js?v=3" defer></script>
     <script src="/app/js/core/toast.js" defer></script>
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
