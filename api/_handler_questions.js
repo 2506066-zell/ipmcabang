@@ -57,10 +57,42 @@ async function list(req, res) {
         let nextSchedule = null;
         try {
             nextSchedule = (await query`
-          SELECT title, description, start_time, show_in_quiz 
-          FROM quiz_schedules 
-          WHERE active = true AND start_time > NOW() AND (show_in_quiz = true OR show_in_quiz IS NULL)
-          ORDER BY start_time ASC 
+          SELECT
+            title,
+            description,
+            start_time,
+            end_time,
+            show_in_quiz,
+            CASE WHEN start_time > (NOW() AT TIME ZONE 'Asia/Bangkok') THEN 'upcoming' ELSE 'active' END AS schedule_state,
+            CASE
+              WHEN start_time > (NOW() AT TIME ZONE 'Asia/Bangkok') THEN start_time
+              ELSE COALESCE(end_time, start_time)
+            END AS countdown_target,
+            (
+              EXTRACT(
+                EPOCH FROM (
+                  CASE
+                    WHEN start_time > (NOW() AT TIME ZONE 'Asia/Bangkok') THEN start_time
+                    ELSE COALESCE(end_time, start_time)
+                  END
+                ) AT TIME ZONE 'Asia/Bangkok'
+              ) * 1000
+            )::bigint AS countdown_target_ms
+          FROM quiz_schedules
+          WHERE
+            active = true
+            AND (show_in_quiz = true OR show_in_quiz IS NULL)
+            AND (
+              start_time > (NOW() AT TIME ZONE 'Asia/Bangkok')
+              OR (
+                start_time <= (NOW() AT TIME ZONE 'Asia/Bangkok')
+                AND (end_time IS NULL OR end_time > (NOW() AT TIME ZONE 'Asia/Bangkok'))
+              )
+            )
+          ORDER BY
+            CASE WHEN start_time > (NOW() AT TIME ZONE 'Asia/Bangkok') THEN 0 ELSE 1 END,
+            CASE WHEN start_time > (NOW() AT TIME ZONE 'Asia/Bangkok') THEN start_time END ASC,
+            CASE WHEN start_time <= (NOW() AT TIME ZONE 'Asia/Bangkok') THEN start_time END DESC
           LIMIT 1
         `).rows[0];
         } catch (e) {
@@ -72,7 +104,9 @@ async function list(req, res) {
             nextQuiz = {
                 title: nextSchedule.title,
                 topic: nextSchedule.description || "Event Mendatang",
-                countdown_target: nextSchedule.start_time
+                countdown_target: nextSchedule.countdown_target || nextSchedule.start_time,
+                countdown_target_ms: nextSchedule.countdown_target_ms ? Number(nextSchedule.countdown_target_ms) : null,
+                state: nextSchedule.schedule_state || 'upcoming'
             };
         }
 
@@ -110,7 +144,7 @@ async function list(req, res) {
         const schedules = (await query`
       SELECT title, description, start_time, end_time, show_in_quiz, show_in_notif 
       FROM quiz_schedules 
-      WHERE (end_time IS NULL OR end_time > NOW()) 
+      WHERE (end_time IS NULL OR end_time > (NOW() AT TIME ZONE 'Asia/Bangkok')) 
       ORDER BY start_time ASC
     `).rows;
         return json(res, 200, { status: 'success', schedules }, cacheHeaders(60));

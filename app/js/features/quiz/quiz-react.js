@@ -675,13 +675,20 @@ function NextQuizCountdown({ nextQuiz }) {
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
-    if (!nextQuiz || !nextQuiz.countdown_target) {
+    if (!nextQuiz || (!nextQuiz.countdown_target && !nextQuiz.countdown_target_ms)) {
       setTimeLeft('');
       return undefined;
     }
 
     const update = () => {
-      const target = new Date(nextQuiz.countdown_target).getTime();
+      const targetMs = Number(nextQuiz.countdown_target_ms);
+      const target = Number.isFinite(targetMs) && targetMs > 0
+        ? targetMs
+        : new Date(nextQuiz.countdown_target).getTime();
+      if (!Number.isFinite(target) || target <= 0) {
+        setTimeLeft('');
+        return;
+      }
       const now = Date.now();
       const diff = Math.max(0, target - now);
       if (!diff) {
@@ -702,6 +709,7 @@ function NextQuizCountdown({ nextQuiz }) {
   }, [nextQuiz]);
 
   if (!nextQuiz || !nextQuiz.title) return null;
+  const isActiveSchedule = String(nextQuiz.state || '').toLowerCase() === 'active';
 
   return (
     <div className="quiz-countdown-bar">
@@ -711,7 +719,9 @@ function NextQuizCountdown({ nextQuiz }) {
           <strong>{nextQuiz.title}</strong>
           {timeLeft && <span className="quiz-timer-pill">{timeLeft}</span>}
         </div>
-        <div className="quiz-countdown-headline">Quiz level berikutnya segera dimulai.</div>
+        <div className="quiz-countdown-headline">
+          {isActiveSchedule ? 'Quiz sedang berlangsung.' : 'Quiz level berikutnya segera dimulai.'}
+        </div>
         {nextQuiz.topic && <div className="quiz-countdown-note">Topik: {nextQuiz.topic}</div>}
         {!nextQuiz.topic && <div className="quiz-countdown-note">Persiapkan diri, kuis dimulai sebentar lagi.</div>}
       </div>
