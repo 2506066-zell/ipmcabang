@@ -1,6 +1,6 @@
 (() => {
     const DEFAULT_API_URL = '/api';
-    const MODULE_VER = '20';
+    const MODULE_VER = '21';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',
@@ -23,6 +23,7 @@
         users: [],
         logs: [],
         feedbackMessages: [],
+        scheduledNotifications: [],
         schedules: [],
         pimpinanOptions: [],
         connected: false,
@@ -131,6 +132,7 @@
             pageTitle: document.getElementById('page-title'),
             pageContextLabel: document.getElementById('page-context-label'),
             pageContextDesc: document.getElementById('page-context-desc'),
+            pageScopeBadge: document.getElementById('page-scope-badge'),
             sectionLastUpdated: document.getElementById('section-last-updated'),
 
             // Login
@@ -163,6 +165,12 @@
             statQuestions: document.getElementById('stat-questions'),
             statSchedules: document.getElementById('stat-schedules'),
             dashboardLogsList: document.getElementById('dashboard-logs-list'),
+            dashboardPriorityList: document.getElementById('dashboard-priority-list'),
+            adminFocusGrid: document.getElementById('admin-focus-grid'),
+            focusArticlesMeta: document.getElementById('focus-articles-meta'),
+            focusQuestionsMeta: document.getElementById('focus-questions-meta'),
+            focusUsersMeta: document.getElementById('focus-users-meta'),
+            focusSystemMeta: document.getElementById('focus-system-meta'),
 
             // Questions
             searchInput: document.getElementById('search-input'),
@@ -188,6 +196,11 @@
             userSortSelect: document.getElementById('user-sort-select'),
             userStatusFilter: document.getElementById('user-status-filter'),
             addUserBtn: document.getElementById('add-user-btn'),
+            usersSummaryTotal: document.getElementById('users-summary-total'),
+            usersSummaryAdmin: document.getElementById('users-summary-admin'),
+            usersSummaryNoQuiz: document.getElementById('users-summary-no-quiz'),
+            usersSummaryAttention: document.getElementById('users-summary-attention'),
+            usersSummaryAttentionMeta: document.getElementById('users-summary-attention-meta'),
 
             // User Modal
             userModalPanel: document.getElementById('user-modal-panel'),
@@ -430,49 +443,58 @@
 
     const TAB_META = {
         dashboard: {
-            label: 'Overview',
-            title: 'Dashboard Operasional',
-            desc: 'Pantau metrik utama, aktivitas terbaru, dan akses cepat ke operasi inti.'
+            label: 'Ringkasan',
+            title: 'Beranda Admin',
+            desc: 'Lihat prioritas kerja, ringkasan sistem, dan pintasan ke modul yang paling sering dipakai.',
+            scope: 'Ringkasan Prioritas'
         },
         questions: {
-            label: 'Assessment Ops',
+            label: 'Kuis & Penilaian',
             title: 'Bank Soal',
-            desc: 'Kelola kualitas soal, kategori, dan set kuis yang dipublikasikan.'
+            desc: 'Kelola kualitas soal, kategori, dan set kuis yang dipublikasikan.',
+            scope: 'Operasional Kuis'
         },
         results: {
-            label: 'Assessment Ops',
-            title: 'Hasil Assessment',
-            desc: 'Evaluasi performa user dan validasi hasil kuis.'
+            label: 'Kuis & Penilaian',
+            title: 'Hasil Peserta',
+            desc: 'Evaluasi performa user dan validasi hasil kuis.',
+            scope: 'Review Penilaian'
         },
         users: {
-            label: 'User & Comms',
-            title: 'User & Komunikasi',
-            desc: 'Atur data user dan kirim broadcast notifikasi secara terkontrol.'
+            label: 'Komunikasi',
+            title: 'Pengguna & Broadcast',
+            desc: 'Atur data user, kirim broadcast, dan tindak lanjuti feedback secara terkontrol.',
+            scope: 'Relasi Pengguna'
         },
         logs: {
-            label: 'System',
-            title: 'Audit Log',
-            desc: 'Lacak aktivitas admin untuk kebutuhan jejak audit.'
+            label: 'Komunikasi',
+            title: 'Riwayat Aktivitas',
+            desc: 'Lacak aktivitas admin untuk kebutuhan jejak audit.',
+            scope: 'Jejak Aktivitas'
         },
         schedules: {
-            label: 'System',
-            title: 'Konfigurasi Sistem',
-            desc: 'Atur jadwal kuis, gamifikasi, konfigurasi form, dan aksi berisiko.'
+            label: 'Pengaturan',
+            title: 'Pengaturan Sistem',
+            desc: 'Atur jadwal kuis, gamifikasi, konfigurasi form, dan aksi berisiko.',
+            scope: 'Konfigurasi Inti'
         },
         articles: {
-            label: 'Content Ops',
+            label: 'Konten Publik',
             title: 'Manajemen Artikel',
-            desc: 'Kelola publikasi artikel dan workflow konten utama.'
+            desc: 'Kelola publikasi artikel dan workflow konten utama.',
+            scope: 'Editorial'
         },
         materials: {
-            label: 'Content Ops',
+            label: 'Konten Publik',
             title: 'Manajemen Materi',
-            desc: 'Kelola materi belajar agar rapi dan mudah ditemukan.'
+            desc: 'Kelola materi belajar agar rapi dan mudah ditemukan.',
+            scope: 'Perpustakaan Digital'
         },
         organization: {
-            label: 'Content Ops',
+            label: 'Konten Publik',
             title: 'Struktur Organisasi',
-            desc: 'Kelola anggota dan program kerja tiap bidang dari satu panel admin.'
+            desc: 'Kelola anggota dan program kerja tiap bidang dari satu panel admin.',
+            scope: 'Data Organisasi'
         }
     };
 
@@ -485,6 +507,122 @@
         if (els.pageContextLabel) els.pageContextLabel.textContent = meta.label;
         if (els.pageTitle) els.pageTitle.textContent = meta.title;
         if (els.pageContextDesc) els.pageContextDesc.textContent = meta.desc;
+        if (els.pageScopeBadge) els.pageScopeBadge.textContent = meta.scope || meta.label;
+    }
+
+    function asNumber(value) {
+        const num = Number(value);
+        return Number.isFinite(num) ? num : 0;
+    }
+
+    function userHasActiveSession(user) {
+        return Boolean(user && (user.active === true || String(user.active).toLowerCase() === 'true'));
+    }
+
+    function buildAttentionSummary() {
+        const openFeedback = (state.feedbackMessages || []).filter(item => String(item.status || 'open').toLowerCase() !== 'resolved').length;
+        const pendingNotifications = (state.scheduledNotifications || []).filter(item => String(item.status || 'pending').toLowerCase() === 'pending').length;
+        return { openFeedback, pendingNotifications, total: openFeedback + pendingNotifications };
+    }
+
+    function renderUsersSummary() {
+        const users = Array.isArray(state.users) ? state.users : [];
+        const adminCount = users.filter(u => String(u.role || '') === 'admin').length;
+        const noQuizCount = users.filter(u => asNumber(u.total_quizzes) === 0 && String(u.role || '') !== 'admin').length;
+        const attention = buildAttentionSummary();
+
+        if (els.usersSummaryTotal) els.usersSummaryTotal.textContent = String(users.length);
+        if (els.usersSummaryAdmin) els.usersSummaryAdmin.textContent = String(adminCount);
+        if (els.usersSummaryNoQuiz) els.usersSummaryNoQuiz.textContent = String(noQuizCount);
+        if (els.usersSummaryAttention) els.usersSummaryAttention.textContent = String(attention.total);
+        if (els.usersSummaryAttentionMeta) {
+            els.usersSummaryAttentionMeta.textContent = `${attention.openFeedback} feedback terbuka, ${attention.pendingNotifications} notifikasi terjadwal`;
+        }
+    }
+
+    function renderDashboardPriorities(context = {}) {
+        if (!els.dashboardPriorityList) return;
+        const users = Array.isArray(context.users) ? context.users : [];
+        const questionCount = asNumber(context.questionCount);
+        const activeSchedules = asNumber(context.activeSchedules);
+        const articleCount = asNumber(context.articleCount);
+        const materialCount = asNumber(context.materialCount);
+        const openFeedback = asNumber(context.openFeedback);
+        const pendingNotifications = asNumber(context.pendingNotifications);
+        const noQuizUsers = users.filter(u => asNumber(u.total_quizzes) === 0 && String(u.role || '') !== 'admin').length;
+
+        const items = [];
+
+        if (openFeedback > 0) {
+            items.push({
+                tone: 'urgent',
+                tab: 'users',
+                title: `${openFeedback} feedback belum ditindaklanjuti`,
+                text: 'Cek pesan kritik dan saran dari pengguna agar masukan tidak tertunda terlalu lama.'
+            });
+        }
+        if (pendingNotifications > 0) {
+            items.push({
+                tone: 'info',
+                tab: 'users',
+                title: `${pendingNotifications} notifikasi masih menunggu jadwal kirim`,
+                text: 'Tinjau notifikasi terjadwal untuk memastikan isi dan targetnya sudah benar.'
+            });
+        }
+        if (activeSchedules === 0) {
+            items.push({
+                tone: 'warn',
+                tab: 'schedules',
+                title: 'Belum ada jadwal kuis aktif',
+                text: 'Tambahkan atau aktifkan jadwal agar halaman publik tetap menampilkan agenda yang relevan.'
+            });
+        }
+        if (questionCount === 0) {
+            items.push({
+                tone: 'warn',
+                tab: 'questions',
+                title: 'Bank soal masih kosong',
+                text: 'Isi soal terlebih dahulu agar fitur kuis bisa dipakai peserta.'
+            });
+        }
+        if (noQuizUsers > 0) {
+            items.push({
+                tone: 'info',
+                tab: 'users',
+                title: `${noQuizUsers} pengguna belum pernah ikut kuis`,
+                text: 'Bisa jadi mereka butuh onboarding, pengingat, atau bantuan akses.'
+            });
+        }
+        if (articleCount === 0 && materialCount === 0) {
+            items.push({
+                tone: 'info',
+                tab: 'articles',
+                title: 'Konten publik masih minim',
+                text: 'Tambahkan artikel atau materi agar halaman publik terlihat aktif dan berguna.'
+            });
+        }
+
+        if (items.length === 0) {
+            els.dashboardPriorityList.innerHTML = `
+                <div class="priority-card priority-ok">
+                    <div class="priority-card-main">
+                        <div class="priority-card-title">Tidak ada prioritas mendesak</div>
+                        <div class="priority-card-text">Panel admin dalam kondisi aman. Kamu bisa lanjut ke pembaruan konten atau evaluasi rutin.</div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        els.dashboardPriorityList.innerHTML = items.map(item => `
+            <button type="button" class="priority-card priority-${item.tone} panel-link" data-tab="${item.tab}">
+                <div class="priority-card-main">
+                    <div class="priority-card-title">${escapeHtml(item.title)}</div>
+                    <div class="priority-card-text">${escapeHtml(item.text)}</div>
+                </div>
+                <div class="priority-card-action">Buka</div>
+            </button>
+        `).join('');
     }
 
     function markSectionUpdated() {
@@ -593,41 +731,87 @@
     async function loadDashboard() {
         // Parallel fetch for stats
         try {
-            const [usersData, questionsData, logsData, schedulesData, resultsData] = await Promise.all([
+            const [usersData, questionsData, logsData, schedulesData, resultsData, articlesData, materialsData, feedbackData, notifyData] = await Promise.all([
                 apiAdminVercel('GET', '/api/admin/users?action=extended'),
                 apiGetVercel('/api/questions?size=1'), // Just to get total count
                 apiAdminVercel('GET', '/api/admin/questions?action=activityLogs'),
                 apiAdminVercel('GET', '/api/admin/questions?action=schedules'),
-                apiGetVercel('/api/results')
+                apiGetVercel('/api/results'),
+                apiGetVercel('/api/articles?size=1'),
+                apiGetVercel('/api/materials?size=1'),
+                apiAdminVercel('GET', '/api/feedback?action=list&status=open&size=20'),
+                apiAdminVercel('GET', '/api/admin/questions?action=listScheduledNotifications')
             ]);
 
+            const userCount = usersData.users ? usersData.users.length : 0;
+            const questionCount = questionsData.total || 0;
+            const activeSchedules = (schedulesData.schedules || []).filter(s => s.active).length;
+            const finished = resultsData.results ? resultsData.results.length : 0;
+            const articleCount = Number(articlesData.total || (articlesData.articles || []).length || 0);
+            const materialCount = Number(materialsData.total || (materialsData.materials || []).length || 0);
+            const openFeedback = Array.isArray(feedbackData.items) ? feedbackData.items.length : 0;
+            const pendingNotifications = Array.isArray(notifyData.items)
+                ? notifyData.items.filter(item => String(item.status || 'pending').toLowerCase() === 'pending').length
+                : 0;
+
             // Users Stat
-            if (els.statUsers) els.statUsers.textContent = usersData.users ? usersData.users.length : 0;
+            if (els.statUsers) els.statUsers.textContent = userCount;
 
             // Questions Stat
-            if (els.statQuestions) els.statQuestions.textContent = questionsData.total || 0;
+            if (els.statQuestions) els.statQuestions.textContent = questionCount;
 
             // Schedules Stat (Active)
-            const activeSchedules = (schedulesData.schedules || []).filter(s => s.active).length;
             if (els.statSchedules) els.statSchedules.textContent = activeSchedules;
 
             // Quizzes Finished Stat
-            const finished = resultsData.results ? resultsData.results.length : 0;
             if (els.statQuizzes) els.statQuizzes.textContent = finished;
+
+            if (els.focusArticlesMeta) {
+                els.focusArticlesMeta.textContent = `${articleCount} artikel, ${materialCount} materi`;
+            }
+            if (els.focusQuestionsMeta) {
+                els.focusQuestionsMeta.textContent = `${questionCount} soal, ${finished} hasil masuk`;
+            }
+            if (els.focusUsersMeta) {
+                els.focusUsersMeta.textContent = `${openFeedback} feedback, ${pendingNotifications} notifikasi tertunda`;
+            }
+            if (els.focusSystemMeta) {
+                els.focusSystemMeta.textContent = `${activeSchedules} jadwal aktif`;
+            }
+
+            renderDashboardPriorities({
+                users: usersData.users || [],
+                questionCount,
+                activeSchedules,
+                articleCount,
+                materialCount,
+                openFeedback,
+                pendingNotifications
+            });
 
             // Recent Activity
             if (els.dashboardLogsList) {
                 const recentLogs = (logsData.logs || []).slice(0, 5);
-                els.dashboardLogsList.innerHTML = recentLogs.map(l => `
-                    <div class="list-item" style="padding:12px;">
-                        <div style="font-weight:600; font-size:0.9rem;">${escapeHtml(l.action)}</div>
-                        <div style="font-size:0.8rem; color:var(--text-secondary);">${escapeHtml(l.admin_name)} - ${new Date(l.created_at).toLocaleString()}</div>
-                    </div>
-                `).join('');
+                if (recentLogs.length === 0) {
+                    els.dashboardLogsList.innerHTML = '<div class="small muted">Belum ada aktivitas admin yang tercatat.</div>';
+                } else {
+                    els.dashboardLogsList.innerHTML = recentLogs.map(l => `
+                        <div class="list-item" style="padding:12px;">
+                            <div style="font-weight:600; font-size:0.9rem;">${escapeHtml(l.action)}</div>
+                            <div style="font-size:0.8rem; color:var(--text-secondary);">${escapeHtml(l.admin_name)} - ${new Date(l.created_at).toLocaleString()}</div>
+                        </div>
+                    `).join('');
+                }
             }
 
         } catch (e) {
             console.error('Dashboard load error:', e);
+            if (els.dashboardLogsList) {
+                els.dashboardLogsList.innerHTML = '<div class="small muted">Dashboard belum bisa memuat ringkasan terbaru.</div>';
+            }
+            if (els.dashboardPriorityList) {
+                els.dashboardPriorityList.innerHTML = '<div class="small muted">Prioritas kerja belum bisa dimuat saat ini.</div>';
+            }
         }
     }
 
@@ -767,10 +951,14 @@
         try {
             const data = await apiAdminVercel('GET', '/api/admin/questions?action=listScheduledNotifications');
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat jadwal');
-            renderNotifyScheduleList(data.items || []);
+            state.scheduledNotifications = Array.isArray(data.items) ? data.items : [];
+            renderNotifyScheduleList(state.scheduledNotifications);
+            renderUsersSummary();
         } catch (e) {
             console.error('Load scheduled notifications failed:', e);
             els.notifyScheduleList.innerHTML = '<div class="small muted">Gagal memuat jadwal notifikasi.</div>';
+            state.scheduledNotifications = [];
+            renderUsersSummary();
         }
     }
 
@@ -855,10 +1043,13 @@
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat pesan.');
             state.feedbackMessages = Array.isArray(data.items) ? data.items : [];
             renderFeedbackList();
+            renderUsersSummary();
         } catch (e) {
             console.error('Load feedback messages failed:', e);
             els.feedbackList.innerHTML = `<div class="small muted">Gagal memuat pesan: ${escapeHtml(e.message || 'error')}</div>`;
             if (els.feedbackCount) els.feedbackCount.textContent = '0 pesan';
+            state.feedbackMessages = [];
+            renderUsersSummary();
         }
     }
 
@@ -1068,8 +1259,11 @@
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat user.');
             state.users = data.users || [];
             renderUsers();
+            renderUsersSummary();
         } catch (e) {
             console.error('Error loading users:', e);
+            state.users = [];
+            renderUsersSummary();
             if (els.usersList) {
                 els.usersList.innerHTML = `<div class="card" style="text-align:center; color:var(--accent-danger)"><p>Gagal memuat data user: ${e.message}</p></div>`;
             }
@@ -1094,8 +1288,8 @@
 
         // Filter Status
         const status = els.userStatusFilter?.value || 'all';
-        if (status === 'active') users = users.filter(u => u.active);
-        if (status === 'inactive') users = users.filter(u => !u.active);
+        if (status === 'active') users = users.filter(u => userHasActiveSession(u));
+        if (status === 'inactive') users = users.filter(u => !userHasActiveSession(u));
 
         // Sort
         const sort = els.userSortSelect?.value || 'newest';
@@ -1112,9 +1306,13 @@
         }
 
         els.usersList.innerHTML = users.map(u => {
-            const activeBadge = u.active ?
-                `<span class="item-badge badge-active">AKTIF</span>` :
-                `<span class="item-badge badge-inactive">NONAKTIF</span>`;
+            const hasActiveSession = userHasActiveSession(u);
+            const totalQuizzes = asNumber(u.total_quizzes);
+            const avgScore = Math.round(asNumber(u.avg_score));
+            const activeBadge = hasActiveSession ?
+                `<span class="item-badge badge-active">SESI AKTIF</span>` :
+                `<span class="item-badge badge-inactive">TANPA SESI AKTIF</span>`;
+            const lastQuizAt = u.last_quiz_at ? new Date(u.last_quiz_at).toLocaleDateString('id-ID') : 'Belum ada';
 
             return `
             <div class="list-item">
@@ -1129,8 +1327,9 @@
                 <div style="font-size:0.85rem; color:#888; margin-bottom:12px;">
                     <div><i class="fas fa-envelope"></i> ${escapeHtml(u.email || '-')}</div>
                     <div><i class="fas fa-calendar"></i> Bergabung: ${new Date(u.created_at).toLocaleDateString()}</div>
-                    <div><i class="fas fa-check-circle"></i> Kuis Selesai: ${u.total_quizzes}</div>
-                    <div><i class="fas fa-star"></i> Rata-rata Skor: ${Math.round(u.avg_score)}%</div>
+                    <div><i class="fas fa-check-circle"></i> Kuis Selesai: ${totalQuizzes}</div>
+                    <div><i class="fas fa-star"></i> Rata-rata Skor: ${avgScore}%</div>
+                    <div><i class="fas fa-clock-rotate-left"></i> Kuis Terakhir: ${escapeHtml(lastQuizAt)}</div>
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
                     <button class="btn btn-secondary" style="font-size:0.8rem; flex:1;" onclick="handleResetAttempt(${u.id}, 1)">Reset Kuis 1</button>
@@ -1853,6 +2052,14 @@
         els.sidebarNav?.addEventListener('click', (e) => {
             const btn = e.target.closest('.nav-item');
             if (btn && btn.dataset.tab) handleNav(btn.dataset.tab);
+        });
+        els.adminFocusGrid?.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-tab]');
+            if (btn && btn.dataset.tab) handleNav(btn.dataset.tab);
+        });
+        els.appCard?.addEventListener('click', (e) => {
+            const workflowBtn = e.target.closest('.panel-link[data-tab], .workflow-card[data-tab]');
+            if (workflowBtn && workflowBtn.dataset.tab) handleNav(workflowBtn.dataset.tab);
         });
 
         // Theme

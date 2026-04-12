@@ -44,10 +44,26 @@ async function handleMarkNotificationsRead(req, res) {
 async function handleGetUsersExtended(req, res) {
     try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
     const users = (await query`
-        SELECT u.id, u.username, u.email, u.nama_panjang, u.role, u.created_at,
-               COUNT(r.id) as total_quizzes, COALESCE(AVG(r.score), 0) as avg_score
-        FROM users u LEFT JOIN results r ON u.id = r.user_id
-        GROUP BY u.id ORDER BY u.created_at DESC
+        SELECT
+            u.id,
+            u.username,
+            u.email,
+            u.nama_panjang,
+            u.role,
+            u.created_at,
+            COUNT(r.id)::int AS total_quizzes,
+            COALESCE(AVG(r.score), 0)::float AS avg_score,
+            MAX(r.created_at) AS last_quiz_at,
+            EXISTS(
+                SELECT 1
+                FROM sessions s
+                WHERE s.user_id = u.id
+                  AND s.expires_at > NOW()
+            ) AS active
+        FROM users u
+        LEFT JOIN results r ON u.id = r.user_id
+        GROUP BY u.id
+        ORDER BY u.created_at DESC
     `).rows;
     return json(res, 200, { status: 'success', users });
 }

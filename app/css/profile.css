@@ -1,4 +1,4 @@
-﻿body.page-profile {
+body.page-profile {
     background: #f8fafc;
 }
 
@@ -134,6 +134,42 @@
     color: #64748b;
     font-size: 0.78rem;
     opacity: 0.8;
+}
+
+.profile-badges-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.badge-item {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transform: translateY(0);
+    transition: transform 0.2s ease;
+}
+
+.badge-item:hover {
+    transform: translateY(-2px);
+}
+
+.badge-item i { font-size: 0.75rem; }
+
+.badge-item.legend { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.badge-item.epic { background: linear-gradient(135deg, #64748b, #94a3b8); }
+.badge-item.rare { background: linear-gradient(135deg, #10b981, #34d399); }
+
+.border-dynamic {
+    transition: box-shadow 0.3s ease;
 }
 
 .profile-info-grid {

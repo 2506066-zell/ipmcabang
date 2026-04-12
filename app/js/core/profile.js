@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     const USER_SESSION_KEY = 'ipmquiz_user_session';
     const USER_USERNAME_KEY = 'ipmquiz_user_username';
     const USER_FULLNAME_KEY = 'ipmquiz_user_fullname';
@@ -42,12 +42,13 @@
                         <i class="fas fa-times"></i>
                     </button>
                     <div class="profile-header">
-                        <div class="profile-avatar" id="profile-avatar">U</div>
+                        <div class="profile-avatar border-dynamic" id="profile-avatar">U</div>
                         <div class="profile-header-text">
                             <h1 class="profile-username" id="profile-username">Pengguna</h1>
                             <div class="profile-subtext" id="profile-subtext">Profil Akun</div>
                         </div>
                     </div>
+                    <div class="profile-badges-container" id="profile-badges-container"></div>
                     <div class="profile-info-grid">
                         <div class="profile-info-row">
                             <span class="profile-label">Username</span>
@@ -140,6 +141,24 @@
         totalEl.textContent = activity.totalCompleted !== undefined ? String(activity.totalCompleted) : '1';
         rankEl.textContent = activity.rank ? `#${activity.rank}` : '-';
         emptyEl.style.display = 'none';
+
+        // Render Badges
+        const badgesContainer = container.querySelector('#profile-badges-container');
+        if (badgesContainer && activity.badges && activity.badges.length > 0) {
+            badgesContainer.innerHTML = activity.badges.map(b => `<div class="badge-item ${b.type}"><i class="${b.icon}"></i> ${b.name}</div>`).join('');
+            
+            // Dynamic Avatar Border
+            const avatar = container.querySelector('#profile-avatar');
+            if (avatar) {
+                if(activity.badges.some(b => b.type === 'legend')) {
+                    avatar.style.boxShadow = '0 0 0 4px #fbbf24, 0 0 15px rgba(251, 191, 36, 0.6)';
+                } else if(activity.badges.some(b => b.type === 'epic')) {
+                    avatar.style.boxShadow = '0 0 0 4px #94a3b8';
+                }
+            }
+        } else if (badgesContainer) {
+            badgesContainer.innerHTML = '';
+        }
     }
 
     async function loadProfileData(container) {
@@ -199,12 +218,18 @@
 
             const row = results[idx];
             const totalCompleted = row.total || row.attempts || 1;
+            const badges = [];
+            if (row.score >= 100) badges.push({ name: 'Si Akurat', type: 'epic', icon: 'fas fa-bullseye' });
+            if (idx === 0) badges.push({ name: 'Juara Bertahan', type: 'legend', icon: 'fas fa-crown' });
+            if (totalCompleted >= 3) badges.push({ name: 'Kader Pelopor', type: 'rare', icon: 'fas fa-fire' });
+
             const activity = {
                 hasActivity: true,
                 lastScore: row.score || 0,
                 totalCompleted,
                 rank: idx + 1,
-                statusText: `Sudah menyelesaikan ${totalCompleted} kuis`
+                statusText: `Sudah menyelesaikan ${totalCompleted} kuis`,
+                badges
             };
             fillActivity(container, activity);
         } catch {}

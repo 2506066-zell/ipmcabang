@@ -532,8 +532,10 @@ function QuizQuestion({
     let isCorrect = null;
     if (q.correct) {
       isCorrect = String(chosenKey).toLowerCase() === String(q.correct).toLowerCase();
+      const praises = ['Mantap! Jawaban benar 🔥', 'Tepat Sekali! Terus lanjut 🚀', 'Genius! Tambahan XP ✨', 'Benar! Kamu siap jadi juara 🏆'];
+      const taunts = ['Aduh salah.. Ayo fokus! 👀', 'Belum tepat, jangan nyerah 💪', 'Kurang dikit lagi, ayo teliti! 🧐', 'Oops.. Fokus Kader! 🔥'];
       setFeedback(isCorrect ? 'correct' : 'wrong');
-      setFeedbackText(isCorrect ? 'Jawaban benar! XP bertambah.' : 'Belum tepat, coba fokus di soal berikutnya.');
+      setFeedbackText(isCorrect ? praises[Math.floor(Math.random() * praises.length)] : taunts[Math.floor(Math.random() * taunts.length)]);
       setFeedbackTone(isCorrect ? 'positive' : 'negative');
       vibrate(isCorrect ? [12, 40, 14] : [20, 40, 20]);
       onImmediateReward(isCorrect);
@@ -590,7 +592,7 @@ function QuizQuestion({
   const remainingQuestions = Math.max(0, questions.length - (index + 1));
 
   return (
-    <div className={`quiz-card quiz-question${transitionPhase === 'enter' ? ' animate-in' : ''}${transitionPhase === 'exit' ? ' animate-out' : ''}${isUrgent ? ' is-urgent' : ''}`}>
+    <div className={`quiz-card quiz-question${transitionPhase === 'enter' ? ' animate-in' : ''}${transitionPhase === 'exit' ? ' animate-out' : ''}${isUrgent ? ' is-urgent' : ''}${feedback === 'wrong' ? ' shake' : ''}`}>
       <div className="quiz-question-header">
         <div className="quiz-question-title">
           <span className="quiz-floating-icon" aria-hidden="true"><i className="fas fa-pen-to-square"></i></span>
@@ -622,9 +624,10 @@ function QuizQuestion({
         </div>
       </div>
       <div className="quiz-progress-wrap" aria-hidden="true">
-        <div className="quiz-progress">
-          <span style={{ width: `${progress}%` }} />
-          <span className="quiz-progress-dot" style={{ left: `${progress}%` }} />
+        <div className="quiz-led-progress">
+          {questions.map((_, i) => (
+            <div key={i} className={`led-segment ${i <= index ? 'active' : ''}`} />
+          ))}
         </div>
       </div>
       {xpBurst && (
@@ -951,7 +954,6 @@ function App() {
       return { ...prev, completedSets: current.filter((s) => s !== setId) };
     });
   };
-
   const toggleSound = () => {
     setSoundOn((prev) => {
       const next = !prev;
@@ -969,16 +971,35 @@ function App() {
       if (!AudioCtx) return;
       const ctx = window.__quizAudioCtx || new AudioCtx();
       window.__quizAudioCtx = ctx;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = type === 'correct' ? 880 : 220;
-      gain.gain.value = 0.04;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
       const now = ctx.currentTime;
-      osc.start(now);
-      osc.stop(now + (type === 'correct' ? 0.08 : 0.12));
+
+      if (type === 'correct') {
+        [523.25, 659.25, 1046.50].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, now + (i * 0.05));
+          gain.gain.linearRampToValueAtTime(0.06, now + (i * 0.05) + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.05) + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + (i * 0.05));
+          osc.stop(now + (i * 0.05) + 0.3);
+        });
+      } else {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
     } catch (e) {}
   };
 

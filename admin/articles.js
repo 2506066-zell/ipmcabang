@@ -327,12 +327,19 @@ export function initArticles(state, els, api) {
     // Create/Edit
     if (addBtn) {
         addBtn.onclick = () => {
-            window.location.href = 'editor.html';
+            resetForm();
+            openModal();
         };
     }
 
     async function openEdit(id) {
-        window.location.href = `editor.html?id=${id}`;
+        resetForm();
+        try {
+            await loadArticleIntoForm(id);
+            openModal();
+        } catch (e) {
+            alert(e.message);
+        }
     }
 
     async function handleDelete(id) {

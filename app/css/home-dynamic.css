@@ -119,6 +119,127 @@
     display: flex;
     gap: 16px;
     justify-content: center;
+/* === Dynamic Background Blobs === */
+.bg-blobs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.blob {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, rgba(74, 124, 93, 0.1), rgba(45, 122, 74, 0.05));
+    filter: blur(80px);
+    border-radius: 50%;
+    z-index: -1;
+    animation: move-blobs 20s infinite alternate;
+}
+
+.blob-1 {
+    top: -100px;
+    left: -100px;
+    animation-duration: 25s;
+}
+
+.blob-2 {
+    bottom: -150px;
+    right: -100px;
+    background: linear-gradient(135deg, rgba(244, 208, 63, 0.08), rgba(74, 124, 93, 0.05));
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+
+.blob-3 {
+    top: 40%;
+    left: 60%;
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(135deg, rgba(74, 124, 93, 0.05), rgba(45, 122, 74, 0.1));
+    animation-duration: 22s;
+    animation-delay: -10s;
+}
+
+@keyframes move-blobs {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+
+    33% {
+        transform: translate(100px, 50px) scale(1.1) rotate(90deg);
+    }
+
+    66% {
+        transform: translate(-50px, 100px) scale(0.9) rotate(180deg);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1) rotate(360deg);
+    }
+}
+
+/* === Typing Effect === */
+.cursor {
+    display: inline-block;
+    width: 2px;
+    margin-left: 2px;
+    background-color: #4a7c5d;
+    animation: blink 0.7s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+/* === Scroll Reveal === */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* === Hero Specific Premium Polishes === */
+.hero-logo {
+    animation: float-logo 4s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+    transition: transform 0.3s ease;
+}
+
+@keyframes float-logo {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
     flex-wrap: wrap;
     margin-top: 40px;
     animation: fadeInUp 1s ease both;
@@ -139,7 +260,6 @@
         opacity: 0;
         transform: translateY(20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -522,16 +642,6 @@
     border-radius: 20px;
 }
 
-@keyframes shimmer {
-    0% {
-        background-position: -200% 0;
-    }
-
-    100% {
-        background-position: 200% 0;
-    }
-}
-
 /* Mobile specific */
 @media (max-width: 768px) {
     .section-title {
@@ -542,3 +652,73 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* === Premium Landing Upgrades === */
+.hero-title {
+    background: linear-gradient(to right, #0f172a, #2D7A4A);
+    -webkit-background-clip: text;
+    color: transparent;
+    font-weight: 800;
+}
+
+.btn-hero.btn-hero-primary {
+    background: linear-gradient(135deg, #0984e3, #1e3a8a);
+    border: none;
+    color: white;
+    box-shadow: 0 8px 20px rgba(9, 132, 227, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-hero.btn-hero-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+    transform: skewX(-20deg);
+    animation: shine-hero 4s infinite;
+}
+
+@keyframes shine-hero {
+    0% { left: -100%; }
+    20% { left: 200%; }
+    100% { left: 200%; }
+}
+
+/* === PWA Install Banner === */
+.pwa-banner {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(150%);
+    width: 90%;
+    max-width: 380px;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 16px 32px rgba(0,0,0,0.3);
+    z-index: 9999;
+    color: white;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pwa-banner.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.pwa-banner-icon { width: 50px; height: 50px; flex-shrink: 0; background: #fff; border-radius: 12px; padding: 6px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+.pwa-banner-icon img { max-width: 100%; max-height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));}
+.pwa-banner-text { flex: 1; }
+.pwa-banner-text h4 { margin: 0 0 4px; font-size: 0.95rem; font-weight: 700; color: #fff;}
+.pwa-banner-text p { margin: 0; font-size: 0.72rem; color: #94a3b8; line-height: 1.4;}
+.pwa-banner-actions { display: flex; flex-direction: column; gap: 6px; }
+
+.btn-pwa { border: none; border-radius: 8px; font-weight: 700; cursor: pointer; padding: 8px 14px; font-size: 0.8rem; transition: all 0.2s; white-space: nowrap;}
+.btn-pwa.primary { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+.btn-pwa.secondary { background: transparent; color: #64748b; font-size: 1.1rem; padding: 4px; align-self: flex-end;}
+.btn-pwa.primary:hover { filter: brightness(1.1); transform: translateY(-2px); }

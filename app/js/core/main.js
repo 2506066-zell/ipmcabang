@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
 
     const uiBack = (() => {
         const state = { current: null, closers: {} };
@@ -800,6 +800,43 @@
     }, observerOptions);
 
     revealElements.forEach(el => revealObserver.observe(el));
+
+    // --- PWA INSTALLATION PROMPT ---
+    let deferredPrompt;
+    const pwaBanner = document.getElementById('pwa-install-banner');
+    const pwaInstallBtn = document.getElementById('btn-pwa-install');
+    const pwaCloseBtn = document.getElementById('btn-pwa-close');
+
+    if (pwaBanner && pwaInstallBtn && pwaCloseBtn) {
+        const isDismissed = localStorage.getItem('pwa_banner_dismissed') === '1';
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!isDismissed) {
+                pwaBanner.hidden = false;
+                // Wait for other boot animations to clear
+                setTimeout(() => pwaBanner.classList.add('show'), 2000);
+            }
+        });
+
+        pwaInstallBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            pwaBanner.classList.remove('show');
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if (outcome === 'accepted') {
+                pwaBanner.hidden = true;
+            }
+        });
+
+        pwaCloseBtn.addEventListener('click', () => {
+            pwaBanner.classList.remove('show');
+            setTimeout(() => { pwaBanner.hidden = true; }, 500);
+            localStorage.setItem('pwa_banner_dismissed', '1');
+        });
+    }
 
     // Fetch Program Kerja Highlights
     const highlightsGrid = document.getElementById('highlights-content');

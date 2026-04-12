@@ -28,43 +28,45 @@
             <div class="sidebar-header">
                 <div>
                     <h2>Admin IPM</h2>
-                    <p class="sidebar-subtitle">Hybrid Sections</p>
+                    <p class="sidebar-subtitle">Panel kerja harian admin</p>
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <p class="nav-group-title">Overview</p>
+                <p class="nav-group-title">Ringkasan</p>
                 <button class="nav-item active" data-tab="dashboard">
-                    <i class="fas fa-chart-line"></i> <span>Dashboard Operasional</span>
+                    <i class="fas fa-chart-line"></i> <span>Beranda Admin</span>
                 </button>
 
-                <p class="nav-group-title">Assessment Ops</p>
+                <p class="nav-group-title">Konten Publik</p>
+                <button class="nav-item" data-tab="articles">
+                    <i class="fas fa-newspaper"></i> <span>Artikel</span>
+                </button>
+                <button class="nav-item" data-tab="materials">
+                    <i class="fas fa-book"></i> <span>Materi</span>
+                </button>
+                <button class="nav-item" data-tab="organization">
+                    <i class="fas fa-sitemap"></i> <span>Struktur &amp; Program</span>
+                </button>
+
+                <p class="nav-group-title">Kuis &amp; Penilaian</p>
                 <button class="nav-item" data-tab="questions">
                     <i class="fas fa-list-ul"></i> <span>Bank Soal</span>
                 </button>
                 <button class="nav-item" data-tab="results">
-                    <i class="fas fa-square-poll-vertical"></i> <span>Hasil Assessment</span>
+                    <i class="fas fa-square-poll-vertical"></i> <span>Hasil Peserta</span>
                 </button>
 
-                <p class="nav-group-title">Content Ops</p>
-                <button class="nav-item" data-tab="articles">
-                    <i class="fas fa-newspaper"></i> <span>Manajemen Artikel</span>
-                </button>
-                <button class="nav-item" data-tab="materials">
-                    <i class="fas fa-book"></i> <span>Manajemen Materi</span>
-                </button>
-                <button class="nav-item" data-tab="organization">
-                    <i class="fas fa-sitemap"></i> <span>Struktur Organisasi</span>
-                </button>
-
-                <p class="nav-group-title">User &amp; System</p>
+                <p class="nav-group-title">Komunikasi &amp; Pengguna</p>
                 <button class="nav-item" data-tab="users">
-                    <i class="fas fa-users"></i> <span>User &amp; Komunikasi</span>
-                </button>
-                <button class="nav-item" data-tab="schedules">
-                    <i class="fas fa-sliders"></i> <span>Konfigurasi Sistem</span>
+                    <i class="fas fa-users"></i> <span>Pengguna &amp; Broadcast</span>
                 </button>
                 <button class="nav-item" data-tab="logs">
-                    <i class="fas fa-history"></i> <span>Audit Log</span>
+                    <i class="fas fa-history"></i> <span>Riwayat Aktivitas</span>
+                </button>
+
+                <p class="nav-group-title">Pengaturan</p>
+                <button class="nav-item" data-tab="schedules">
+                    <i class="fas fa-sliders"></i> <span>Pengaturan Sistem</span>
                 </button>
             </nav>
             <div class="sidebar-footer">
@@ -132,15 +134,15 @@
                     </div>
                 </div>
                 <div class="page-meta-row">
-                    <span class="status-badge status-muted" id="page-scope-badge">Hybrid Sections</span>
+                    <span class="status-badge status-muted" id="page-scope-badge">Ringkasan Prioritas</span>
                     <span class="small muted" id="section-last-updated">Belum diperbarui</span>
                 </div>
 
                 <!-- DASHBOARD TAB -->
                 <div id="tab-dashboard">
                     <section class="section-intro">
-                        <h3>Overview Operasional</h3>
-                        <p>Halaman ini untuk memantau kondisi sistem saat ini dan melihat aktivitas terbaru admin.</p>
+                        <h3>Pusat Kendali Admin</h3>
+                        <p>Layar ini merangkum pekerjaan utama admin: cek kondisi sistem, buka modul yang paling sering dipakai, dan lanjutkan tugas prioritas tanpa harus mencari-cari menu.</p>
                     </section>
                     <div class="dashboard-grid">
                         <div class="stat-card">
@@ -176,6 +178,95 @@
                             </div>
                         </div>
                     </div>
+
+                    <section class="card section-card">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title">Fokus Kerja Hari Ini</h3>
+                                <p class="section-support-text">Gunakan pintasan ini untuk langsung masuk ke pekerjaan admin yang paling sering dilakukan.</p>
+                            </div>
+                            <span class="status-badge status-muted">Quick Access</span>
+                        </div>
+                        <div class="admin-focus-grid" id="admin-focus-grid">
+                            <button type="button" class="focus-card" data-tab="articles">
+                                <div class="focus-card-icon accent-content"><i class="fas fa-newspaper"></i></div>
+                                <div class="focus-card-body">
+                                    <div class="focus-card-title">Kelola Artikel</div>
+                                    <div class="focus-card-text">Perbarui artikel organisasi dan cek konten terbaru.</div>
+                                </div>
+                                <div class="focus-card-meta" id="focus-articles-meta">Buka modul</div>
+                            </button>
+                            <button type="button" class="focus-card" data-tab="questions">
+                                <div class="focus-card-icon accent-quiz"><i class="fas fa-list-check"></i></div>
+                                <div class="focus-card-body">
+                                    <div class="focus-card-title">Rapikan Bank Soal</div>
+                                    <div class="focus-card-text">Tambah, edit, dan cek kualitas soal aktif per set.</div>
+                                </div>
+                                <div class="focus-card-meta" id="focus-questions-meta">Buka modul</div>
+                            </button>
+                            <button type="button" class="focus-card" data-tab="users">
+                                <div class="focus-card-icon accent-people"><i class="fas fa-bullhorn"></i></div>
+                                <div class="focus-card-body">
+                                    <div class="focus-card-title">User &amp; Broadcast</div>
+                                    <div class="focus-card-text">Atur akun, kirim notifikasi, dan tindak lanjuti masukan pengguna.</div>
+                                </div>
+                                <div class="focus-card-meta" id="focus-users-meta">Buka modul</div>
+                            </button>
+                            <button type="button" class="focus-card" data-tab="schedules">
+                                <div class="focus-card-icon accent-system"><i class="fas fa-sliders"></i></div>
+                                <div class="focus-card-body">
+                                    <div class="focus-card-title">Atur Sistem</div>
+                                    <div class="focus-card-text">Kelola jadwal, gamifikasi, dan pengaturan penting panel.</div>
+                                </div>
+                                <div class="focus-card-meta" id="focus-system-meta">Buka modul</div>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="card section-card mt-24">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title">Area Kerja Admin</h3>
+                                <p class="section-support-text">Semua fitur dikelompokkan berdasarkan alur kerja agar lebih mudah dipahami oleh admin baru maupun lama.</p>
+                            </div>
+                            <span class="status-badge status-muted">Workflow</span>
+                        </div>
+                        <div class="workflow-grid">
+                            <button type="button" class="workflow-card" data-tab="articles">
+                                <span class="workflow-badge">Konten Publik</span>
+                                <h4>Artikel, materi, dan struktur organisasi</h4>
+                                <p>Untuk menjaga informasi organisasi tetap rapi, konsisten, dan mudah diakses publik.</p>
+                            </button>
+                            <button type="button" class="workflow-card" data-tab="questions">
+                                <span class="workflow-badge">Kuis &amp; Penilaian</span>
+                                <h4>Soal, hasil peserta, dan evaluasi</h4>
+                                <p>Untuk menyiapkan assessment, memantau hasil, dan menjaga kualitas pengalaman belajar.</p>
+                            </button>
+                            <button type="button" class="workflow-card" data-tab="users">
+                                <span class="workflow-badge">Komunikasi</span>
+                                <h4>Pengguna, broadcast, dan feedback</h4>
+                                <p>Untuk mengelola akun, menargetkan notifikasi, dan menindaklanjuti pesan dari pengguna.</p>
+                            </button>
+                            <button type="button" class="workflow-card" data-tab="schedules">
+                                <span class="workflow-badge">Pengaturan</span>
+                                <h4>Jadwal, gamifikasi, dan konfigurasi</h4>
+                                <p>Untuk mengatur perilaku sistem, jadwal kuis, dan aksi operasional berisiko.</p>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="card section-card mt-24">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title">Perlu Ditindaklanjuti</h3>
+                                <p class="section-support-text">Daftar ini otomatis menyorot pekerjaan yang paling butuh perhatian admin saat ini.</p>
+                            </div>
+                            <span class="status-badge status-muted">Auto Priority</span>
+                        </div>
+                        <div id="dashboard-priority-list" class="priority-list mt-16">
+                            <div class="small muted">Memuat prioritas kerja...</div>
+                        </div>
+                    </section>
 
                     <section class="card section-card mt-24">
                         <h3 class="section-card-title">Aktivitas Terbaru</h3>
@@ -243,12 +334,48 @@
                 <!-- USERS TAB -->
                 <div id="tab-users" class="hidden">
                     <section class="section-intro">
-                        <h3>User &amp; Comms</h3>
-                        <p>Halaman ini untuk mengelola akun pengguna dan mengirim komunikasi notifikasi ke target yang tepat.</p>
+                        <h3>Pengguna &amp; Komunikasi</h3>
+                        <p>Halaman ini dirancang untuk dua pekerjaan utama: mengelola akun pengguna dan menindaklanjuti komunikasi yang masuk atau dijadwalkan.</p>
                     </section>
                     <section class="card section-card">
-                        <h3 class="section-card-title">Manajemen User</h3>
-                        <p class="small muted mb-16">Kelola status user, role, dan pencarian user secara cepat.</p>
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title">Ringkasan Komunikasi</h3>
+                                <p class="section-support-text">Gunakan ringkasan ini untuk cepat melihat apakah ada akun, feedback, atau notifikasi yang perlu diproses.</p>
+                            </div>
+                            <span class="status-badge status-muted">Summary</span>
+                        </div>
+                        <div class="users-summary-grid mt-16">
+                            <div class="mini-summary-card">
+                                <div class="mini-summary-label">Total Akun</div>
+                                <div class="mini-summary-value" id="users-summary-total">0</div>
+                                <div class="mini-summary-meta">Seluruh akun yang terdaftar</div>
+                            </div>
+                            <div class="mini-summary-card">
+                                <div class="mini-summary-label">Admin</div>
+                                <div class="mini-summary-value" id="users-summary-admin">0</div>
+                                <div class="mini-summary-meta">Akun dengan hak kelola panel</div>
+                            </div>
+                            <div class="mini-summary-card">
+                                <div class="mini-summary-label">Belum Ikut Kuis</div>
+                                <div class="mini-summary-value" id="users-summary-no-quiz">0</div>
+                                <div class="mini-summary-meta">Perlu onboarding atau follow-up</div>
+                            </div>
+                            <div class="mini-summary-card">
+                                <div class="mini-summary-label">Perlu Ditindaklanjuti</div>
+                                <div class="mini-summary-value" id="users-summary-attention">0</div>
+                                <div class="mini-summary-meta" id="users-summary-attention-meta">Feedback dan notifikasi tertunda</div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="card section-card">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title">Kelola Pengguna</h3>
+                                <p class="section-support-text">Cari akun, lihat progres singkat, lalu edit atau reset attempt dari satu tempat.</p>
+                            </div>
+                            <span class="status-badge status-muted">Akun</span>
+                        </div>
                         <div class="toolbar-row toolbar-spread mb-16">
                             <div class="toolbar-row toolbar-grow">
                                 <input type="text" id="user-search-input" class="toolbar-input"
@@ -260,9 +387,9 @@
                                     <option value="quiz_desc">Kuis Terbanyak</option>
                                 </select>
                                 <select id="user-status-filter" class="toolbar-select">
-                                    <option value="all">Semua Status</option>
-                                    <option value="active">Aktif</option>
-                                    <option value="inactive">Nonaktif</option>
+                                    <option value="all">Semua Sesi</option>
+                                    <option value="active">Punya Sesi Aktif</option>
+                                    <option value="inactive">Tanpa Sesi Aktif</option>
                                 </select>
                             </div>
                             <div class="action-group">
@@ -279,65 +406,87 @@
                         </div>
                     </section>
                     <section class="card section-card mt-20" id="admin-notify-card">
-                        <h3 class="section-card-title section-title-icon">
-                            <i class="fas fa-bell"></i> Broadcast &amp; Notifikasi
-                        </h3>
-                        <p class="small muted mb-12">Kirim atau jadwalkan notifikasi ke semua user atau grup tertentu (in-app + lock screen).</p>
-                        <form id="notify-form" class="admin-form-grid">
-                            <div class="form-group">
-                                <label for="notify-title">Judul</label>
-                                <input type="text" id="notify-title" placeholder="Judul notifikasi">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title section-title-icon">
+                                    <i class="fas fa-bell"></i> Broadcast &amp; Notifikasi
+                                </h3>
+                                <p class="section-support-text">Kirim notifikasi langsung atau jadwalkan pesan agar komunikasi ke user lebih teratur.</p>
                             </div>
-                            <div class="form-group">
-                                <label for="notify-message">Pesan</label>
-                                <textarea id="notify-message" rows="3" placeholder="Isi notifikasi"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="notify-url">Tautan (opsional)</label>
-                                <input type="text" id="notify-url" placeholder="/articles/slug-judul-anda">
-                                <small class="form-hint">Contoh: <code>/articles/slug-judul</code> atau URL lengkap.</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="notify-target">Target Notifikasi</label>
-                                <select id="notify-target">
-                                    <option value="all">Semua User</option>
-                                </select>
-                                <small class="form-hint">Pilih grup/asal pimpinan.</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="notify-schedule">Jadwal Kirim (opsional)</label>
-                                <input type="datetime-local" id="notify-schedule">
-                                <small class="form-hint">Kosongkan untuk kirim sekarang.</small>
-                            </div>
-                            <div class="form-group form-inline-check">
-                                <input type="checkbox" id="notify-save" checked>
-                                <label for="notify-save">Simpan ke notifikasi aplikasi</label>
-                            </div>
-                            <div class="action-group">
-                                <button type="submit" class="btn btn-primary" id="notify-send-btn"><i class="fas fa-paper-plane"></i> Kirim</button>
-                                <span id="notify-status" class="small muted"></span>
-                            </div>
-                        </form>
-                        <div class="notify-schedule-list" id="notify-schedule-list"></div>
-                        <div class="notify-preview-panel">
-                            <div class="notify-preview-header">
-                                <span>Preview Lock Screen</span>
-                                <button class="btn btn-secondary btn-xs" id="notify-preview-btn" type="button">Lihat Preview</button>
-                            </div>
-                            <div class="notify-preview-box hidden" id="notify-preview-box">
-                                <!-- JS inject preview -->
+                            <span class="status-badge status-muted">Komunikasi Keluar</span>
+                        </div>
+                        <div class="notify-layout-split">
+                            <form id="notify-form" class="admin-form-grid">
+                                <div class="form-group">
+                                    <label for="notify-title">Judul</label>
+                                    <input type="text" id="notify-title" placeholder="Judul notifikasi" oninput="document.getElementById('live-notif-title').textContent = this.value || 'Judul Notifikasi'">
+                                </div>
+                                <div class="form-group">
+                                    <label for="notify-message">Pesan</label>
+                                    <textarea id="notify-message" rows="3" placeholder="Isi notifikasi" oninput="document.getElementById('live-notif-message').textContent = this.value || 'Pesan notifikasi akan muncul di sini...'"></textarea>
+                                </div>
+                                <details class="form-advanced-mode mt-8">
+                                    <summary><i class="fas fa-cog"></i> Tampilkan Opsi Lanjutan (Penjadwalan & Tautan)</summary>
+                                    <div class="mt-12" style="display:flex; flex-direction:column; gap:16px;">
+                                        <div class="form-group">
+                                            <label for="notify-url">Tautan</label>
+                                            <input type="text" id="notify-url" placeholder="/articles/slug-judul-anda">
+                                            <small class="form-hint">Kosongkan jika tidak ada aksi khusus ketika notifikasi ditekan.</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="notify-schedule">Jadwal Kirim</label>
+                                            <input type="datetime-local" id="notify-schedule">
+                                            <small class="form-hint">Kosongkan untuk kirim sekarang.</small>
+                                        </div>
+                                    </div>
+                                </details>
+                                <div class="form-group mt-16">
+                                    <label for="notify-target">Target Penerima</label>
+                                    <select id="notify-target">
+                                        <option value="all">Semua User Aktif</option>
+                                    </select>
+                                </div>
+                                <div class="form-group form-inline-check mt-8 mb-16">
+                                    <input type="checkbox" id="notify-save" checked>
+                                    <label for="notify-save">Simpan riwayat ke kotak masuk aplikasi</label>
+                                </div>
+                                <div class="action-group">
+                                    <button type="submit" class="btn btn-primary" id="notify-send-btn"><i class="fas fa-paper-plane"></i> Kirim Notifikasi</button>
+                                    <span id="notify-status" class="small muted"></span>
+                                </div>
+                            </form>
+                            <div class="notify-live-mockup-wrapper hidden-mobile">
+                                <div class="device-mockup">
+                                    <div class="mockup-camera"></div>
+                                    <div class="mockup-screen">
+                                        <div class="mockup-time">10:00</div>
+                                        <div class="mockup-notif-card">
+                                            <div class="mockup-notif-top">
+                                                <i class="fas fa-bell"></i> <span>IPM Panawuan</span> <span class="mockup-timestamp">Sekarang</span>
+                                            </div>
+                                            <h4 class="mockup-notif-title" id="live-notif-title">Judul Notifikasi</h4>
+                                            <p class="mockup-notif-msg" id="live-notif-message">Pesan notifikasi akan muncul di sini saat Anda mengetiknya di form.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="action-group wrap mt-12">
                             <button class="btn btn-secondary" id="notify-schedule-reload">Muat Jadwal Notifikasi</button>
                             <button class="btn btn-primary" id="notify-schedule-run">Jalankan Jadwal Sekarang</button>
                         </div>
+                        <div id="notify-schedule-list" class="notify-schedule-list mt-16"></div>
                     </section>
                     <section class="card section-card mt-20" id="admin-feedback-card">
-                        <h3 class="section-card-title section-title-icon">
-                            <i class="fas fa-comment-dots"></i> Pesan Kritik &amp; Saran Program Kerja
-                        </h3>
-                        <p class="small muted mb-12">Pesan dari user terkait program kerja bidang akan masuk ke sini.</p>
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title section-title-icon">
+                                    <i class="fas fa-comment-dots"></i> Pesan Kritik &amp; Saran Program Kerja
+                                </h3>
+                                <p class="section-support-text">Pesan dari user terkait program kerja bidang masuk ke sini agar mudah ditinjau dan ditindaklanjuti.</p>
+                            </div>
+                            <span class="status-badge status-muted">Komunikasi Masuk</span>
+                        </div>
                         <div class="toolbar-row toolbar-spread mb-12">
                             <div class="toolbar-row toolbar-grow">
                                 <select id="feedback-status-filter" class="toolbar-select">
@@ -408,45 +557,45 @@
                         <h3 class="section-card-title section-title-icon">
                             <i class="fas fa-gamepad"></i> Pengaturan Gamifikasi
                         </h3>
-                        <p class="small muted mb-12">Atur XP, streak, quest, dan timer untuk sistem kuis gamified.</p>
+                        <p class="small muted mb-12">Sesuaikan durasi, poin (XP), dan syarat misi harian untuk memotivasi peserta.</p>
                         <div class="form-row">
                             <div class="form-group grow">
-                                <label for="gm-enabled">Aktifkan Gamifikasi</label>
+                                <label for="gm-enabled">Status Fitur Kuis</label>
                                 <select id="gm-enabled">
-                                    <option value="true">Aktif</option>
-                                    <option value="false">Nonaktif</option>
+                                    <option value="true">Aktif (Bisa dimainkan)</option>
+                                    <option value="false">Nonaktif (Ditutup)</option>
                                 </select>
                             </div>
                             <div class="form-group grow">
-                                <label for="gm-timer">Timer per Soal (detik)</label>
+                                <label for="gm-timer">Waktu per Soal (Detik)</label>
                                 <input type="number" id="gm-timer" min="5" max="120" step="1" placeholder="20">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group grow">
-                                <label for="gm-xp-base">XP Dasar (jawaban benar)</label>
+                                <label for="gm-xp-base">Poin Dasar Jawaban Benar</label>
                                 <input type="number" id="gm-xp-base" min="1" max="200" step="1" placeholder="10">
                             </div>
                             <div class="form-group grow">
-                                <label for="gm-streak-bonus">Bonus Streak per langkah</label>
+                                <label for="gm-streak-bonus">Tambahan Poin Beruntun (Streak)</label>
                                 <input type="number" id="gm-streak-bonus" min="0" max="50" step="1" placeholder="2">
                             </div>
                             <div class="form-group grow">
-                                <label for="gm-streak-cap">Batas Streak Bonus</label>
+                                <label for="gm-streak-cap">Maksimal Poin Beruntun (Cap)</label>
                                 <input type="number" id="gm-streak-cap" min="0" max="20" step="1" placeholder="5">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group grow">
-                                <label for="gm-quest-daily">Target Kuis Harian</label>
+                                <label for="gm-quest-daily">Syarat Misi Harian: Main X Kuis</label>
                                 <input type="number" id="gm-quest-daily" min="1" max="10" step="1" placeholder="3">
                             </div>
                             <div class="form-group grow">
-                                <label for="gm-quest-highscore">Target Skor Tinggi</label>
+                                <label for="gm-quest-highscore">Syarat Misi Spesial: Skormax X Kali</label>
                                 <input type="number" id="gm-quest-highscore" min="1" max="10" step="1" placeholder="2">
                             </div>
                             <div class="form-group grow">
-                                <label for="gm-highscore-percent">Ambang Skor Tinggi (%)</label>
+                                <label for="gm-highscore-percent">Syarat Dikatakan Skormax (%)</label>
                                 <input type="number" id="gm-highscore-percent" min="50" max="100" step="1" placeholder="80">
                             </div>
                         </div>
@@ -482,23 +631,23 @@
                         </div>
                     </section>
                     <section class="card section-card danger-zone mt-20">
-                        <h3 class="section-card-title section-title-icon">
-                            <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                        <h3 class="section-card-title section-title-icon" style="color: var(--accent-danger);">
+                            <i class="fas fa-exclamation-triangle"></i> Zona Berbahaya
                         </h3>
                         <p class="small mb-12">
-                            Reset set kuis akan menghapus data hasil user pada set yang dipilih. Gunakan hanya untuk kebutuhan operasional khusus.
+                            Tindakan ini akan <strong>menghapus permanen</strong> seluruh riwayat jawaban peserta pada Paket Kuis yang dipilih. Gunakan hanya jika Anda ingin mereset lomba dari awal.
                         </p>
                         <div class="form-group">
-                            <label for="reset-set-select">Reset Total Set Kuis</label>
+                            <label for="reset-set-select">Pilih Paket Kuis yang ingin Dikosongkan Riwayatnya</label>
                             <div class="toolbar-row">
                                 <select id="reset-set-select" class="toolbar-select">
                                     <option value="1">Kuis 1 (Mingguan)</option>
                                     <option value="2">Kuis 2 (Event)</option>
                                     <option value="3">Kuis 3 (Bidang)</option>
-                                    <option value="4">Kuis 4 (Spesial)</option>
+                                    <option value="4">Paket 4 (Bidang)</option>
                                 </select>
                                 <button class="btn btn-danger" id="global-reset-btn">
-                                    <i class="fas fa-trash-alt"></i> Reset Set
+                                    <i class="fas fa-trash-alt"></i> Hapus Semua Data Peserta
                                 </button>
                             </div>
                         </div>
@@ -656,7 +805,7 @@
     <nav class="bottom-nav hidden" id="bottom-nav">
         <button class="nav-item active" data-tab="dashboard">
             <i class="fas fa-home"></i>
-            <span>Overview</span>
+            <span>Beranda</span>
         </button>
         <button class="nav-item" data-tab="questions">
             <i class="fas fa-list-ul"></i>
@@ -676,7 +825,7 @@
         </button>
         <button class="nav-item" data-tab="users">
             <i class="fas fa-users"></i>
-            <span>Comms</span>
+            <span>User</span>
         </button>
         <button class="nav-item" data-tab="schedules">
             <i class="fas fa-calendar-alt"></i>
