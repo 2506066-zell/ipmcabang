@@ -42,7 +42,7 @@ async function seedOrganizationData() {
   const bidangMap = new Map(bidangRows.map(r => [String(r.code), Number(r.id)]));
 
   const membersCount = Number((await query`SELECT COUNT(*)::int AS c FROM org_members`).rows[0]?.c || 0);
-  if (membersCount === 0) {
+  if (membersCount < 50) {
     const memberSort = new Map();
     for (const item of DEFAULT_ORG_MEMBERS) {
       const bidangCode = String(item?.bidangId || '').trim();

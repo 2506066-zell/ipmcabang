@@ -653,58 +653,38 @@
         els.selfiePreview.hidden = false;
     }
 
-    async function stopCamera() {
+    function stopCamera() {
         const stream = state.selfieStream;
         if (stream && typeof stream.getTracks === 'function') {
             stream.getTracks().forEach((track) => track.stop());
         }
         state.selfieStream = null;
         if (els.cameraVideo) {
-            els.cameraVideo.pause?.();
+            try { els.cameraVideo.pause(); } catch(e) {}
             els.cameraVideo.srcObject = null;
             els.cameraVideo.hidden = true;
+            els.cameraVideo.classList.remove('is-active');
         }
         if (els.captureCameraBtn) els.captureCameraBtn.hidden = true;
     }
 
     async function openCamera() {
-        if (!navigator.mediaDevices?.getUserMedia) {
-            setInlineStatus(els.checkinStatus, 'Browser ini tidak mendukung kamera langsung. Hubungi admin untuk input manual.', 'error');
-            return;
-        }
-
-        // Reset visibility
-        if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = false;
-        if (els.cameraOverlay) els.cameraOverlay.hidden = true;
-
-        // Try to check permissions API status first if available
-        if (navigator.permissions && navigator.permissions.query) {
-            try {
-                const status = await navigator.permissions.query({ name: 'camera' });
-                if (status.state === 'denied') {
-                    setInlineStatus(els.checkinStatus, 'Izin kamera diblokir.', 'error');
-                    if (els.cameraOverlay) els.cameraOverlay.hidden = false;
-                    if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
-                    return;
-                }
-            } catch (e) {}
-        }
-
+        // Immediate check: requires secure context
         if (!window.isSecureContext) {
-            console.error('[Camera] Insecure context. HTTPS is required.');
             if (els.cameraOverlay) els.cameraOverlay.hidden = false;
             if (els.secureWarning) els.secureWarning.hidden = false;
             if (els.cameraErrorMessage) els.cameraErrorMessage.hidden = true;
-            if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
-            showToast('Fitur kamera memerlukan koneksi aman (HTTPS).', 'error');
             return;
         }
 
-        if (window.AppLoader) window.AppLoader.show('Menyiapkan Kamera...');
+        stopCamera();
         
+        // Reset UI immediately (no awaits)
+        if (els.cameraOverlay) els.cameraOverlay.hidden = true;
+        if (els.cameraErrorMessage) els.cameraErrorMessage.hidden = true;
+        if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = false;
+
         try {
-            await stopCamera();
-            
             const selectedDeviceId = els.cameraSelect?.value;
             const constraints = {
                 video: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : { 
@@ -715,7 +695,7 @@
                 audio: false
             };
 
-            // Immediate call to preserve user gesture
+            // CRITICAL: Call getUserMedia IMMEDIATELY after a user interaction
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             state.selfieStream = stream;
             
@@ -723,9 +703,7 @@
                 els.cameraVideo.srcObject = stream;
                 els.cameraVideo.hidden = false;
                 if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
-                if (els.cameraOverlay) els.cameraOverlay.hidden = true;
                 
-                // Wait for video metadata to be loaded to ensure smooth transition
                 await new Promise((resolve) => {
                     els.cameraVideo.onloadedmetadata = () => resolve();
                 });
@@ -733,7 +711,6 @@
                 els.cameraVideo.classList.add('is-active');
             }
 
-            // Enumerate devices after first successful access
             await enumerateCameras();
 
             if (els.captureCameraBtn) els.captureCameraBtn.hidden = false;
@@ -741,7 +718,7 @@
             if (els.openCameraBtn) els.openCameraBtn.hidden = true;
             
             updateSelfiePreview(null);
-            setInlineStatus(els.checkinStatus, 'Kamera aktif. Silakan ambil selfie untuk verifikasi.', 'success');
+            setInlineStatus(els.checkinStatus, 'Kamera aktif.', 'success');
         } catch (error) {
             console.error('[Camera] Error:', error);
             let msg = 'Gagal membuka kamera perangkat.';

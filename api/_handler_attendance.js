@@ -11,7 +11,10 @@ const APP_TIMEZONE = 'Asia/Bangkok';
 const CABANG_ROOM_SYNONYMS = [
   'IPM CABANG PANAWUAN',
   'PC IPM PANAWUAN',
-  'IPM PANAWUAN'
+  'IPM PANAWUAN',
+  'PR IPM PANAWUAN',
+  'PC IPM',
+  'PR IPM'
 ];
 
 function nowIso() {
@@ -69,7 +72,10 @@ function normalizeRoomName(value) {
 function getIdentityMode(roomLike) {
   const pimpinan = typeof roomLike === 'string' ? roomLike : roomLike?.pimpinan;
   const normalized = normalizeRoomName(pimpinan);
-  const isBranch = CABANG_ROOM_SYNONYMS.some(syn => normalizeRoomName(syn) === normalized);
+  const isBranch = CABANG_ROOM_SYNONYMS.some(syn => normalized.includes(normalizeRoomName(syn))) ||
+                   normalized.includes('PC IPM') || 
+                   normalized.includes('PR IPM') ||
+                   normalized.includes('CABANG');
   return isBranch ? 'org_member_select' : 'account_identity';
 }
 
@@ -153,7 +159,7 @@ async function getActiveOrgMembers() {
     SELECT m.id, m.full_name, m.role_title, m.bidang_id, b.name AS bidang_name
     FROM org_members m
     LEFT JOIN org_bidang b ON b.id = m.bidang_id
-    WHERE m.is_active = true
+    WHERE COALESCE(m.is_active, true) = true
     ORDER BY m.full_name ASC, m.id ASC
   `).rows;
 }
