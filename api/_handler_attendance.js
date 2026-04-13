@@ -8,6 +8,7 @@ const ROOM_ACCESS_HEADER = 'x-room-access';
 const ROOM_SESSION_HOURS = 12;
 const VALID_STATUSES = new Set(['hadir', 'izin', 'sakit', 'alfa']);
 const APP_TIMEZONE = 'Asia/Bangkok';
+const CABANG_ROOM_NAME = 'IPM CABANG PANAWUAN';
 
 function nowIso() {
   return new Date().toISOString();
@@ -55,6 +56,15 @@ function generateAccessToken() {
 function toNumber(value) {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
+}
+
+function normalizeRoomName(value) {
+  return cleanString(value, 120).toUpperCase();
+}
+
+function getIdentityMode(roomLike) {
+  const pimpinan = typeof roomLike === 'string' ? roomLike : roomLike?.pimpinan;
+  return normalizeRoomName(pimpinan) === CABANG_ROOM_NAME ? 'org_member_select' : 'account_identity';
 }
 
 function buildSummary(events, records) {
@@ -132,6 +142,25 @@ async function ensureAttendanceRooms() {
   `).rows;
 }
 
+async function getActiveOrgMembers() {
+  return (await query`
+    SELECT m.id, m.full_name, m.role_title, m.bidang_id, b.name AS bidang_name
+    FROM org_members m
+    LEFT JOIN org_bidang b ON b.id = m.bidang_id
+    WHERE m.is_active = true
+    ORDER BY m.full_name ASC, m.id ASC
+  `).rows;
+}
+
+async function getOrgMemberById(orgMemberId) {
+  return (await query`
+    SELECT m.id, m.full_name, m.role_title, m.bidang_id, b.name AS bidang_name, m.is_active
+    FROM org_members m
+    LEFT JOIN org_bidang b ON b.id = m.bidang_id
+    WHERE m.id=${orgMemberId}
+  `).rows[0] || null;
+}
+
 async function syncExpiredEvents() {
   await query`
     UPDATE attendance_events
@@ -144,11 +173,12 @@ async function syncExpiredEvents() {
 }
 
 async function getRoomById(roomId) {
-  return (await query`
+  const room = (await query`
     SELECT id, pimpinan, room_code, is_active, created_at, updated_at
     FROM attendance_rooms
     WHERE id=${roomId}
   `).rows[0] || null;
+  return room ? { ...room, identity_mode: getIdentityMode(room) } : null;
 }
 
 async function getRoomSession(userId, roomId, accessToken) {
@@ -209,7 +239,7 @@ async function getRoomHistory(roomId, limit = 12) {
 }
 
 async function getEventById(eventId) {
-  return (await query`
+  const event = (await query`
     SELECT e.id, e.room_id, e.title, e.description, e.event_date, e.status,
            e.created_by, e.created_at, e.updated_at, e.closed_at,
            room.pimpinan,
@@ -218,6 +248,7 @@ async function getEventById(eventId) {
     JOIN attendance_rooms room ON room.id = e.room_id
     WHERE e.id=${eventId}
   `).rows[0] || null;
+  return event ? { ...event, identity_mode: getIdentityMode(event) } : null;
 }
 
 async function getRoomEvents(roomId) {
@@ -231,7 +262,7 @@ async function getRoomEvents(roomId) {
 
 async function getRoomRecords(roomId) {
   return (await query`
-    SELECT r.id, r.event_id, r.user_id, r.attendance_status, r.photo_url, r.check_in_at,
+    SELECT r.id, r.event_id, r.user_id, r.org_member_id, r.attendee_name_snapshot, r.attendance_status, r.photo_url, r.check_in_at,
            r.submitted_by_admin, r.submitted_by, r.note, r.created_at, r.updated_at
     FROM attendance_records r
     JOIN attendance_events e ON e.id = r.event_id
@@ -243,7 +274,7 @@ async function getRoomRecords(roomId) {
 async function getUserSummaryForRoom(roomId, userId) {
   const events = await getRoomEvents(roomId);
   const records = (await query`
-    SELECT id, event_id, user_id, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
+    SELECT id, event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
     FROM attendance_records
     WHERE user_id=${userId}
       AND event_id IN (
@@ -260,6 +291,34 @@ async function getUserSummaryForRoom(roomId, userId) {
 async function buildRoomRecap(room) {
   const events = await getRoomEvents(room.id);
   const records = await getRoomRecords(room.id);
+  if (getIdentityMode(room) === 'org_member_select') {
+    const members = await getActiveOrgMembers();
+    const recapUsers = members.map((member) => {
+      const memberRecords = records
+        .filter((record) => Number(record.org_member_id) === Number(member.id))
+        .map((record) => ({ ...record, user_id: member.id }));
+      const summary = buildSummary(events, memberRecords);
+      return {
+        id: member.id,
+        username: '',
+        nama_panjang: member.full_name,
+        role_title: member.role_title,
+        bidang_name: member.bidang_name || '',
+        summary
+      };
+    });
+
+    return {
+      room_id: room.id,
+      pimpinan: room.pimpinan,
+      identity_mode: 'org_member_select',
+      total_members: recapUsers.length,
+      active_members: recapUsers.filter((item) => item.summary.activity_status === 'aktif').length,
+      passive_members: recapUsers.filter((item) => item.summary.activity_status === 'pasif').length,
+      users: recapUsers
+    };
+  }
+
   const users = (await query`
     SELECT id, username, nama_panjang, pimpinan, role, created_at
     FROM users
@@ -282,6 +341,7 @@ async function buildRoomRecap(room) {
   return {
     room_id: room.id,
     pimpinan: room.pimpinan,
+    identity_mode: 'account_identity',
     total_members: recapUsers.length,
     active_members: recapUsers.filter((item) => item.summary.activity_status === 'aktif').length,
     passive_members: recapUsers.filter((item) => item.summary.activity_status === 'pasif').length,
@@ -293,6 +353,7 @@ function serializeRoomForUser(room, accessMap, activeEventMap) {
   return {
     id: room.id,
     pimpinan: room.pimpinan,
+    identity_mode: getIdentityMode(room),
     is_active: room.is_active === true || String(room.is_active).toLowerCase() === 'true',
     has_access: accessMap.has(Number(room.id)),
     today_event: activeEventMap.get(Number(room.id)) || null
@@ -339,6 +400,33 @@ async function handleRooms(req, res) {
   }, cacheHeaders(0));
 }
 
+async function handleMemberOptions(req, res) {
+  const user = await getSessionUser(req);
+  if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+
+  await ensureAttendanceRooms();
+  const roomId = toNumber(req.query?.room_id);
+  if (!roomId) return json(res, 400, { status: 'error', message: 'room_id wajib diisi' });
+  const room = await getRoomById(roomId);
+  if (!room) return json(res, 404, { status: 'error', message: 'Room tidak ditemukan' });
+
+  if (room.identity_mode !== 'org_member_select') {
+    return json(res, 200, { status: 'success', identity_mode: room.identity_mode, members: [] }, cacheHeaders(0));
+  }
+
+  const members = await getActiveOrgMembers();
+  return json(res, 200, {
+    status: 'success',
+    identity_mode: room.identity_mode,
+    members: members.map((item) => ({
+      id: item.id,
+      full_name: item.full_name,
+      role_title: item.role_title,
+      bidang_name: item.bidang_name || ''
+    }))
+  }, cacheHeaders(0));
+}
+
 async function handleVerifyRoom(req, res) {
   const user = await getSessionUser(req);
   if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
@@ -376,6 +464,7 @@ async function handleVerifyRoom(req, res) {
     room: {
       id: room.id,
       pimpinan: room.pimpinan,
+      identity_mode: room.identity_mode,
       is_active: room.is_active
     },
     access_token: accessToken,
@@ -404,11 +493,13 @@ async function handleRoomDetail(req, res) {
   const activeEvent = await getActiveEventForRoom(room.id);
   const history = await getRoomHistory(room.id, 14);
   const myState = await getUserSummaryForRoom(room.id, user.id);
-  const roomMemberCount = Number((await query`
-    SELECT COUNT(*)::int AS c
-    FROM users
-    WHERE COALESCE(TRIM(pimpinan), '')=${cleanString(room.pimpinan, 80)}
-  `).rows[0]?.c || 0);
+  const roomMemberCount = getIdentityMode(room) === 'org_member_select'
+    ? Number((await query`SELECT COUNT(*)::int AS c FROM org_members WHERE is_active = true`).rows[0]?.c || 0)
+    : Number((await query`
+      SELECT COUNT(*)::int AS c
+      FROM users
+      WHERE COALESCE(TRIM(pimpinan), '')=${cleanString(room.pimpinan, 80)}
+    `).rows[0]?.c || 0);
   const currentRecord = activeEvent
     ? myState.records.find((item) => Number(item.event_id) === Number(activeEvent.id)) || null
     : null;
@@ -417,9 +508,12 @@ async function handleRoomDetail(req, res) {
   let attendeesCount = 0;
   if (activeEvent) {
     recentAttendees = (await query`
-      SELECT u.username, u.nama_panjang, r.check_in_at
+      SELECT COALESCE(r.attendee_name_snapshot, m.full_name, u.nama_panjang, u.username) AS attendee_name,
+             u.username,
+             r.check_in_at
       FROM attendance_records r
-      JOIN users u ON u.id = r.user_id
+      LEFT JOIN org_members m ON m.id = r.org_member_id
+      LEFT JOIN users u ON u.id = r.user_id
       WHERE r.event_id=${activeEvent.id}
         AND r.attendance_status='hadir'
       ORDER BY r.check_in_at DESC
@@ -438,6 +532,7 @@ async function handleRoomDetail(req, res) {
     room: {
       id: room.id,
       pimpinan: room.pimpinan,
+      identity_mode: room.identity_mode,
       is_active: room.is_active,
       member_count: roomMemberCount
     },
@@ -447,11 +542,14 @@ async function handleRoomDetail(req, res) {
     },
     current_event: activeEvent ? {
       ...activeEvent,
+      identity_mode: room.identity_mode,
       attendees_count: attendeesCount,
       recent_attendees: recentAttendees,
       my_record: currentRecord
         ? {
             id: currentRecord.id,
+            org_member_id: currentRecord.org_member_id,
+            attendee_name_snapshot: currentRecord.attendee_name_snapshot,
             attendance_status: currentRecord.attendance_status,
             photo_url: currentRecord.photo_url,
             check_in_at: currentRecord.check_in_at,
@@ -504,7 +602,7 @@ async function handleCreateEvent(req, res) {
 
   return json(res, 201, {
     status: 'success',
-    event: created
+    event: { ...created, identity_mode: room.identity_mode }
   });
 }
 
@@ -518,6 +616,7 @@ async function handleCheckIn(req, res) {
   const body = parseJsonBody(req);
   const eventId = toNumber(body.event_id);
   const photoUrl = cleanString(body.photo_url, 500);
+  const orgMemberId = toNumber(body.org_member_id);
   if (!eventId || !photoUrl) {
     return json(res, 400, { status: 'error', message: 'Event dan foto selfie wajib diisi' });
   }
@@ -546,16 +645,39 @@ async function handleCheckIn(req, res) {
     return json(res, 409, { status: 'error', message: 'Anda sudah tercatat pada event ini' });
   }
 
+  let targetOrgMemberId = null;
+  let attendeeNameSnapshot = cleanString(user.nama_panjang || user.username, 160);
+  if (event.identity_mode === 'org_member_select') {
+    if (!orgMemberId) {
+      return json(res, 400, { status: 'error', message: 'Nama anggota organisasi wajib dipilih untuk room cabang' });
+    }
+    const orgMember = await getOrgMemberById(orgMemberId);
+    if (!orgMember || orgMember.is_active === false) {
+      return json(res, 400, { status: 'error', message: 'Nama anggota organisasi tidak valid atau tidak aktif' });
+    }
+    const existingOrgMember = (await query`
+      SELECT id
+      FROM attendance_records
+      WHERE event_id=${event.id}
+        AND org_member_id=${orgMember.id}
+    `).rows[0];
+    if (existingOrgMember) {
+      return json(res, 409, { status: 'error', message: 'Nama anggota ini sudah tercatat pada event yang sama' });
+    }
+    targetOrgMemberId = orgMember.id;
+    attendeeNameSnapshot = cleanString(orgMember.full_name, 160);
+  }
+
   const record = (await query`
     INSERT INTO attendance_records (
-      event_id, user_id, attendance_status, photo_url, check_in_at,
+      event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at,
       submitted_by_admin, submitted_by, note, created_at, updated_at
     )
     VALUES (
-      ${event.id}, ${user.id}, ${'hadir'}, ${photoUrl}, NOW(),
+      ${event.id}, ${user.id}, ${targetOrgMemberId}, ${attendeeNameSnapshot}, ${'hadir'}, ${photoUrl}, NOW(),
       ${false}, ${user.id}, ${null}, NOW(), NOW()
     )
-    RETURNING id, event_id, user_id, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
+    RETURNING id, event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
   `).rows[0];
 
   return json(res, 201, { status: 'success', record });
@@ -580,6 +702,7 @@ async function handleMySummary(req, res) {
     summaries.push({
       room_id: room.id,
       pimpinan: room.pimpinan,
+      identity_mode: getIdentityMode(room),
       summary: data.summary
     });
   }
@@ -614,6 +737,7 @@ async function handleAdminOverview(req, res) {
     roomCards.push({
       id: room.id,
       pimpinan: room.pimpinan,
+      identity_mode: getIdentityMode(room),
       room_code: room.room_code,
       is_active: room.is_active,
       active_event: activeEvent,
@@ -648,39 +772,80 @@ async function handleAdminEventDetail(req, res) {
   const event = await getEventById(eventId);
   if (!event) return json(res, 404, { status: 'error', message: 'Event tidak ditemukan' });
 
-  const members = (await query`
-    SELECT id, username, nama_panjang, pimpinan, role, created_at
-    FROM users
-    WHERE COALESCE(TRIM(pimpinan), '')=${cleanString(event.pimpinan, 80)}
-    ORDER BY nama_panjang ASC NULLS LAST, username ASC
-  `).rows;
   const records = (await query`
-    SELECT r.id, r.event_id, r.user_id, r.attendance_status, r.photo_url, r.check_in_at,
+    SELECT r.id, r.event_id, r.user_id, r.org_member_id, r.attendee_name_snapshot, r.attendance_status, r.photo_url, r.check_in_at,
            r.submitted_by_admin, r.submitted_by, r.note, r.created_at, r.updated_at,
-           submitter.username AS submitted_by_username
+           submitter.username AS submitted_by_username,
+           u.username,
+           u.nama_panjang,
+           m.full_name AS org_member_name,
+           m.role_title AS org_member_role_title,
+           b.name AS org_member_bidang_name
     FROM attendance_records r
     LEFT JOIN users submitter ON submitter.id = r.submitted_by
+    LEFT JOIN users u ON u.id = r.user_id
+    LEFT JOIN org_members m ON m.id = r.org_member_id
+    LEFT JOIN org_bidang b ON b.id = m.bidang_id
     WHERE r.event_id=${event.id}
     ORDER BY r.updated_at DESC, r.id DESC
   `).rows;
-  const recordMap = new Map(records.map((item) => [Number(item.user_id), item]));
-  const participants = members.map((member) => {
-    const record = recordMap.get(Number(member.id)) || null;
-    const fallbackStatus = cleanString(event.status, 20).toLowerCase() === 'closed' ? 'alfa' : 'belum';
-    return {
-      id: member.id,
-      username: member.username,
-      nama_panjang: member.nama_panjang,
-      pimpinan: member.pimpinan,
-      attendance_status: record ? record.attendance_status : fallbackStatus,
-      photo_url: record?.photo_url || '',
-      check_in_at: record?.check_in_at || null,
-      source: record ? (record.submitted_by_admin ? 'admin manual' : 'self check-in') : 'belum absen',
-      note: record?.note || '',
-      record_id: record?.id || null,
-      submitted_by_username: record?.submitted_by_username || ''
-    };
-  });
+  let participants = [];
+  if (event.identity_mode === 'org_member_select') {
+    const members = await getActiveOrgMembers();
+    const recordMap = new Map(records.map((item) => [Number(item.org_member_id), item]));
+    participants = members.map((member) => {
+      const record = recordMap.get(Number(member.id)) || null;
+      const fallbackStatus = cleanString(event.status, 20).toLowerCase() === 'closed' ? 'alfa' : 'belum';
+      return {
+        id: member.id,
+        user_id: record?.user_id || null,
+        org_member_id: member.id,
+        username: record?.username || '',
+        nama_panjang: member.full_name,
+        display_name: record?.attendee_name_snapshot || member.full_name,
+        role_title: member.role_title || '',
+        bidang_name: member.bidang_name || '',
+        pimpinan: event.pimpinan,
+        attendance_status: record ? record.attendance_status : fallbackStatus,
+        photo_url: record?.photo_url || '',
+        check_in_at: record?.check_in_at || null,
+        source: record ? (record.submitted_by_admin ? 'admin manual' : 'self check-in') : 'belum absen',
+        note: record?.note || '',
+        record_id: record?.id || null,
+        submitted_by_username: record?.submitted_by_username || ''
+      };
+    });
+  } else {
+    const members = (await query`
+      SELECT id, username, nama_panjang, pimpinan, role, created_at
+      FROM users
+      WHERE COALESCE(TRIM(pimpinan), '')=${cleanString(event.pimpinan, 80)}
+      ORDER BY nama_panjang ASC NULLS LAST, username ASC
+    `).rows;
+    const recordMap = new Map(records.map((item) => [Number(item.user_id), item]));
+    participants = members.map((member) => {
+      const record = recordMap.get(Number(member.id)) || null;
+      const fallbackStatus = cleanString(event.status, 20).toLowerCase() === 'closed' ? 'alfa' : 'belum';
+      return {
+        id: member.id,
+        user_id: member.id,
+        org_member_id: null,
+        username: member.username,
+        nama_panjang: member.nama_panjang,
+        display_name: member.nama_panjang || member.username,
+        role_title: '',
+        bidang_name: '',
+        pimpinan: member.pimpinan,
+        attendance_status: record ? record.attendance_status : fallbackStatus,
+        photo_url: record?.photo_url || '',
+        check_in_at: record?.check_in_at || null,
+        source: record ? (record.submitted_by_admin ? 'admin manual' : 'self check-in') : 'belum absen',
+        note: record?.note || '',
+        record_id: record?.id || null,
+        submitted_by_username: record?.submitted_by_username || ''
+      };
+    });
+  }
 
   const summary = participants.reduce((acc, item) => {
     const key = normalizeAttendanceStatus(item.attendance_status) || 'belum';
@@ -690,7 +855,7 @@ async function handleAdminEventDetail(req, res) {
 
   return json(res, 200, {
     status: 'success',
-    event,
+    event: { ...event, identity_mode: event.identity_mode },
     participants,
     summary
   }, cacheHeaders(0));
@@ -719,6 +884,7 @@ async function handleAdminRoomEvents(req, res) {
     room: {
       id: room.id,
       pimpinan: room.pimpinan,
+      identity_mode: room.identity_mode,
       room_code: room.room_code,
       is_active: room.is_active
     },
@@ -776,50 +942,94 @@ async function handleManualRecord(req, res) {
   const body = parseJsonBody(req);
   const eventId = toNumber(body.event_id);
   const userId = toNumber(body.user_id);
+  const orgMemberId = toNumber(body.org_member_id);
   const attendanceStatus = normalizeAttendanceStatus(body.attendance_status);
   const photoUrl = cleanString(body.photo_url, 500) || null;
   const note = cleanString(body.note, 300) || null;
-  if (!eventId || !userId || !attendanceStatus) {
-    return json(res, 400, { status: 'error', message: 'Event, user, dan status wajib diisi' });
+  if (!eventId || !attendanceStatus) {
+    return json(res, 400, { status: 'error', message: 'Event dan status wajib diisi' });
   }
 
   const event = await getEventById(eventId);
   if (!event) return json(res, 404, { status: 'error', message: 'Event tidak ditemukan' });
 
-  const targetUser = (await query`
-    SELECT id, username, nama_panjang, pimpinan
-    FROM users
-    WHERE id=${userId}
-  `).rows[0];
-  if (!targetUser) return json(res, 404, { status: 'error', message: 'User tidak ditemukan' });
-  if (cleanString(targetUser.pimpinan, 80) !== cleanString(event.pimpinan, 80)) {
-    return json(res, 400, { status: 'error', message: 'User tidak termasuk pimpinan room event ini' });
+  let targetUserId = userId || null;
+  let targetOrgMemberId = null;
+  let attendeeNameSnapshot = '';
+  let existing = null;
+  if (event.identity_mode === 'org_member_select') {
+    if (!orgMemberId) {
+      return json(res, 400, { status: 'error', message: 'Nama anggota organisasi wajib dipilih untuk room cabang' });
+    }
+    const orgMember = await getOrgMemberById(orgMemberId);
+    if (!orgMember || orgMember.is_active === false) {
+      return json(res, 404, { status: 'error', message: 'Anggota organisasi tidak ditemukan' });
+    }
+    targetOrgMemberId = orgMember.id;
+    attendeeNameSnapshot = cleanString(orgMember.full_name, 160);
+    existing = (await query`
+      SELECT id
+      FROM attendance_records
+      WHERE event_id=${event.id}
+        AND org_member_id=${targetOrgMemberId}
+    `).rows[0];
+  } else {
+    if (!userId) {
+      return json(res, 400, { status: 'error', message: 'User wajib dipilih untuk room ini' });
+    }
+    const targetUser = (await query`
+      SELECT id, username, nama_panjang, pimpinan
+      FROM users
+      WHERE id=${userId}
+    `).rows[0];
+    if (!targetUser) return json(res, 404, { status: 'error', message: 'User tidak ditemukan' });
+    if (cleanString(targetUser.pimpinan, 80) !== cleanString(event.pimpinan, 80)) {
+      return json(res, 400, { status: 'error', message: 'User tidak termasuk pimpinan room event ini' });
+    }
+    targetUserId = targetUser.id;
+    attendeeNameSnapshot = cleanString(targetUser.nama_panjang || targetUser.username, 160);
+    existing = (await query`
+      SELECT id
+      FROM attendance_records
+      WHERE event_id=${event.id}
+        AND user_id=${targetUserId}
+    `).rows[0];
   }
 
-  const record = (await query`
-    INSERT INTO attendance_records (
-      event_id, user_id, attendance_status, photo_url, check_in_at,
-      submitted_by_admin, submitted_by, note, created_at, updated_at
-    )
-    VALUES (
-      ${event.id}, ${targetUser.id}, ${attendanceStatus}, ${photoUrl}, NOW(),
-      ${true}, ${admin.id}, ${note}, NOW(), NOW()
-    )
-    ON CONFLICT (event_id, user_id)
-    DO UPDATE SET
-      attendance_status=EXCLUDED.attendance_status,
-      photo_url=EXCLUDED.photo_url,
-      check_in_at=NOW(),
-      submitted_by_admin=${true},
-      submitted_by=${admin.id},
-      note=EXCLUDED.note,
-      updated_at=NOW()
-    RETURNING id, event_id, user_id, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
-  `).rows[0];
+  let record = null;
+  if (existing) {
+    record = (await query`
+      UPDATE attendance_records
+      SET user_id=${targetUserId},
+          org_member_id=${targetOrgMemberId},
+          attendee_name_snapshot=${attendeeNameSnapshot},
+          attendance_status=${attendanceStatus},
+          photo_url=${photoUrl},
+          check_in_at=NOW(),
+          submitted_by_admin=${true},
+          submitted_by=${admin.id},
+          note=${note},
+          updated_at=NOW()
+      WHERE id=${existing.id}
+      RETURNING id, event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
+    `).rows[0];
+  } else {
+    record = (await query`
+      INSERT INTO attendance_records (
+        event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at,
+        submitted_by_admin, submitted_by, note, created_at, updated_at
+      )
+      VALUES (
+        ${event.id}, ${targetUserId}, ${targetOrgMemberId}, ${attendeeNameSnapshot}, ${attendanceStatus}, ${photoUrl}, NOW(),
+        ${true}, ${admin.id}, ${note}, NOW(), NOW()
+      )
+      RETURNING id, event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
+    `).rows[0];
+  }
 
   await query`
     INSERT INTO activity_logs (admin_id, action, details)
-    VALUES (${admin.id}, ${'MANUAL_ATTENDANCE_RECORD'}, ${{ event_id: event.id, user_id: targetUser.id, attendance_status: attendanceStatus }})
+    VALUES (${admin.id}, ${'MANUAL_ATTENDANCE_RECORD'}, ${{ event_id: event.id, user_id: targetUserId, org_member_id: targetOrgMemberId, attendance_status: attendanceStatus }})
   `;
 
   return json(res, 200, { status: 'success', record });
@@ -856,6 +1066,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       if (action === 'rooms') return await handleRooms(req, res);
       if (action === 'roomDetail') return await handleRoomDetail(req, res);
+      if (action === 'memberOptions') return await handleMemberOptions(req, res);
       if (action === 'mySummary') return await handleMySummary(req, res);
       if (action === 'adminOverview') return await handleAdminOverview(req, res);
       if (action === 'adminEventDetail') return await handleAdminEventDetail(req, res);

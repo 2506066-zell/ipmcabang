@@ -51,35 +51,46 @@
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <main class="main-content attendance-main">
-        <section class="attendance-hero card-shell">
+        <section class="attendance-hero card-shell reveal">
             <div class="attendance-hero-copy">
-                <span class="attendance-kicker">Room Absensi</span>
-                <h1>Masuk room, buat event rapat, lalu hadir dengan selfie.</h1>
-                <p>Setiap room mengikuti pimpinan yang sudah terdaftar. Akses masuk memakai kode room, sementara absensi mandiri hanya untuk anggota pimpinan yang sesuai.</p>
+                <span class="attendance-kicker"><i class="fas fa-camera"></i> Room Absensi Virtual</span>
+                <h1>Masuk room pimpinan, buat rapat, hadir via selfie.</h1>
+                <p>Akses masuk aman menggunakan kode unik room. Anggota pimpinan yang sesuai dapat melakukan absensi mandiri dengan verifikasi wajah/selfie.</p>
             </div>
             <div class="attendance-hero-side">
-                <div class="attendance-user-chip" id="attendance-user-chip">Memuat akun...</div>
-                <div class="attendance-tip">
-                    <i class="fas fa-shield-heart"></i>
-                    <span>Kode room memberi akses masuk. Selfie wajib saat check-in untuk bukti kehadiran.</span>
+                <div class="attendance-user-chip" id="attendance-user-chip"><i class="fas fa-spinner fa-spin"></i> Menyiapkan akun...</div>
+                <div class="attendance-tip reveal">
+                    <i class="fas fa-shield-check"></i>
+                    <span>Kode room adalah kunci akses. Selfie wajib saat check-in untuk bukti kehadiran yang sah.</span>
                 </div>
             </div>
         </section>
 
-        <section class="attendance-guide-grid">
+
+        <section class="attendance-guide-grid reveal">
             <article class="attendance-guide-card">
-                <span class="attendance-room-label">1. Masuk Room</span>
-                <p>Pilih room sesuai rapat, lalu masukkan kode untuk membuka akses selama sesi login kamu aktif.</p>
+                <div class="guide-icon"><i class="fas fa-door-open"></i></div>
+                <div class="guide-text">
+                    <span class="attendance-room-label">1. Masuk Room</span>
+                    <p>Gunakan kode pimpinan untuk membuka akses room selama sesi aktif.</p>
+                </div>
             </article>
             <article class="attendance-guide-card">
-                <span class="attendance-room-label">2. Buat Event</span>
-                <p>Kalau belum ada rapat aktif hari ini, user yang sudah masuk room bisa langsung membuat event rapat.</p>
+                <div class="guide-icon"><i class="fas fa-calendar-plus"></i></div>
+                <div class="guide-text">
+                    <span class="attendance-room-label">2. Buat Event</span>
+                    <p>Buka rapat baru hari ini jika belum tersedia di pimpinanmu.</p>
+                </div>
             </article>
             <article class="attendance-guide-card">
-                <span class="attendance-room-label">3. Selfie & Hadir</span>
-                <p>Anggota dengan pimpinan yang sama bisa check-in mandiri dengan selfie. Kalau perlu, admin tetap bisa input manual.</p>
+                <div class="guide-icon"><i class="fas fa-face-smile-wink"></i></div>
+                <div class="guide-text">
+                    <span class="attendance-room-label">3. Selfie & Hadir</span>
+                    <p>Anggota sah melakukan check-in mandiri dengan verifikasi wajah.</p>
+                </div>
             </article>
         </section>
+
 
         <section class="attendance-section">
             <div class="attendance-section-head">
@@ -111,24 +122,25 @@
 
                 <div class="attendance-access-strip" id="attendance-access-strip"></div>
 
-                <div class="attendance-summary-grid" id="attendance-summary-grid">
+                <div class="attendance-summary-grid reveal" id="attendance-summary-grid">
                     <article class="attendance-summary-card">
                         <span class="attendance-summary-label">Total Event</span>
-                        <strong id="attendance-summary-total">0</strong>
+                        <div class="stat-value"><strong id="attendance-summary-total">0</strong></div>
                     </article>
                     <article class="attendance-summary-card">
-                        <span class="attendance-summary-label">Hadir</span>
-                        <strong id="attendance-summary-hadir">0</strong>
+                        <span class="attendance-summary-label">Kehadiran</span>
+                        <div class="stat-value"><strong id="attendance-summary-hadir">0</strong></div>
                     </article>
                     <article class="attendance-summary-card">
                         <span class="attendance-summary-label">Persentase</span>
-                        <strong id="attendance-summary-percent">0%</strong>
+                        <div class="stat-value"><strong id="attendance-summary-percent">0%</strong></div>
                     </article>
-                    <article class="attendance-summary-card">
-                        <span class="attendance-summary-label">Status</span>
-                        <strong id="attendance-summary-status">Pasif</strong>
+                    <article class="attendance-summary-card highlight">
+                        <span class="attendance-summary-label">Status Anggota</span>
+                        <div class="stat-value"><strong id="attendance-summary-status">MEMUAT</strong></div>
                     </article>
                 </div>
+
 
                 <div class="attendance-detail-grid">
                     <section class="attendance-panel-card">
@@ -177,13 +189,33 @@
                             </div>
                         </div>
                         <form id="attendance-checkin-form" class="attendance-form">
-                            <label class="attendance-field">
-                                <span>Ambil selfie</span>
-                                <input type="file" id="attendance-selfie-input" accept="image/*" capture="user">
+                            <label class="attendance-field" id="attendance-member-field" hidden>
+                                <span>Pilih nama anggota</span>
+                                <select id="attendance-member-select">
+                                    <option value="">Pilih nama dari struktur organisasi</option>
+                                </select>
+                                <small id="attendance-member-meta" class="attendance-helper-text"></small>
                             </label>
-                            <div class="attendance-preview" id="attendance-selfie-preview" hidden>
-                                <img src="" alt="Preview selfie" id="attendance-selfie-image">
+                            <div class="attendance-camera-shell">
+                                <video id="attendance-camera-video" class="attendance-camera-video" autoplay playsinline muted hidden></video>
+                                <div class="attendance-preview" id="attendance-selfie-preview" hidden>
+                                    <img src="" alt="Preview selfie" id="attendance-selfie-image">
+                                </div>
                             </div>
+                            <label class="attendance-field">
+                                <span>Selfie wajib dari kamera</span>
+                                <div class="attendance-camera-actions">
+                                    <button type="button" class="attendance-secondary-btn" id="attendance-open-camera-btn">
+                                        <i class="fas fa-video"></i> Buka Kamera
+                                    </button>
+                                    <button type="button" class="attendance-secondary-btn" id="attendance-capture-camera-btn" hidden>
+                                        <i class="fas fa-camera"></i> Ambil Selfie
+                                    </button>
+                                    <button type="button" class="attendance-secondary-btn" id="attendance-retake-camera-btn" hidden>
+                                        <i class="fas fa-rotate-left"></i> Ambil Ulang
+                                    </button>
+                                </div>
+                            </label>
                             <button type="submit" class="attendance-primary-btn" id="attendance-checkin-btn">
                                 <i class="fas fa-camera"></i> Hadir Sekarang
                             </button>
@@ -249,7 +281,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>
-    <script src="/app/js/pages/absen.js?v=5" defer></script>
+    <script src="/app/js/pages/absen.js?v=6" defer></script>
 </body>
 
 </html>

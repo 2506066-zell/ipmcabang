@@ -14,8 +14,10 @@
         accessMap: {},
         currentRoomId: 0,
         detail: null,
+        memberOptions: [],
         pendingRoomId: 0,
         selfieFile: null,
+        selfieStream: null,
         pollingInterval: null
     };
 
@@ -172,6 +174,10 @@
         setText('attendance-user-chip', `${name} | ${pimpinan}`);
     }
 
+    function currentIdentityMode() {
+        return String(state.detail?.room?.identity_mode || '').trim() || 'account_identity';
+    }
+
     function setCodeModalOpen(isOpen) {
         if (!els.codeModal) return;
         els.codeModal.hidden = !isOpen;
@@ -219,15 +225,15 @@
 
         els.roomGrid.innerHTML = state.rooms.map((room) => {
             const selected = Number(room.id) === Number(state.currentRoomId);
-            const accessLabel = room.has_access ? 'Sudah dibuka' : 'Masuk pakai kode';
+            const accessLabel = room.has_access ? 'Terbuka' : 'Terkunci';
             const eventLabel = room.today_event ? `${escapeHtml(room.today_event.title)} sedang aktif` : 'Belum ada event aktif hari ini';
             const isEligible = String(state.user?.pimpinan || '').trim() === String(room.pimpinan || '').trim();
 
             return `
-                <button type="button" class="attendance-room-card ${selected ? 'is-selected' : ''}" data-room-id="${room.id}" data-room-name="${escapeHtml(room.pimpinan)}">
+                <button type="button" class="attendance-room-card reveal ${selected ? 'is-selected' : ''}" data-room-id="${room.id}" data-room-name="${escapeHtml(room.pimpinan)}">
                     <div class="attendance-room-head">
                         <div>
-                            <span class="attendance-room-label">Room</span>
+                            <span class="attendance-room-label">Pimpinan</span>
                             <h3 class="attendance-room-name">${escapeHtml(room.pimpinan)}</h3>
                         </div>
                         <span class="attendance-pill ${room.today_event ? 'is-alert' : ''}">
@@ -235,15 +241,18 @@
                         </span>
                     </div>
                     <div class="attendance-room-meta">
-                        <span><i class="fas fa-users-viewfinder"></i> ${escapeHtml(eventLabel)}</span>
-                        <span><i class="fas fa-user-check"></i> ${isEligible ? 'Kamu bisa self check-in di room ini.' : 'Kamu bisa masuk room, tapi self check-in terkunci.'}</span>
+                        <span><i class="fas fa-signal"></i> ${escapeHtml(eventLabel)}</span>
+                        <span><i class="fas fa-shield-halved"></i> ${isEligible ? 'Verifikasi wajah tersedia.' : 'Self check-in ditutup.'}</span>
                     </div>
                     <div class="attendance-room-actions">
-                        <span class="attendance-secondary-btn">${room.has_access ? 'Buka Room' : 'Masukkan Kode'}</span>
+                        <span class="attendance-primary-btn" style="padding: 10px 16px; font-size: 0.85rem; box-shadow: none;">
+                            <i class="fas ${room.has_access ? 'fa-door-open' : 'fa-key'}"></i> ${room.has_access ? 'Buka Room' : 'Akses Room'}
+                        </span>
                     </div>
                 </button>
             `;
         }).join('');
+
     }
 
     function renderSummary(summary) {
@@ -251,6 +260,27 @@
         setText('attendance-summary-hadir', String(summary?.hadir_count || 0));
         setText('attendance-summary-percent', `${summary?.attendance_percent || 0}%`);
         setText('attendance-summary-status', String(summary?.activity_status || 'pasif').toUpperCase());
+    }
+
+    function renderMemberOptions() {
+        if (!els.memberField || !els.memberSelect || !els.memberMeta) return;
+        const isCabangRoom = currentIdentityMode() === 'org_member_select';
+        els.memberField.hidden = !isCabangRoom;
+        if (!isCabangRoom) {
+            els.memberSelect.innerHTML = '<option value="">Pilih nama dari struktur organisasi</option>';
+            els.memberMeta.textContent = 'Room ini memakai identitas akun login, jadi pilihan nama organisasi tidak dipakai.';
+            return;
+        }
+
+        const options = Array.isArray(state.memberOptions) ? state.memberOptions : [];
+        els.memberSelect.innerHTML = [
+            '<option value="">Pilih nama dari struktur organisasi</option>',
+            ...options.map((item) => `<option value="${item.id}">${escapeHtml(item.full_name)}</option>`)
+        ].join('');
+        const selected = options.find((item) => String(item.id) === String(els.memberSelect.value || ''));
+        els.memberMeta.textContent = selected
+            ? `${selected.role_title || 'Anggota'}${selected.bidang_name ? ` • ${selected.bidang_name}` : ''}`
+            : 'Pilih nama anggota aktif dari struktur organisasi cabang sebelum check-in.';
     }
 
     function renderAccessStrip() {
@@ -261,22 +291,23 @@
         const memberCount = Number(detail.room.member_count || 0);
 
         els.accessStrip.innerHTML = `
-            <article class="attendance-access-card">
-                <span class="attendance-room-label">Akses Room</span>
+            <article class="attendance-access-card reveal">
+                <span class="attendance-room-label"><i class="fas fa-unlock"></i> Akses Terbuka</span>
                 <strong>${escapeHtml(detail.room.pimpinan)}</strong>
-                <p>Kode room sudah diverifikasi untuk sesi login ini. Kamu bisa masuk lagi tanpa mengetik ulang selama sesi masih aktif.</p>
+                <p>Otorisasi room berhasil. Anda memiliki akses penuh ke histori dan kontrol event pimpinan ini.</p>
             </article>
-            <article class="attendance-access-card ${canSelfCheckIn ? '' : 'is-warning'}">
-                <span class="attendance-room-label">Status Kehadiran</span>
-                <strong>${canSelfCheckIn ? 'Boleh Self Check-in' : 'Perlu Admin Manual'}</strong>
-                <p>${canSelfCheckIn ? 'Pimpinan akunmu cocok dengan room ini, jadi absensi mandiri dengan selfie bisa dipakai.' : 'Kamu tetap bisa membuka room, tapi absensi mandiri terkunci karena pimpinan akunmu berbeda.'}</p>
+            <article class="attendance-access-card reveal ${canSelfCheckIn ? '' : 'is-warning'}">
+                <span class="attendance-room-label"><i class="fas fa-face-smile"></i> Biometrik</span>
+                <strong>${canSelfCheckIn ? 'Selfie Diizinkan' : 'Verifikasi Terkunci'}</strong>
+                <p>${canSelfCheckIn ? 'Pimpinan akun cocok. Anda dapat melakukan absensi mandiri dengan verifikasi wajah/selfie.' : 'Status pimpinan berbeda. Anda hanya dapat memantau room, permintaan hadir harus melalui admin.'}</p>
             </article>
-            <article class="attendance-access-card ${currentEvent ? '' : 'is-muted'}">
-                <span class="attendance-room-label">Kondisi Room</span>
-                <strong>${currentEvent ? 'Rapat Sedang Berjalan' : 'Menunggu Event Baru'}</strong>
-                <p>${currentEvent ? `${Number(currentEvent.attendees_count || 0)} anggota sudah tercatat hadir dari sekitar ${memberCount} anggota room.` : `Room ini terhubung dengan sekitar ${memberCount} anggota pimpinan.`}</p>
+            <article class="attendance-access-card reveal ${currentEvent ? '' : 'is-muted'}">
+                <span class="attendance-room-label"><i class="fas fa-bolt"></i> Aktivitas</span>
+                <strong>${currentEvent ? 'Rapat Berlangsung' : 'Room Standby'}</strong>
+                <p>${currentEvent ? `${Number(currentEvent.attendees_count || 0)} kader telah check-in dari total ${memberCount} anggota.` : `Menunggu pimpinan atau moderator membuka event rapat baru hari ini.`}</p>
             </article>
         `;
+
     }
 
     function renderHistory(items) {
@@ -321,6 +352,7 @@
         const detail = state.detail;
         const currentEvent = detail?.current_event;
         const canSelfCheckIn = !!detail?.permissions?.can_self_check_in;
+        const isCabangRoom = currentIdentityMode() === 'org_member_select';
         if (!els.currentEventBox) return;
 
         if (!currentEvent) {
@@ -334,6 +366,7 @@
                     ? 'Buat atau tunggu event aktif lebih dulu sebelum check-in.'
                     : 'Kamu bisa masuk room ini, tapi absensi mandiri hanya untuk anggota pimpinan yang sama.'
             );
+            renderMemberOptions();
             return;
         }
 
@@ -344,48 +377,58 @@
         setText('attendance-event-badge', 'Aktif Hari Ini');
 
         els.currentEventBox.innerHTML = `
-            <article class="attendance-event-card">
-                <h4 class="attendance-event-title">${escapeHtml(currentEvent.title)}</h4>
-                <div class="attendance-event-meta">
-                    <span><i class="fas fa-calendar-day"></i> ${escapeHtml(String(currentEvent.event_date || '').slice(0, 10))}</span>
-                    <span><i class="fas fa-user-pen"></i> Dibuat oleh ${escapeHtml(creator)}</span>
-                    <span><i class="fas fa-signal"></i> Status ${escapeHtml(currentEvent.status || 'active')}</span>
+            <article class="attendance-event-card reveal">
+                <div class="attendance-panel-head" style="margin-bottom: 20px;">
+                    <div>
+                        <h4 class="attendance-event-title">${escapeHtml(currentEvent.title)}</h4>
+                        <div class="attendance-event-meta">
+                            <span><i class="fas fa-calendar-alt"></i> ${escapeHtml(String(currentEvent.event_date || '').slice(0, 10))}</span>
+                            <span><i class="fas fa-user-tie"></i> Oleh ${escapeHtml(creator)}</span>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="attendance-event-stats">
                     <div class="attendance-event-stat">
                         <strong>${attendeesCount}</strong>
-                        <span>Sudah hadir</span>
+                        <span>Hadir</span>
                     </div>
                     <div class="attendance-event-stat">
                         <strong>${Number(detail.room?.member_count || 0)}</strong>
-                        <span>Anggota room</span>
+                        <span>Kader</span>
                     </div>
-                    <div class="attendance-event-stat">
-                        <strong>${myRecord ? 'Sudah' : 'Belum'}</strong>
-                        <span>Status absensimu</span>
+                    <div class="attendance-event-stat" style="background: ${myRecord ? 'var(--att-primary)' : '#fff'}">
+                        <strong style="color: ${myRecord ? '#fff' : 'inherit'}">${myRecord ? 'Selesai' : 'Belum'}</strong>
+                        <span style="color: ${myRecord ? 'rgba(255,255,255,0.7)' : 'inherit'}">Status Anda</span>
                     </div>
                 </div>
-                <p>${escapeHtml(currentEvent.description || 'Event rapat aktif untuk room ini. Gunakan panel di bawah untuk check-in dengan selfie.')}</p>
+                
+                <p style="margin: 15px 0;">${escapeHtml(currentEvent.description || 'Agenda rapat rutin pimpinan. Pastikan Anda berada di lokasi dan siap melakukan verifikasi wajah.')}</p>
+                
                 ${myRecord ? `
-                    <div class="attendance-pill">
-                        <i class="fas fa-check-circle"></i> Kamu sudah tercatat: ${escapeHtml(myRecord.attendance_status)}
+                    <div class="attendance-pill" style="margin-bottom: 15px; width: 100%; justify-content: center; background: #f0fdf4;">
+                        <i class="fas fa-check-double"></i> Anda Tercatat Hadir (${escapeHtml(myRecord.attendance_status)})
                     </div>
                 ` : ''}
+                
                 <div class="attendance-roster">
+                    <span class="attendance-summary-label" style="font-size: 0.65rem; margin-bottom: 10px; display: block;">Check-in Terbaru</span>
                     ${recentAttendees.length ? recentAttendees.map((item) => `
                         <div class="attendance-roster-item">
                             <div>
-                                <strong>${escapeHtml(item.nama_panjang || item.username)}</strong>
-                                <span>@${escapeHtml(item.username || '')}</span>
+                                <strong>${escapeHtml(item.attendee_name || item.nama_panjang || item.username)}</strong>
+                                <span style="display: block; font-size: 0.75rem; color: var(--att-muted);">${escapeHtml(item.username ? `@${item.username}` : 'Self verif')}</span>
                             </div>
-                            <span>${escapeHtml(item.check_in_at ? new Date(item.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-')}</span>
+                            <span class="attendance-pill" style="background: #f8fafc; color: var(--att-muted);">${escapeHtml(item.check_in_at ? new Date(item.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-')}</span>
                         </div>
-                    `).join('') : '<div class="attendance-empty-state">Belum ada peserta yang check-in pada event ini.</div>'}
+                    `).join('') : '<div class="attendance-empty-state">Belum ada kader yang hadir.</div>'}
                 </div>
             </article>
         `;
 
+
         renderCreateFormState(currentEvent);
+        renderMemberOptions();
 
         if (els.checkinForm) {
             els.checkinForm.hidden = !canSelfCheckIn || !!myRecord;
@@ -421,6 +464,23 @@
         renderCurrentEvent();
         renderHistory(detail.history || []);
         startLivePolling(detail.room.id);
+    }
+
+    async function loadMemberOptions(roomId) {
+        if (!roomId) return;
+        if (currentIdentityMode() !== 'org_member_select') {
+            state.memberOptions = [];
+            renderMemberOptions();
+            return;
+        }
+        try {
+            const data = await apiFetch(`/api/attendance?action=memberOptions&room_id=${encodeURIComponent(roomId)}`, { method: 'GET' }, roomId);
+            state.memberOptions = Array.isArray(data.members) ? data.members : [];
+            renderMemberOptions();
+        } catch {
+            state.memberOptions = [];
+            renderMemberOptions();
+        }
     }
 
     function startLivePolling(roomId) {
@@ -492,6 +552,7 @@
             state.detail = data;
             renderRooms();
             renderDetail();
+            await loadMemberOptions(roomId);
         } catch (error) {
             if (error.status === 403) {
                 setRoomAccess(roomId, '');
@@ -592,6 +653,74 @@
         els.selfiePreview.hidden = false;
     }
 
+    async function stopCamera() {
+        const stream = state.selfieStream;
+        if (stream && typeof stream.getTracks === 'function') {
+            stream.getTracks().forEach((track) => track.stop());
+        }
+        state.selfieStream = null;
+        if (els.cameraVideo) {
+            els.cameraVideo.pause?.();
+            els.cameraVideo.srcObject = null;
+            els.cameraVideo.hidden = true;
+        }
+        if (els.captureCameraBtn) els.captureCameraBtn.hidden = true;
+    }
+
+    async function openCamera() {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            setInlineStatus(els.checkinStatus, 'Browser ini tidak mendukung kamera langsung. Hubungi admin untuk input manual.', 'error');
+            return;
+        }
+        try {
+            await stopCamera();
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: false
+            });
+            state.selfieStream = stream;
+            if (els.cameraVideo) {
+                els.cameraVideo.srcObject = stream;
+                els.cameraVideo.hidden = false;
+                await els.cameraVideo.play();
+            }
+            if (els.captureCameraBtn) els.captureCameraBtn.hidden = false;
+            if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
+            updateSelfiePreview(null);
+            setInlineStatus(els.checkinStatus, 'Kamera aktif. Ambil selfie terbaru untuk absensi.');
+        } catch (error) {
+            setInlineStatus(els.checkinStatus, error?.name === 'NotAllowedError'
+                ? 'Izin kamera ditolak. Izinkan kamera atau minta bantuan admin.'
+                : 'Gagal membuka kamera perangkat.', 'error');
+        }
+    }
+
+    async function captureSelfie() {
+        if (!state.selfieStream || !els.cameraVideo) {
+            setInlineStatus(els.checkinStatus, 'Buka kamera dulu sebelum mengambil selfie.', 'error');
+            return;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = els.cameraVideo.videoWidth || 720;
+        canvas.height = els.cameraVideo.videoHeight || 960;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            setInlineStatus(els.checkinStatus, 'Gagal menyiapkan kamera untuk capture selfie.', 'error');
+            return;
+        }
+        ctx.drawImage(els.cameraVideo, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+        if (!blob) {
+            setInlineStatus(els.checkinStatus, 'Selfie gagal diproses. Coba ambil ulang.', 'error');
+            return;
+        }
+        const file = new File([blob], `attendance-selfie-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        updateSelfiePreview(file);
+        await stopCamera();
+        if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = false;
+        setInlineStatus(els.checkinStatus, 'Selfie berhasil diambil. Periksa preview lalu kirim absensi.', 'success');
+    }
+
     async function uploadSelfie(file) {
         const response = await fetch('/api/upload', {
             method: 'POST',
@@ -613,12 +742,18 @@
     async function handleCheckIn(event) {
         event.preventDefault();
         const currentEvent = state.detail?.current_event;
+        const identityMode = currentIdentityMode();
         if (!currentEvent) {
             setInlineStatus(els.checkinStatus, 'Belum ada event aktif untuk dihadiri.', 'error');
             return;
         }
+        const selectedMemberId = Number(els.memberSelect?.value || 0);
+        if (identityMode === 'org_member_select' && !selectedMemberId) {
+            setInlineStatus(els.checkinStatus, 'Pilih nama anggota organisasi dulu sebelum absensi.', 'error');
+            return;
+        }
         if (!state.selfieFile) {
-            setInlineStatus(els.checkinStatus, 'Selfie wajib diambil sebelum kirim absensi.', 'error');
+            setInlineStatus(els.checkinStatus, 'Selfie wajib diambil dari kamera sebelum kirim absensi.', 'error');
             return;
         }
 
@@ -631,11 +766,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     event_id: currentEvent.id,
-                    photo_url: photoUrl
+                    photo_url: photoUrl,
+                    org_member_id: identityMode === 'org_member_select' ? selectedMemberId : null
                 })
             }, Number(state.currentRoomId));
             if (els.checkinForm) els.checkinForm.reset();
             updateSelfiePreview(null);
+            if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
             showToast('Absensi berhasil direkam', 'success');
             await loadRooms(state.currentRoomId);
         } catch (error) {
@@ -673,7 +810,13 @@
         els.checkinForm = document.getElementById('attendance-checkin-form');
         els.checkinBtn = document.getElementById('attendance-checkin-btn');
         els.checkinStatus = document.getElementById('attendance-checkin-status');
-        els.selfieInput = document.getElementById('attendance-selfie-input');
+        els.memberField = document.getElementById('attendance-member-field');
+        els.memberSelect = document.getElementById('attendance-member-select');
+        els.memberMeta = document.getElementById('attendance-member-meta');
+        els.openCameraBtn = document.getElementById('attendance-open-camera-btn');
+        els.captureCameraBtn = document.getElementById('attendance-capture-camera-btn');
+        els.retakeCameraBtn = document.getElementById('attendance-retake-camera-btn');
+        els.cameraVideo = document.getElementById('attendance-camera-video');
         els.selfiePreview = document.getElementById('attendance-selfie-preview');
         els.selfieImage = document.getElementById('attendance-selfie-image');
         setCodeModalOpen(false);
@@ -704,10 +847,10 @@
         });
         els.createForm?.addEventListener('submit', handleCreateEvent);
         els.checkinForm?.addEventListener('submit', handleCheckIn);
-        els.selfieInput?.addEventListener('change', () => {
-            const file = els.selfieInput?.files?.[0] || null;
-            updateSelfiePreview(file);
-        });
+        els.memberSelect?.addEventListener('change', renderMemberOptions);
+        els.openCameraBtn?.addEventListener('click', openCamera);
+        els.captureCameraBtn?.addEventListener('click', captureSelfie);
+        els.retakeCameraBtn?.addEventListener('click', openCamera);
         els.roomGrid?.addEventListener('click', (event) => {
             const card = event.target.closest('[data-room-id]');
             if (!card) return;
@@ -719,6 +862,9 @@
                 return;
             }
             openCodeModal(roomId, roomName);
+        });
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
         });
     }
 

@@ -1,4 +1,4 @@
-export function initAttendance(appState, api) {
+﻿export function initAttendance(appState, api) {
     const root = document.getElementById('attendance-admin-root');
     if (!root) return;
 
@@ -131,6 +131,7 @@ export function initAttendance(appState, api) {
         wrap.innerHTML = state.overview.map((room) => {
             const selected = Number(room.id) === Number(state.selectedRoomId);
             const isActive = !!room.active_event;
+            const identityLabel = room.identity_mode === 'org_member_select' ? 'Nama organisasi' : 'Akun pribadi';
             return `
                 <article class="attendance-admin-room-card ${selected ? 'is-selected' : ''}">
                     <div class="attendance-admin-room-head">
@@ -138,6 +139,7 @@ export function initAttendance(appState, api) {
                             <div class="status-badge ${isActive ? 'status-warning' : 'status-muted'}">${isActive ? 'Event Aktif' : 'Standby'}</div>
                             <h4>${escapeHtml(room.pimpinan)}</h4>
                             <p>${isActive ? escapeHtml(room.active_event.title || 'Rapat aktif hari ini') : 'Belum ada rapat aktif hari ini.'}</p>
+                            <p class="small muted">Mode identitas: ${escapeHtml(identityLabel)}</p>
                         </div>
                         <button type="button" class="btn btn-secondary btn-sm attendance-room-open-btn" data-room-id="${room.id}">
                             <i class="fas fa-eye"></i> Buka
@@ -220,7 +222,7 @@ export function initAttendance(appState, api) {
                     <div class="attendance-admin-recap-row">
                         <div>
                             <strong>${escapeHtml(user.nama_panjang || user.username)}</strong>
-                            <div class="small muted">@${escapeHtml(user.username)}</div>
+                            <div class="small muted">${escapeHtml(user.username ? `@${user.username}` : (user.role_title || 'Nama organisasi'))}</div>
                         </div>
                         <div class="small muted">${Number(user.summary?.hadir_count || 0)}/${Number(user.summary?.total_events || 0)} hadir</div>
                         <div class="status-badge ${String(user.summary?.activity_status || '') === 'aktif' ? 'status-success' : 'status-warning'}">
@@ -247,6 +249,7 @@ export function initAttendance(appState, api) {
                     <span class="small muted">Event</span>
                     <strong>${escapeHtml(detail.event.title)}</strong>
                     <p class="small muted">${escapeHtml(String(detail.event.event_date || '').slice(0, 10))} • ${escapeHtml(detail.event.status || 'active')}</p>
+                    <p class="small muted">Mode identitas: ${escapeHtml(detail.event.identity_mode === 'org_member_select' ? 'Nama organisasi' : 'Akun pribadi')}</p>
                     <button class="btn btn-secondary btn-sm mt-8" id="attendance-export-csv-btn" data-event-id="${detail.event.id}"><i class="fas fa-file-csv"></i> Unduh CSV Laporan</button>
                 </div>
                 <div class="attendance-admin-event-summary-card">
@@ -259,8 +262,9 @@ export function initAttendance(appState, api) {
                     <article class="attendance-admin-participant-card">
                         <div class="attendance-admin-participant-main">
                             <div>
-                                <h4>${escapeHtml(item.nama_panjang || item.username)}</h4>
-                                <p class="small muted">@${escapeHtml(item.username)} • ${escapeHtml(item.source || 'belum absen')}</p>
+                                <h4>${escapeHtml(item.display_name || item.nama_panjang || item.username)}</h4>
+                                <p class="small muted">${escapeHtml(item.username ? `@${item.username}` : (item.role_title || 'Nama organisasi'))} • ${escapeHtml(item.source || 'belum absen')}</p>
+                                ${item.bidang_name ? `<p class="small muted">${escapeHtml(item.bidang_name)}</p>` : ''}
                                 <div class="attendance-admin-participant-meta">
                                     <span class="status-badge ${String(item.attendance_status || '') === 'hadir' ? 'status-success' : 'status-muted'}">
                                         ${escapeHtml(String(item.attendance_status || 'belum').toUpperCase())}
@@ -269,7 +273,7 @@ export function initAttendance(appState, api) {
                                 </div>
                             </div>
                         </div>
-                        <form class="attendance-admin-manual-form" data-user-id="${item.id}" data-event-id="${detail.event.id}">
+                        <form class="attendance-admin-manual-form" data-user-id="${item.user_id || ''}" data-org-member-id="${item.org_member_id || ''}" data-event-id="${detail.event.id}">
                             <div class="toolbar-row">
                                 <select name="attendance_status" class="toolbar-select">
                                     <option value="hadir" ${item.attendance_status === 'hadir' ? 'selected' : ''}>Hadir</option>
@@ -398,12 +402,14 @@ export function initAttendance(appState, api) {
         const fd = new FormData(form);
         const eventId = Number(form.dataset.eventId || 0);
         const userId = Number(form.dataset.userId || 0);
-        if (!eventId || !userId) return;
+        const orgMemberId = Number(form.dataset.orgMemberId || 0);
+        if (!eventId) return;
         setLoading(true, 'Menyimpan status absensi...');
         try {
             await api.apiAdminVercel('POST', '/api/attendance?action=manualRecord', {
                 event_id: eventId,
-                user_id: userId,
+                user_id: userId || null,
+                org_member_id: orgMemberId || null,
                 attendance_status: String(fd.get('attendance_status') || '').trim(),
                 photo_url: String(fd.get('photo_url') || '').trim(),
                 note: String(fd.get('note') || '').trim()
@@ -464,7 +470,7 @@ export function initAttendance(appState, api) {
         const p = state.eventDetail.participants;
         let csvContent = "Nama Lengkap,Username,Pimpinan,Status Absensi,Waktu Check-in,Sumber,Catatan\n";
         p.forEach(row => {
-            const name = `"${String(row.nama_panjang || row.username).replace(/"/g, '""')}"`;
+            const name = `"${String(row.display_name || row.nama_panjang || row.username).replace(/"/g, '""')}"`;
             const username = `"${String(row.username || '').replace(/"/g, '""')}"`;
             const pimpinan = `"${String(row.pimpinan || '').replace(/"/g, '""')}"`;
             const status = `"${String(row.attendance_status || '').toUpperCase()}"`;
@@ -492,3 +498,5 @@ export function initAttendance(appState, api) {
     renderShell();
     loadOverview();
 }
+
+

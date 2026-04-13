@@ -365,7 +365,9 @@ async function ensureSchema() {
   await query`CREATE TABLE IF NOT EXISTS attendance_records (
     id SERIAL PRIMARY KEY,
     event_id INT NOT NULL REFERENCES attendance_events(id) ON DELETE CASCADE,
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    org_member_id INT REFERENCES org_members(id) ON DELETE SET NULL,
+    attendee_name_snapshot TEXT,
     attendance_status TEXT NOT NULL,
     photo_url TEXT,
     check_in_at TIMESTAMP,
@@ -458,9 +460,12 @@ async function ensureSchema() {
   await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS check_in_at TIMESTAMP`;
   await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS submitted_by_admin BOOLEAN DEFAULT FALSE`;
   await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS submitted_by INT`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS org_member_id INT`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS attendee_name_snapshot TEXT`;
   await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS note TEXT`;
   await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_records ALTER COLUMN user_id DROP NOT NULL`;
   await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS access_token TEXT`;
   await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP`;
   await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
@@ -492,7 +497,9 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_attendance_events_status_date ON attendance_events(status, event_date DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_attendance_records_event ON attendance_records(event_id, updated_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_attendance_records_user ON attendance_records(user_id, updated_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_attendance_records_org_member ON attendance_records(org_member_id, updated_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_attendance_sessions_user_room ON attendance_room_sessions(user_id, room_id)`;
+  await query`CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_records_event_org_member_unique ON attendance_records(event_id, org_member_id) WHERE org_member_id IS NOT NULL`;
 }
 
 module.exports = { ensureSchema };
