@@ -19,7 +19,8 @@ const routes = {
   'feedback': require('./_handler_feedback'),
   'push': require('./_handler_push'),
   'attendance': require('./_handler_attendance'),
-  'discussions': require('./_handler_discussions')
+  'discussions': require('./_handler_discussions'),
+  'webauthn': require('./_handler_webauthn')
 };
 
 module.exports = async (req, res) => {

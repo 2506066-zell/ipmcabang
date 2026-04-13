@@ -251,6 +251,26 @@ async function ensureSchema() {
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS user_authenticators (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    credential_id TEXT UNIQUE NOT NULL,
+    public_key TEXT NOT NULL,
+    counter BIGINT DEFAULT 0,
+    transports TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    last_used_at TIMESTAMP
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS webauthn_challenges (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT, -- Can be IP or UUID for registration; or username/id for login
+    challenge TEXT NOT NULL,
+    purpose TEXT NOT NULL, -- 'registration' or 'authentication'
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+
   await query`CREATE TABLE IF NOT EXISTS scheduled_notifications (
     id SERIAL PRIMARY KEY,
     title TEXT,

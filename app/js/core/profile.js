@@ -90,6 +90,39 @@
                     <div class="profile-notif-list collapsed" id="profile-notif-list">
                         <div class="profile-notif-empty">Belum ada notifikasi.</div>
                     </div>
+                    <div class="profile-section-header">🎫 Kartu Anggota Digital</div>
+                    <div class="profile-digital-card-container">
+                        <div class="digital-membership-card" id="digital-membership-card">
+                            <div class="card-glow"></div>
+                            <div class="card-brand">
+                                <img src="/ipm%20(2).png" alt="IPM">
+                                <span>IKATAN PELAJAR MUHAMMADIYAH</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="card-user-info">
+                                    <div class="card-name" id="card-name-val">-</div>
+                                    <div class="card-pimpinan" id="card-pimpinan-val">-</div>
+                                    <div class="card-role" id="card-role-val">ANGGOTA</div>
+                                </div>
+                                <div class="card-qr-section">
+                                    <div id="card-qr-code" class="card-qr-code"></div>
+                                </div>
+                            </div>
+                            <div class="card-footer">E-CARD PC IPM PANAWUAN</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section-header">🛡️ Keamanan & Identitas</div>
+                    <div class="profile-biometric-section" id="profile-biometric-section">
+                        <div class="biometric-info">
+                            <strong>Login Biometrik (Passkey)</strong>
+                            <p>Masuk lebih cepat dan aman tanpa password menggunakan sidik jari atau wajah.</p>
+                        </div>
+                        <button type="button" class="profile-btn secondary" id="profile-biometric-btn">
+                            <i class="fas fa-fingerprint"></i> Daftarkan Biometrik
+                        </button>
+                    </div>
+
                     <div class="profile-actions compact-actions">
                         <button type="button" class="profile-btn primary" id="profile-logout-btn">Logout</button>
                     </div>
@@ -393,6 +426,66 @@
         if (e.target === overlayEl) closeOverlay();
         if (e.target && e.target.closest && e.target.closest('#profile-close-btn')) closeOverlay();
     });
+    function initDigitalCard(container) {
+        const qrContainer = container.querySelector('#card-qr-code');
+        if (!qrContainer || !window.QRCode) return;
+
+        const username = getStored(USER_USERNAME_KEY);
+        const fullName = getStored(USER_FULLNAME_KEY);
+        const pimpinan = getStored(USER_PIMPINAN_KEY);
+
+        // Update card values
+        const nameVal = container.querySelector('#card-name-val');
+        const pimpinanVal = container.querySelector('#card-pimpinan-val');
+        if (nameVal) nameVal.textContent = (fullName || username).toUpperCase();
+        if (pimpinanVal) pimpinanVal.textContent = (pimpinan || 'PIMPINAN BELUM SET').toUpperCase();
+
+        // Generate QR
+        qrContainer.innerHTML = '';
+        const qrData = JSON.stringify({
+            u: username,
+            p: pimpinan,
+            t: Date.now()
+        });
+
+        new window.QRCode(qrContainer, {
+            text: qrData,
+            width: 80,
+            height: 80,
+            colorDark: "#064e3b",
+            colorLight: "#ffffff",
+            correctLevel: window.QRCode.CorrectLevel.H
+        });
+    }
+
+    function initBiometricSetup(container) {
+        const bioBtn = container.querySelector('#profile-biometric-btn');
+        if (!bioBtn || !window.WebAuthnClient) return;
+
+        window.WebAuthnClient.isSupported().then(supported => {
+            if (!supported) {
+                container.querySelector('#profile-biometric-section').style.display = 'none';
+            }
+        });
+
+        bioBtn.addEventListener('click', async () => {
+            if (window.AppLoader) window.AppLoader.show('Mendaftarkan Biometrik...');
+            try {
+                const result = await window.WebAuthnClient.register();
+                if (result.status === 'success') {
+                    if (window.Toast) window.Toast.show('Biometrik berhasil didaftarkan!', 'success');
+                    bioBtn.innerHTML = '<i class="fas fa-check"></i> Biometrik Aktif';
+                    bioBtn.disabled = true;
+                } else {
+                    if (window.Toast) window.Toast.show(result.message || 'Gagal mendaftarkan biometrik.', 'error');
+                }
+            } catch (err) {
+                if (window.Toast) window.Toast.show('Terjadi kesalahan pada biometrik.', 'error');
+            } finally {
+                if (window.AppLoader) window.AppLoader.hide();
+            }
+        });
+    }
 })();
 
 

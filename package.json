@@ -8,7 +8,9 @@
   "dependencies": {
     "@vercel/blob": "^2.3.0",
     "pg": "^8.11.3",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "@simplewebauthn/server": "^9.0.3",
+    "qrcode": "^1.5.3"
   },
   "overrides": {
     "bn.js": "^5.2.3"

@@ -181,6 +181,42 @@
       showError(flash, 'success');
       if (window.Toast) Toast.show(flash, 'info');
     }
+
+    // --- Biometric Login Support (Point 4) ---
+    const bioBtn = qs('biometric-login-btn');
+    if (bioBtn && window.WebAuthnClient) {
+        window.WebAuthnClient.isSupported().then(supported => {
+            if (supported) bioBtn.hidden = false;
+        });
+
+        bioBtn.addEventListener('click', async () => {
+            const usernameInput = qs('username');
+            const username = String(usernameInput?.value || '').trim().toLowerCase();
+            
+            if (!username) {
+                setFieldError('username', 'Masukkan username dulu sebelum login biometrik.');
+                focusField('username');
+                return;
+            }
+
+            try {
+                if (window.AppLoader) window.AppLoader.show('Verifikasi Biometrik...');
+                const result = await window.WebAuthnClient.login(username);
+                if (result.status === 'success') {
+                    const token = result.user?.session || ''; // Handled by cookie too
+                    storeSession(token, username, true);
+                    if (window.Toast) window.Toast.show('Berhasil masuk via biometrik.', 'success');
+                    window.location.href = 'quiz-gamified.html';
+                } else {
+                    showError(result.message || 'Gagal login biometrik.');
+                }
+            } catch (err) {
+                showError('Biometrik gagal atau dibatalkan.');
+            } finally {
+                if (window.AppLoader) window.AppLoader.hide();
+            }
+        });
+    }
   });
 
   async function autoSubscribePush(token) {

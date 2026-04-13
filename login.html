@@ -41,6 +41,10 @@
                     </label>
                 </div>
                 <button type="submit" class="btn-login" id="login-submit-btn">Masuk</button>
+                <div class="divider"><span>atau</span></div>
+                <button type="button" class="btn-biometric" id="biometric-login-btn" hidden>
+                    <i class="fas fa-fingerprint"></i> Masuk dengan Passkey
+                </button>
                 <p id="error-message" class="form-message error" role="alert" aria-live="polite" hidden></p>
                 <small class="input-hint">Lupa password? Hubungi admin untuk reset akun.</small>
             </form>
@@ -53,7 +57,9 @@
     <script src="/app/js/core/toast.js" defer></script>
     <script src="scripts/navguard.js" defer></script>
     <script src="scripts/auth-ui.js?v=3" defer></script>
-    <script src="scripts/login.js?v=4" defer></script>    <script src="/app/js/core/profile.js" defer></script>
+    <script src="scripts/login.js?v=4" defer></script>
+    <script src="/app/js/features/auth/webauthn-client.js" defer></script>
+    <script src="/app/js/core/profile.js" defer></script>
 </body>
 </html>
 

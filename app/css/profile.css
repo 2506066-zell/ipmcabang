@@ -434,3 +434,186 @@ body.page-profile {
     font-size: 0.85rem;
     color: #94a3b8;
 }
+/* --- Digital Membership Card (Point 4) --- */
+.profile-digital-card-container {
+    margin: 12px 0;
+    perspective: 1000px;
+}
+
+.digital-membership-card {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+    border-radius: 16px;
+    padding: 20px;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(6, 78, 59, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.digital-membership-card:hover {
+    transform: translateY(-5px) rotateX(2deg) rotateY(-2deg);
+}
+
+.card-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    animation: cardGlowMove 10s infinite linear;
+}
+
+@keyframes cardGlowMove {
+    0% { transform: translate(-10%, -10%); }
+    50% { transform: translate(10%, 10%); }
+    100% { transform: translate(-10%, -10%); }
+}
+
+.card-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.card-brand img {
+    height: 24px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.card-brand span {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    opacity: 0.9;
+}
+
+.card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.card-user-info {
+    flex: 1;
+}
+
+.card-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+}
+
+.card-pimpinan {
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.8;
+    text-transform: uppercase;
+}
+
+.card-role {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    margin-top: 12px;
+    backdrop-filter: blur(4px);
+}
+
+.card-qr-section {
+    background: #ffffff;
+    padding: 6px;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.card-qr-code img {
+    display: block;
+}
+
+.card-footer {
+    margin-top: 20px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    opacity: 0.4;
+    text-align: center;
+}
+
+/* --- Biometric Section --- */
+.profile-biometric-section {
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 15px;
+    border: 1px dashed #cbd5e1;
+}
+
+.biometric-info strong {
+    display: block;
+    font-size: 0.85rem;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+.biometric-info p {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+.btn-biometric, .profile-btn.secondary {
+    width: 100%;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.btn-biometric:hover, .profile-btn.secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.btn-biometric i {
+    color: #1d8d27;
+}
+
+/* Auth Pages Polish */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.divider span {
+    padding: 0 10px;
+}
