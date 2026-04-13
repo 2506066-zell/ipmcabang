@@ -677,6 +677,10 @@
 .roster-time { font-size: 0.75rem; color: var(--att-muted); font-weight: 500; }
 
 /* Attendee Drawer (Bottom Sheet) */
+.attendance-drawer-overlay[hidden] {
+    display: none !important;
+}
+
 .attendance-drawer-overlay {
     position: fixed;
     inset: 0;
