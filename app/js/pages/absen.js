@@ -262,10 +262,11 @@
         setText('attendance-summary-status', String(summary?.activity_status || 'pasif').toUpperCase());
     }
 
-    function renderMemberOptions() {
+    function renderMemberOptions(isFirstLoad = false) {
         if (!els.memberField || !els.memberSelect || !els.memberMeta) return;
         const isCabangRoom = currentIdentityMode() === 'org_member_select';
         els.memberField.hidden = !isCabangRoom;
+        
         if (!isCabangRoom) {
             els.memberSelect.innerHTML = '<option value="">Pilih nama dari struktur organisasi</option>';
             els.memberMeta.textContent = 'Room ini memakai identitas akun login, jadi pilihan nama organisasi tidak dipakai.';
@@ -273,10 +274,17 @@
         }
 
         const options = Array.isArray(state.memberOptions) ? state.memberOptions : [];
-        els.memberSelect.innerHTML = [
-            '<option value="">Pilih nama dari struktur organisasi</option>',
-            ...options.map((item) => `<option value="${item.id}">${escapeHtml(item.full_name)}</option>`)
-        ].join('');
+        
+        // ONLY populate innerHTML if it's a first load or empty
+        if (isFirstLoad || els.memberSelect.options.length <= 1) {
+            const currentVal = els.memberSelect.value;
+            els.memberSelect.innerHTML = [
+                '<option value="">Pilih nama dari struktur organisasi</option>',
+                ...options.map((item) => `<option value="${item.id}">${escapeHtml(item.full_name)}</option>`)
+            ].join('');
+            if (currentVal) els.memberSelect.value = currentVal;
+        }
+
         const selected = options.find((item) => String(item.id) === String(els.memberSelect.value || ''));
         els.memberMeta.textContent = selected
             ? `${selected.role_title || 'Anggota'}${selected.bidang_name ? ` • ${selected.bidang_name}` : ''}`
@@ -468,18 +476,14 @@
 
     async function loadMemberOptions(roomId) {
         if (!roomId) return;
-        if (currentIdentityMode() !== 'org_member_select') {
-            state.memberOptions = [];
-            renderMemberOptions();
-            return;
-        }
         try {
-            const data = await apiFetch(`/api/attendance?action=memberOptions&room_id=${encodeURIComponent(roomId)}`, { method: 'GET' }, roomId);
+            const data = await apiFetch(`/api/attendance?action=members&room_id=${encodeURIComponent(roomId)}`, { method: 'GET' }, roomId);
             state.memberOptions = Array.isArray(data.members) ? data.members : [];
-            renderMemberOptions();
-        } catch {
+            renderMemberOptions(true); // Pass true to force populate list
+        } catch (error) {
+            console.error('Gagal memuat daftar anggota:', error);
             state.memberOptions = [];
-            renderMemberOptions();
+            renderMemberOptions(true);
         }
     }
 
