@@ -307,12 +307,15 @@
             els.memberMeta.textContent = `${selected.role_title || 'Anggota'}${selected.bidang_name ? ` • ${selected.bidang_name}` : ''}`;
             els.memberMeta.style.color = 'var(--att-muted)';
         } else if (queryText && filtered.length === 0) {
-            els.memberMeta.textContent = `Nama "${filterText}" tidak ditemukan di struktur organisasi.`;
-            els.memberMeta.style.color = '#b42318';
+            els.memberMeta.textContent = `Nama "${filterText}" tidak ditemukan.`;
+            els.memberMeta.style.color = '#ef4444';
+        } else if (options.length === 0) {
+            els.memberMeta.textContent = 'Data kader belum ada di struktur organisasi. Hubungi admin untuk input data.';
+            els.memberMeta.style.color = '#f59e0b'; // Amber warning
         } else {
             els.memberMeta.textContent = queryText 
-                ? `${filtered.length} nama ditemukan. Pilih dari daftar di bawah.`
-                : 'Pilih nama anggota aktif dari struktur organisasi cabang sebelum check-in.';
+                ? `${filtered.length} nama ditemukan.`
+                : 'Pilih nama kader aktif dari struktur organisasi.';
             els.memberMeta.style.color = 'var(--att-muted)';
         }
         updateStepHighlight();
@@ -1083,6 +1086,7 @@
         els.checkinStatus = document.getElementById('attendance-checkin-status');
         els.memberSelect = document.getElementById('attendance-member-select');
         els.memberSearch = document.getElementById('attendance-member-search');
+        els.memberField = document.getElementById('attendance-member-field');
         els.memberMeta = document.getElementById('attendance-member-meta');
         els.openCameraBtn = document.getElementById('attendance-open-camera-btn');
         els.captureCameraBtn = document.getElementById('attendance-capture-camera-btn');
