@@ -90,6 +90,13 @@
         el.style.color = type === 'error' ? '#b42318' : (type === 'success' ? '#0f7b42' : '#526171');
     }
 
+    function redirectToLogin(message) {
+        try {
+            sessionStorage.setItem('ipmquiz_flash', message || 'Silakan login dulu untuk membuka room absensi.');
+        } catch {}
+        window.location.href = '/login.html';
+    }
+
     async function apiFetch(path, init = {}, roomId = 0) {
         const headers = { ...(init.headers || {}) };
         if (state.session) headers.Authorization = `Bearer ${state.session}`;
@@ -131,13 +138,30 @@
     function requireLogin() {
         state.session = getStored(STORAGE.session);
         if (!state.session) {
-            try {
-                sessionStorage.setItem('ipmquiz_flash', 'Silakan login dulu untuk membuka room absensi.');
-            } catch {}
-            window.location.href = '/login.html';
+            redirectToLogin('Silakan login dulu untuk membuka room absensi.');
             return false;
         }
         return true;
+    }
+
+    async function validateSession() {
+        try {
+            const data = await apiFetch('/api/auth?action=me');
+            state.user = data.user || null;
+            updateUserChip();
+            return true;
+        } catch (error) {
+            if (error.status === 401) {
+                clearStoredSession();
+                renderAuthRequired('Sesi login kamu tidak valid atau sudah berakhir.');
+                showToast('Sesi habis. Halaman akan diarahkan ke login.', 'error');
+                setTimeout(() => {
+                    redirectToLogin('Sesi login kamu sudah habis. Silakan masuk lagi.');
+                }, 900);
+                return false;
+            }
+            throw error;
+        }
     }
 
     function updateUserChip() {
@@ -150,6 +174,10 @@
 
     function openCodeModal(roomId, roomName) {
         state.pendingRoomId = Number(roomId) || 0;
+        if (els.codeModal) {
+            els.codeModal.dataset.roomId = String(state.pendingRoomId || '');
+            els.codeModal.dataset.roomName = String(roomName || '');
+        }
         setText('attendance-code-modal-title', `Masukkan kode room ${roomName || ''}`.trim());
         if (els.codeModal) els.codeModal.hidden = false;
         if (els.codeInput) {
@@ -161,7 +189,11 @@
 
     function closeCodeModal() {
         state.pendingRoomId = 0;
-        if (els.codeModal) els.codeModal.hidden = true;
+        if (els.codeModal) {
+            els.codeModal.hidden = true;
+            delete els.codeModal.dataset.roomId;
+            delete els.codeModal.dataset.roomName;
+        }
         setInlineStatus(els.codeStatus, '');
     }
 
@@ -409,7 +441,7 @@
         if (els.refreshBtn) els.refreshBtn.disabled = true;
         try {
             const data = await apiFetch('/api/attendance?action=rooms');
-            state.user = data.user || null;
+            state.user = data.user || state.user || null;
             state.rooms = Array.isArray(data.rooms) ? data.rooms : [];
             updateUserChip();
             renderRooms();
@@ -423,6 +455,9 @@
                 clearStoredSession();
                 renderAuthRequired('Sesi login kamu tidak valid atau sudah kedaluwarsa.');
                 showToast('Silakan login lagi untuk memakai fitur absensi.', 'error');
+                setTimeout(() => {
+                    redirectToLogin('Sesi login kamu sudah habis. Silakan masuk lagi.');
+                }, 900);
                 return;
             }
             showToast(error.message || 'Gagal memuat room absensi', 'error');
@@ -460,7 +495,13 @@
 
     async function handleCodeSubmit(event) {
         event.preventDefault();
-        if (!state.pendingRoomId) return;
+        const roomId = Number(state.pendingRoomId || els.codeModal?.dataset.roomId || 0);
+        if (!roomId) {
+            setInlineStatus(els.codeStatus, 'Room belum terpilih. Tutup modal lalu pilih room lagi.', 'error');
+            showToast('Pilih room dulu sebelum memasukkan kode.', 'error');
+            return;
+        }
+        state.pendingRoomId = roomId;
         if (els.codeSubmit) els.codeSubmit.disabled = true;
         setInlineStatus(els.codeStatus, 'Memverifikasi kode room...');
         try {
@@ -468,13 +509,13 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    room_id: state.pendingRoomId,
+                    room_id: roomId,
                     room_code: String(els.codeInput?.value || '').trim()
                 })
             });
-            setRoomAccess(state.pendingRoomId, data.access_token || '');
+            setRoomAccess(roomId, data.access_token || '');
             closeCodeModal();
-            await loadRooms(state.pendingRoomId);
+            await loadRooms(roomId);
             showToast('Room berhasil dibuka', 'success');
         } catch (error) {
             if (error.status === 401) {
@@ -642,6 +683,11 @@
             els.codeInput.value = String(els.codeInput.value || '').toUpperCase().replace(/\s+/g, '');
         });
         els.codeForm?.addEventListener('submit', handleCodeSubmit);
+        els.codeSubmit?.addEventListener('click', () => {
+            if (!els.codeForm?.reportValidity || els.codeForm.reportValidity()) {
+                setInlineStatus(els.codeStatus, 'Menyiapkan verifikasi room...');
+            }
+        });
         els.createForm?.addEventListener('submit', handleCreateEvent);
         els.checkinForm?.addEventListener('submit', handleCheckIn);
         els.selfieInput?.addEventListener('change', () => {
@@ -668,6 +714,8 @@
         bindEvents();
         state.accessMap = loadRoomAccessMap();
         updateUserChip();
+        const valid = await validateSession();
+        if (!valid) return;
         await loadRooms();
     }
 

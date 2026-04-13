@@ -2,6 +2,7 @@ const { query } = require('./_db');
 const { json, parseJsonBody } = require('./_util');
 const crypto = require('crypto');
 const { hashPassword, verifyPassword } = require('./_password');
+const { getSessionUser } = require('./_auth');
 const { getClientIp, checkRateLimit, setRateLimitHeaders } = require('./_rate_limit');
 
 async function tooManyFailures(username, ip) {
@@ -178,6 +179,22 @@ async function handleGetPimpinanOptions(req, res) {
     return json(res, 200, { status: 'success', options });
 }
 
+async function handleMe(req, res) {
+    if (req.method !== 'GET') return json(res, 405, { status: 'error', message: 'Method not allowed' });
+    const user = await getSessionUser(req);
+    if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+    return json(res, 200, {
+        status: 'success',
+        user: {
+            id: user.id,
+            username: user.username,
+            nama_panjang: user.nama_panjang,
+            pimpinan: user.pimpinan,
+            role: user.role
+        }
+    });
+}
+
 module.exports = async (req, res) => {
     try {
         const action = req.query?.action;
@@ -185,6 +202,7 @@ module.exports = async (req, res) => {
             case 'login': return await handleLogin(req, res);
             case 'register': return await handleRegister(req, res);
             case 'pimpinanOptions': return await handleGetPimpinanOptions(req, res);
+            case 'me': return await handleMe(req, res);
             case 'promoteAdmin': return await handlePromoteAdmin(req, res);
             case 'seedAdmins': return await handleSeedAdmins(req, res);
             default: return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
