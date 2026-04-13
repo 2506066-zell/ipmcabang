@@ -323,26 +323,20 @@
         const detail = state.detail;
         const currentEvent = detail.current_event;
         const canSelfCheckIn = !!detail.permissions?.can_self_check_in;
-        const memberCount = Number(detail.room.member_count || 0);
-
+        
         els.accessStrip.innerHTML = `
-            <article class="attendance-access-card reveal">
-                <span class="attendance-room-label"><i class="fas fa-unlock"></i> Akses Terbuka</span>
-                <strong>${escapeHtml(detail.room.pimpinan)}</strong>
-                <p>Otorisasi room berhasil. Anda memiliki akses penuh ke histori dan kontrol event pimpinan ini.</p>
-            </article>
-            <article class="attendance-access-card reveal ${canSelfCheckIn ? '' : 'is-warning'}">
-                <span class="attendance-room-label"><i class="fas fa-face-smile"></i> Biometrik</span>
-                <strong>${canSelfCheckIn ? 'Selfie Diizinkan' : 'Verifikasi Terkunci'}</strong>
-                <p>${canSelfCheckIn ? 'Pimpinan akun cocok. Anda dapat melakukan absensi mandiri dengan verifikasi wajah/selfie.' : 'Status pimpinan berbeda. Anda hanya dapat memantau room, permintaan hadir harus melalui admin.'}</p>
-            </article>
-            <article class="attendance-access-card reveal ${currentEvent ? '' : 'is-muted'}">
-                <span class="attendance-room-label"><i class="fas fa-bolt"></i> Aktivitas</span>
-                <strong>${currentEvent ? 'Rapat Berlangsung' : 'Room Standby'}</strong>
-                <p>${currentEvent ? `${Number(currentEvent.attendees_count || 0)} kader telah check-in dari total ${memberCount} anggota.` : `Menunggu pimpinan atau moderator membuka event rapat baru hari ini.`}</p>
-            </article>
+            <div class="attendance-status-bar">
+                <span class="status-pill ${canSelfCheckIn ? 'is-success' : 'is-warning'}">
+                    <i class="fas fa-fingerprint"></i> ${canSelfCheckIn ? 'Akses Mandiri' : 'Verifikasi Manual'}
+                </span>
+                <span class="status-pill ${currentEvent ? 'is-active' : 'is-muted'}">
+                    <i class="fas fa-bolt"></i> ${currentEvent ? 'Rapat Aktif' : 'Standby'}
+                </span>
+                <span class="status-pill">
+                    <i class="fas fa-users"></i> ${detail.room.member_count || 0} Kader
+                </span>
+            </div>
         `;
-
     }
 
     function renderHistory(items) {
@@ -398,7 +392,10 @@
                     <div class="history-month-header">${monthKey}</div>
                     <div class="attendance-history-list">
                         ${groupItems.map(item => `
-                            <article class="attendance-history-item ${item.status === 'closed' ? 'inactive' : ''}">
+                            <article class="attendance-history-item clickable ${item.status === 'closed' ? 'inactive' : ''}" 
+                                     data-event-id="${item.id}" 
+                                     data-event-title="${escapeHtml(item.title)}" 
+                                     data-event-date="${escapeHtml(String(item.event_date || '').slice(0, 10))}">
                                 <div class="attendance-history-content">
                                     <div class="attendance-pill" style="margin-bottom: 8px; font-size: 10px; padding: 4px 10px; background: ${item.status === 'active' ? 'var(--att-primary-soft)' : '#f1f5f9'}; color: ${item.status === 'active' ? 'var(--att-primary-light)' : '#64748b'};">
                                         ${item.status === 'active' ? 'AKTIF' : 'DIARSIPKAN'}
@@ -469,49 +466,40 @@
         setText('attendance-event-badge', 'Aktif Hari Ini');
 
         els.currentEventBox.innerHTML = `
-            <article class="attendance-event-card reveal">
-                <div class="attendance-panel-head" style="margin-bottom: 20px;">
-                    <div>
-                        <h4 class="attendance-event-title">${escapeHtml(currentEvent.title)}</h4>
-                        <div class="attendance-event-meta">
-                            <span><i class="fas fa-calendar-alt"></i> ${escapeHtml(String(currentEvent.event_date || '').slice(0, 10))}</span>
-                            <span><i class="fas fa-user-tie"></i> Oleh ${escapeHtml(creator)}</span>
-                        </div>
+            <article class="attendance-event-card">
+                <div class="event-card-main">
+                    <h4 class="event-title">${escapeHtml(currentEvent.title)}</h4>
+                    <div class="event-meta">
+                        <span><i class="fas fa-calendar-day"></i> ${escapeHtml(String(currentEvent.event_date || '').slice(0, 10))}</span>
+                        <span><i class="fas fa-user-circle"></i> ${escapeHtml(creator)}</span>
                     </div>
                 </div>
                 
                 <div class="attendance-event-stats">
-                    <div class="attendance-event-stat">
-                        <strong>${attendeesCount}</strong>
-                        <span>Hadir</span>
+                    <div class="event-stat-item">
+                        <span class="stat-label">Terdaftar</span>
+                        <strong class="stat-value">${attendeesCount}</strong>
                     </div>
-                    <div class="attendance-event-stat">
-                        <strong>${Number(detail.room?.member_count || 0)}</strong>
-                        <span>Kader</span>
+                    <div class="event-stat-item">
+                        <span class="stat-label">Anggota</span>
+                        <strong class="stat-value">${Number(detail.room?.member_count || 0)}</strong>
                     </div>
-                    <div class="attendance-event-stat" style="background: ${myRecord ? 'var(--att-primary)' : '#fff'}">
-                        <strong style="color: ${myRecord ? '#fff' : 'inherit'}">${myRecord ? 'Selesai' : 'Belum'}</strong>
-                        <span style="color: ${myRecord ? 'rgba(255,255,255,0.7)' : 'inherit'}">Status Anda</span>
+                    <div class="event-stat-item ${myRecord ? 'is-highlight' : ''}">
+                        <span class="stat-label">Status</span>
+                        <strong class="stat-value">${myRecord ? 'Hadir' : 'Pasif'}</strong>
                     </div>
                 </div>
                 
-                <p style="margin: 15px 0;">${escapeHtml(currentEvent.description || 'Agenda rapat rutin pimpinan. Pastikan Anda berada di lokasi dan siap melakukan verifikasi wajah.')}</p>
-                
-                ${myRecord ? `
-                    <div class="attendance-pill" style="margin-bottom: 15px; width: 100%; justify-content: center; background: #f0fdf4;">
-                        <i class="fas fa-check-double"></i> Anda Tercatat Hadir (${escapeHtml(myRecord.attendance_status)})
-                    </div>
-                ` : ''}
+                <p class="event-description">${escapeHtml(currentEvent.description || 'Agenda rapat rutin.')}</p>
                 
                 <div class="attendance-roster">
-                    <span class="attendance-summary-label" style="font-size: 0.65rem; margin-bottom: 10px; display: block;">Check-in Terbaru</span>
+                    <div class="roster-head">Check-in Terbaru</div>
                     ${recentAttendees.length ? recentAttendees.map((item) => `
-                        <div class="attendance-roster-item">
-                            <div>
-                                <strong>${escapeHtml(item.attendee_name || item.nama_panjang || item.username)}</strong>
-                                <span style="display: block; font-size: 0.75rem; color: var(--att-muted);">${escapeHtml(item.username ? `@${item.username}` : 'Self verif')}</span>
+                        <div class="roster-item">
+                            <div class="roster-info">
+                                <span class="roster-name">${escapeHtml(item.attendee_name || item.nama_panjang || item.username)}</span>
+                                <span class="roster-time">${escapeHtml(item.check_in_at ? new Date(item.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-')}</span>
                             </div>
-                            <span class="attendance-pill" style="background: #f8fafc; color: var(--att-muted);">${escapeHtml(item.check_in_at ? new Date(item.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-')}</span>
                         </div>
                     `).join('') : '<div class="attendance-empty-state">Belum ada kader yang hadir.</div>'}
                 </div>
@@ -1000,15 +988,25 @@
         const isIdentityDone = isIdentityMode ? !!els.memberSelect?.value : true;
         const isPhotoDone = !!state.selfieFile;
 
-        // Reset all
-        [els.stepIdentity, els.stepPhoto, els.stepSubmit].forEach(s => s.classList.remove('is-active'));
+        // Hide contents by default (Progressive Disclosure)
+        [els.stepIdentity, els.stepPhoto, els.stepSubmit].forEach(s => {
+            s.classList.remove('is-active');
+            const field = s.querySelector('.attendance-field');
+            if (field) field.style.display = 'none';
+        });
 
         if (!isIdentityDone) {
             els.stepIdentity.classList.add('is-active');
+            const f = els.stepIdentity.querySelector('.attendance-field');
+            if (f) f.style.display = 'flex';
         } else if (!isPhotoDone) {
             els.stepPhoto.classList.add('is-active');
+            const f = els.stepPhoto.querySelector('.attendance-field');
+            if (f) f.style.display = 'flex';
         } else {
             els.stepSubmit.classList.add('is-active');
+            const f = els.stepSubmit.querySelector('.attendance-field');
+            if (f) f.style.display = 'flex';
         }
     }
 
@@ -1058,6 +1056,15 @@
         els.historyFilters = document.querySelectorAll('.history-filter-btn');
         els.tabBtns = document.querySelectorAll('.tab-btn');
         els.tabPanels = document.querySelectorAll('.attendance-tab-panel');
+        
+        // Drawer elements
+        els.drawerOverlay = document.getElementById('attendees-drawer-overlay');
+        els.drawer = document.getElementById('attendees-drawer');
+        els.drawerClose = document.getElementById('attendees-drawer-close');
+        els.drawerTitle = document.getElementById('drawer-event-title');
+        els.drawerMeta = document.getElementById('drawer-event-meta');
+        els.drawerContent = document.getElementById('attendees-list-content');
+        
         setCodeModalOpen(false);
     }
 
@@ -1087,8 +1094,23 @@
         els.createForm?.addEventListener('submit', handleCreateEvent);
         els.checkinForm?.addEventListener('submit', handleCheckIn);
         els.historyList?.addEventListener('click', (event) => {
-            const btn = event.target.closest('.action-download');
-            if (btn) handleExportAction(Number(btn.dataset.eventId));
+            const downloadBtn = event.target.closest('.action-download');
+            if (downloadBtn) {
+                handleExportAction(Number(downloadBtn.dataset.eventId));
+                return;
+            }
+            
+            const item = event.target.closest('.attendance-history-item');
+            if (item) {
+                const id = Number(item.dataset.eventId);
+                const title = item.dataset.eventTitle;
+                const meta = item.dataset.eventDate;
+                showAttendeesDrawer(id, title, meta);
+            }
+        });
+        els.drawerClose?.addEventListener('click', closeAttendeesDrawer);
+        els.drawerOverlay?.addEventListener('click', (e) => {
+            if (e.target === els.drawerOverlay) closeAttendeesDrawer();
         });
         els.memberSelect?.addEventListener('change', () => renderMemberOptions(false, els.memberSearch?.value));
         els.memberSearch?.addEventListener('input', (e) => renderMemberOptions(false, e.target.value));
@@ -1129,6 +1151,62 @@
         });
 
         initTabs();
+    }
+
+    async function showAttendeesDrawer(eventId, title, meta) {
+        if (!eventId || !els.drawerOverlay || !els.drawerContent) return;
+        
+        els.drawerTitle.textContent = title || 'Daftar Hadir';
+        els.drawerMeta.textContent = `Event pada ${meta || '--'}`;
+        els.drawerContent.innerHTML = '<div class="attendance-loading">Memuat daftar hadir...</div>';
+        els.drawerOverlay.hidden = false;
+        document.body.style.overflow = 'hidden'; // Lock scroll
+        
+        try {
+            const result = await apiFetch(`/api/attendance?action=exportEvent&event_id=${eventId}`, { method: 'GET' }, state.currentRoomId);
+            if (result.status === 'success' && result.data) {
+                renderAttendeesList(result.data);
+            } else {
+                els.drawerContent.innerHTML = '<div class="attendance-empty-state">Gagal memuat data hadir.</div>';
+            }
+        } catch (error) {
+            els.drawerContent.innerHTML = `<div class="attendance-empty-state">${error.message || 'Error memuat data.'}</div>`;
+        }
+    }
+
+    function renderAttendeesList(data) {
+        if (!els.drawerContent) return;
+        if (!data || !data.length) {
+            els.drawerContent.innerHTML = '<div class="attendance-empty-state">Belum ada yang hadir di event ini.</div>';
+            return;
+        }
+
+        els.drawerContent.innerHTML = `
+            <div class="attendee-stats-ribbon">
+                <strong>${data.length}</strong> <span>Kader Hadir</span>
+            </div>
+            <div class="attendee-list-grid">
+                ${data.map(item => `
+                    <div class="attendee-list-item">
+                        <div class="attendee-avatar">
+                            ${(item.nama || item.username || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div class="attendee-info">
+                            <div class="attendee-name">${escapeHtml(item.nama || item.username)}</div>
+                            <div class="attendee-role">${escapeHtml(item.jabatan || 'Anggota')} • ${escapeHtml(item.bidang || 'Pimpinan')}</div>
+                        </div>
+                        <div class="attendee-time">
+                            ${escapeHtml(item.waktu_absen || '--:--')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function closeAttendeesDrawer() {
+        if (els.drawerOverlay) els.drawerOverlay.hidden = true;
+        document.body.style.overflow = '';
     }
 
     function initTabs() {

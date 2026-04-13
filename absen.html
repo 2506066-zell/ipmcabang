@@ -120,25 +120,13 @@
                     </button>
                 </div>
 
-                <div class="attendance-access-strip" id="attendance-access-strip"></div>
+                <div class="attendance-status-container" id="attendance-access-strip"></div>
 
-                <div class="attendance-summary-grid reveal" id="attendance-summary-grid">
-                    <article class="attendance-summary-card">
-                        <span class="attendance-summary-label">Total Event</span>
-                        <div class="stat-value"><strong id="attendance-summary-total">0</strong></div>
-                    </article>
-                    <article class="attendance-summary-card">
-                        <span class="attendance-summary-label">Kehadiran</span>
-                        <div class="stat-value"><strong id="attendance-summary-hadir">0</strong></div>
-                    </article>
-                    <article class="attendance-summary-card">
-                        <span class="attendance-summary-label">Persentase</span>
-                        <div class="stat-value"><strong id="attendance-summary-percent">0%</strong></div>
-                    </article>
-                    <article class="attendance-summary-card highlight">
-                        <span class="attendance-summary-label">Status Anggota</span>
-                        <div class="stat-value"><strong id="attendance-summary-status">MEMUAT</strong></div>
-                    </article>
+                <div class="attendance-mini-stats" id="attendance-summary-grid">
+                    <span class="mini-stat"><b>Events:</b> <i id="attendance-summary-total">0</i></span>
+                    <span class="mini-stat"><b>Hadir:</b> <i id="attendance-summary-hadir">0</i></span>
+                    <span class="mini-stat"><b>Ratio:</b> <i id="attendance-summary-percent">0%</i></span>
+                    <span class="mini-stat highlight"><b>Status:</b> <i id="attendance-summary-status">...</i></span>
                 </div>
 
 
@@ -333,6 +321,25 @@
                 </button>
                 <p class="attendance-inline-status" id="attendance-code-status"></p>
             </form>
+        </div>
+    </div>
+
+    <!-- Attendee List Drawer (Bottom Sheet) -->
+    <div class="attendance-drawer-overlay" id="attendees-drawer-overlay" hidden>
+        <div class="attendance-drawer" id="attendees-drawer">
+            <div class="drawer-handler"></div>
+            <div class="drawer-header">
+                <div class="drawer-title-group">
+                    <h3 id="drawer-event-title">Daftar Hadir</h3>
+                    <p id="drawer-event-meta">--</p>
+                </div>
+                <button type="button" class="drawer-close" id="attendees-drawer-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="drawer-body">
+                <div id="attendees-list-content"></div>
+            </div>
         </div>
     </div>
 
