@@ -1078,7 +1078,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       if (action === 'rooms') return await handleRooms(req, res);
       if (action === 'roomDetail') return await handleRoomDetail(req, res);
-      if (action === 'memberOptions') return await handleMemberOptions(req, res);
+      if (action === 'memberOptions' || action === 'members') return await handleMemberOptions(req, res);
       if (action === 'mySummary') return await handleMySummary(req, res);
       if (action === 'adminOverview') return await handleAdminOverview(req, res);
       if (action === 'adminEventDetail') return await handleAdminEventDetail(req, res);
