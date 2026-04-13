@@ -152,166 +152,6 @@ body.app-entering .bottom-nav {
         animation: none !important;
     }
 
-    .loading-overlay,
-    .loading-content,
-    .mobile-header,
-    .main-content,
-/* ==================== Loading Overlay ==================== */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 20% 15%, rgba(230, 244, 233, 0.9) 0%, rgba(248, 251, 249, 0.95) 46%, rgba(255, 255, 255, 0.98) 100%);
-    backdrop-filter: blur(10px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.36s ease, visibility 0.36s ease;
-}
-
-.loading-overlay.show {
-    opacity: 1;
-    visibility: visible;
-}
-
-.loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    padding: 12px;
-    transform: translateY(0) scale(1);
-    opacity: 1;
-    transition: transform 0.34s ease, opacity 0.34s ease;
-}
-
-.loading-logo {
-    height: 58px;
-    width: auto;
-    max-width: 62px;
-    object-fit: contain;
-    image-rendering: -webkit-optimize-contrast;
-    filter: drop-shadow(0 6px 14px rgba(15, 118, 82, 0.2));
-    animation: logoFloat 1.9s ease-in-out infinite;
-}
-
-#loading-text {
-    font-size: 0.93rem;
-    font-weight: 700;
-    letter-spacing: 0.045em;
-    color: #1f2937;
-    text-transform: uppercase;
-    opacity: 0.92;
-}
-
-@keyframes logoFloat {
-    0% {
-        transform: translateY(0) scale(1);
-    }
-
-    50% {
-        transform: translateY(-4px) scale(1.035);
-    }
-
-    100% {
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* --- Scanner Effect (Premium Loader) --- */
-.scanner-container {
-    position: relative;
-    width: 94px;
-    height: 94px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.scanner-container::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 1px solid rgba(22, 101, 52, 0.2);
-    box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.56), 0 10px 24px rgba(16, 185, 129, 0.12);
-    animation: pulseRing 1.9s ease-in-out infinite;
-}
-
-.scanner {
-    position: absolute;
-    top: 8px;
-    left: 7px;
-    width: calc(100% - 14px);
-    height: 3px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, transparent, rgba(22, 101, 52, 0.2), rgba(22, 101, 52, 0.95), rgba(22, 101, 52, 0.2), transparent);
-    box-shadow: 0 0 14px rgba(22, 101, 52, 0.55);
-    animation: scan 1.6s ease-in-out infinite;
-    z-index: 2;
-}
-
-@keyframes scan {
-
-    0%,
-    100% {
-        top: 8px;
-        opacity: 0;
-    }
-
-    50% {
-        top: calc(100% - 11px);
-        opacity: 1;
-    }
-}
-
-@keyframes pulseRing {
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 0.72;
-    }
-    50% {
-        transform: scale(1.04);
-        opacity: 0.95;
-    }
-}
-
-.loading-overlay.boot-leave .loading-content {
-    transform: translateY(-8px) scale(0.985);
-    opacity: 0;
-}
-
-.mobile-header,
-.main-content,
-.public-footer,
-.bottom-nav {
-    transition: opacity 0.44s cubic-bezier(0.22, 1, 0.36, 1), transform 0.44s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-body.app-entering .mobile-header,
-body.app-entering .main-content,
-body.app-entering .public-footer,
-body.app-entering .bottom-nav {
-    opacity: 0;
-    transform: translateY(10px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .loading-logo,
-    .scanner,
-    .scanner-container::before {
-        animation: none !important;
-    }
-
-    .loading-overlay,
-    .loading-content,
     .mobile-header,
     .main-content,
     .public-footer,
@@ -903,10 +743,11 @@ main {
 }
 
 .hero-logo {
-    width: 140px;
+    width: 100px;
     height: auto;
-    margin: 0 auto 32px;
-    opacity: 0.9;
+    margin: 0 auto 24px;
+    opacity: 0.95;
+    filter: drop-shadow(0 8px 24px rgba(15, 118, 82, 0.15));
 }
 
 .hero-title {
@@ -918,14 +759,6 @@ main {
     letter-spacing: -0.04em;
 }
 
-.hero-tagline {
-    color: var(--em-primary);
-    font-size: var(--text-base);
-    font-weight: 700;
-    margin-bottom: 16px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
 
 .hero-subtitle {
     color: var(--slate-400);
