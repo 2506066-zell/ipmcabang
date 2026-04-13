@@ -262,7 +262,7 @@
         setText('attendance-summary-status', String(summary?.activity_status || 'pasif').toUpperCase());
     }
 
-    function renderMemberOptions(isFirstLoad = false) {
+    function renderMemberOptions(isFirstLoad = false, filterText = '') {
         if (!els.memberField || !els.memberSelect || !els.memberMeta) return;
         const isCabangRoom = currentIdentityMode() === 'org_member_select';
         els.memberField.hidden = !isCabangRoom;
@@ -270,25 +270,52 @@
         if (!isCabangRoom) {
             els.memberSelect.innerHTML = '<option value="">Pilih nama dari struktur organisasi</option>';
             els.memberMeta.textContent = 'Room ini memakai identitas akun login, jadi pilihan nama organisasi tidak dipakai.';
+            updateStepHighlight();
             return;
         }
 
+        const queryText = String(filterText || '').toLowerCase().trim();
         const options = Array.isArray(state.memberOptions) ? state.memberOptions : [];
         
-        // ONLY populate innerHTML if it's a first load or empty
-        if (isFirstLoad || els.memberSelect.options.length <= 1) {
-            const currentVal = els.memberSelect.value;
+        let filtered = options;
+        if (queryText) {
+            filtered = options.filter(item => 
+                String(item.full_name || '').toLowerCase().includes(queryText) ||
+                String(item.role_title || '').toLowerCase().includes(queryText) ||
+                String(item.bidang_name || '').toLowerCase().includes(queryText)
+            );
+        }
+
+        // ONLY populate innerHTML if it's a first load, search changed, or empty
+        const currentVal = els.memberSelect.value;
+        const shouldRepopulate = isFirstLoad || !!queryText || els.memberSelect.options.length <= 1;
+
+        if (shouldRepopulate) {
             els.memberSelect.innerHTML = [
                 '<option value="">Pilih nama dari struktur organisasi</option>',
-                ...options.map((item) => `<option value="${item.id}">${escapeHtml(item.full_name)}</option>`)
+                ...filtered.map((item) => `<option value="${item.id}">${escapeHtml(item.full_name)}</option>`)
             ].join('');
-            if (currentVal) els.memberSelect.value = currentVal;
+            
+            // Try to restore previous value if it's still in the filtered list
+            if (currentVal && filtered.some(item => String(item.id) === String(currentVal))) {
+                els.memberSelect.value = currentVal;
+            }
         }
 
         const selected = options.find((item) => String(item.id) === String(els.memberSelect.value || ''));
-        els.memberMeta.textContent = selected
-            ? `${selected.role_title || 'Anggota'}${selected.bidang_name ? ` • ${selected.bidang_name}` : ''}`
-            : 'Pilih nama anggota aktif dari struktur organisasi cabang sebelum check-in.';
+        if (selected) {
+            els.memberMeta.textContent = `${selected.role_title || 'Anggota'}${selected.bidang_name ? ` • ${selected.bidang_name}` : ''}`;
+            els.memberMeta.style.color = 'var(--att-muted)';
+        } else if (queryText && filtered.length === 0) {
+            els.memberMeta.textContent = `Nama "${filterText}" tidak ditemukan di struktur organisasi.`;
+            els.memberMeta.style.color = '#b42318';
+        } else {
+            els.memberMeta.textContent = queryText 
+                ? `${filtered.length} nama ditemukan. Pilih dari daftar di bawah.`
+                : 'Pilih nama anggota aktif dari struktur organisasi cabang sebelum check-in.';
+            els.memberMeta.style.color = 'var(--att-muted)';
+        }
+        updateStepHighlight();
     }
 
     function renderAccessStrip() {
@@ -320,22 +347,79 @@
 
     function renderHistory(items) {
         if (!els.historyList) return;
-        if (!Array.isArray(items) || !items.length) {
-            els.historyList.innerHTML = '<div class="attendance-empty-state">Belum ada riwayat event untuk room ini.</div>';
+        if (!Array.isArray(items)) return;
+
+        // Store original to state if not yet stored
+        if (items !== state.originalHistory) {
+            state.originalHistory = items;
+            state.historySearch = '';
+            state.historyFilter = 'all';
+            if (els.historySearch) els.historySearch.value = '';
+            els.historyFilters?.forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+        }
+
+        // Apply Filtering
+        let filtered = [...items];
+        if (state.historySearch) {
+            const query = state.historySearch.toLowerCase();
+            filtered = filtered.filter(it => 
+                (it.title || '').toLowerCase().includes(query) || 
+                (it.event_date || '').includes(query)
+            );
+        }
+        if (state.historyFilter && state.historyFilter !== 'all') {
+            filtered = filtered.filter(it => it.status === state.historyFilter);
+        }
+
+        if (!filtered.length) {
+            els.historyList.innerHTML = '<div class="attendance-empty-state">Tidak ada riwayat yang sesuai dengan pencarian Anda.</div>';
             return;
         }
 
-        els.historyList.innerHTML = items.map((item) => `
-            <article class="attendance-history-item">
-                <h4 class="attendance-history-title">${escapeHtml(item.title)}</h4>
-                <div class="attendance-history-meta">
-                    <span><i class="fas fa-calendar-day"></i> ${escapeHtml(String(item.event_date || '').slice(0, 10))}</span>
-                    <span><i class="fas fa-user-check"></i> ${Number(item.hadir_count || 0)} hadir</span>
-                    <span><i class="fas fa-file-signature"></i> ${Number(item.submitted_count || 0)} data masuk</span>
+        // Chronological Sorting (Ensure Newest First)
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        // Group by Month & Year
+        const groups = {};
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        
+        filtered.forEach(item => {
+            const date = new Date(item.event_date);
+            const key = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(item);
+        });
+
+        // Generate HTML with Group Headers
+        let html = '';
+        for (const [monthKey, groupItems] of Object.entries(groups)) {
+            html += `
+                <div class="history-month-group">
+                    <div class="history-month-header">${monthKey}</div>
+                    <div class="attendance-history-list">
+                        ${groupItems.map(item => `
+                            <article class="attendance-history-item ${item.status === 'closed' ? 'inactive' : ''}">
+                                <div class="attendance-history-content">
+                                    <div class="attendance-pill" style="margin-bottom: 8px; font-size: 10px; padding: 4px 10px; background: ${item.status === 'active' ? 'var(--att-primary-soft)' : '#f1f5f9'}; color: ${item.status === 'active' ? 'var(--att-primary-light)' : '#64748b'};">
+                                        ${item.status === 'active' ? 'AKTIF' : 'DIARSIPKAN'}
+                                    </div>
+                                    <h4 class="attendance-history-title">${escapeHtml(item.title)}</h4>
+                                    <div class="attendance-history-meta">
+                                        <span><i class="fas fa-calendar-day"></i> ${escapeHtml(String(item.event_date || '').slice(0, 10))}</span>
+                                        <span><i class="fas fa-users"></i> ${Number(item.hadir_count || 0)} Hadir</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="attendance-icon-btn action-download" data-event-id="${item.id}" title="Ekspor CSV">
+                                    <i class="fas fa-file-csv"></i>
+                                    <span>Ekspor</span>
+                                </button>
+                            </article>
+                        `).join('')}
+                    </div>
                 </div>
-                <p>${escapeHtml(item.status === 'closed' ? 'Event sudah ditutup dan masuk histori evaluasi.' : 'Event ini masih aktif hari ini.')}</p>
-            </article>
-        `).join('');
+            `;
+        }
+        els.historyList.innerHTML = html;
     }
 
     function renderCreateFormState(currentEvent) {
@@ -650,11 +734,13 @@
         if (!file) {
             els.selfiePreview.hidden = true;
             els.selfieImage.src = '';
+            updateStepHighlight();
             return;
         }
         const objectUrl = URL.createObjectURL(file);
         els.selfieImage.src = objectUrl;
         els.selfiePreview.hidden = false;
+        updateStepHighlight();
     }
 
     function stopCamera() {
@@ -669,6 +755,7 @@
             els.cameraVideo.hidden = true;
             els.cameraVideo.classList.remove('is-active');
         }
+        if (els.cameraGuide) els.cameraGuide.hidden = true;
         if (els.captureCameraBtn) els.captureCameraBtn.hidden = true;
     }
 
@@ -720,6 +807,7 @@
                 if (els.cameraOverlay) els.cameraOverlay.style.display = 'none';
                 if (els.secureWarning) els.secureWarning.style.display = 'none';
                 if (els.cameraErrorMessage) els.cameraErrorMessage.style.display = 'none';
+                if (els.cameraGuide) els.cameraGuide.hidden = false;
                 
                 await new Promise((resolve) => {
                     els.cameraVideo.onloadedmetadata = () => resolve();
@@ -856,16 +944,19 @@
         }
         const selectedMemberId = Number(els.memberSelect?.value || 0);
         if (identityMode === 'org_member_select' && !selectedMemberId) {
-            setInlineStatus(els.checkinStatus, 'Pilih nama anggota organisasi dulu sebelum absensi.', 'error');
+            setInlineStatus(els.checkinStatus, 'Pilih nama kamu dulu (Langkah 1)', 'error');
+            showToast('Pilih nama di Langkah 1', 'error');
             return;
         }
         if (!state.selfieFile) {
-            setInlineStatus(els.checkinStatus, 'Selfie wajib diambil dari kamera sebelum kirim absensi.', 'error');
+            setInlineStatus(els.checkinStatus, 'Ambil foto selfie dulu (Langkah 2)', 'error');
+            showToast('Ambil foto di Langkah 2', 'error');
             return;
         }
 
         if (els.checkinBtn) els.checkinBtn.disabled = true;
-        setInlineStatus(els.checkinStatus, 'Mengunggah selfie dan menyimpan absensi...');
+        setInlineStatus(els.checkinStatus, 'Mengunggah selfie dan memverifikasi...');
+        
         try {
             const photoUrl = await uploadSelfie(state.selfieFile);
             await apiFetch('/api/attendance?action=checkIn', {
@@ -877,21 +968,47 @@
                     org_member_id: identityMode === 'org_member_select' ? selectedMemberId : null
                 })
             }, Number(state.currentRoomId));
-            if (els.checkinForm) els.checkinForm.reset();
-            updateSelfiePreview(null);
-            if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
-            showToast('Absensi berhasil direkam', 'success');
+
+            // SUCCESS STATE
+            stopCamera();
+            if (els.successOverlay) {
+                els.successOverlay.hidden = false;
+                els.successOverlay.classList.add('reveal');
+            }
+            showToast('Absensi Berhasil!', 'success');
+            
             await loadRooms(state.currentRoomId);
         } catch (error) {
             if (error.status === 401) {
                 clearStoredSession();
                 renderAuthRequired('Sesi login kamu habis saat mengirim absensi.');
-                showToast('Login ulang dulu untuk mengirim absensi.', 'error');
+                showToast('Login ulang dulu untuk melanjutkan.', 'error');
                 return;
             }
-            setInlineStatus(els.checkinStatus, error.message || 'Gagal mengirim absensi.', 'error');
+            setInlineStatus(els.checkinStatus, error.message || 'Gagal mengirim absensi. Coba lagi.', 'error');
+            showToast(error.message || 'Gagal mengirim absensi', 'error');
         } finally {
             if (els.checkinBtn) els.checkinBtn.disabled = false;
+        }
+    }
+
+    // Step Highlighting Logic
+    function updateStepHighlight() {
+        if (!els.stepIdentity || !els.stepPhoto || !els.stepSubmit) return;
+        
+        const isIdentityMode = currentIdentityMode() === 'org_member_select';
+        const isIdentityDone = isIdentityMode ? !!els.memberSelect?.value : true;
+        const isPhotoDone = !!state.selfieFile;
+
+        // Reset all
+        [els.stepIdentity, els.stepPhoto, els.stepSubmit].forEach(s => s.classList.remove('is-active'));
+
+        if (!isIdentityDone) {
+            els.stepIdentity.classList.add('is-active');
+        } else if (!isPhotoDone) {
+            els.stepPhoto.classList.add('is-active');
+        } else {
+            els.stepSubmit.classList.add('is-active');
         }
     }
 
@@ -917,8 +1034,8 @@
         els.checkinForm = document.getElementById('attendance-checkin-form');
         els.checkinBtn = document.getElementById('attendance-checkin-btn');
         els.checkinStatus = document.getElementById('attendance-checkin-status');
-        els.memberField = document.getElementById('attendance-member-field');
         els.memberSelect = document.getElementById('attendance-member-select');
+        els.memberSearch = document.getElementById('attendance-member-search');
         els.memberMeta = document.getElementById('attendance-member-meta');
         els.openCameraBtn = document.getElementById('attendance-open-camera-btn');
         els.captureCameraBtn = document.getElementById('attendance-capture-camera-btn');
@@ -932,6 +1049,13 @@
         els.cameraSelect = document.getElementById('attendance-camera-select');
         els.selfiePreview = document.getElementById('attendance-selfie-preview');
         els.selfieImage = document.getElementById('attendance-selfie-image');
+        els.cameraGuide = document.getElementById('attendance-camera-guide');
+        els.successOverlay = document.getElementById('attendance-success-overlay');
+        els.stepIdentity = document.getElementById('step-identity');
+        els.stepPhoto = document.getElementById('step-photo');
+        els.stepSubmit = document.getElementById('step-submit');
+        els.historySearch = document.getElementById('history-search-input');
+        els.historyFilters = document.querySelectorAll('.history-filter-btn');
         setCodeModalOpen(false);
     }
 
@@ -960,7 +1084,12 @@
         });
         els.createForm?.addEventListener('submit', handleCreateEvent);
         els.checkinForm?.addEventListener('submit', handleCheckIn);
-        els.memberSelect?.addEventListener('change', renderMemberOptions);
+        els.historyList?.addEventListener('click', (event) => {
+            const btn = event.target.closest('.action-download');
+            if (btn) handleExportAction(Number(btn.dataset.eventId));
+        });
+        els.memberSelect?.addEventListener('change', () => renderMemberOptions(false, els.memberSearch?.value));
+        els.memberSearch?.addEventListener('input', (e) => renderMemberOptions(false, e.target.value));
         els.openCameraBtn?.addEventListener('click', openCamera);
         els.captureCameraBtn?.addEventListener('click', captureSelfie);
         els.retakeCameraBtn?.addEventListener('click', openCamera);
@@ -977,9 +1106,87 @@
             }
             openCodeModal(roomId, roomName);
         });
+
+        // History Filters
+        els.historySearch?.addEventListener('input', (e) => {
+            state.historySearch = e.target.value;
+            renderHistory(state.originalHistory);
+        });
+
+        els.historyFilters?.forEach(btn => {
+            btn.addEventListener('click', () => {
+                els.historyFilters.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.historyFilter = btn.dataset.filter;
+                renderHistory(state.originalHistory);
+            });
+        });
+
         window.addEventListener('beforeunload', () => {
             stopCamera();
         });
+    }
+
+    async function handleExportAction(eventId) {
+        if (!eventId) return;
+        const room = state.detail?.room;
+        if (window.AppLoader) window.AppLoader.show('Menyiapkan laporan...');
+        try {
+            const result = await apiFetch(`/api/attendance?action=exportEvent&event_id=${eventId}`, { method: 'GET' }, state.currentRoomId);
+            if (result.status === 'success' && result.data) {
+                const csv = convertToCSV(result.data, result.event);
+                const filename = `Absensi_${result.event.pimpinan || 'PCIPM'}_${result.event.title.replace(/\s+/g, '_')}_${result.event.date}.csv`;
+                downloadFile(csv, filename, 'text/csv;charset=utf-8;');
+                showToast('Laporan berhasil diunduh', 'success');
+            }
+        } catch (error) {
+            showToast('Gagal mengunduh laporan: ' + error.message, 'error');
+        } finally {
+            if (window.AppLoader) window.AppLoader.hide();
+        }
+    }
+
+    function convertToCSV(data, eventInfo) {
+        if (!data || !data.length) return '';
+        const headers = ['No', 'Nama', 'Jabatan', 'Bidang', 'Status Kehadiran', 'Waktu Masuk', 'Sumber Data', 'URL Foto Selfie', 'Catatan'];
+        
+        const metadata = [
+            [`LAPORAN ABSENSI DIGITAL - PC IPM PANAWUAN`],
+            [`Pimpinan: ${eventInfo.pimpinan || '-'}`],
+            [`Agenda: ${eventInfo.title || '-'}`],
+            [`Tanggal: ${eventInfo.date || '-'}`],
+            [''],
+            headers
+        ];
+
+        const rows = data.map((item, index) => [
+            index + 1,
+            item.nama,
+            item.jabatan,
+            item.bidang,
+            item.status,
+            item.waktu_absen,
+            item.sumber,
+            item.foto,
+            item.catatan || '-'
+        ]);
+
+        return metadata.concat(rows).map(row => 
+            row.map(cell => {
+                const text = String(cell || '').replace(/"/g, '""');
+                return `"${text}"`;
+            }).join(',')
+        ).join('\r\n');
+    }
+
+    function downloadFile(content, filename, contentType) {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 100);
     }
 
     async function init() {

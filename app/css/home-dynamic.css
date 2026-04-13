@@ -135,8 +135,19 @@
 }
 
 .section-header { text-align: center; margin-bottom: 60px; }
-.section-title { font-size: 36px; font-weight: 800; color: #1a1a1a; margin-bottom: 12px; letter-spacing: -1px; }
-.section-subtitle { color: #666; font-size: 16px; max-width: 600px; margin: 0 auto; }
+.section-title { 
+    font-size: var(--text-2xl); 
+    font-weight: 800; 
+    color: var(--slate-900); 
+    margin-bottom: 12px; 
+    letter-spacing: -0.04em; 
+}
+.section-subtitle { 
+    color: var(--slate-600); 
+    font-size: var(--text-base); 
+    max-width: 600px; 
+    margin: 0 auto; 
+}
 
 .featured-grid {
     display: grid;
@@ -172,9 +183,9 @@
 /* === PROGRAM HIGHLIGHTS === */
 .program-highlights { padding: 80px 0; background: #ffffff; }
 .highlights-wrapper { display: flex; flex-direction: column; gap: 40px; }
-.highlights-badge { display: inline-block; padding: 6px 14px; background: #e9f5ec; color: #2D7A4A; border-radius: 99px; font-size: 0.8rem; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
-.highlights-title { font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
-.highlights-description { font-size: 1.1rem; color: #64748b; max-width: 600px; }
+.highlights-badge { display: inline-block; padding: 6px 14px; background: #e9f5ec; color: #2D7A4A; border-radius: 99px; font-size: 0.75rem; font-weight: 800; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em; }
+.highlights-title { font-size: var(--text-2xl); font-weight: 800; color: var(--slate-900); margin-bottom: 12px; letter-spacing: -0.05em; }
+.highlights-description { font-size: var(--text-base); color: var(--slate-600); max-width: 600px; line-height: 1.7; }
 
 .highlights-countdown {
     margin-top: 24px;
@@ -219,8 +230,8 @@
 }
 
 .program-countdown-seg { display: flex; align-items: baseline; justify-content: center; gap: 4px; }
-.program-countdown-val { font-size: 1.5rem; font-weight: 800; color: #0f172a; font-family: 'Inter', sans-serif;}
-.program-countdown-unit { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: lowercase; }
+.program-countdown-val { font-size: 1.5rem; font-weight: 800; color: var(--slate-900); }
+.program-countdown-unit { font-size: 0.7rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; }
 
 .program-countdown-sub { font-size: 0.85rem; color: #475569; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;}
 .program-countdown-sub strong { color: #1e293b; font-weight: 600; }

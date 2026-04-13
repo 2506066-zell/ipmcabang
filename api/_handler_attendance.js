@@ -180,7 +180,7 @@ async function syncExpiredEvents() {
         closed_at=COALESCE(closed_at, NOW()),
         updated_at=NOW()
     WHERE status='active'
-      AND event_date < ${todayDate()}
+      AND (created_at < (NOW() - INTERVAL '24 hours') OR event_date < ${todayDate()})
   `;
 }
 
@@ -226,7 +226,7 @@ async function getActiveEventForRoom(roomId) {
     LEFT JOIN users u ON u.id = e.created_by
     WHERE e.room_id=${roomId}
       AND e.status='active'
-      AND e.event_date=${todayDate()}
+      AND e.created_at >= (NOW() - INTERVAL '24 hours')
     ORDER BY e.created_at DESC
     LIMIT 1
   `).rows[0] || null;
@@ -394,7 +394,7 @@ async function handleRooms(req, res) {
     SELECT id, room_id, title, event_date, status, created_at
     FROM attendance_events
     WHERE status='active'
-      AND event_date=${todayDate()}
+      AND created_at >= (NOW() - INTERVAL '24 hours')
   `).rows;
   const accessMap = new Map(accessRows.map((item) => [Number(item.room_id), item]));
   const activeEventMap = new Map(activeEvents.map((item) => [Number(item.room_id), item]));
@@ -635,7 +635,7 @@ async function handleCheckIn(req, res) {
 
   const event = await getEventById(eventId);
   if (!event) return json(res, 404, { status: 'error', message: 'Event tidak ditemukan' });
-  if (cleanString(event.status, 20).toLowerCase() !== 'active' || formatDateInZone(new Date(event.event_date), APP_TIMEZONE) !== todayDate()) {
+  if (cleanString(event.status, 20).toLowerCase() !== 'active' || (new Date() - new Date(event.created_at)) > 24 * 60 * 60 * 1000) {
     return json(res, 409, { status: 'error', message: 'Event tidak sedang aktif untuk absensi mandiri' });
   }
   if (cleanString(user.pimpinan, 80) !== cleanString(event.pimpinan, 80)) {
@@ -905,6 +905,69 @@ async function handleAdminRoomEvents(req, res) {
   }, cacheHeaders(0));
 }
 
+async function handleExportEvent(req, res) {
+  const user = await getSessionUser(req);
+  if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
+
+  const eventId = toNumber(req.query?.event_id);
+  if (!eventId) return json(res, 400, { status: 'error', message: 'event_id wajib diisi' });
+
+  const event = await getEventById(eventId);
+  if (!event) return json(res, 404, { status: 'error', message: 'Event tidak ditemukan' });
+
+  // Safety check: require room access or admin
+  let isAdmin = false;
+  try {
+    await requireAdminAuth(req);
+    isAdmin = true;
+  } catch {}
+
+  if (!isAdmin) {
+    try {
+      await requireRoomAccess(req, user, event.room_id);
+    } catch (e) {
+      return json(res, 403, { status: 'error', message: 'Anda tidak memiliki akses untuk mengekspor data room ini' });
+    }
+  }
+
+  // Reuse AdminEventDetail logic to get participants list
+  const records = (await query`
+    SELECT r.id, r.event_id, r.user_id, r.org_member_id, r.attendee_name_snapshot, r.attendance_status, r.photo_url, r.check_in_at,
+           r.submitted_by_admin, r.note, r.created_at,
+           u.username, u.nama_panjang,
+           m.full_name AS org_member_name,
+           m.role_title AS org_member_role_title,
+           b.name AS org_member_bidang_name
+    FROM attendance_records r
+    LEFT JOIN users u ON u.id = r.user_id
+    LEFT JOIN org_members m ON m.id = r.org_member_id
+    LEFT JOIN org_bidang b ON b.id = m.bidang_id
+    WHERE r.event_id=${event.id}
+    ORDER BY r.check_in_at ASC, r.id ASC
+  `).rows;
+
+  const exportData = records.map(r => ({
+    nama: r.attendee_name_snapshot || r.org_member_name || r.nama_panjang || r.username || '-',
+    jabatan: r.org_member_role_title || '-',
+    bidang: r.org_member_bidang_name || '-',
+    status: r.attendance_status,
+    waktu_absen: r.check_in_at ? new Date(r.check_in_at).toLocaleString('id-ID') : '-',
+    sumber: r.submitted_by_admin ? 'Admin' : 'Mandiri',
+    foto: r.photo_url || '-',
+    catatan: r.note || '-'
+  }));
+
+  return json(res, 200, {
+    status: 'success',
+    event: {
+      title: event.title,
+      date: event.event_date,
+      pimpinan: event.pimpinan
+    },
+    data: exportData
+  });
+}
+
 async function handleUpdateRoomCode(req, res) {
   let admin = null;
   try {
@@ -1083,6 +1146,7 @@ module.exports = async (req, res) => {
       if (action === 'adminOverview') return await handleAdminOverview(req, res);
       if (action === 'adminEventDetail') return await handleAdminEventDetail(req, res);
       if (action === 'adminRoomEvents') return await handleAdminRoomEvents(req, res);
+      if (action === 'exportEvent') return await handleExportEvent(req, res);
       return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
     }
 
