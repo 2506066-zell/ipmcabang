@@ -20,7 +20,8 @@ const routes = {
   'push': require('./_handler_push'),
   'attendance': require('./_handler_attendance'),
   'discussions': require('./_handler_discussions'),
-  'webauthn': require('./_handler_webauthn')
+  'webauthn': require('./_handler_webauthn'),
+  'upload': require('./upload')
 };
 
 module.exports = async (req, res) => {

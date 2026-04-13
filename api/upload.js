@@ -17,6 +17,14 @@ const json = (res, status, data) => {
     res.end(JSON.stringify(data));
 };
 
+async function getBuffer(req) {
+    const chunks = [];
+    for await (const chunk of req) {
+        chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+}
+
 function sanitizeFilename(input) {
     const raw = String(input || 'upload');
     const noPath = raw.replace(/[\\/]/g, '-');
@@ -58,11 +66,6 @@ module.exports = async (req, res) => {
             return json(res, 413, { status: 'error', message: msg, error: msg });
         }
 
-        if (!put || !process.env.BLOB_READ_WRITE_TOKEN) {
-            const msg = 'Storage belum dikonfigurasi.';
-            return json(res, 503, { status: 'error', message: msg, error: msg });
-        }
-
         const filename = sanitizeFilename(headers['x-filename']);
         const contentType = String(headers['content-type'] || 'application/octet-stream');
         if (uploadScope === 'attendance-selfie' && !contentType.startsWith('image/')) {
@@ -70,7 +73,25 @@ module.exports = async (req, res) => {
             return json(res, 400, { status: 'error', message: msg, error: msg });
         }
 
-        // Direct put to Vercel Blob
+        // HYBRID STORAGE LOGIC
+        if (!put || !process.env.BLOB_READ_WRITE_TOKEN) {
+            // FALLBACK: Store as Base64 in database (works because we compressed the image to ~24KB)
+            const buffer = await getBuffer(req);
+            if (buffer.length > maxBytes) {
+                return json(res, 413, { status: 'error', message: 'File terlalu besar untuk database.', error: 'Payload too large' });
+            }
+            const base64 = buffer.toString('base64');
+            const dataUrl = `data:${contentType};base64,${base64}`;
+            
+            console.log(`[Upload] Using Database Fallback for ${uploadScope} (${buffer.length} bytes)`);
+            return json(res, 201, {
+                status: 'success',
+                url: dataUrl,
+                uploaded_by: uploader?.id || null
+            });
+        }
+
+        // PRIMARY: Direct put to Vercel Blob
         const blob = await put(`${folderPrefix}/${Date.now()}-${filename}`, req, {
             access: 'public',
             contentType: contentType,

@@ -18,7 +18,8 @@
         pendingRoomId: 0,
         selfieFile: null,
         selfieStream: null,
-        pollingInterval: null
+        pollingInterval: null,
+        deferredPrompt: null
     };
 
     const els = {};
@@ -959,6 +960,11 @@
             },
             body: file
         });
+
+        if (response.status === 503) {
+            throw new Error('Layanan penyimpanan belum aktif. Hubungi admin untuk konfigurasi Vercel Blob.');
+        }
+
         const data = await response.json().catch(() => ({}));
         if (!response.ok || data.status === 'error' || !data.url) {
             throw new Error(data.message || 'Gagal mengunggah selfie.');
@@ -1110,6 +1116,10 @@
         els.tabBtns = document.querySelectorAll('.tab-btn');
         els.tabPanels = document.querySelectorAll('.attendance-tab-panel');
         
+        // PWA Install
+        els.pwaInstallSection = document.getElementById('pwa-install-section');
+        els.pwaInstallBtn = document.getElementById('pwa-install-btn');
+        
         // Drawer elements
         els.drawerOverlay = document.getElementById('attendees-drawer-overlay');
         els.drawer = document.getElementById('attendees-drawer');
@@ -1201,6 +1211,22 @@
 
         window.addEventListener('beforeunload', () => {
             stopCamera();
+        });
+
+        // PWA Install Logic
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            state.deferredPrompt = e;
+            if (els.pwaInstallSection) els.pwaInstallSection.hidden = false;
+        });
+
+        els.pwaInstallBtn?.addEventListener('click', async () => {
+            if (!state.deferredPrompt) return;
+            state.deferredPrompt.prompt();
+            const { outcome } = await state.deferredPrompt.userChoice;
+            console.log(`[PWA] User response: ${outcome}`);
+            state.deferredPrompt = null;
+            if (els.pwaInstallSection) els.pwaInstallSection.hidden = true;
         });
 
         initTabs();
