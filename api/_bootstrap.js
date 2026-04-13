@@ -340,6 +340,54 @@ async function ensureSchema() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS attendance_rooms (
+    id SERIAL PRIMARY KEY,
+    pimpinan TEXT UNIQUE NOT NULL,
+    room_code TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS attendance_events (
+    id SERIAL PRIMARY KEY,
+    room_id INT NOT NULL REFERENCES attendance_rooms(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    event_date DATE NOT NULL,
+    status TEXT DEFAULT 'active',
+    created_by INT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    closed_at TIMESTAMP
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS attendance_records (
+    id SERIAL PRIMARY KEY,
+    event_id INT NOT NULL REFERENCES attendance_events(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    attendance_status TEXT NOT NULL,
+    photo_url TEXT,
+    check_in_at TIMESTAMP,
+    submitted_by_admin BOOLEAN DEFAULT FALSE,
+    submitted_by INT REFERENCES users(id) ON DELETE SET NULL,
+    note TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (event_id, user_id)
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS attendance_room_sessions (
+    id SERIAL PRIMARY KEY,
+    room_id INT NOT NULL REFERENCES attendance_rooms(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    access_token TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (room_id, user_id)
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -394,6 +442,29 @@ async function ensureSchema() {
   await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'open'`;
   await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP`;
   await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS resolved_by INT`;
+  await query`ALTER TABLE attendance_rooms ADD COLUMN IF NOT EXISTS room_code TEXT`;
+  await query`ALTER TABLE attendance_rooms ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
+  await query`ALTER TABLE attendance_rooms ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_rooms ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_events ADD COLUMN IF NOT EXISTS description TEXT`;
+  await query`ALTER TABLE attendance_events ADD COLUMN IF NOT EXISTS event_date DATE`;
+  await query`ALTER TABLE attendance_events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active'`;
+  await query`ALTER TABLE attendance_events ADD COLUMN IF NOT EXISTS created_by INT`;
+  await query`ALTER TABLE attendance_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_events ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_events ADD COLUMN IF NOT EXISTS closed_at TIMESTAMP`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS attendance_status TEXT`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS photo_url TEXT`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS check_in_at TIMESTAMP`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS submitted_by_admin BOOLEAN DEFAULT FALSE`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS submitted_by INT`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS note TEXT`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS access_token TEXT`;
+  await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP`;
+  await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
 
   await seedOrganizationData();
 
@@ -417,6 +488,11 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_org_bidang_sort ON org_bidang(sort_order, id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_org_members_bidang_sort ON org_members(bidang_id, sort_order, id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_org_programs_bidang_sort ON org_programs(bidang_id, sort_order, id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_attendance_events_room_date ON attendance_events(room_id, event_date DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_attendance_events_status_date ON attendance_events(status, event_date DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_attendance_records_event ON attendance_records(event_id, updated_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_attendance_records_user ON attendance_records(user_id, updated_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_attendance_sessions_user_room ON attendance_room_sessions(user_id, room_id)`;
 }
 
 module.exports = { ensureSchema };

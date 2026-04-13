@@ -413,6 +413,9 @@ export function initOrganization(state, els, api) {
         programForm?.addEventListener('submit', submitProgramForm);
         memberCancelBtn?.addEventListener('click', resetMemberForm);
         programCancelBtn?.addEventListener('click', resetProgramForm);
+        programProgress?.addEventListener('input', () => {
+            if (programProgressVal) programProgressVal.textContent = programProgress.value;
+        });
         bindMemberListActions();
         bindProgramListActions();
     }

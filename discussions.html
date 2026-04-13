@@ -20,14 +20,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" fetchpriority="low">
 </head>
 <body class="safe-area-padding hidden-scroll">
-    <div class="overlay" id="underConstructionOverlay" onclick="closeUnderConstruction(event)">
-        <div class="modal">
-            <h2><i class="fas fa-tools"></i> Sedang dalam Pengembangan</h2>
-            <p>Fitur ini masih dalam tahap pengerjaan. Nantikan pembaruan selanjutnya!</p>
-            <button class="btn-primary" onclick="closeUnderConstruction(event)">Mengerti</button>
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="scanner-container">
+                <picture><img src="/ipm%20(2).png" alt="Loading..." class="loading-logo">
+                </picture>
+                <div class="scanner"></div>
+            </div>
+            <p id="loading-text">Memuat Diskusi...</p>
         </div>
     </div>
-
     <!-- Header Mobile -->
     <header class="mobile-header" id="mobile-header">
         <div class="logo-container">
@@ -60,15 +62,17 @@
 
     <main class="main-content">
         <!-- Forum Header -->
-        <section class="forum-hero">
+        <section class="forum-hero reveal">
             <div class="container">
+
                 <h1 class="forum-title">Forum Tanya Jawab</h1>
                 <p class="forum-subtitle">Tempat berekspresi, berbagi gagasan, dan berdiskusi sesama Kader PC IPM Panawuan.</p>
                 <div class="forum-hero-actions">
                     <button id="btn-new-topic" class="btn-create-topic">
-                        <i class="fas fa-pen"></i> Tulis Topik Baru
+                        <i class="fas fa-plus"></i> Buat Topik Diskusi
                     </button>
                 </div>
+
             </div>
         </section>
 

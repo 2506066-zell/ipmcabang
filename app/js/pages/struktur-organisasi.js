@@ -606,28 +606,37 @@
       const statusText = program.status === 'terlaksana' ? 'Terlaksana' : (program.status === 'rencana' ? 'Rencana' : 'Draft');
       card.className = 'program-card';
       card.style.setProperty('--color-bidang', bidang.color || '#4A7C5D');
+      
       const pBar = `
-        <div style="background:#eee; height:6px; border-radius:3px; margin: 12px 0 4px; overflow:hidden;">
-          <div style="background:var(--color-bidang, #4A7C5D); height:100%; width: ${program.progress_percent}%; transition:width 0.4s ease;"></div>
+        <div class="program-progress-wrapper" style="margin-top: 16px;">
+          <div class="program-progress-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:12px; font-weight:600; color:var(--color-bidang, #4A7C5D);">${program.progress_percent}% Kemajuan</span>
+            <span style="font-size:11px; color:#64748b; font-weight:500;">Target: ${statusText}</span>
+          </div>
+          <div class="program-progress-track" style="background:#e2e8f0; height:8px; border-radius:10px; overflow:hidden; position:relative;">
+            <div class="program-progress-fill" style="background:var(--color-bidang, #4A7C5D); height:100%; width: ${program.progress_percent}%; transition:width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+                <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 2s infinite;"></div>
+            </div>
+          </div>
         </div>
-        <div style="font-size:12px; font-weight:600; color:var(--color-bidang, #4A7C5D); margin-bottom:8px;">${program.progress_percent}% Kemajuan</div>
       `;
+
       card.innerHTML = `
         <div class="program-card-head">
-          <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
-          <span class="program-card-status status-${escapeHtml(program.status)}">${statusText}</span>
+          <div class="program-card-name" style="font-weight:700; font-size:16px; line-height:1.4;">${escapeHtml(program.title || 'Program')}</div>
+          <span class="program-card-status status-${escapeHtml(program.status)}" style="padding: 4px 10px; border-radius: 20px; font-size:11px; font-weight:600; letter-spacing:0.02em;">${statusText}</span>
         </div>
         ${pBar}
-        <div class="program-card-desc">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
-        <div class="program-card-actions" style="display:flex; gap:8px; margin-top:16px;">
-           <button type="button" class="btn btn-secondary btn-sm btn-upvote" data-program-id="${program.id}">
-              <i class="fas fa-thumbs-up"></i> <span class="upvt-count">${program.upvote_count}</span> Dukung
+        <div class="program-card-desc" style="margin-top:12px; font-size:14px; color:#475569; line-height:1.6;">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
+        <div class="program-card-actions" style="display:flex; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid #f1f5f9;">
+           <button type="button" class="btn btn-secondary btn-sm btn-upvote" data-program-id="${program.id}" style="border-radius:12px; background: #fff; border: 1px solid #e2e8f0; font-weight:600;">
+              <i class="fas fa-thumbs-up" style="margin-right:6px;"></i> <span class="upvt-count">${program.upvote_count}</span> <span class="btn-lbl">Dukung</span>
            </button>
-           <button type="button" class="btn btn-secondary btn-sm btn-comment" data-program-id="${program.id}">
-              <i class="fas fa-comments"></i> Ruang Diskusi
+           <button type="button" class="btn btn-secondary btn-sm btn-comment" data-program-id="${program.id}" style="border-radius:12px; background: #fff; border: 1px solid #e2e8f0; font-weight:600;">
+              <i class="fas fa-comments" style="margin-right:6px;"></i> Ruang Diskusi
            </button>
         </div>
-        <div class="program-comment-section hidden mt-16" id="comments-${program.id}" style="background:#f8fafc; border-radius:8px; padding:12px; margin-top:12px;"></div>
+        <div class="program-comment-section hidden" id="comments-${program.id}" style="background:#f8fafc; border-radius:12px; padding:16px; margin-top:16px; border: 1px solid #f1f5f9;"></div>
       `;
       els.programList.appendChild(card);
     });
@@ -829,6 +838,7 @@
                     if (token) authHeaders['Authorization'] = 'Bearer ' + token;
                 } catch(e){}
                 
+                btnUpvote.classList.add('loading');
                 try {
                    const res = await fetch('/api/organization?action=toggleUpvote', {
                       method: 'POST', body: JSON.stringify({program_id: pid}),
@@ -837,12 +847,22 @@
                    const data = await res.json();
                    if (data.status === 'success') {
                       btnUpvote.querySelector('.upvt-count').textContent = data.upvote_count;
-                      if (data.upvoted) btnUpvote.style.color = 'var(--text-accent)';
-                      else btnUpvote.style.color = '';
+                      if (data.upvoted) {
+                          btnUpvote.style.color = '#3b82f6';
+                          btnUpvote.style.borderColor = '#3b82f6';
+                          btnUpvote.style.background = '#eff6ff';
+                          btnUpvote.querySelector('.btn-lbl').textContent = 'Didukung';
+                      } else {
+                          btnUpvote.style.color = '';
+                          btnUpvote.style.borderColor = '';
+                          btnUpvote.style.background = '';
+                          btnUpvote.querySelector('.btn-lbl').textContent = 'Dukung';
+                      }
                    } else {
                       alert(data.message || 'Gagal update dukungan. Pastikan Anda sudah login.');
                    }
                 } catch(err){ alert('Silakan login terlebih dahulu untuk mendukung program.') }
+                btnUpvote.classList.remove('loading');
             }
 
             const btnComment = e.target.closest('.btn-comment');
@@ -851,39 +871,83 @@
                 const cSec = document.getElementById('comments-'+pid);
                 if (cSec.classList.contains('hidden')) {
                     cSec.classList.remove('hidden');
-                    cSec.innerHTML = '<div class="small muted">Memuat diskusi...</div>';
+                    cSec.innerHTML = '<div class="loading-dots" style="padding:10px; text-align:center;"><i class="fas fa-circle-notch fa-spin"></i> Memuat diskusi...</div>';
                     try {
                         const res = await fetch('/api/organization?action=getProgramDetails&program_id='+pid);
                         const data = await res.json();
+                        
+                        // User Context for Moderation
+                        const currentAdmin = sessionStorage.getItem('ipmquiz_admin_username') || localStorage.getItem('ipmquiz_admin_username');
+
                         if (data.status === 'success') {
-                            let html = '<div class="comments-list" style="max-height:220px;overflow-y:auto; padding-right:4px;">';
-                            if (!data.comments || !data.comments.length) html += '<div class="small muted" id="no-cmt-'+pid+'" style="margin-bottom:8px">Belum ada diskusi, yuk mulai!</div>';
-                            else {
+                            let html = '<div class="comments-list" style="max-height:300px; overflow-y:auto; margin-bottom:16px;">';
+                            if (!data.comments || !data.comments.length) {
+                                html += `<div class="empty-comments" id="no-cmt-${pid}" style="text-align:center; padding:20px 0; color:#94a3b8;">
+                                    <i class="fas fa-comments" style="font-size:24px; display:block; margin-bottom:8px; opacity:0.3;"></i>
+                                    <span style="font-size:13px;">Belum ada diskusi. Yuk, berikan masukan atau pertanyaan!</span>
+                                </div>`;
+                            } else {
                                 data.comments.forEach(c => {
-                                    html += `<div style="padding:10px 0; border-bottom:1px solid #e2e8f0"><strong style="font-size:13px; color:#1e293b;">${escapeHtml(c.nama_panjang || c.username)}</strong><div style="font-size:13px; color:#475569; margin-top:4px;">${escapeHtml(c.content)}</div></div>`;
+                                    const isAdminMark = c.role === 'admin' ? '<span style="background:#3b82f6; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:6px;">ADMIN</span>' : '';
+                                    const canDelete = currentAdmin ? `<button class="btn-delete-comment" data-comment-id="${c.id}" style="color:#ef4444; border:none; background:transparent; font-size:11px; cursor:pointer;"><i class="fas fa-trash"></i></button>` : '';
+                                    
+                                    html += `
+                                    <div class="comment-item" style="padding:12px 0; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <div style="flex-grow:1;">
+                                            <div style="display:flex; align-items:center; margin-bottom:4px;">
+                                                <strong style="font-size:13px; color:#1e293b;">${escapeHtml(c.nama_panjang || c.username)}</strong>
+                                                ${isAdminMark}
+                                            </div>
+                                            <div style="font-size:13px; color:#475569; line-height:1.5;">${escapeHtml(c.content)}</div>
+                                        </div>
+                                        ${canDelete}
+                                    </div>`;
                                 });
                             }
                             html += '</div>';
                             html += `
-                              <form class="program-comment-form mt-12" style="display:flex;gap:8px" data-program-id="${pid}">
-                                 <input type="text" class="toolbar-input" placeholder="Tulis ide atau pertanyaan..." required style="flex-grow:1; font-size:13px; padding:8px 12px">
-                                 <button type="submit" class="btn btn-primary btn-sm">Kirim</button>
+                              <form class="program-comment-form" style="display:flex; gap:8px;" data-program-id="${pid}">
+                                 <input type="text" class="comment-input" placeholder="Tulis masukan..." required style="flex-grow:1; font-size:13px; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0; outline:none; transition:border 0.2s;">
+                                 <button type="submit" class="btn btn-primary" style="padding:0 16px; border-radius:10px; font-weight:600;"><i class="fas fa-paper-plane"></i></button>
                               </form>
                             `;
                             cSec.innerHTML = html;
                             
+                            // Bind Moderation Actions
+                            cSec.querySelectorAll('.btn-delete-comment').forEach(delBtn => {
+                                delBtn.addEventListener('click', async () => {
+                                    const cid = delBtn.dataset.commentId;
+                                    if(!confirm('Hapus komentar ini?')) return;
+                                    
+                                    try {
+                                        const adminToken = sessionStorage.getItem('ipmquiz_admin_session') || localStorage.getItem('ipmquiz_admin_session');
+                                        const dr = await fetch('/api/organization?action=deleteProgramComment', {
+                                            method: 'POST', body: JSON.stringify({comment_id: cid}),
+                                            headers: {'Content-Type':'application/json', 'Authorization': 'Bearer ' + adminToken}
+                                        });
+                                        const dd = await dr.json();
+                                        if(dd.status === 'success') {
+                                            delBtn.closest('.comment-item').remove();
+                                        } else alert(dd.message);
+                                    } catch(e) { alert('Gagal menghapus komentar.') }
+                                });
+                            });
+
                             const form = cSec.querySelector('.program-comment-form');
                             form.addEventListener('submit', async (ev) => {
                                 ev.preventDefault();
-                                const val = form.querySelector('input').value;
+                                const inp = form.querySelector('.comment-input');
+                                const val = inp.value.trim();
+                                if(!val) return;
                                 const sb = form.querySelector('button');
                                 let authHeaders = {};
                                 try {
-                                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session');
+                                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session') || sessionStorage.getItem('ipmquiz_admin_session') || localStorage.getItem('ipmquiz_admin_session');
                                     if (token) authHeaders['Authorization'] = 'Bearer ' + token;
                                 } catch(e){}
 
                                 sb.disabled = true;
+                                sb.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                                 try {
                                    const pr = await fetch('/api/organization?action=addProgramComment', {
                                       method:'POST', body: JSON.stringify({program_id: pid, content: val}),
@@ -891,22 +955,32 @@
                                    });
                                    const pd = await pr.json();
                                    if(pd.status === 'success') {
-                                       const nx = document.createElement('div');
-                                       nx.setAttribute('style', 'padding:10px 0; border-bottom:1px solid #e2e8f0');
-                                       nx.innerHTML = `<strong style="font-size:13px; color:#1e293b;">${escapeHtml(pd.comment.nama_panjang || pd.comment.username)}</strong><div style="font-size:13px; color:#475569; margin-top:4px;">${escapeHtml(pd.comment.content)}</div>`;
-                                       cSec.querySelector('.comments-list').appendChild(nx);
-                                       form.querySelector('input').value = '';
+                                       const list = cSec.querySelector('.comments-list');
                                        const noCmt = document.getElementById('no-cmt-'+pid);
-                                       if (noCmt) noCmt.style.display='none';
-                                       cSec.querySelector('.comments-list').scrollTop = cSec.querySelector('.comments-list').scrollHeight;
+                                       if (noCmt) noCmt.remove();
+                                       
+                                       const nx = document.createElement('div');
+                                       nx.className = 'comment-item';
+                                       nx.setAttribute('style', 'padding:12px 0; border-bottom:1px solid #f1f5f9; animation: slideIn 0.3s ease-out;');
+                                       nx.innerHTML = `
+                                            <div style="display:flex; align-items:center; margin-bottom:4px;">
+                                                <strong style="font-size:13px; color:#1e293b;">${escapeHtml(pd.comment.nama_panjang || pd.comment.username)}</strong>
+                                                ${pd.comment.role === 'admin' ? '<span style="background:#3b82f6; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:6px;">ADMIN</span>' : ''}
+                                            </div>
+                                            <div style="font-size:13px; color:#475569; line-height:1.5;">${escapeHtml(pd.comment.content)}</div>
+                                       `;
+                                       list.appendChild(nx);
+                                       inp.value = '';
+                                       list.scrollTop = list.scrollHeight;
                                    } else {
                                        alert(pd.message || 'Gagal mengirim. Pastikan Anda sudah login.');
                                    }
-                                } catch(err) { alert('Silakan login terlebih dahulu.') }
+                                } catch(err) { alert('Silakan login terlebih dahulu untuk berkomentar.') }
                                 sb.disabled = false;
+                                sb.innerHTML = '<i class="fas fa-paper-plane"></i>';
                             });
                         }
-                    } catch(e){ cSec.innerHTML = '<div class="small" style="color:var(--status-danger)">Gagal memuat diskusi.</div>'; }
+                    } catch(e){ cSec.innerHTML = '<div class="small" style="color:var(--status-danger); text-align:center; padding:10px;">Gagal memuat diskusi.</div>'; }
                 } else {
                     cSec.classList.add('hidden');
                 }

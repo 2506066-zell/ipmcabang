@@ -7163,3 +7163,69 @@ body.quiz-active .premium-fab-container {
         width: 62%;
     }
 }
+
+/* ==================== Organization Specific & Animations ==================== */
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.program-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.program-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+}
+
+.program-card-status {
+    text-transform: uppercase;
+}
+
+.status-terlaksana {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-rencana {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.status-draft {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.btn-upvote.loading i {
+    animation: fa-spin 1s infinite linear;
+}
+
+/* Custom Scrollbar for comments */
+.comments-list::-webkit-scrollbar {
+    width: 6px;
+}
+.comments-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+.comments-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+.comments-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

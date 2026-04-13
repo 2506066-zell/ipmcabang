@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { query, rawQuery } = require('./_db');
+const { ensureSchema } = require('./_bootstrap');
 const { json, cacheHeaders, parseJsonBody } = require('./_util');
 const { getSessionUser, requireAdminAuth } = require('./_auth');
 
@@ -113,6 +114,7 @@ async function getPimpinanOptions() {
 }
 
 async function ensureAttendanceRooms() {
+  await ensureSchema();
   const options = await getPimpinanOptions();
   for (const pimpinan of options) {
     const roomCode = generateDefaultRoomCode(pimpinan);

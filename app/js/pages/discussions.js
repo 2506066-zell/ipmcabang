@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const USER_SESSION_KEY = 'ipmquiz_user_session';
     const getSession = () => sessionStorage.getItem(USER_SESSION_KEY) || localStorage.getItem(USER_SESSION_KEY) || '';
+    const uiBack = window.__uiBack;
 
     // Views
     const listView = document.getElementById('discussions-list-view');
@@ -40,7 +41,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return "baru saja";
     }
 
-    async function loadDiscussions() {
+    async function loadDiscussions(quiet = false) {
+        if (!quiet) {
+            feedContainer.innerHTML = `
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            `;
+        }
+
         try {
             const res = await fetch('/api/discussions');
             const data = await res.json();
@@ -48,41 +57,49 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.status === 'success') {
                 renderDiscussions(data.discussions);
             } else {
-                feedContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Gagal memuat diskusi.</p>';
+                feedContainer.innerHTML = `<div class="error-placeholder"><i class="fas fa-exclamation-circle"></i> <p>${data.message || 'Gagal memuat diskusi.'}</p></div>`;
             }
         } catch (error) {
-            feedContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Terjadi kesalahan koneksi.</p>';
+            feedContainer.innerHTML = '<div class="error-placeholder"><i class="fas fa-wifi"></i> <p>Terjadi kesalahan koneksi.</p></div>';
         }
     }
 
     function renderDiscussions(items) {
         if (!items || items.length === 0) {
             feedContainer.innerHTML = `
-                <div style="text-align:center; padding: 40px 20px; color: #64748b;">
-                    <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
-                    <p>Belum ada topik diskusi. Jadilah yang pertama!</p>
+                <div class="empty-placeholder">
+                    <i class="fas fa-comments"></i>
+                    <p>Belum ada diskusi.</p>
+                    <span>Mulai bagikan idemu sekarang!</span>
                 </div>
             `;
             return;
         }
 
         feedContainer.innerHTML = items.map(t => `
-            <div class="thread-card" data-id="${t.id}">
+            <article class="thread-card reveal" data-id="${t.id}">
                 <div class="thread-meta">
-                    <span class="thread-author">
-                        ${t.username}
-                        ${t.user_role === 'admin' ? '<span class="author-badge">Admin</span>' : '<span class="author-badge">Kader</span>'}
-                    </span>
-                    <span>${timeAgo(t.created_at)}</span>
+                    <div class="author-info">
+                        <span class="thread-author">${t.username}</span>
+                        <span class="author-badge ${t.user_role === 'admin' ? 'admin' : 'member'}">
+                            ${t.user_role === 'admin' ? 'Admin' : 'Kader'}
+                        </span>
+                    </div>
+                    <span class="thread-time">${timeAgo(t.created_at)}</span>
                 </div>
                 <h3 class="thread-title">${t.title}</h3>
-                <div class="thread-snippet">${t.content}</div>
+                <p class="thread-snippet">${t.content}</p>
                 <div class="thread-footer">
-                    <span><i class="fas fa-reply"></i> ${t.reply_count || 0} Balasan</span>
-                    <span><i class="fas fa-eye"></i> ${t.views || 0} Dilihat</span>
+                    <span><i class="far fa-comment-dots"></i> ${t.reply_count || 0} Balasan</span>
+                    <span><i class="far fa-eye"></i> ${t.views || 0}</span>
                 </div>
-            </div>
+            </article>
         `).join('');
+
+        // Re-run reveal animations
+        if (window.revealObserver) {
+            document.querySelectorAll('.thread-card.reveal').forEach(el => window.revealObserver.observe(el));
+        }
 
         // Attach click listeners
         document.querySelectorAll('.thread-card').forEach(card => {
@@ -97,10 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
         listView.hidden = true;
         detailView.hidden = false;
         
-        threadHead.innerHTML = '<div class="skeleton-card" style="height: 150px;"></div>';
+        threadHead.innerHTML = '<div class="skeleton-card shimmer" style="height: 140px;"></div>';
         repliesList.innerHTML = '';
         
         checkAuthForReply();
+
+        if (uiBack) uiBack.open('discussion-detail');
 
         try {
             const res = await fetch(`/api/discussions?id=${id}`);
@@ -110,16 +129,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const t = data.discussion;
                 threadHead.innerHTML = `
                     <div class="thread-meta">
-                        <span class="thread-author">
-                            ${t.username}
-                            ${t.user_role === 'admin' ? '<span class="author-badge">Admin</span>' : '<span class="author-badge">Kader</span>'}
-                        </span>
-                        <span>${timeAgo(t.created_at)}</span>
+                        <div class="author-info">
+                            <span class="thread-author">${t.username}</span>
+                            <span class="author-badge ${t.user_role === 'admin' ? 'admin' : 'member'}">
+                                ${t.user_role === 'admin' ? 'Admin' : 'Kader'}
+                            </span>
+                        </div>
+                        <span class="thread-time">${timeAgo(t.created_at)}</span>
                     </div>
-                    <h2 class="thread-title">${t.title}</h2>
+                    <h2 class="thread-title-full">${t.title}</h2>
                     <div class="thread-full-content">${t.content}</div>
-                    <div class="thread-footer" style="margin-top:24px;">
-                        <span><i class="fas fa-eye"></i> ${t.views || 0}x Dilihat</span>
+                    <div class="thread-stats">
+                        <span><i class="far fa-eye"></i> Dilihat ${t.views || 0} kali</span>
                     </div>
                 `;
 
@@ -127,60 +148,76 @@ document.addEventListener('DOMContentLoaded', () => {
                     repliesList.innerHTML = data.replies.map(r => `
                         <div class="reply-card">
                             <div class="thread-meta">
-                                <span class="thread-author">
-                                    ${r.username}
-                                    ${r.user_role === 'admin' ? '<span class="author-badge">Admin</span>' : ''}
-                                </span>
+                                <span class="thread-author">${r.username}</span>
                                 <span>${timeAgo(r.created_at)}</span>
                             </div>
                             <div class="reply-content">${r.content}</div>
                         </div>
                     `).join('');
                 } else {
-                    repliesList.innerHTML = '<p style="color:#64748b; font-size: 0.9rem; margin-bottom: 16px;">Belum ada balasan.</p>';
+                    repliesList.innerHTML = '<div class="no-replies">Belum ada balasan. Jadilah yang pertama membalas!</div>';
                 }
 
-                window.scrollTo(0, 0);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
 
             }
         } catch (err) {
-            threadHead.innerHTML = '<p>Gagal memuat detail diskusi.</p>';
+            threadHead.innerHTML = '<div class="error-placeholder"><p>Gagal memuat detail diskusi.</p></div>';
         }
     }
 
     function checkAuthForReply() {
         const session = getSession();
         if (session) {
-            replyForm.hidden = false;
+            replyForm.style.display = 'flex';
             replyLoginPrompt.hidden = true;
         } else {
-            replyForm.hidden = true;
+            replyForm.style.display = 'none';
             replyLoginPrompt.hidden = false;
         }
     }
 
-    document.getElementById('btn-back-to-list').addEventListener('click', () => {
+    function closeDetail(fromPop = false) {
         detailView.hidden = true;
         listView.hidden = false;
         currentDiscussionId = null;
-        loadDiscussions(); // Refresh view count
-    });
+        if (!fromPop && uiBack) uiBack.requestClose('discussion-detail');
+        loadDiscussions(true); // Quiet refresh
+    }
 
-    // New Topic Modal
-    btnNewTopic.addEventListener('click', () => {
-        if (!getSession()) {
-            if (window.Toast) Toast.show('Silakan Login terlebih dahulu untuk menulis', 'info');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1000);
-            return;
+    document.getElementById('btn-back-to-list').addEventListener('click', () => closeDetail());
+
+    // New Topic Modal Control
+    function toggleModalTopic(show) {
+        if (show) {
+            if (!getSession()) {
+                if (window.Toast) Toast.show('Silakan Login untuk menulis topik', 'info');
+                setTimeout(() => { window.location.href = 'login.html'; }, 800);
+                return;
+            }
+            modalTopic.hidden = false;
+            document.body.classList.add('body-no-scroll');
+            if (uiBack) uiBack.open('discussions-modal');
+        } else {
+            modalTopic.hidden = true;
+            document.body.classList.remove('body-no-scroll');
         }
-        modalTopic.hidden = false;
-        document.body.style.overflow = 'hidden';
+    }
+
+    btnNewTopic.addEventListener('click', () => toggleModalTopic(true));
+    btnCloseTopic.addEventListener('click', () => {
+        if (uiBack) uiBack.requestClose('discussions-modal');
+        else toggleModalTopic(false);
     });
 
-    btnCloseTopic.addEventListener('click', () => {
-        modalTopic.hidden = true;
-        document.body.style.overflow = '';
-    });
+    // uiBack Registrations
+    if (uiBack) {
+        uiBack.register('discussion-detail', (fromPop) => closeDetail(fromPop));
+        uiBack.register('discussions-modal', (fromPop) => {
+            modalTopic.hidden = true;
+            document.body.classList.remove('body-no-scroll');
+        });
+    }
 
     // Submit Topic
     btnSubmitTopic.addEventListener('click', async () => {
@@ -188,12 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = document.getElementById('topic-content').value.trim();
 
         if (!title || !content) {
-            if (window.Toast) Toast.show('Judul dan konten tidak boleh kosong', 'error');
+            if (window.Toast) Toast.show('Judul dan isi tidak boleh kosong', 'error');
             return;
         }
 
         btnSubmitTopic.disabled = true;
-        btnSubmitTopic.textContent = 'Memposting...';
+        const originalText = btnSubmitTopic.innerHTML;
+        btnSubmitTopic.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memposting...';
 
         try {
             const res = await fetch('/api/discussions', {
@@ -208,8 +246,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.status === 'success') {
                 if (window.Toast) Toast.show('Diskusi berhasil diposting!', 'success');
-                modalTopic.hidden = true;
-                document.body.style.overflow = '';
+                if (uiBack) uiBack.requestClose('discussions-modal');
+                else toggleModalTopic(false);
+                
                 document.getElementById('topic-title').value = '';
                 document.getElementById('topic-content').value = '';
                 loadDiscussions();
@@ -217,10 +256,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.Toast) Toast.show(data.message || 'Gagal memposting', 'error');
             }
         } catch (e) {
-            if (window.Toast) Toast.show('Terjadi kesalahan jaringan', 'error');
+            if (window.Toast) Toast.show('Kesalahan jaringan', 'error');
         } finally {
             btnSubmitTopic.disabled = false;
-            btnSubmitTopic.textContent = 'Posting Diskusi';
+            btnSubmitTopic.innerHTML = originalText;
         }
     });
 
@@ -229,7 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentDiscussionId) return;
 
         const content = document.getElementById('reply-content').value.trim();
-        if (!content) return;
+        if (!content) {
+            if (window.Toast) Toast.show('Balasan tidak boleh kosong', 'info');
+            return;
+        }
 
         btnSubmitReply.disabled = true;
         btnSubmitReply.textContent = 'Mengirim...';
@@ -248,12 +290,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.status === 'success') {
                 if (window.Toast) Toast.show('Balasan terkirim', 'success');
                 document.getElementById('reply-content').value = '';
-                openDetail(currentDiscussionId); // Refresh detail
+                openDetail(currentDiscussionId);
             } else {
                 if (window.Toast) Toast.show(data.message || 'Gagal membalas', 'error');
             }
         } catch (e) {
-            if (window.Toast) Toast.show('Terjadi kesalahan jaringan', 'error');
+            if (window.Toast) Toast.show('Kesalahan jaringan', 'error');
         } finally {
             btnSubmitReply.disabled = false;
             btnSubmitReply.textContent = 'Kirim Balasan';
@@ -263,3 +305,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init
     loadDiscussions();
 });
+
