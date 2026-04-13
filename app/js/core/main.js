@@ -875,70 +875,36 @@ document.addEventListener('DOMContentLoaded', () => {
         return upcoming || null;
     };
 
-        const updateProgramCountdown = () => {
-            if (!programCountdownSchedule || !programCountdown || !programCountdownTitle || !programCountdownTimer || !programCountdownSub) return;
-            const now = Date.now();
-            const start = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).getTime() : 0;
-            const end = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).getTime() : 0;
-            const title = programCountdownSchedule.title || programCountdownSchedule.description || 'Program Kerja Mendatang';
-            programCountdownTitle.textContent = title;
-        const startLabel = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).toLocaleString('id-ID', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }) : '';
-        const endLabel = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).toLocaleString('id-ID', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }) : '';
-        const renderSegments = (days, hours, minutes, seconds) => {
-            const makeSeg = (value, label) => `
-                <div class="program-countdown-seg">
-                    <span class="program-countdown-val">${value}</span>
-                    <span class="program-countdown-unit">${label}</span>
-                </div>
-            `;
-            return [
-                makeSeg(String(days).padStart(2, '0'), 'Hari'),
-                makeSeg(String(hours).padStart(2, '0'), 'Jam'),
-                makeSeg(String(minutes).padStart(2, '0'), 'Mnt'),
-                makeSeg(String(seconds).padStart(2, '0'), 'Dtk')
-            ].join('');
-        };
+    const updateProgramCountdown = () => {
+        if (!programCountdownSchedule || !programCountdown || !programCountdownTitle || !programCountdownTimer || !programCountdownSub) return;
+        const now = Date.now();
+        const start = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).getTime() : 0;
+        const end = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).getTime() : 0;
+        programCountdownTitle.textContent = programCountdownSchedule.title || programCountdownSchedule.description || 'Program Kerja Mendatang';
+        const badge = document.getElementById('program-countdown-badge');
+        const fmtOpts = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        const startLabel = programCountdownSchedule.start_time ? new Date(programCountdownSchedule.start_time).toLocaleString('id-ID', fmtOpts) : '';
+        const endLabel = programCountdownSchedule.end_time ? new Date(programCountdownSchedule.end_time).toLocaleString('id-ID', fmtOpts) : '';
+        const sep = '<div class="countdown-sep"><span class="countdown-sep-dot"></span><span class="countdown-sep-dot"></span></div>';
+        const mkS = (v, l) => '<div class="program-countdown-seg"><span class="program-countdown-val">' + v + '</span><span class="program-countdown-unit">' + l + '</span></div>';
+        const rnd = (d,h,m,s) => [mkS(String(d).padStart(2,'0'),'Hari'),sep,mkS(String(h).padStart(2,'0'),'Jam'),sep,mkS(String(m).padStart(2,'0'),'Menit'),sep,mkS(String(s).padStart(2,'0'),'Detik')].join('');
+        const calc = (diff) => { const t=Math.floor(diff/1000); return rnd(Math.floor(t/86400),Math.floor((t%86400)/3600),Math.floor((t%3600)/60),t%60); };
 
         if (start && now < start) {
-            const diff = Math.max(0, start - now);
-            const totalSeconds = Math.floor(diff / 1000);
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            programCountdownTimer.innerHTML = renderSegments(days, hours, minutes, seconds);
-            programCountdownSub.innerHTML = startLabel ? `<strong>Status:</strong> Akan dimulai &diams; <strong>Mulai:</strong> ${startLabel}` : '<strong>Status:</strong> Akan dimulai';
-            programCountdown.hidden = false;
-            return;
+            programCountdownTimer.innerHTML = calc(start - now);
+            programCountdownSub.innerHTML = startLabel ? '<i class="far fa-calendar"></i> <strong>Mulai:</strong> ' + startLabel : '<i class="far fa-clock"></i> Akan dimulai';
+            if (badge) { badge.className = 'program-countdown-badge upcoming'; badge.innerHTML = '<span class="countdown-pulse"></span> Segera'; }
+            programCountdown.hidden = false; return;
         }
-
         if (end && now < end) {
-            const diff = Math.max(0, end - now);
-            const totalSeconds = Math.floor(diff / 1000);
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            programCountdownTimer.innerHTML = renderSegments(days, hours, minutes, seconds);
-            programCountdownSub.innerHTML = endLabel ? `<strong>Status:</strong> Sedang berlangsung &diams; <strong>Berakhir:</strong> ${endLabel}` : '<strong>Status:</strong> Sedang berlangsung';
-            programCountdown.hidden = false;
-            return;
+            programCountdownTimer.innerHTML = calc(end - now);
+            programCountdownSub.innerHTML = endLabel ? '<i class="far fa-calendar"></i> <strong>Berakhir:</strong> ' + endLabel : '<i class="fas fa-bolt"></i> Sedang berlangsung';
+            if (badge) { badge.className = 'program-countdown-badge live'; badge.innerHTML = '<span class="countdown-pulse"></span> Live'; }
+            programCountdown.hidden = false; return;
         }
-
-        programCountdownTimer.innerHTML = `<span class="program-countdown-state">Selesai</span>`;
-        programCountdownSub.innerHTML = endLabel ? `<strong>Status:</strong> Selesai &diams; <strong>Berakhir:</strong> ${endLabel}` : '<strong>Status:</strong> Selesai';
+        programCountdownTimer.innerHTML = '<span class="program-countdown-state"><i class="fas fa-check-circle" style="margin-right:8px"></i>Selesai</span>';
+        programCountdownSub.innerHTML = endLabel ? '<i class="far fa-calendar-check"></i> <strong>Berakhir:</strong> ' + endLabel : '<i class="fas fa-check"></i> Selesai';
+        if (badge) { badge.className = 'program-countdown-badge done'; badge.innerHTML = 'Selesai'; }
         programCountdown.hidden = false;
     };
 
