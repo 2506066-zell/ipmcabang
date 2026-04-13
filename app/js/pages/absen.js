@@ -680,9 +680,9 @@
         stopCamera();
         
         // Reset UI immediately (no awaits)
-        if (els.cameraOverlay) els.cameraOverlay.hidden = true;
-        if (els.cameraErrorMessage) els.cameraErrorMessage.hidden = true;
-        if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = false;
+        if (els.cameraOverlay) els.cameraOverlay.style.display = 'none';
+        if (els.cameraErrorMessage) els.cameraErrorMessage.style.display = 'none';
+        if (els.cameraPlaceholder) els.cameraPlaceholder.style.display = 'flex';
 
         try {
             const selectedDeviceId = els.cameraSelect?.value;
@@ -712,10 +712,10 @@
                 els.cameraVideo.hidden = false;
                 
                 // FORCE HIDE all overlays on success
-                if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
-                if (els.cameraOverlay) els.cameraOverlay.hidden = true;
-                if (els.secureWarning) els.secureWarning.hidden = true;
-                if (els.cameraErrorMessage) els.cameraErrorMessage.hidden = true;
+                if (els.cameraPlaceholder) els.cameraPlaceholder.style.display = 'none';
+                if (els.cameraOverlay) els.cameraOverlay.style.display = 'none';
+                if (els.secureWarning) els.secureWarning.style.display = 'none';
+                if (els.cameraErrorMessage) els.cameraErrorMessage.style.display = 'none';
                 
                 await new Promise((resolve) => {
                     els.cameraVideo.onloadedmetadata = () => resolve();
@@ -738,10 +738,10 @@
             
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
                 msg = 'Izin kamera tetap ditolak oleh browser/sistem OS.';
-                if (els.cameraOverlay) els.cameraOverlay.hidden = false;
-                if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+                if (els.cameraOverlay) els.cameraOverlay.style.display = 'flex';
+                if (els.cameraPlaceholder) els.cameraPlaceholder.style.display = 'none';
                 if (els.cameraErrorMessage) {
-                    els.cameraErrorMessage.hidden = false;
+                    els.cameraErrorMessage.style.display = 'block';
                     els.cameraErrorMessage.innerHTML = `
                         <div style="text-align: left; font-size: 0.8rem; line-height: 1.4;">
                             <strong style="color: #ff4d4d;">Akses Diblokir (${error.name})</strong><br><br>

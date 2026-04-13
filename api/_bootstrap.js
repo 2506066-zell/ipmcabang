@@ -42,38 +42,46 @@ async function seedOrganizationData() {
   const bidangMap = new Map(bidangRows.map(r => [String(r.code), Number(r.id)]));
 
   // Anti-duplicate cleanup & Seeding
-  const membersCount = Number((await query`SELECT COUNT(*)::int AS c FROM org_members`).rows[0]?.c || 0);
-  
-  // If we have duplicates (count > total defined) or if we are very low, we refresh.
-  // 332 is the count in DEFAULT_ORG_MEMBERS. If it's more, we likely have duplicates.
-  if (membersCount === 0 || membersCount < 50 || membersCount > (DEFAULT_ORG_MEMBERS.length + 20)) {
-    console.log(`[Seeder] Data kader tidak sinkron (${membersCount}), membersihkan dan mengisi ulang...`);
-    await query`DELETE FROM org_members`; 
-    
-    const memberSort = new Map();
-    for (const item of DEFAULT_ORG_MEMBERS) {
-      const bidangCode = String(item?.bidangId || '').trim();
-      const bidangId = bidangMap.get(bidangCode);
-      if (!bidangId) continue;
+  console.log('[Seeder] Menghapus duplikat org_members...');
+  await query(`
+    DELETE FROM org_members 
+    WHERE id NOT IN (
+      SELECT MIN(id) 
+      FROM org_members 
+      GROUP BY full_name, bidang_id
+    )
+  `);
 
-      const sortOrder = (memberSort.get(bidangCode) || 0) + 1;
-      memberSort.set(bidangCode, sortOrder);
+  try {
+    await query(`ALTER TABLE org_members ADD CONSTRAINT unique_member_identity UNIQUE (full_name, bidang_id)`);
+  } catch (e) {
+    // Ignore if constraint already exists
+  }
 
-      await query`
-        INSERT INTO org_members (
-          bidang_id, full_name, role_title, quote, photo_url, instagram_url, sort_order, is_active
-        ) VALUES (
-          ${bidangId},
-          ${String(item?.name || '').trim()},
-          ${String(item?.role || '').trim()},
-          ${String(item?.quote || '').trim()},
-          ${normalizeMediaPath(item?.photo)},
-          ${String(item?.instagram || '').trim()},
-          ${sortOrder},
-          ${true}
-        )
-      `;
-    }
+  const memberSort = new Map();
+  for (const item of DEFAULT_ORG_MEMBERS) {
+    const bidangCode = String(item?.bidangId || '').trim();
+    const bidangId = bidangMap.get(bidangCode);
+    if (!bidangId) continue;
+
+    const sortOrder = (memberSort.get(bidangCode) || 0) + 1;
+    memberSort.set(bidangCode, sortOrder);
+
+    await query`
+      INSERT INTO org_members (
+        bidang_id, full_name, role_title, quote, photo_url, instagram_url, sort_order, is_active
+      ) VALUES (
+        ${bidangId},
+        ${String(item?.name || '').trim()},
+        ${String(item?.role || '').trim()},
+        ${String(item?.quote || '').trim()},
+        ${normalizeMediaPath(item?.photo)},
+        ${String(item?.instagram || '').trim()},
+        ${sortOrder},
+        true
+      )
+      ON CONFLICT (full_name, bidang_id) DO NOTHING
+    `;
   }
 
   const programCount = Number((await query`SELECT COUNT(*)::int AS c FROM org_programs`).rows[0]?.c || 0);
