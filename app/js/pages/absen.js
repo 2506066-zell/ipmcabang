@@ -710,7 +710,12 @@
             if (els.cameraVideo) {
                 els.cameraVideo.srcObject = stream;
                 els.cameraVideo.hidden = false;
+                
+                // FORCE HIDE all overlays on success
                 if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+                if (els.cameraOverlay) els.cameraOverlay.hidden = true;
+                if (els.secureWarning) els.secureWarning.hidden = true;
+                if (els.cameraErrorMessage) els.cameraErrorMessage.hidden = true;
                 
                 await new Promise((resolve) => {
                     els.cameraVideo.onloadedmetadata = () => resolve();

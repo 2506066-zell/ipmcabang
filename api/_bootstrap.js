@@ -41,8 +41,15 @@ async function seedOrganizationData() {
   const bidangRows = (await query`SELECT id, code FROM org_bidang`).rows;
   const bidangMap = new Map(bidangRows.map(r => [String(r.code), Number(r.id)]));
 
+  // Anti-duplicate cleanup & Seeding
   const membersCount = Number((await query`SELECT COUNT(*)::int AS c FROM org_members`).rows[0]?.c || 0);
-  if (membersCount < 50) {
+  
+  // If we have duplicates (count > total defined) or if we are very low, we refresh.
+  // 332 is the count in DEFAULT_ORG_MEMBERS. If it's more, we likely have duplicates.
+  if (membersCount === 0 || membersCount < 50 || membersCount > (DEFAULT_ORG_MEMBERS.length + 20)) {
+    console.log(`[Seeder] Data kader tidak sinkron (${membersCount}), membersihkan dan mengisi ulang...`);
+    await query`DELETE FROM org_members`; 
+    
     const memberSort = new Map();
     for (const item of DEFAULT_ORG_MEMBERS) {
       const bidangCode = String(item?.bidangId || '').trim();
