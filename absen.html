@@ -133,17 +133,7 @@
                             </div>
                             
                             <form id="attendance-checkin-form" class="attendance-form" style="position: relative;">
-                                <!-- Success Overlay -->
-                                <div class="attendance-success-overlay" id="attendance-success-overlay" hidden>
-                                    <div class="success-icon-wrap">
-                                        <i class="fas fa-check-double"></i>
-                                    </div>
-                                    <h3>Berhasil!</h3>
-                                    <p>Kehadiran Anda telah tercatat.</p>
-                                    <button type="button" class="attendance-secondary-btn" style="margin-top: 20px;" onclick="window.location.reload()">
-                                        <i class="fas fa-rotate"></i> Kembali
-                                    </button>
-                                </div>
+                                <!-- Success feedback is now handled via toasts and status text -->
 
                                 <!-- Step 1: Identitas -->
                                 <div class="attendance-step is-active" id="step-identity">

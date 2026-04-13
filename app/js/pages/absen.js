@@ -998,22 +998,17 @@
                 })
             }, Number(state.currentRoomId));
 
-            // SUCCESS STATE
-            if (els.successOverlay) {
-                els.successOverlay.hidden = false;
-                els.successOverlay.classList.add('reveal');
-                setTimeout(() => {
-                    els.successOverlay.hidden = true;
-                    els.successOverlay.classList.remove('reveal');
-                }, 2500);
-            }
+            // SUCCESS STATE - Immediate Reset for Seamless Multi-Entry
             showToast('Absensi Berhasil!', 'success');
+            setInlineStatus(els.checkinStatus, 'Absensi Berhasil! Silakan pilih kader lain untuk mengabsensi lagi.', 'success');
             
-            // Reset for the next proxy check-in
+            // Reset state & fields
             state.selfieFile = null;
-            if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
+            if (els.memberSelect) els.memberSelect.value = '';
             if (els.memberSearch) els.memberSearch.value = '';
+            if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
             
+            // Re-open camera for next person if applicable
             updateStepHighlight();
             if (els.cameraSelect?.value !== 'disabled') {
                 openCamera();
