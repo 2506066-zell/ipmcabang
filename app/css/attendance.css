@@ -14,6 +14,7 @@
     --att-radius-xl: 32px;
     --att-radius-lg: 24px;
     --att-radius-md: 16px;
+    --att-tabs-height: 56px;
     --att-shadow-soft: 0 10px 40px -10px rgba(6, 78, 59, 0.05);
     --att-shadow-strong: 0 25px 60px -15px rgba(6, 78, 59, 0.15);
     
@@ -25,11 +26,12 @@
 }
 
 .page-attendance .attendance-main {
-    width: min(1200px, 100%);
+    width: min(800px, 100%);
     margin: 0 auto;
-    padding: 32px 16px calc(120px + env(safe-area-inset-bottom));
-    display: grid;
-    gap: 32px;
+    padding: 24px 16px calc(120px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 /* Typography */
@@ -210,18 +212,19 @@
 
 .attendance-step-tag {
     position: absolute;
-    left: -48px;
-    top: 0;
-    width: 32px;
-    height: 32px;
+    left: 0;
+    top: -12px;
+    width: 24px;
+    height: 24px;
     background: var(--att-primary);
     color: white;
-    border-radius: 10px;
+    border-radius: 8px;
     display: grid;
     place-items: center;
     font-weight: 900;
-    font-size: 0.9rem;
-    box-shadow: 0 4px 12px rgba(6, 78, 59, 0.2);
+    font-size: 0.75rem;
+    box-shadow: 0 4px 8px rgba(6, 78, 59, 0.2);
+    z-index: 2;
 }
 
 .attendance-step.is-active .attendance-step-tag {
@@ -229,25 +232,83 @@
     animation: pulseBorder 2s infinite;
 }
 
-/* Panel Cards */
+/* Tabbed Layout System */
+.attendance-tabs-nav {
+    display: flex;
+    background: rgba(6, 78, 59, 0.05);
+    padding: 6px;
+    border-radius: 16px;
+    margin-bottom: 8px;
+    position: sticky;
+    top: 16px;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 8px;
+    border: none;
+    background: transparent;
+    color: var(--att-muted);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-btn i { font-size: 1rem; }
+
+.tab-btn.active {
+    background: white;
+    color: var(--att-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.attendance-tab-panel {
+    display: none;
+    flex-direction: column;
+    gap: 24px;
+    animation: tabFadeIn 0.4s ease both;
+    padding-top: 8px;
+}
+
+.attendance-tab-panel.active {
+    display: flex;
+}
+
+@keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Panel Cards Enhancement */
 .attendance-panel-card {
     background: var(--att-surface);
     border: 1px solid var(--att-border);
-    padding: 32px;
+    padding: 24px; /* Reduced from 32px */
     border-radius: var(--att-radius-lg);
     box-shadow: var(--att-shadow-soft);
     position: relative;
     transition: all 0.3s ease;
 }
 
-.attendance-panel-card:has(.attendance-step.is-active) {
-    border-color: var(--att-primary-light);
-    box-shadow: var(--att-shadow-strong);
+.attendance-panel-card.hero-panel {
     background: #fff;
+    border-color: rgba(16, 185, 129, 0.2);
+    box-shadow: 0 20px 50px -10px rgba(6, 78, 59, 0.1);
+    text-align: center;
 }
 
 .attendance-panel-head {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .attendance-panel-head h3 { font-size: 1.4rem; color: var(--att-primary); margin-bottom: 6px; }

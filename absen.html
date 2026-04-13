@@ -149,157 +149,172 @@
                                 <h3>Event Aktif Hari Ini</h3>
                                 <p id="attendance-event-helper">Kalau belum ada event, kamu bisa membuat event rapat dari room ini.</p>
                             </div>
-                            <span class="attendance-status-badge" id="attendance-event-badge">Menunggu</span>
-                        </div>
-                        <div id="attendance-current-event">
-                            <div class="attendance-empty-state">Belum ada event aktif untuk room ini hari ini.</div>
-                        </div>
-                    </section>
-
-                    <section class="attendance-panel-card">
-                        <div class="attendance-panel-head">
-                            <div>
-                                <h3>Buat Event Rapat</h3>
-                                <p>Semua user yang sudah masuk room boleh membuat event aktif untuk rapat hari ini.</p>
-                            </div>
-                        </div>
-                        <form id="attendance-create-form" class="attendance-form">
-                            <label class="attendance-field">
-                                <span>Judul rapat</span>
-                                <input type="text" id="attendance-event-title" placeholder="Contoh: Rapat Koordinasi Pekanan" required>
-                            </label>
-                            <label class="attendance-field">
-                                <span>Keterangan singkat</span>
-                                <textarea id="attendance-event-description" rows="3" placeholder="Opsional: agenda, lokasi, atau catatan rapat"></textarea>
-                            </label>
-                            <button type="submit" class="attendance-primary-btn" id="attendance-create-btn">
-                                <i class="fas fa-plus"></i> Buat Event Hari Ini
-                            </button>
-                            <p class="attendance-inline-status" id="attendance-create-status"></p>
-                        </form>
-                    </section>
+                <!-- Segmented Tab Control (Mobile First) -->
+                <div class="attendance-tabs-nav">
+                    <button class="tab-btn active" data-target="tab-attendance">
+                        <i class="fas fa-fingerprint"></i> Absensi
+                    </button>
+                    <button class="tab-btn" data-target="tab-info">
+                        <i class="fas fa-info-circle"></i> Info
+                    </button>
+                    <button class="tab-btn" data-target="tab-history">
+                        <i class="fas fa-clock-rotate-left"></i> Riwayat
+                    </button>
                 </div>
 
-                <div class="attendance-detail-grid">
-                    <section class="attendance-panel-card">
-                        <div class="attendance-panel-head">
-                            <div>
-                                <h3>Absensi Saya</h3>
-                                <p>Check-in mandiri hanya muncul kalau pimpinan akunmu sama dengan pimpinan room ini.</p>
-                            </div>
-                        </div>
-                        <form id="attendance-checkin-form" class="attendance-form" style="position: relative;">
-                            <!-- Success Overlay (Hidden) -->
-                            <div class="attendance-success-overlay" id="attendance-success-overlay" hidden>
-                                <div class="success-icon-wrap">
-                                    <i class="fas fa-check-double"></i>
-                                </div>
-                                <h3>Absensi Berhasil!</h3>
-                                <p>Kehadiran Anda telah tercatat secara sah di sistem pimpinan.</p>
-                                <button type="button" class="attendance-secondary-btn" style="margin-top: 20px;" onclick="window.location.reload()">
-                                    <i class="fas fa-rotate"></i> Kembali
-                                </button>
-                            </div>
-
-                            <!-- STEP 1: IDENTITAS -->
-                            <div class="attendance-step is-active" id="step-identity">
-                                <span class="attendance-step-tag">1</span>
-                                <div class="attendance-field" id="attendance-member-field" hidden>
-                                    <span>Pilih Nama Anda</span>
-                                    <div class="attendance-search-wrapper">
-                                        <i class="fas fa-search"></i>
-                                        <input type="text" id="attendance-member-search" placeholder="Cari nama kader..." class="attendance-input">
-                                    </div>
-                                    <select id="attendance-member-select" class="attendance-select">
-                                        <option value="">Pilih nama dari struktur organisasi</option>
-                                    </select>
-                                    <small id="attendance-member-meta" class="attendance-helper-text"></small>
+                <div class="attendance-tabs-container">
+                    <!-- TAB 1: ABSENSI (PRIMARY) -->
+                    <div id="tab-attendance" class="attendance-tab-panel active">
+                        <section class="attendance-panel-card hero-panel">
+                            <div class="attendance-panel-head">
+                                <div>
+                                    <h3>Absensi Mandiri</h3>
+                                    <p>Identitas & verifikasi wajah diperlukan untuk kehadiran sah.</p>
                                 </div>
                             </div>
-
-                            <!-- STEP 2: VERIFIKASI WAJAH -->
-                            <div class="attendance-step" id="step-photo">
-                                <span class="attendance-step-tag">2</span>
-                                <div class="attendance-field">
-                                    <span>Verifikasi Wajah / Selfie</span>
-                                    <div class="attendance-camera-shell" id="attendance-camera-shell">
-                                        <div class="attendance-camera-placeholder" id="attendance-camera-placeholder">
-                                            <i class="fas fa-camera"></i>
-                                            <span>Kamera belum aktif</span>
-                                        </div>
-                                        <div class="attendance-camera-guide" id="attendance-camera-guide" hidden></div>
-                                        <video id="attendance-camera-video" class="attendance-camera-video" autoplay playsinline muted hidden></video>
-                                        <div class="attendance-preview" id="attendance-selfie-preview" hidden>
-                                            <img src="" alt="Preview selfie" id="attendance-selfie-image">
-                                            <div class="preview-badge">HASIL SELFIE</div>
-                                        </div>
-                                        <!-- Error Overlay -->
-                                        <div class="camera-permission-overlay" id="camera-permission-overlay" hidden>
-                                            <i class="fas fa-lock"></i>
-                                            <h4>Akses Kamera Diblokir</h4>
-                                            <p id="camera-error-message">Izin kamera diperlukan untuk absensi mandiri.</p>
-                                            <button type="button" class="attendance-secondary-btn" style="margin-top: 15px; color: #fff; border-color: rgba(255,255,255,0.2); background: rgba(0,0,0,0.3);" onclick="alert('Klik ikon gembok di sebelah alamat web lalu pilih Izinkan Kamera.')">Bantuan</button>
-                                        </div>
+                            
+                            <form id="attendance-checkin-form" class="attendance-form" style="position: relative;">
+                                <!-- Success Overlay -->
+                                <div class="attendance-success-overlay" id="attendance-success-overlay" hidden>
+                                    <div class="success-icon-wrap">
+                                        <i class="fas fa-check-double"></i>
                                     </div>
-
-                                    <div class="attendance-device-selector" id="attendance-device-selector" hidden>
-                                        <select id="attendance-camera-select" class="attendance-select">
-                                            <option value="">Pilih Kamera...</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="attendance-camera-actions">
-                                        <button type="button" class="attendance-secondary-btn" id="attendance-open-camera-btn">
-                                            <i class="fas fa-video"></i> Buka Kamera
-                                        </button>
-                                        <button type="button" class="attendance-secondary-btn" id="attendance-capture-camera-btn" hidden>
-                                            <i class="fas fa-camera"></i> Ambil Selfie
-                                        </button>
-                                        <button type="button" class="attendance-secondary-btn" id="attendance-retake-camera-btn" hidden>
-                                            <i class="fas fa-rotate-left"></i> Ambil Ulang
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- STEP 3: SUBMIT -->
-                            <div class="attendance-step" id="step-submit">
-                                <span class="attendance-step-tag">3</span>
-                                <div class="attendance-field">
-                                    <span>Kirim Konfirmasi</span>
-                                    <button type="submit" class="attendance-primary-btn" id="attendance-checkin-btn">
-                                        <i class="fas fa-paper-plane"></i> Kirim Kehadiran
+                                    <h3>Berhasil!</h3>
+                                    <p>Kehadiran Anda telah tercatat.</p>
+                                    <button type="button" class="attendance-secondary-btn" style="margin-top: 20px;" onclick="window.location.reload()">
+                                        <i class="fas fa-rotate"></i> Kembali
                                     </button>
-                                    <p class="attendance-inline-status" id="attendance-checkin-status"></p>
+                                </div>
+
+                                <!-- Step 1: Identitas -->
+                                <div class="attendance-step is-active" id="step-identity">
+                                    <span class="attendance-step-tag">1</span>
+                                    <div class="attendance-field" id="attendance-member-field" hidden>
+                                        <span>Pilih Nama Anda</span>
+                                        <div class="attendance-search-wrapper">
+                                            <i class="fas fa-search"></i>
+                                            <input type="text" id="attendance-member-search" placeholder="Cari nama kader..." class="attendance-input">
+                                        </div>
+                                        <select id="attendance-member-select" class="attendance-select">
+                                            <option value="">Pilih nama dari struktur organisasi</option>
+                                        </select>
+                                        <small id="attendance-member-meta" class="attendance-helper-text"></small>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Kamera -->
+                                <div class="attendance-step" id="step-photo">
+                                    <span class="attendance-step-tag">2</span>
+                                    <div class="attendance-field">
+                                        <span>Verifikasi Wajah</span>
+                                        <div class="attendance-camera-shell" id="attendance-camera-shell">
+                                            <div class="attendance-camera-placeholder" id="attendance-camera-placeholder">
+                                                <i class="fas fa-camera"></i>
+                                                <span>Kamera Siap</span>
+                                            </div>
+                                            <video id="attendance-camera-video" class="attendance-camera-video" autoplay playsinline muted hidden></video>
+                                            <div class="attendance-preview" id="attendance-selfie-preview" hidden>
+                                                <img src="" id="attendance-selfie-image">
+                                            </div>
+                                            <div class="camera-permission-overlay" id="camera-permission-overlay" hidden>
+                                                <i class="fas fa-lock"></i>
+                                                <p>Izin kamera diperlukan.</p>
+                                            </div>
+                                        </div>
+                                        <div class="attendance-camera-actions">
+                                            <button type="button" class="attendance-secondary-btn" id="attendance-open-camera-btn">
+                                                <i class="fas fa-video"></i> Buka Kamera
+                                            </button>
+                                            <button type="button" class="attendance-secondary-btn" id="attendance-capture-camera-btn" hidden>
+                                                <i class="fas fa-camera"></i> Ambil Selfie
+                                            </button>
+                                            <button type="button" class="attendance-secondary-btn" id="attendance-retake-camera-btn" hidden>
+                                                <i class="fas fa-rotate-left"></i> Ulang
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Submit -->
+                                <div class="attendance-step" id="step-submit">
+                                    <span class="attendance-step-tag">3</span>
+                                    <div class="attendance-field">
+                                        <span>Konfirmasi</span>
+                                        <button type="submit" class="attendance-primary-btn" id="attendance-checkin-btn">
+                                            <i class="fas fa-paper-plane"></i> Kirim Kehadiran
+                                        </button>
+                                        <p class="attendance-inline-status" id="attendance-checkin-status"></p>
+                                    </div>
+                                </div>
+                            </form>
+                        </section>
+                    </div>
+
+                    <!-- TAB 2: INFO & CREATE -->
+                    <div id="tab-info" class="attendance-tab-panel">
+                        <section class="attendance-panel-card">
+                            <div class="attendance-panel-head">
+                                <div>
+                                    <h3>Event Aktif</h3>
+                                    <p>Status rapat saat ini di room ini.</p>
+                                </div>
+                                <span class="attendance-status-badge" id="attendance-event-badge">Menunggu</span>
+                            </div>
+                            <div id="attendance-current-event">
+                                <div class="attendance-empty-state">Belum ada event aktif.</div>
+                            </div>
+                        </section>
+
+                        <section class="attendance-panel-card">
+                            <div class="attendance-panel-head">
+                                <div>
+                                    <h3>Buat Event Baru</h3>
+                                    <p>Khusus admin atau pengelola room.</p>
                                 </div>
                             </div>
-                        </form>
-                    </section>
+                            <form id="attendance-create-form" class="attendance-form">
+                                <label class="attendance-field">
+                                    <span>Judul Rapat</span>
+                                    <input type="text" id="attendance-event-title" placeholder="Nama rapat hari ini..." required>
+                                </label>
+                                <label class="attendance-field">
+                                    <span>Keterangan</span>
+                                    <textarea id="attendance-event-description" rows="2" placeholder="Agenda singkat..."></textarea>
+                                </label>
+                                <button type="submit" class="attendance-primary-btn" id="attendance-create-btn">
+                                    <i class="fas fa-plus"></i> Buat Event
+                                </button>
+                                <p class="attendance-inline-status" id="attendance-create-status"></p>
+                            </form>
+                        </section>
+                    </div>
 
-                    <section class="attendance-panel-card">
-                        <div class="attendance-panel-head">
-                            <div>
-                                <h3>Riwayat Room</h3>
-                                <p>Event yang sudah ditutup akan masuk ke histori dan ikut memengaruhi status aktif atau pasif.</p>
+                    <!-- TAB 3: RIWAYAT -->
+                    <div id="tab-history" class="attendance-tab-panel">
+                        <section class="attendance-panel-card">
+                            <div class="attendance-panel-head">
+                                <div>
+                                    <h3>Riwayat Rapat</h3>
+                                    <p>Arsip kegiatan di room ini.</p>
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- Search & Filter Bar -->
-                        <div class="attendance-history-controls">
-                            <div class="history-search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="history-search-input" placeholder="Cari nama event...">
+                            <!-- Search & Filter Bar -->
+                            <div class="attendance-history-controls">
+                                <div class="history-search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="history-search-input" placeholder="Cari event...">
+                                </div>
+                                <div class="history-filter-pills">
+                                    <button type="button" class="history-filter-btn active" data-filter="all">Semua</button>
+                                    <button type="button" class="history-filter-btn" data-filter="active">Aktif</button>
+                                    <button type="button" class="history-filter-btn" data-filter="closed">Arsip</button>
+                                </div>
                             </div>
-                            <div class="history-filter-pills">
-                                <button type="button" class="history-filter-btn active" data-filter="all">Semua</button>
-                                <button type="button" class="history-filter-btn" data-filter="active">Aktif</button>
-                                <button type="button" class="history-filter-btn" data-filter="closed">Arsip</button>
+                            <div class="attendance-history-list" id="attendance-history-list">
+                                <div class="attendance-empty-state">Riwayat belum tersedia.</div>
                             </div>
-                        </div>
-                        <div class="attendance-history-list" id="attendance-history-list">
-                            <div class="attendance-empty-state">Belum ada riwayat event untuk room ini.</div>
-                        </div>
-                    </section>
+                        </section>
+                    </div>
                 </div>
             </div>
         </section>

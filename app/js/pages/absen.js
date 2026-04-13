@@ -1056,6 +1056,8 @@
         els.stepSubmit = document.getElementById('step-submit');
         els.historySearch = document.getElementById('history-search-input');
         els.historyFilters = document.querySelectorAll('.history-filter-btn');
+        els.tabBtns = document.querySelectorAll('.tab-btn');
+        els.tabPanels = document.querySelectorAll('.attendance-tab-panel');
         setCodeModalOpen(false);
     }
 
@@ -1124,6 +1126,31 @@
 
         window.addEventListener('beforeunload', () => {
             stopCamera();
+        });
+
+        initTabs();
+    }
+
+    function initTabs() {
+        if (!els.tabBtns || !els.tabPanels) return;
+        
+        els.tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.dataset.target;
+                if (!targetId) return;
+
+                // Stop camera if moving away from attendance tab
+                if (targetId !== 'tab-attendance') {
+                    stopCamera();
+                }
+
+                els.tabBtns.forEach(b => b.classList.remove('active'));
+                els.tabPanels.forEach(p => p.classList.remove('active'));
+
+                btn.classList.add('active');
+                const targetPanel = document.getElementById(targetId);
+                if (targetPanel) targetPanel.classList.add('active');
+            });
         });
     }
 
