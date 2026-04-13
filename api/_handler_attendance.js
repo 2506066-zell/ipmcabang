@@ -8,7 +8,11 @@ const ROOM_ACCESS_HEADER = 'x-room-access';
 const ROOM_SESSION_HOURS = 12;
 const VALID_STATUSES = new Set(['hadir', 'izin', 'sakit', 'alfa']);
 const APP_TIMEZONE = 'Asia/Bangkok';
-const CABANG_ROOM_NAME = 'IPM CABANG PANAWUAN';
+const CABANG_ROOM_SYNONYMS = [
+  'IPM CABANG PANAWUAN',
+  'PC IPM PANAWUAN',
+  'IPM PANAWUAN'
+];
 
 function nowIso() {
   return new Date().toISOString();
@@ -64,7 +68,9 @@ function normalizeRoomName(value) {
 
 function getIdentityMode(roomLike) {
   const pimpinan = typeof roomLike === 'string' ? roomLike : roomLike?.pimpinan;
-  return normalizeRoomName(pimpinan) === CABANG_ROOM_NAME ? 'org_member_select' : 'account_identity';
+  const normalized = normalizeRoomName(pimpinan);
+  const isBranch = CABANG_ROOM_SYNONYMS.some(syn => normalizeRoomName(syn) === normalized);
+  return isBranch ? 'org_member_select' : 'account_identity';
 }
 
 function buildSummary(events, records) {

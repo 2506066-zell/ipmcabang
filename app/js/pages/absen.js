@@ -672,26 +672,73 @@
             setInlineStatus(els.checkinStatus, 'Browser ini tidak mendukung kamera langsung. Hubungi admin untuk input manual.', 'error');
             return;
         }
+
+        // Reset visibility
+        if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = false;
+        if (els.cameraOverlay) els.cameraOverlay.hidden = true;
+
+        // Try to check permissions API status first if available
+        if (navigator.permissions && navigator.permissions.query) {
+            try {
+                const status = await navigator.permissions.query({ name: 'camera' });
+                if (status.state === 'denied') {
+                    setInlineStatus(els.checkinStatus, 'Izin kamera diblokir.', 'error');
+                    if (els.cameraOverlay) els.cameraOverlay.hidden = false;
+                    if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+                    return;
+                }
+            } catch (e) {}
+        }
+
         try {
             await stopCamera();
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user' },
+            if (window.AppLoader) window.AppLoader.show('Menyiapkan Kamera...');
+            
+            const constraints = {
+                video: { 
+                    facingMode: 'user',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
                 audio: false
-            });
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             state.selfieStream = stream;
+            
             if (els.cameraVideo) {
                 els.cameraVideo.srcObject = stream;
                 els.cameraVideo.hidden = false;
+                if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+                
+                // Wait for video metadata to be loaded to ensure smooth transition
+                await new Promise((resolve) => {
+                    els.cameraVideo.onloadedmetadata = () => resolve();
+                });
                 await els.cameraVideo.play();
+                els.cameraVideo.classList.add('is-active');
             }
+
             if (els.captureCameraBtn) els.captureCameraBtn.hidden = false;
             if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
+            if (els.openCameraBtn) els.openCameraBtn.hidden = true;
+            
             updateSelfiePreview(null);
-            setInlineStatus(els.checkinStatus, 'Kamera aktif. Ambil selfie terbaru untuk absensi.');
+            setInlineStatus(els.checkinStatus, 'Kamera aktif. Silakan ambil selfie untuk verifikasi.', 'success');
         } catch (error) {
-            setInlineStatus(els.checkinStatus, error?.name === 'NotAllowedError'
-                ? 'Izin kamera ditolak. Izinkan kamera atau minta bantuan admin.'
-                : 'Gagal membuka kamera perangkat.', 'error');
+            console.error('[Camera] Error:', error);
+            let msg = 'Gagal membuka kamera perangkat.';
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                msg = 'Izin kamera ditolak. Mohon izinkan akses kamera di pengaturan browser Anda.';
+                if (els.cameraOverlay) els.cameraOverlay.hidden = false;
+                if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                msg = 'Kamera tidak ditemukan di perangkat ini.';
+            }
+            setInlineStatus(els.checkinStatus, msg, 'error');
+            if (window.Toast) window.Toast.show(msg, 'error');
+        } finally {
+            if (window.AppLoader) window.AppLoader.hide();
         }
     }
 
@@ -817,6 +864,8 @@
         els.captureCameraBtn = document.getElementById('attendance-capture-camera-btn');
         els.retakeCameraBtn = document.getElementById('attendance-retake-camera-btn');
         els.cameraVideo = document.getElementById('attendance-camera-video');
+        els.cameraPlaceholder = document.getElementById('attendance-camera-placeholder');
+        els.cameraOverlay = document.getElementById('camera-permission-overlay');
         els.selfiePreview = document.getElementById('attendance-selfie-preview');
         els.selfieImage = document.getElementById('attendance-selfie-image');
         setCodeModalOpen(false);

@@ -344,7 +344,59 @@
     box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
 
-.attendance-camera-video { width: 100%; height: 100%; object-fit: cover; }
+.attendance-camera-video { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease; opacity: 0; }
+.attendance-camera-video.is-active { opacity: 1; }
+
+.attendance-camera-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    color: #4b5563;
+    gap: 12px;
+}
+
+.attendance-camera-placeholder i { font-size: 3rem; opacity: 0.3; }
+.attendance-camera-placeholder span { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+
+.camera-permission-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    color: white;
+    z-index: 10;
+}
+
+.camera-permission-overlay i { font-size: 2.5rem; color: #f87171; margin-bottom: 16px; }
+.camera-permission-overlay h4 { font-size: 1.1rem; margin-bottom: 8px; color: white; }
+.camera-permission-overlay p { font-size: 0.88rem; color: #9ca3af; line-height: 1.5; }
+
+.attendance-preview { position: relative; width: 100%; height: 100%; }
+.attendance-preview img { width: 100%; height: 100%; object-fit: cover; }
+.preview-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(6, 78, 59, 0.8);
+    backdrop-filter: blur(8px);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    border: 1px solid rgba(255,255,255,0.1);
+}
 
 /* Modal */
 .attendance-modal {
@@ -365,6 +417,27 @@
 }
 
 @media (max-width: 768px) {
-    .attendance-hero { padding: 24px; }
-    .attendance-hero h1 { font-size: 2rem; }
+    .page-attendance .attendance-main { padding: 16px 12px calc(100px + env(safe-area-inset-bottom)); gap: 16px; }
+    .attendance-hero { padding: 24px; border-radius: 24px; }
+    .attendance-hero h1 { font-size: 2.2rem; }
+    .attendance-hero p { font-size: 0.95rem; }
+    
+    .attendance-room-grid { grid-template-columns: 1fr; }
+    .attendance-room-card { padding: 20px; }
+    
+    .attendance-summary-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .attendance-summary-card { padding: 16px; }
+    .stat-value strong { font-size: 1.5rem; }
+
+    .attendance-room-shell { padding: 20px; border-radius: 24px; gap: 24px; }
+    .attendance-panel-card { padding: 20px; border-radius: 20px; }
+    
+    .attendance-guide-grid { display: none; } /* Hide guide on mobile to save space */
+}
+
+@media (max-width: 480px) {
+    .attendance-hero h1 { font-size: 1.75rem; }
+    .attendance-detail-grid { gap: 16px; }
+    .attendance-camera-shell { border-radius: 16px; border-width: 2px; }
+    .attendance-primary-btn { padding: 14px 20px; font-size: 0.9rem; }
 }

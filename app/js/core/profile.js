@@ -123,6 +123,13 @@
                         </button>
                     </div>
 
+                    <div class="profile-section-header">🔍 Interaksi</div>
+                    <div class="profile-interaction-section">
+                        <button type="button" class="profile-btn secondary" id="profile-scan-btn">
+                            <i class="fas fa-qrcode"></i> Pindai Kartu Anggota
+                        </button>
+                    </div>
+
                     <div class="profile-actions compact-actions">
                         <button type="button" class="profile-btn primary" id="profile-logout-btn">Logout</button>
                     </div>
@@ -365,6 +372,9 @@
             const uname = getStored(USER_USERNAME_KEY);
             loadActivityData(root, uname);
             loadNotifications(root);
+            initDigitalCard(root);
+            initBiometricSetup(root);
+            initScannerAction(root);
         }
 
         requestAnimationFrame(() => {
@@ -417,6 +427,9 @@
             const uname = getStored(USER_USERNAME_KEY);
             loadActivityData(root, uname);
             loadNotifications(root);
+            initDigitalCard(root);
+            initBiometricSetup(root);
+            initScannerAction(root);
         }
         registerUiBack();
     });
@@ -462,10 +475,22 @@
         const bioBtn = container.querySelector('#profile-biometric-btn');
         if (!bioBtn || !window.WebAuthnClient) return;
 
-        window.WebAuthnClient.isSupported().then(supported => {
+        window.WebAuthnClient.isSupported().then(async supported => {
             if (!supported) {
-                container.querySelector('#profile-biometric-section').style.display = 'none';
+                const section = container.querySelector('#profile-biometric-section');
+                if (section) section.style.display = 'none';
+                return;
             }
+
+            // Check if already registered
+            try {
+                const res = await fetch('/api/webauthn?action=list-authenticators');
+                const data = await res.json();
+                if (data.status === 'success' && data.count > 0) {
+                    bioBtn.classList.add('active');
+                    bioBtn.innerHTML = '<i class="fas fa-check-circle"></i> Biometrik Aktif';
+                }
+            } catch (e) {}
         });
 
         bioBtn.addEventListener('click', async () => {
@@ -484,6 +509,23 @@
             } finally {
                 if (window.AppLoader) window.AppLoader.hide();
             }
+        });
+    }
+
+    function initScannerAction(container) {
+        const scanBtn = container.querySelector('#profile-scan-btn');
+        if (!scanBtn || !window.CardScanner) return;
+
+        scanBtn.addEventListener('click', () => {
+            window.CardScanner.scan((data) => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (window.Toast) window.Toast.show(`Kader ditemukan: ${parsed.u || 'Anonim'}`, 'success');
+                    // Add logic here to show public profile of scanned user
+                } catch (e) {
+                    if (window.Toast) window.Toast.show(`Data QR: ${data}`, 'info');
+                }
+            });
         });
     }
 })();

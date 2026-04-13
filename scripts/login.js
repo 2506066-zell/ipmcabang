@@ -203,12 +203,23 @@
                 if (window.AppLoader) window.AppLoader.show('Verifikasi Biometrik...');
                 const result = await window.WebAuthnClient.login(username);
                 if (result.status === 'success') {
-                    const token = result.user?.session || ''; // Handled by cookie too
-                    storeSession(token, username, true);
-                    if (window.Toast) window.Toast.show('Berhasil masuk via biometrik.', 'success');
+                    const token = result.user?.session || '';
+                    const uname = result.user?.username || username;
+                    storeSession(token, uname, true);
+                    
+                    // Store other user details returned
+                    localStorage.setItem('ipmquiz_user_fullname', result.user?.nama_panjang || '');
+                    localStorage.setItem('ipmquiz_user_pimpinan', result.user?.pimpinan || '');
+
+                    if (window.Toast) window.Toast.show('Berhasil masuk via sidik jari.', 'success');
+                    try { await autoSubscribePush(token); } catch {}
                     window.location.href = 'quiz-gamified.html';
                 } else {
-                    showError(result.message || 'Gagal login biometrik.');
+                    const errorMsg = result.message || 'Gagal login biometrik.';
+                    showError(errorMsg);
+                    if (errorMsg.includes('tidak terdaftar')) {
+                        if (window.Toast) window.Toast.show('Biometrik belum didaftarkan di Profil.', 'warning');
+                    }
                 }
             } catch (err) {
                 showError('Biometrik gagal atau dibatalkan.');

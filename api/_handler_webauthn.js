@@ -11,8 +11,18 @@ const { getSessionUser } = require('./_auth');
 
 // RP = Relying Party
 const rpName = 'PC IPM Panawuan';
-const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
-const origin = process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000';
+
+function getWebAuthnConfig(req) {
+    const host = req.headers.host || 'localhost:3000';
+    const protocol = req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
+    const detectedOrigin = `${protocol}://${host}`;
+    const detectedRPID = host.split(':')[0]; // remove port
+
+    return {
+        origin: process.env.WEBAUTHN_ORIGIN || detectedOrigin,
+        rpID: process.env.WEBAUTHN_RP_ID || detectedRPID
+    };
+}
 
 async function handleGetRegistrationOptions(req, res) {
     const user = await getSessionUser(req);
@@ -20,6 +30,7 @@ async function handleGetRegistrationOptions(req, res) {
 
     const userAuthenticators = (await query`SELECT credential_id FROM user_authenticators WHERE user_id=${user.id}`).rows;
 
+    const { rpID } = getWebAuthnConfig(req);
     const options = await generateRegistrationOptions({
         rpName,
         rpID,
@@ -34,6 +45,7 @@ async function handleGetRegistrationOptions(req, res) {
         authenticatorSelection: {
             residentKey: 'preferred',
             userVerification: 'preferred',
+            authenticatorAttachment: 'platform',
         },
     });
 
@@ -53,6 +65,7 @@ async function handleVerifyRegistration(req, res) {
 
     if (!challengeRow) return json(res, 400, { status: 'error', message: 'Challenge tidak ditemukan' });
 
+    const { origin, rpID } = getWebAuthnConfig(req);
     try {
         const verification = await verifyRegistrationResponse({
             response: body,
@@ -86,6 +99,7 @@ async function handleGetAuthenticationOptions(req, res) {
 
     const userAuthenticators = (await query`SELECT credential_id FROM user_authenticators WHERE user_id=${user.id}`).rows;
 
+    const { rpID } = getWebAuthnConfig(req);
     const options = await generateAuthenticationOptions({
         rpID,
         allowCredentials: userAuthenticators.map((auth) => ({
@@ -116,6 +130,7 @@ async function handleVerifyAuthentication(req, res) {
     const authenticator = (await query`SELECT * FROM user_authenticators WHERE credential_id=${body.id} AND user_id=${user.id}`).rows[0];
     if (!authenticator) return json(res, 404, { status: 'error', message: 'Alat verifikasi tidak terdaftar.' });
 
+    const { origin, rpID } = getWebAuthnConfig(req);
     try {
         const verification = await verifyAuthenticationResponse({
             response: body,
@@ -149,7 +164,8 @@ async function handleVerifyAuthentication(req, res) {
                     username: user.username,
                     nama_panjang: user.nama_panjang,
                     pimpinan: user.pimpinan,
-                    role: user.role
+                    role: user.role,
+                    session: token
                 }
             });
         }
@@ -168,6 +184,12 @@ module.exports = async (req, res) => {
             case 'register-verify': return await handleVerifyRegistration(req, res);
             case 'login-options': return await handleGetAuthenticationOptions(req, res);
             case 'login-verify': return await handleVerifyAuthentication(req, res);
+            case 'list-authenticators': {
+                const user = await getSessionUser(req);
+                if (!user) return json(res, 401, { status: 'error' });
+                const count = Number((await query`SELECT COUNT(*)::int AS c FROM user_authenticators WHERE user_id=${user.id}`).rows[0]?.c || 0);
+                return json(res, 200, { status: 'success', count });
+            }
             default: return json(res, 404, { status: 'error', message: 'WebAuthn action not found' });
         }
     } catch (e) {

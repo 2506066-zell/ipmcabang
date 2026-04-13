@@ -54,8 +54,8 @@
         <section class="attendance-hero card-shell reveal">
             <div class="attendance-hero-copy">
                 <span class="attendance-kicker"><i class="fas fa-camera"></i> Room Absensi Virtual</span>
-                <h1>Masuk room pimpinan, buat rapat, hadir via selfie.</h1>
-                <p>Akses masuk aman menggunakan kode unik room. Anggota pimpinan yang sesuai dapat melakukan absensi mandiri dengan verifikasi wajah/selfie.</p>
+                <h1>Absensi Virtual Room</h1>
+                <p>Masuk ke room pimpinan menggunakan kode akses. Lakukan absensi mandiri dengan verifikasi wajah/selfie.</p>
             </div>
             <div class="attendance-hero-side">
                 <div class="attendance-user-chip" id="attendance-user-chip"><i class="fas fa-spinner fa-spin"></i> Menyiapkan akun...</div>
@@ -196,10 +196,20 @@
                                 </select>
                                 <small id="attendance-member-meta" class="attendance-helper-text"></small>
                             </label>
-                            <div class="attendance-camera-shell">
+                            <div class="attendance-camera-shell" id="attendance-camera-shell">
+                                <div class="attendance-camera-placeholder" id="attendance-camera-placeholder">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Kamera belum aktif</span>
+                                </div>
                                 <video id="attendance-camera-video" class="attendance-camera-video" autoplay playsinline muted hidden></video>
                                 <div class="attendance-preview" id="attendance-selfie-preview" hidden>
                                     <img src="" alt="Preview selfie" id="attendance-selfie-image">
+                                    <div class="preview-badge">HASIL SELFIE</div>
+                                </div>
+                                <div class="camera-permission-overlay" id="camera-permission-overlay" hidden>
+                                    <i class="fas fa-lock"></i>
+                                    <h4>Akses Kamera Diblokir</h4>
+                                    <p>Klik ikon gembok di alamat bar atas untuk mengizinkan kamera pada situs ini.</p>
                                 </div>
                             </div>
                             <label class="attendance-field">

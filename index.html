@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="/app/css/style.css">
     <link rel="stylesheet" href="/app/css/profile.css">
     <link rel="stylesheet" href="/app/css/home-dynamic.css">
+    <link rel="stylesheet" href="/app/css/scanner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -170,6 +171,10 @@
         </section>
     </main>
 
+    <button type="button" class="scan-fab" id="global-scan-btn" aria-label="Pindai QR Kader">
+        <i class="fas fa-qrcode"></i>
+    </button>
+
 
 
     <!-- Footer -->
@@ -243,7 +248,22 @@
     <script src="/app/js/features/auth/webauthn-client.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="/app/js/features/realtime.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="/app/js/features/scanner.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const scanBtn = document.getElementById('global-scan-btn');
+            if (scanBtn && window.CardScanner) {
+                scanBtn.addEventListener('click', () => {
+                    window.CardScanner.scan((data) => {
+                        console.log('Scanned:', data);
+                        // Future: handle member profiles
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
