@@ -402,16 +402,42 @@ async function handleRoomDetail(req, res) {
   const activeEvent = await getActiveEventForRoom(room.id);
   const history = await getRoomHistory(room.id, 14);
   const myState = await getUserSummaryForRoom(room.id, user.id);
+  const roomMemberCount = Number((await query`
+    SELECT COUNT(*)::int AS c
+    FROM users
+    WHERE COALESCE(TRIM(pimpinan), '')=${cleanString(room.pimpinan, 80)}
+  `).rows[0]?.c || 0);
   const currentRecord = activeEvent
     ? myState.records.find((item) => Number(item.event_id) === Number(activeEvent.id)) || null
     : null;
+
+  let recentAttendees = [];
+  let attendeesCount = 0;
+  if (activeEvent) {
+    recentAttendees = (await query`
+      SELECT u.username, u.nama_panjang, r.check_in_at
+      FROM attendance_records r
+      JOIN users u ON u.id = r.user_id
+      WHERE r.event_id=${activeEvent.id}
+        AND r.attendance_status='hadir'
+      ORDER BY r.check_in_at DESC
+      LIMIT 10
+    `).rows;
+    attendeesCount = Number((await query`
+      SELECT COUNT(*)::int AS c
+      FROM attendance_records
+      WHERE event_id=${activeEvent.id}
+        AND attendance_status='hadir'
+    `).rows[0]?.c || 0);
+  }
 
   return json(res, 200, {
     status: 'success',
     room: {
       id: room.id,
       pimpinan: room.pimpinan,
-      is_active: room.is_active
+      is_active: room.is_active,
+      member_count: roomMemberCount
     },
     permissions: {
       can_create_event: true,
@@ -419,6 +445,8 @@ async function handleRoomDetail(req, res) {
     },
     current_event: activeEvent ? {
       ...activeEvent,
+      attendees_count: attendeesCount,
+      recent_attendees: recentAttendees,
       my_record: currentRecord
         ? {
             id: currentRecord.id,

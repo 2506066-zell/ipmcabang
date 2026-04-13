@@ -325,6 +325,21 @@ async function ensureSchema() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS org_program_upvotes (
+    program_id INT REFERENCES org_programs(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (program_id, user_id)
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS org_program_comments (
+    id SERIAL PRIMARY KEY,
+    program_id INT REFERENCES org_programs(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -365,6 +380,8 @@ async function ensureSchema() {
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS description TEXT`;
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`;
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 1`;
+  await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS progress_percent INT DEFAULT 0`;
+  await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS upvote_count INT DEFAULT 0`;
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`;
   await query`ALTER TABLE org_programs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE feedback_messages ADD COLUMN IF NOT EXISTS source_page TEXT DEFAULT 'struktur-organisasi'`;

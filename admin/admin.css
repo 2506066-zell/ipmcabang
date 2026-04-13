@@ -3636,3 +3636,127 @@ button.priority-card:hover {
         min-width: 100%;
     }
 }
+
+.attendance-admin-shell,
+.attendance-admin-room-panel,
+.attendance-admin-events-panel,
+.attendance-admin-detail-panel {
+    border-radius: 20px;
+}
+
+.attendance-admin-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.attendance-admin-layout {
+    display: grid;
+    gap: 16px;
+}
+
+.attendance-admin-room-grid,
+.attendance-admin-events-list,
+.attendance-admin-participant-list {
+    display: grid;
+    gap: 12px;
+}
+
+.attendance-admin-room-card,
+.attendance-admin-event-card,
+.attendance-admin-participant-card,
+.attendance-admin-event-summary-card {
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 14px;
+    background: rgba(255,255,255,0.02);
+}
+
+.attendance-admin-room-card.is-selected,
+.attendance-admin-event-card.is-selected {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px rgba(74, 124, 93, 0.24);
+}
+
+.attendance-admin-room-head,
+.attendance-admin-event-head,
+.attendance-admin-event-actions,
+.attendance-admin-recap-row,
+.attendance-admin-recap-head,
+.attendance-admin-participant-meta {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.attendance-admin-room-head h4,
+.attendance-admin-event-head h4,
+.attendance-admin-participant-card h4,
+.attendance-admin-recap-head h4 {
+    margin: 8px 0 4px;
+}
+
+.attendance-admin-room-head p,
+.attendance-admin-event-head p,
+.attendance-admin-event-summary-card p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.attendance-admin-room-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.attendance-admin-recap-list {
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.attendance-admin-recap-table {
+    display: grid;
+    gap: 8px;
+}
+
+.attendance-admin-recap-row {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.attendance-admin-event-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.attendance-admin-participant-list {
+    margin-top: 16px;
+}
+
+.attendance-admin-participant-card form .toolbar-row {
+    align-items: stretch;
+}
+
+.attendance-admin-room-code-form .toolbar-row {
+    align-items: center;
+}
+
+@media (min-width: 1100px) {
+    .attendance-admin-layout {
+        grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1fr) minmax(360px, 1.15fr);
+        align-items: start;
+    }
+}
+
+@media (max-width: 720px) {
+    .attendance-admin-room-head,
+    .attendance-admin-event-head,
+    .attendance-admin-recap-row {
+        flex-direction: column;
+    }
+}

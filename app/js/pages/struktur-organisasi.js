@@ -181,6 +181,8 @@
       title: String(raw?.title || raw?.name || '').trim(),
       description: String(raw?.description || raw?.desc || '').trim(),
       status,
+      progress_percent: Number(raw?.progress_percent || 0),
+      upvote_count: Number(raw?.upvote_count || 0),
       sort_order: Number(raw?.sort_order || idx + 1) || idx + 1
     };
   }
@@ -604,7 +606,29 @@
       const statusText = program.status === 'terlaksana' ? 'Terlaksana' : (program.status === 'rencana' ? 'Rencana' : 'Draft');
       card.className = 'program-card';
       card.style.setProperty('--color-bidang', bidang.color || '#4A7C5D');
-      card.innerHTML = `<div class="program-card-head"><div class="program-card-name">${escapeHtml(program.title || 'Program')}</div><span class="program-card-status status-${escapeHtml(program.status)}">${statusText}</span></div><div class="program-card-desc">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>`;
+      const pBar = `
+        <div style="background:#eee; height:6px; border-radius:3px; margin: 12px 0 4px; overflow:hidden;">
+          <div style="background:var(--color-bidang, #4A7C5D); height:100%; width: ${program.progress_percent}%; transition:width 0.4s ease;"></div>
+        </div>
+        <div style="font-size:12px; font-weight:600; color:var(--color-bidang, #4A7C5D); margin-bottom:8px;">${program.progress_percent}% Kemajuan</div>
+      `;
+      card.innerHTML = `
+        <div class="program-card-head">
+          <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
+          <span class="program-card-status status-${escapeHtml(program.status)}">${statusText}</span>
+        </div>
+        ${pBar}
+        <div class="program-card-desc">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
+        <div class="program-card-actions" style="display:flex; gap:8px; margin-top:16px;">
+           <button type="button" class="btn btn-secondary btn-sm btn-upvote" data-program-id="${program.id}">
+              <i class="fas fa-thumbs-up"></i> <span class="upvt-count">${program.upvote_count}</span> Dukung
+           </button>
+           <button type="button" class="btn btn-secondary btn-sm btn-comment" data-program-id="${program.id}">
+              <i class="fas fa-comments"></i> Ruang Diskusi
+           </button>
+        </div>
+        <div class="program-comment-section hidden mt-16" id="comments-${program.id}" style="background:#f8fafc; border-radius:8px; padding:12px; margin-top:12px;"></div>
+      `;
       els.programList.appendChild(card);
     });
   }
@@ -793,6 +817,103 @@
         }
       });
     }
+
+    if (els.programList) {
+        els.programList.addEventListener('click', async (e) => {
+            const btnUpvote = e.target.closest('.btn-upvote');
+            if (btnUpvote) {
+                const pid = Number(btnUpvote.dataset.programId);
+                let authHeaders = {};
+                try {
+                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session');
+                    if (token) authHeaders['Authorization'] = 'Bearer ' + token;
+                } catch(e){}
+                
+                try {
+                   const res = await fetch('/api/organization?action=toggleUpvote', {
+                      method: 'POST', body: JSON.stringify({program_id: pid}),
+                      headers: {'Content-Type': 'application/json', ...authHeaders}
+                   });
+                   const data = await res.json();
+                   if (data.status === 'success') {
+                      btnUpvote.querySelector('.upvt-count').textContent = data.upvote_count;
+                      if (data.upvoted) btnUpvote.style.color = 'var(--text-accent)';
+                      else btnUpvote.style.color = '';
+                   } else {
+                      alert(data.message || 'Gagal update dukungan. Pastikan Anda sudah login.');
+                   }
+                } catch(err){ alert('Silakan login terlebih dahulu untuk mendukung program.') }
+            }
+
+            const btnComment = e.target.closest('.btn-comment');
+            if (btnComment) {
+                const pid = Number(btnComment.dataset.programId);
+                const cSec = document.getElementById('comments-'+pid);
+                if (cSec.classList.contains('hidden')) {
+                    cSec.classList.remove('hidden');
+                    cSec.innerHTML = '<div class="small muted">Memuat diskusi...</div>';
+                    try {
+                        const res = await fetch('/api/organization?action=getProgramDetails&program_id='+pid);
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            let html = '<div class="comments-list" style="max-height:220px;overflow-y:auto; padding-right:4px;">';
+                            if (!data.comments || !data.comments.length) html += '<div class="small muted" id="no-cmt-'+pid+'" style="margin-bottom:8px">Belum ada diskusi, yuk mulai!</div>';
+                            else {
+                                data.comments.forEach(c => {
+                                    html += `<div style="padding:10px 0; border-bottom:1px solid #e2e8f0"><strong style="font-size:13px; color:#1e293b;">${escapeHtml(c.nama_panjang || c.username)}</strong><div style="font-size:13px; color:#475569; margin-top:4px;">${escapeHtml(c.content)}</div></div>`;
+                                });
+                            }
+                            html += '</div>';
+                            html += `
+                              <form class="program-comment-form mt-12" style="display:flex;gap:8px" data-program-id="${pid}">
+                                 <input type="text" class="toolbar-input" placeholder="Tulis ide atau pertanyaan..." required style="flex-grow:1; font-size:13px; padding:8px 12px">
+                                 <button type="submit" class="btn btn-primary btn-sm">Kirim</button>
+                              </form>
+                            `;
+                            cSec.innerHTML = html;
+                            
+                            const form = cSec.querySelector('.program-comment-form');
+                            form.addEventListener('submit', async (ev) => {
+                                ev.preventDefault();
+                                const val = form.querySelector('input').value;
+                                const sb = form.querySelector('button');
+                                let authHeaders = {};
+                                try {
+                                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session');
+                                    if (token) authHeaders['Authorization'] = 'Bearer ' + token;
+                                } catch(e){}
+
+                                sb.disabled = true;
+                                try {
+                                   const pr = await fetch('/api/organization?action=addProgramComment', {
+                                      method:'POST', body: JSON.stringify({program_id: pid, content: val}),
+                                      headers:{'Content-Type':'application/json', ...authHeaders}
+                                   });
+                                   const pd = await pr.json();
+                                   if(pd.status === 'success') {
+                                       const nx = document.createElement('div');
+                                       nx.setAttribute('style', 'padding:10px 0; border-bottom:1px solid #e2e8f0');
+                                       nx.innerHTML = `<strong style="font-size:13px; color:#1e293b;">${escapeHtml(pd.comment.nama_panjang || pd.comment.username)}</strong><div style="font-size:13px; color:#475569; margin-top:4px;">${escapeHtml(pd.comment.content)}</div>`;
+                                       cSec.querySelector('.comments-list').appendChild(nx);
+                                       form.querySelector('input').value = '';
+                                       const noCmt = document.getElementById('no-cmt-'+pid);
+                                       if (noCmt) noCmt.style.display='none';
+                                       cSec.querySelector('.comments-list').scrollTop = cSec.querySelector('.comments-list').scrollHeight;
+                                   } else {
+                                       alert(pd.message || 'Gagal mengirim. Pastikan Anda sudah login.');
+                                   }
+                                } catch(err) { alert('Silakan login terlebih dahulu.') }
+                                sb.disabled = false;
+                            });
+                        }
+                    } catch(e){ cSec.innerHTML = '<div class="small" style="color:var(--status-danger)">Gagal memuat diskusi.</div>'; }
+                } else {
+                    cSec.classList.add('hidden');
+                }
+            }
+        });
+    }
+
     if (els.anggotaDetailOverlay) els.anggotaDetailOverlay.addEventListener('click', (event) => { if (event.target === els.anggotaDetailOverlay) closeAnggotaDetail(); });
     if (els.anggotaDetailCard) els.anggotaDetailCard.addEventListener('click', (event) => event.stopPropagation());
     if (els.closeAnggotaDetailBtn) els.closeAnggotaDetailBtn.addEventListener('click', closeAnggotaDetail);

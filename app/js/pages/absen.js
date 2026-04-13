@@ -15,7 +15,8 @@
         currentRoomId: 0,
         detail: null,
         pendingRoomId: 0,
-        selfieFile: null
+        selfieFile: null,
+        pollingInterval: null
     };
 
     const els = {};
@@ -63,9 +64,21 @@
             .replace(/'/g, '&#39;');
     }
 
-    function setText(id, value) {
-        const el = typeof id === 'string' ? document.getElementById(id) : id;
+    function setText(target, value) {
+        const el = typeof target === 'string' ? document.getElementById(target) : target;
         if (el) el.textContent = value;
+    }
+
+    function showToast(message, type) {
+        if (window.Toast && typeof window.Toast.show === 'function') {
+            window.Toast.show(message, type || 'info');
+        }
+    }
+
+    function setInlineStatus(el, message, type) {
+        if (!el) return;
+        el.textContent = message || '';
+        el.style.color = type === 'error' ? '#b42318' : (type === 'success' ? '#0f7b42' : '#526171');
     }
 
     async function apiFetch(path, init = {}, roomId = 0) {
@@ -100,19 +113,7 @@
         const fallbackPimpinan = getStored(STORAGE.pimpinan) || '-';
         const name = state.user?.nama_panjang || state.user?.username || fallbackName;
         const pimpinan = state.user?.pimpinan || fallbackPimpinan;
-        setText('attendance-user-chip', `${name} • ${pimpinan}`);
-    }
-
-    function showToast(message, type) {
-        if (window.Toast && typeof window.Toast.show === 'function') {
-            window.Toast.show(message, type || 'info');
-        }
-    }
-
-    function setInlineStatus(el, message, type) {
-        if (!el) return;
-        el.textContent = message || '';
-        el.style.color = type === 'error' ? '#b42318' : (type === 'success' ? '#0f7b42' : '#526171');
+        setText('attendance-user-chip', `${name} | ${pimpinan}`);
     }
 
     function openCodeModal(roomId, roomName) {
@@ -143,6 +144,8 @@
             const selected = Number(room.id) === Number(state.currentRoomId);
             const accessLabel = room.has_access ? 'Sudah dibuka' : 'Masuk pakai kode';
             const eventLabel = room.today_event ? `${escapeHtml(room.today_event.title)} sedang aktif` : 'Belum ada event aktif hari ini';
+            const isEligible = String(state.user?.pimpinan || '').trim() === String(room.pimpinan || '').trim();
+
             return `
                 <button type="button" class="attendance-room-card ${selected ? 'is-selected' : ''}" data-room-id="${room.id}" data-room-name="${escapeHtml(room.pimpinan)}">
                     <div class="attendance-room-head">
@@ -156,7 +159,7 @@
                     </div>
                     <div class="attendance-room-meta">
                         <span><i class="fas fa-users-viewfinder"></i> ${escapeHtml(eventLabel)}</span>
-                        <span><i class="fas fa-user-check"></i> Self check-in hanya untuk anggota pimpinan yang sama.</span>
+                        <span><i class="fas fa-user-check"></i> ${isEligible ? 'Kamu bisa self check-in di room ini.' : 'Kamu bisa masuk room, tapi self check-in terkunci.'}</span>
                     </div>
                     <div class="attendance-room-actions">
                         <span class="attendance-secondary-btn">${room.has_access ? 'Buka Room' : 'Masukkan Kode'}</span>
@@ -171,6 +174,32 @@
         setText('attendance-summary-hadir', String(summary?.hadir_count || 0));
         setText('attendance-summary-percent', `${summary?.attendance_percent || 0}%`);
         setText('attendance-summary-status', String(summary?.activity_status || 'pasif').toUpperCase());
+    }
+
+    function renderAccessStrip() {
+        if (!els.accessStrip || !state.detail?.room) return;
+        const detail = state.detail;
+        const currentEvent = detail.current_event;
+        const canSelfCheckIn = !!detail.permissions?.can_self_check_in;
+        const memberCount = Number(detail.room.member_count || 0);
+
+        els.accessStrip.innerHTML = `
+            <article class="attendance-access-card">
+                <span class="attendance-room-label">Akses Room</span>
+                <strong>${escapeHtml(detail.room.pimpinan)}</strong>
+                <p>Kode room sudah diverifikasi untuk sesi login ini. Kamu bisa masuk lagi tanpa mengetik ulang selama sesi masih aktif.</p>
+            </article>
+            <article class="attendance-access-card ${canSelfCheckIn ? '' : 'is-warning'}">
+                <span class="attendance-room-label">Status Kehadiran</span>
+                <strong>${canSelfCheckIn ? 'Boleh Self Check-in' : 'Perlu Admin Manual'}</strong>
+                <p>${canSelfCheckIn ? 'Pimpinan akunmu cocok dengan room ini, jadi absensi mandiri dengan selfie bisa dipakai.' : 'Kamu tetap bisa membuka room, tapi absensi mandiri terkunci karena pimpinan akunmu berbeda.'}</p>
+            </article>
+            <article class="attendance-access-card ${currentEvent ? '' : 'is-muted'}">
+                <span class="attendance-room-label">Kondisi Room</span>
+                <strong>${currentEvent ? 'Rapat Sedang Berjalan' : 'Menunggu Event Baru'}</strong>
+                <p>${currentEvent ? `${Number(currentEvent.attendees_count || 0)} anggota sudah tercatat hadir dari sekitar ${memberCount} anggota room.` : `Room ini terhubung dengan sekitar ${memberCount} anggota pimpinan.`}</p>
+            </article>
+        `;
     }
 
     function renderHistory(items) {
@@ -193,6 +222,24 @@
         `).join('');
     }
 
+    function renderCreateFormState(currentEvent) {
+        if (!els.createForm) return;
+        const disabled = !!currentEvent;
+        els.createForm.classList.toggle('is-disabled', disabled);
+        if (els.createBtn) {
+            els.createBtn.disabled = disabled;
+            els.createBtn.innerHTML = disabled
+                ? '<i class="fas fa-lock"></i> Event Hari Ini Sudah Aktif'
+                : '<i class="fas fa-plus"></i> Buat Event Hari Ini';
+        }
+        setInlineStatus(
+            els.createStatus,
+            disabled
+                ? 'Event aktif sudah ada. Tunggu event ini ditutup dulu sebelum membuat event baru.'
+                : 'Kalau rapat belum dibuka hari ini, kamu bisa membuat event baru dari form ini.'
+        );
+    }
+
     function renderCurrentEvent() {
         const detail = state.detail;
         const currentEvent = detail?.current_event;
@@ -203,12 +250,20 @@
             els.currentEventBox.innerHTML = '<div class="attendance-empty-state">Belum ada event aktif untuk room ini hari ini.</div>';
             setText('attendance-event-badge', 'Menunggu');
             if (els.checkinForm) els.checkinForm.hidden = true;
-            setInlineStatus(els.checkinStatus, canSelfCheckIn ? 'Buat atau tunggu event aktif lebih dulu sebelum check-in.' : 'Kamu bisa masuk room ini, tapi absensi mandiri hanya untuk anggota pimpinan yang sama.');
+            renderCreateFormState(null);
+            setInlineStatus(
+                els.checkinStatus,
+                canSelfCheckIn
+                    ? 'Buat atau tunggu event aktif lebih dulu sebelum check-in.'
+                    : 'Kamu bisa masuk room ini, tapi absensi mandiri hanya untuk anggota pimpinan yang sama.'
+            );
             return;
         }
 
         const myRecord = currentEvent.my_record;
         const creator = currentEvent.created_by_name || currentEvent.created_by_username || 'User room';
+        const attendeesCount = Number(currentEvent.attendees_count || 0);
+        const recentAttendees = Array.isArray(currentEvent.recent_attendees) ? currentEvent.recent_attendees : [];
         setText('attendance-event-badge', 'Aktif Hari Ini');
 
         els.currentEventBox.innerHTML = `
@@ -219,14 +274,41 @@
                     <span><i class="fas fa-user-pen"></i> Dibuat oleh ${escapeHtml(creator)}</span>
                     <span><i class="fas fa-signal"></i> Status ${escapeHtml(currentEvent.status || 'active')}</span>
                 </div>
+                <div class="attendance-event-stats">
+                    <div class="attendance-event-stat">
+                        <strong>${attendeesCount}</strong>
+                        <span>Sudah hadir</span>
+                    </div>
+                    <div class="attendance-event-stat">
+                        <strong>${Number(detail.room?.member_count || 0)}</strong>
+                        <span>Anggota room</span>
+                    </div>
+                    <div class="attendance-event-stat">
+                        <strong>${myRecord ? 'Sudah' : 'Belum'}</strong>
+                        <span>Status absensimu</span>
+                    </div>
+                </div>
                 <p>${escapeHtml(currentEvent.description || 'Event rapat aktif untuk room ini. Gunakan panel di bawah untuk check-in dengan selfie.')}</p>
                 ${myRecord ? `
                     <div class="attendance-pill">
                         <i class="fas fa-check-circle"></i> Kamu sudah tercatat: ${escapeHtml(myRecord.attendance_status)}
                     </div>
                 ` : ''}
+                <div class="attendance-roster">
+                    ${recentAttendees.length ? recentAttendees.map((item) => `
+                        <div class="attendance-roster-item">
+                            <div>
+                                <strong>${escapeHtml(item.nama_panjang || item.username)}</strong>
+                                <span>@${escapeHtml(item.username || '')}</span>
+                            </div>
+                            <span>${escapeHtml(item.check_in_at ? new Date(item.check_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-')}</span>
+                        </div>
+                    `).join('') : '<div class="attendance-empty-state">Belum ada peserta yang check-in pada event ini.</div>'}
+                </div>
             </article>
         `;
+
+        renderCreateFormState(currentEvent);
 
         if (els.checkinForm) {
             els.checkinForm.hidden = !canSelfCheckIn || !!myRecord;
@@ -250,18 +332,49 @@
         if (els.roomPanel) els.roomPanel.hidden = false;
         setText('attendance-room-label', `Room ${detail.room.pimpinan}`);
         setText('attendance-room-title', detail.room.pimpinan);
-        setText('attendance-room-subtitle', detail.permissions?.can_self_check_in
-            ? 'Kamu bisa membuat event dan check-in mandiri di room ini.'
-            : 'Kamu bisa membuka room dan membuat event, tetapi absensi mandiri hanya untuk anggota pimpinan yang sama.');
+        setText(
+            'attendance-room-subtitle',
+            detail.permissions?.can_self_check_in
+                ? 'Kamu bisa membuat event dan check-in mandiri di room ini.'
+                : 'Kamu bisa membuka room dan membuat event, tetapi absensi mandiri hanya untuk anggota pimpinan yang sama.'
+        );
 
+        renderAccessStrip();
         renderSummary(detail.my_summary || {});
         renderCurrentEvent();
         renderHistory(detail.history || []);
+        startLivePolling(detail.room.id);
+    }
+
+    function startLivePolling(roomId) {
+        if (state.pollingInterval) clearInterval(state.pollingInterval);
+        state.pollingInterval = setInterval(async () => {
+            if (!state.currentRoomId || state.currentRoomId !== roomId) {
+                clearInterval(state.pollingInterval);
+                return;
+            }
+            try {
+                const data = await apiFetch(`/api/attendance?action=roomDetail&room_id=${encodeURIComponent(roomId)}`, { method: 'GET' }, roomId);
+                const newAttendees = data.current_event?.recent_attendees || [];
+                const oldAttendees = state.detail?.current_event?.recent_attendees || [];
+                if (newAttendees.length > 0 && oldAttendees.length > 0) {
+                    const oldIds = new Set(oldAttendees.map((item) => item.username));
+                    const freshlyJoined = newAttendees.filter((item) => !oldIds.has(item.username));
+                    freshlyJoined.forEach((item) => {
+                        showToast(`${item.nama_panjang || item.username} baru saja hadir`, 'success');
+                    });
+                }
+                state.detail = data;
+                renderAccessStrip();
+                renderSummary(data.my_summary || {});
+                renderCurrentEvent();
+                renderHistory(data.history || []);
+            } catch {}
+        }, 12000);
     }
 
     async function loadRooms(preferredRoomId) {
-        const refreshBtn = els.refreshBtn;
-        if (refreshBtn) refreshBtn.disabled = true;
+        if (els.refreshBtn) els.refreshBtn.disabled = true;
         try {
             const data = await apiFetch('/api/attendance?action=rooms');
             state.user = data.user || null;
@@ -279,7 +392,7 @@
                 els.roomGrid.innerHTML = `<div class="attendance-empty-card">${escapeHtml(error.message || 'Gagal memuat room absensi.')}</div>`;
             }
         } finally {
-            if (refreshBtn) refreshBtn.disabled = false;
+            if (els.refreshBtn) els.refreshBtn.disabled = false;
         }
     }
 
@@ -300,9 +413,7 @@
                 state.detail = null;
                 renderRooms();
                 renderDetail();
-                if (openCodeWhenNeeded !== false) {
-                    openCodeModal(roomId, room.pimpinan);
-                }
+                if (openCodeWhenNeeded !== false) openCodeModal(roomId, room.pimpinan);
                 return;
             }
             showToast(error.message || 'Gagal memuat detail room', 'error');
@@ -312,8 +423,7 @@
     async function handleCodeSubmit(event) {
         event.preventDefault();
         if (!state.pendingRoomId) return;
-        const submitBtn = els.codeSubmit;
-        if (submitBtn) submitBtn.disabled = true;
+        if (els.codeSubmit) els.codeSubmit.disabled = true;
         setInlineStatus(els.codeStatus, 'Memverifikasi kode room...');
         try {
             const data = await apiFetch('/api/attendance?action=verifyRoom', {
@@ -331,7 +441,7 @@
         } catch (error) {
             setInlineStatus(els.codeStatus, error.message || 'Kode room tidak sesuai.', 'error');
         } finally {
-            if (submitBtn) submitBtn.disabled = false;
+            if (els.codeSubmit) els.codeSubmit.disabled = false;
         }
     }
 
@@ -345,6 +455,7 @@
             setInlineStatus(els.createStatus, 'Judul event wajib diisi.', 'error');
             return;
         }
+
         if (els.createBtn) els.createBtn.disabled = true;
         setInlineStatus(els.createStatus, 'Membuat event rapat...');
         try {
@@ -354,13 +465,12 @@
                 body: JSON.stringify({ room_id: roomId, title, description })
             }, roomId);
             if (els.createForm) els.createForm.reset();
-            setInlineStatus(els.createStatus, 'Event aktif berhasil dibuat.', 'success');
             showToast('Event rapat berhasil dibuat', 'success');
             await loadRooms(roomId);
         } catch (error) {
             setInlineStatus(els.createStatus, error.message || 'Gagal membuat event.', 'error');
         } finally {
-            if (els.createBtn) els.createBtn.disabled = false;
+            renderCreateFormState(state.detail?.current_event || null);
         }
     }
 
@@ -406,6 +516,7 @@
             setInlineStatus(els.checkinStatus, 'Selfie wajib diambil sebelum kirim absensi.', 'error');
             return;
         }
+
         if (els.checkinBtn) els.checkinBtn.disabled = true;
         setInlineStatus(els.checkinStatus, 'Mengunggah selfie dan menyimpan absensi...');
         try {
@@ -418,10 +529,9 @@
                     photo_url: photoUrl
                 })
             }, Number(state.currentRoomId));
-            setInlineStatus(els.checkinStatus, 'Absensi berhasil direkam.', 'success');
-            showToast('Absensi berhasil direkam', 'success');
             if (els.checkinForm) els.checkinForm.reset();
             updateSelfiePreview(null);
+            showToast('Absensi berhasil direkam', 'success');
             await loadRooms(state.currentRoomId);
         } catch (error) {
             setInlineStatus(els.checkinStatus, error.message || 'Gagal mengirim absensi.', 'error');
@@ -431,9 +541,9 @@
     }
 
     function bindElements() {
-        els.userChip = document.getElementById('attendance-user-chip');
         els.roomGrid = document.getElementById('attendance-room-grid');
         els.roomPanel = document.getElementById('attendance-room-panel');
+        els.accessStrip = document.getElementById('attendance-access-strip');
         els.currentEventBox = document.getElementById('attendance-current-event');
         els.historyList = document.getElementById('attendance-history-list');
         els.refreshBtn = document.getElementById('attendance-refresh-btn');
@@ -469,6 +579,10 @@
         els.codeClose?.addEventListener('click', closeCodeModal);
         els.codeModal?.addEventListener('click', (event) => {
             if (event.target === els.codeModal) closeCodeModal();
+        });
+        els.codeInput?.addEventListener('input', () => {
+            if (!els.codeInput) return;
+            els.codeInput.value = String(els.codeInput.value || '').toUpperCase().replace(/\s+/g, '');
         });
         els.codeForm?.addEventListener('submit', handleCodeSubmit);
         els.createForm?.addEventListener('submit', handleCreateEvent);

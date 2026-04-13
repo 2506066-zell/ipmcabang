@@ -215,6 +215,14 @@
                                 </div>
                                 <div class="focus-card-meta" id="focus-users-meta">Buka modul</div>
                             </button>
+                            <button type="button" class="focus-card" data-tab="attendance">
+                                <div class="focus-card-icon accent-system"><i class="fas fa-camera-retro"></i></div>
+                                <div class="focus-card-body">
+                                    <div class="focus-card-title">Pantau Absensi</div>
+                                    <div class="focus-card-text">Cek room aktif, kode akses, dan kader yang perlu follow up kehadiran.</div>
+                                </div>
+                                <div class="focus-card-meta" id="focus-attendance-meta">Buka modul</div>
+                            </button>
                             <button type="button" class="focus-card" data-tab="schedules">
                                 <div class="focus-card-icon accent-system"><i class="fas fa-sliders"></i></div>
                                 <div class="focus-card-body">
@@ -249,6 +257,11 @@
                                 <span class="workflow-badge">Komunikasi</span>
                                 <h4>Pengguna, broadcast, dan feedback</h4>
                                 <p>Untuk mengelola akun, menargetkan notifikasi, dan menindaklanjuti pesan dari pengguna.</p>
+                            </button>
+                            <button type="button" class="workflow-card" data-tab="attendance">
+                                <span class="workflow-badge">Kehadiran</span>
+                                <h4>Room absensi, event rapat, dan rekap kader</h4>
+                                <p>Untuk memantau keaktifan kader per pimpinan dan memastikan absensi rapat tercatat dengan rapi.</p>
                             </button>
                             <button type="button" class="workflow-card" data-tab="schedules">
                                 <span class="workflow-badge">Pengaturan</span>
@@ -761,54 +774,6 @@
                                     </button>
                                 </div>
                             </form>
-                            <div id="org-members-list" class="list-container mt-16"></div>
-                        </section>
-
-                        <section class="card section-card">
-                            <h3 class="section-card-title">Program Kerja Bidang</h3>
-                            <form id="org-program-form" class="org-form-grid">
-                                <input type="hidden" id="org-program-id">
-                                <div class="field">
-                                    <label for="org-program-title">Judul Program</label>
-                                    <input type="text" id="org-program-title" placeholder="Judul program kerja" required>
-                                </div>
-                                <div class="field">
-                                    <label for="org-program-status">Status</label>
-                                    <select id="org-program-status">
-                                        <option value="draft">Draft</option>
-                                        <option value="rencana">Rencana</option>
-                                        <option value="terlaksana">Terlaksana</option>
-                                    </select>
-                                </div>
-                                <div class="field">
-                                    <label for="org-program-description">Deskripsi</label>
-                                    <textarea id="org-program-description" rows="3" placeholder="Deskripsi program"></textarea>
-                                </div>
-                                <div class="field">
-                                    <label for="org-program-sort">Urutan</label>
-                                    <input type="number" id="org-program-sort" min="1" placeholder="1">
-                                </div>
-                                <div class="toolbar-row">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-floppy-disk"></i> Simpan Program
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" id="org-program-cancel-btn">
-                                        Reset
-                                    </button>
-                                </div>
-                            </form>
-                            <div id="org-programs-list" class="list-container mt-16"></div>
-                        </section>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- FLOATING ACTION BUTTON (Sticky) -->
-    <div class="fab-container" id="fab-add-question" role="button" aria-label="Tambah Soal">
-        <button class="fab-btn">
-            <i class="fas fa-plus"></i>
         </button>
     </div>
 

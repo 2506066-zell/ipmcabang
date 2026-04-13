@@ -39,6 +39,9 @@ async function withMockedRouterHandlers(run) {
     if (id.endsWith('/_handler_push') || id.endsWith('\\_handler_push')) {
       return async (req, res) => res.status(200).send(JSON.stringify({ status: 'success', route: 'push' }));
     }
+    if (id.endsWith('/_handler_attendance') || id.endsWith('\\_handler_attendance')) {
+      return async (req, res) => res.status(200).send(JSON.stringify({ status: 'success', route: 'attendance' }));
+    }
     return orig.apply(this, arguments);
   };
   try {
@@ -118,6 +121,26 @@ async function testAuthLoginMissingFields400() {
   assert.strictEqual(r.body.status, 'error');
 }
 
+async function testIndexAttendanceRoute() {
+  await withMockedRouterHandlers(async () => {
+    delete require.cache[require.resolve('../api/index')];
+    const handler = require('../api/index');
+    const res = fakeRes();
+    await handler(
+      {
+        method: 'GET',
+        url: '/api/index?segment=attendance&action=rooms',
+        query: { segment: 'attendance', action: 'rooms' },
+        headers: { host: 'localhost' }
+      },
+      res
+    );
+    const r = res.result;
+    assert.strictEqual(r.code, 200);
+    assert.strictEqual(r.body.route, 'attendance');
+  });
+}
+
 async function testUploadRequiresAdminAuth() {
   const handler = require('../api/upload');
   const res = {
@@ -142,15 +165,26 @@ async function testUsersListRequiresSession() {
   assert.strictEqual(r.body.status, 'error');
 }
 
+async function testAttendanceRoomsRequiresSession() {
+  const handler = require('../api/_handler_attendance');
+  const res = fakeRes();
+  await handler({ method: 'GET', query: { action: 'rooms' }, headers: {}, body: '{}' }, res);
+  const r = res.result;
+  assert.strictEqual(r.code, 401);
+  assert.strictEqual(r.body.status, 'error');
+}
+
 async function main() {
   const tests = [
     ['_util.json sets headers and body', testUtilJson],
     ['index supports vercel query segment rewrite', testIndexUsesQuerySegmentRewrite],
     ['index unknown segment returns 404', testIndexUnknownRoute404],
+    ['index attendance route resolves', testIndexAttendanceRoute],
     ['auth unknown action returns 404', testAuthUnknownAction404],
     ['auth login missing fields returns 400', testAuthLoginMissingFields400],
     ['upload requires admin auth', testUploadRequiresAdminAuth],
     ['users endpoint requires session', testUsersListRequiresSession],
+    ['attendance rooms require session', testAttendanceRoomsRequiresSession],
   ];
 
   let passed = 0;

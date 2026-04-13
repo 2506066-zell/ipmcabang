@@ -1,6 +1,6 @@
 const { query } = require('./_db');
 const { json, parseJsonBody } = require('./_util');
-const { requireAdminAuth } = require('./_auth');
+const { requireAdminAuth, requireUserAuth } = require('./_auth');
 
 function sanitizeText(value, max = 255) {
   return String(value || '')
@@ -90,6 +90,8 @@ function groupByBidang(bidangRows, membersRows, programsRows) {
       description: p.description || '',
       status: sanitizeProgramStatus(p.status),
       sort_order: Number(p.sort_order || 1),
+      progress_percent: Number(p.progress_percent || 0),
+      upvote_count: Number(p.upvote_count || 0),
       is_active: p.is_active !== false
     });
   }
@@ -130,7 +132,7 @@ async function handlePublicList(req, res) {
   `).rows;
 
   const programsRows = (await query`
-    SELECT id, bidang_id, title, description, status, sort_order, is_active
+    SELECT id, bidang_id, title, description, status, sort_order, progress_percent, upvote_count, is_active
     FROM org_programs
     WHERE is_active = true
     ORDER BY bidang_id ASC, sort_order ASC, id ASC
@@ -160,7 +162,7 @@ async function handleSnapshot(req, res) {
   `).rows;
 
   const programsRows = (await query`
-    SELECT id, bidang_id, title, description, status, sort_order, is_active
+    SELECT id, bidang_id, title, description, status, sort_order, progress_percent, upvote_count, is_active
     FROM org_programs
     ORDER BY bidang_id ASC, sort_order ASC, id ASC
   `).rows;
@@ -281,6 +283,7 @@ async function handleUpsertProgram(req, res) {
   const description = sanitizeText(body.description || body.desc, 700);
   if (!title) return json(res, 400, { status: 'error', message: 'Judul program wajib diisi' });
   const status = sanitizeProgramStatus(body.status);
+  const progressPercent = Math.max(0, Math.min(100, Number(body.progress_percent || 0)));
 
   let sortOrder = parseSortOrder(body.sort_order, 0);
   if (sortOrder < 1) {
@@ -296,6 +299,7 @@ async function handleUpsertProgram(req, res) {
           title=${title},
           description=${description},
           status=${status},
+          progress_percent=${progressPercent},
           sort_order=${sortOrder},
           is_active=true,
           updated_at=NOW()
@@ -309,9 +313,9 @@ async function handleUpsertProgram(req, res) {
   } else {
     row = (await query`
       INSERT INTO org_programs (
-        bidang_id, title, description, status, sort_order, is_active
+        bidang_id, title, description, status, sort_order, progress_percent, is_active
       ) VALUES (
-        ${bidangId}, ${title}, ${description}, ${status}, ${sortOrder}, ${true}
+        ${bidangId}, ${title}, ${description}, ${status}, ${sortOrder}, ${progressPercent}, ${true}
       )
       RETURNING *
     `).rows[0];
@@ -346,6 +350,106 @@ async function handleDeleteProgram(req, res) {
   return json(res, 200, { status: 'success' });
 }
 
+async function handleProgramDetails(req, res) {
+  const programId = Number(req.query.program_id || 0);
+  if (!programId) return json(res, 400, { status: 'error', message: 'ID program tidak valid' });
+
+  let userId = null;
+  try {
+    const user = await requireUserAuth(req);
+    userId = user.id;
+  } catch(e) {}
+
+  let upvoted = false;
+  if (userId) {
+    const up = (await query`SELECT 1 FROM org_program_upvotes WHERE program_id=${programId} AND user_id=${userId}`).rows[0];
+    if (up) upvoted = true;
+  }
+
+  const comments = (await query`
+    SELECT c.id, c.content, c.created_at, u.nama_panjang, u.username
+    FROM org_program_comments c
+    JOIN users u ON u.id = c.user_id
+    WHERE c.program_id = ${programId}
+    ORDER BY c.created_at ASC
+  `).rows;
+
+  return json(res, 200, { status: 'success', upvoted, comments });
+}
+
+async function handleToggleUpvote(req, res) {
+  let user;
+  try { user = await requireUserAuth(req); } 
+  catch(e) { return json(res, 401, { status: 'error', message: 'Harus login untuk mendukung program.' }); }
+  
+  const body = parseJsonBody(req);
+  const programId = Number(body.program_id || 0);
+  if (!programId) return json(res, 400, { status: 'error', message: 'Program invalid' });
+
+  const existing = (await query`SELECT 1 FROM org_program_upvotes WHERE program_id=${programId} AND user_id=${user.id}`).rows[0];
+  let upvoted = false;
+  
+  if (existing) {
+    await query`DELETE FROM org_program_upvotes WHERE program_id=${programId} AND user_id=${user.id}`;
+    await query`UPDATE org_programs SET upvote_count = GREATEST(upvote_count - 1, 0) WHERE id=${programId}`;
+  } else {
+    await query`INSERT INTO org_program_upvotes (program_id, user_id) VALUES (${programId}, ${user.id})`;
+    await query`UPDATE org_programs SET upvote_count = upvote_count + 1 WHERE id=${programId}`;
+    upvoted = true;
+  }
+  
+  const countRow = (await query`SELECT upvote_count FROM org_programs WHERE id=${programId}`).rows[0];
+  return json(res, 200, { status: 'success', upvoted, upvote_count: countRow?.upvote_count || 0 });
+}
+
+async function handleAddProgramComment(req, res) {
+  let user;
+  try { user = await requireUserAuth(req); } 
+  catch(e) { return json(res, 401, { status: 'error', message: 'Harus login untuk berkomentar.' }); }
+  
+  const body = parseJsonBody(req);
+  const programId = Number(body.program_id || 0);
+  const content = sanitizeText(body.content, 1000);
+  if (!programId || !content) return json(res, 400, { status: 'error', message: 'Isi komentar tidak boleh kosong' });
+
+  const row = (await query`
+    INSERT INTO org_program_comments (program_id, user_id, content) 
+    VALUES (${programId}, ${user.id}, ${content}) 
+    RETURNING id, content, created_at
+  `).rows[0];
+
+  return json(res, 200, { 
+    status: 'success', 
+    comment: {
+      id: row.id, content: row.content, created_at: row.created_at,
+      username: user.username, nama_panjang: user.nama_panjang
+    } 
+  });
+}
+
+async function handleDeleteProgramComment(req, res) {
+  let adminId = null;
+  try {
+    const admin = await requireAdminAuth(req);
+    adminId = admin.id;
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const body = parseJsonBody(req);
+  const commentId = Number(body.comment_id || 0);
+  if (!commentId) return json(res, 400, { status: 'error', message: 'ID komentar tidak valid' });
+
+  const deleted = (await query`DELETE FROM org_program_comments WHERE id=${commentId} RETURNING id`).rows[0];
+  if (!deleted) return json(res, 404, { status: 'error', message: 'Komentar tidak ditemukan' });
+
+  try {
+    await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'DELETE_ORG_COMMENT', ${{ id: commentId }})`;
+  } catch {}
+
+  return json(res, 200, { status: 'success' });
+}
+
 module.exports = async (req, res) => {
   try {
     req.query = req.query || {};
@@ -353,6 +457,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       if (action === 'snapshot') return await handleSnapshot(req, res);
+      if (action === 'getProgramDetails') return await handleProgramDetails(req, res);
       return await handlePublicList(req, res);
     }
 
@@ -364,6 +469,9 @@ module.exports = async (req, res) => {
     if (action === 'deleteMember') return await handleDeleteMember(req, res);
     if (action === 'upsertProgram') return await handleUpsertProgram(req, res);
     if (action === 'deleteProgram') return await handleDeleteProgram(req, res);
+    if (action === 'deleteProgramComment') return await handleDeleteProgramComment(req, res);
+    if (action === 'toggleUpvote') return await handleToggleUpvote(req, res);
+    if (action === 'addProgramComment') return await handleAddProgramComment(req, res);
 
     return json(res, 404, { status: 'error', message: `Unknown action: ${action || 'none'}` });
   } catch (e) {

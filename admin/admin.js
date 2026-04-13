@@ -170,6 +170,7 @@
             focusArticlesMeta: document.getElementById('focus-articles-meta'),
             focusQuestionsMeta: document.getElementById('focus-questions-meta'),
             focusUsersMeta: document.getElementById('focus-users-meta'),
+            focusAttendanceMeta: document.getElementById('focus-attendance-meta'),
             focusSystemMeta: document.getElementById('focus-system-meta'),
 
             // Questions
@@ -555,6 +556,8 @@
         const materialCount = asNumber(context.materialCount);
         const openFeedback = asNumber(context.openFeedback);
         const pendingNotifications = asNumber(context.pendingNotifications);
+        const activeAttendanceRooms = asNumber(context.activeAttendanceRooms);
+        const passiveAttendanceMembers = asNumber(context.passiveAttendanceMembers);
         const noQuizUsers = users.filter(u => asNumber(u.total_quizzes) === 0 && String(u.role || '') !== 'admin').length;
 
         const items = [];
@@ -573,6 +576,22 @@
                 tab: 'users',
                 title: `${pendingNotifications} notifikasi masih menunggu jadwal kirim`,
                 text: 'Tinjau notifikasi terjadwal untuk memastikan isi dan targetnya sudah benar.'
+            });
+        }
+        if (activeAttendanceRooms > 0) {
+            items.push({
+                tone: 'info',
+                tab: 'attendance',
+                title: `${activeAttendanceRooms} room absensi sedang aktif`,
+                text: 'Cek event rapat yang sedang berjalan untuk memastikan kehadiran kader masuk dengan benar.'
+            });
+        }
+        if (passiveAttendanceMembers > 0) {
+            items.push({
+                tone: 'warn',
+                tab: 'attendance',
+                title: `${passiveAttendanceMembers} kader berstatus pasif`,
+                text: 'Lihat rekap absensi untuk menentukan kader yang perlu diingatkan atau ditindaklanjuti.'
             });
         }
         if (activeSchedules === 0) {
@@ -755,7 +774,7 @@
     async function loadDashboard() {
         // Parallel fetch for stats
         try {
-            const [usersData, questionsData, logsData, schedulesData, resultsData, articlesData, materialsData, feedbackData, notifyData] = await Promise.all([
+            const [usersData, questionsData, logsData, schedulesData, resultsData, articlesData, materialsData, feedbackData, notifyData, attendanceData] = await Promise.all([
                 apiAdminVercel('GET', '/api/admin/users?action=extended'),
                 apiGetVercel('/api/questions?size=1'), // Just to get total count
                 apiAdminVercel('GET', '/api/admin/questions?action=activityLogs'),
@@ -764,7 +783,8 @@
                 apiGetVercel('/api/articles?size=1'),
                 apiGetVercel('/api/materials?size=1'),
                 apiAdminVercel('GET', '/api/feedback?action=list&status=open&size=20'),
-                apiAdminVercel('GET', '/api/admin/questions?action=listScheduledNotifications')
+                apiAdminVercel('GET', '/api/admin/questions?action=listScheduledNotifications'),
+                apiAdminVercel('GET', '/api/attendance?action=adminOverview')
             ]);
 
             const userCount = usersData.users ? usersData.users.length : 0;
@@ -777,6 +797,9 @@
             const pendingNotifications = Array.isArray(notifyData.items)
                 ? notifyData.items.filter(item => String(item.status || 'pending').toLowerCase() === 'pending').length
                 : 0;
+            const attendanceRooms = Array.isArray(attendanceData.rooms) ? attendanceData.rooms : [];
+            const activeAttendanceRooms = attendanceRooms.filter(item => item.active_event).length;
+            const passiveAttendanceMembers = attendanceRooms.reduce((sum, item) => sum + Number(item.recap?.passive_members || 0), 0);
 
             // Users Stat
             if (els.statUsers) els.statUsers.textContent = userCount;
@@ -799,6 +822,9 @@
             if (els.focusUsersMeta) {
                 els.focusUsersMeta.textContent = `${openFeedback} feedback, ${pendingNotifications} notifikasi tertunda`;
             }
+            if (els.focusAttendanceMeta) {
+                els.focusAttendanceMeta.textContent = `${activeAttendanceRooms} room aktif, ${passiveAttendanceMembers} kader pasif`;
+            }
             if (els.focusSystemMeta) {
                 els.focusSystemMeta.textContent = `${activeSchedules} jadwal aktif`;
             }
@@ -810,7 +836,9 @@
                 articleCount,
                 materialCount,
                 openFeedback,
-                pendingNotifications
+                pendingNotifications,
+                activeAttendanceRooms,
+                passiveAttendanceMembers
             });
 
             // Recent Activity

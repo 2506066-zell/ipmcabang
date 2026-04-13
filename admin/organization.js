@@ -20,6 +20,8 @@ export function initOrganization(state, els, api) {
     const programTitle = document.getElementById('org-program-title');
     const programDescription = document.getElementById('org-program-description');
     const programStatus = document.getElementById('org-program-status');
+    const programProgress = document.getElementById('org-program-progress');
+    const programProgressVal = document.getElementById('org-program-progress-val');
     const programSort = document.getElementById('org-program-sort');
     const programCancelBtn = document.getElementById('org-program-cancel-btn');
     const programsList = document.getElementById('org-programs-list');
@@ -133,7 +135,9 @@ export function initOrganization(state, els, api) {
                         <span class="org-chip ${chip}">${chip}</span>
                     </div>
                     <div class="small muted">${api.escapeHtml(p.description || '-')}</div>
-                    <div class="org-row-meta">
+                    <div class="org-row-meta" style="margin-top: 8px;">
+                        <span>Progress: <strong>${Number(p.progress_percent || 0)}%</strong></span>
+                        <span>👍 ${Number(p.upvote_count || 0)}</span>
                         <span>Urutan: ${Number(p.sort_order || 1)}</span>
                     </div>
                     <div class="toolbar-row">
@@ -173,6 +177,8 @@ export function initOrganization(state, els, api) {
         programTitle.value = '';
         programDescription.value = '';
         programStatus.value = 'draft';
+        if (programProgress) programProgress.value = 0;
+        if (programProgressVal) programProgressVal.textContent = '0';
         programSort.value = '';
     }
 
@@ -282,6 +288,7 @@ export function initOrganization(state, els, api) {
                 title: String(programTitle.value || '').trim(),
                 description: String(programDescription.value || '').trim(),
                 status: String(programStatus.value || 'draft').trim(),
+                progress_percent: Number(programProgress?.value || 0),
                 sort_order: Number(programSort.value || 0) || undefined
             };
             const data = await api.apiAdminVercel('POST', '/api/admin/organization?action=upsertProgram', payload);
@@ -378,6 +385,8 @@ export function initOrganization(state, els, api) {
                 programTitle.value = String(item.title || '');
                 programDescription.value = String(item.description || '');
                 programStatus.value = String(item.status || 'draft');
+                if (programProgress) programProgress.value = String(item.progress_percent || 0);
+                if (programProgressVal) programProgressVal.textContent = String(item.progress_percent || 0);
                 programSort.value = String(item.sort_order || '');
                 programTitle.focus();
             }
