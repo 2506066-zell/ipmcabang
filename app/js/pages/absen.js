@@ -876,30 +876,73 @@
         }
     }
 
+    /**
+     * Compress an image blob to target max size (default 200KB).
+     * Resizes to maxDim first, then progressively lowers JPEG quality.
+     */
+    async function compressImage(sourceCanvas, maxDim = 800, maxBytes = 200 * 1024) {
+        const canvas = document.createElement('canvas');
+        const srcW = sourceCanvas.width;
+        const srcH = sourceCanvas.height;
+
+        // Step 1: Resize if larger than maxDim
+        let w = srcW, h = srcH;
+        if (w > maxDim || h > maxDim) {
+            const ratio = Math.min(maxDim / w, maxDim / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+        }
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(sourceCanvas, 0, 0, w, h);
+
+        // Step 2: Progressive quality reduction
+        let quality = 0.82;
+        let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+
+        while (blob && blob.size > maxBytes && quality > 0.3) {
+            quality -= 0.1;
+            blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+        }
+
+        const sizeKB = blob ? (blob.size / 1024).toFixed(0) : '?';
+        console.log(`[Compress] ${srcW}x${srcH} → ${w}x${h}, quality=${quality.toFixed(1)}, size=${sizeKB}KB`);
+        return blob;
+    }
+
     async function captureSelfie() {
         if (!state.selfieStream || !els.cameraVideo) {
             setInlineStatus(els.checkinStatus, 'Buka kamera dulu sebelum mengambil selfie.', 'error');
             return;
         }
-        const canvas = document.createElement('canvas');
-        canvas.width = els.cameraVideo.videoWidth || 720;
-        canvas.height = els.cameraVideo.videoHeight || 960;
-        const ctx = canvas.getContext('2d');
+
+        // Capture raw frame
+        const rawCanvas = document.createElement('canvas');
+        rawCanvas.width = els.cameraVideo.videoWidth || 720;
+        rawCanvas.height = els.cameraVideo.videoHeight || 960;
+        const ctx = rawCanvas.getContext('2d');
         if (!ctx) {
             setInlineStatus(els.checkinStatus, 'Gagal menyiapkan kamera untuk capture selfie.', 'error');
             return;
         }
-        ctx.drawImage(els.cameraVideo, 0, 0, canvas.width, canvas.height);
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+        ctx.drawImage(els.cameraVideo, 0, 0, rawCanvas.width, rawCanvas.height);
+
+        // Compress: resize to max 800px + target ≤200KB
+        const blob = await compressImage(rawCanvas, 800, 200 * 1024);
         if (!blob) {
             setInlineStatus(els.checkinStatus, 'Selfie gagal diproses. Coba ambil ulang.', 'error');
             return;
         }
+
+        const sizeKB = (blob.size / 1024).toFixed(0);
         const file = new File([blob], `attendance-selfie-${Date.now()}.jpg`, { type: 'image/jpeg' });
         updateSelfiePreview(file);
         await stopCamera();
         if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = false;
-        setInlineStatus(els.checkinStatus, 'Selfie berhasil diambil. Periksa preview lalu kirim absensi.', 'success');
+        setInlineStatus(els.checkinStatus, `Selfie siap (${sizeKB}KB). Periksa lalu kirim.`, 'success');
     }
 
     async function uploadSelfie(file) {

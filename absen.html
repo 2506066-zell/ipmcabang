@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0f5132">
+    <meta name="theme-color" content="#064e3b">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="manifest" href="/manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -51,11 +53,11 @@
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <main class="main-content attendance-main">
-        <section class="attendance-hero card-shell reveal">
+        <section class="attendance-hero reveal">
             <div class="attendance-hero-copy">
-                <span class="attendance-kicker"><i class="fas fa-camera"></i> Room Absensi Virtual</span>
-                <h1>Absensi Virtual Room</h1>
-                <p>Masuk ke room pimpinan menggunakan kode akses. Lakukan absensi mandiri dengan verifikasi wajah/selfie.</p>
+                <span class="attendance-kicker"><i class="fas fa-fingerprint"></i> Absensi Digital</span>
+                <h1>Room Absensi</h1>
+                <p>Masuk ke room pimpinan, lalu lakukan absensi mandiri dengan verifikasi wajah.</p>
             </div>
             <div class="attendance-hero-side">
                 <div class="attendance-user-chip" id="attendance-user-chip"><i class="fas fa-spinner fa-spin"></i> Menyiapkan akun...</div>
@@ -66,10 +68,6 @@
             </div>
         </section>
 
-
-<style>
-/* Remove unwanted text/section */
-</style>
 
 
         <section class="attendance-section">
@@ -341,7 +339,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>
-    <script src="/app/js/pages/absen.js?v=6" defer></script>
+    <script src="/app/js/pages/absen.js?v=7" defer></script>
 </body>
 
 </html>
