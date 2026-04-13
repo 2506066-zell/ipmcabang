@@ -172,14 +172,26 @@
         setText('attendance-user-chip', `${name} | ${pimpinan}`);
     }
 
+    function setCodeModalOpen(isOpen) {
+        if (!els.codeModal) return;
+        els.codeModal.hidden = !isOpen;
+        els.codeModal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        els.codeModal.classList.toggle('is-open', !!isOpen);
+    }
+
     function openCodeModal(roomId, roomName) {
         state.pendingRoomId = Number(roomId) || 0;
+        if (!state.pendingRoomId) {
+            closeCodeModal();
+            showToast('Room belum siap dibuka. Pilih kartu room lagi.', 'error');
+            return;
+        }
         if (els.codeModal) {
-            els.codeModal.dataset.roomId = String(state.pendingRoomId || '');
+            els.codeModal.dataset.roomId = String(state.pendingRoomId);
             els.codeModal.dataset.roomName = String(roomName || '');
         }
         setText('attendance-code-modal-title', `Masukkan kode room ${roomName || ''}`.trim());
-        if (els.codeModal) els.codeModal.hidden = false;
+        setCodeModalOpen(true);
         if (els.codeInput) {
             els.codeInput.value = '';
             els.codeInput.focus();
@@ -190,10 +202,11 @@
     function closeCodeModal() {
         state.pendingRoomId = 0;
         if (els.codeModal) {
-            els.codeModal.hidden = true;
             delete els.codeModal.dataset.roomId;
             delete els.codeModal.dataset.roomName;
         }
+        setCodeModalOpen(false);
+        if (els.codeForm) els.codeForm.reset();
         setInlineStatus(els.codeStatus, '');
     }
 
@@ -663,6 +676,7 @@
         els.selfieInput = document.getElementById('attendance-selfie-input');
         els.selfiePreview = document.getElementById('attendance-selfie-preview');
         els.selfieImage = document.getElementById('attendance-selfie-image');
+        setCodeModalOpen(false);
     }
 
     function bindEvents() {
