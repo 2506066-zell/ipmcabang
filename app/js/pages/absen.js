@@ -686,7 +686,8 @@
 
         try {
             const selectedDeviceId = els.cameraSelect?.value;
-            const constraints = {
+            // 1. First attempt: High quality ideal
+            let constraints = {
                 video: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : { 
                     facingMode: 'user',
                     width: { ideal: 1280 },
@@ -695,8 +696,15 @@
                 audio: false
             };
 
-            // CRITICAL: Call getUserMedia IMMEDIATELY after a user interaction
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (initialError) {
+                console.warn('[Camera] High-res failed, trying fallback true:', initialError);
+                // 2. Fallback: Minimal constraints
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            }
+
             state.selfieStream = stream;
             
             if (els.cameraVideo) {
@@ -720,19 +728,31 @@
             updateSelfiePreview(null);
             setInlineStatus(els.checkinStatus, 'Kamera aktif.', 'success');
         } catch (error) {
-            console.error('[Camera] Error:', error);
-            let msg = 'Gagal membuka kamera perangkat.';
+            console.error('[Camera] Final Error:', error);
+            let msg = `Gagal akses kamera: ${error.name}`;
+            
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                msg = 'Izin kamera ditolak atau diblokir sistem browser.';
+                msg = 'Izin kamera tetap ditolak oleh browser/sistem OS.';
                 if (els.cameraOverlay) els.cameraOverlay.hidden = false;
                 if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
                 if (els.cameraErrorMessage) {
                     els.cameraErrorMessage.hidden = false;
-                    els.cameraErrorMessage.textContent = 'Aplikasi tidak mendapatkan izin kamera. Klik ikon gembok di alamat bar atas untuk mengizinkan.';
+                    els.cameraErrorMessage.innerHTML = `
+                        <div style="text-align: left; font-size: 0.8rem; line-height: 1.4;">
+                            <strong style="color: #ff4d4d;">Akses Diblokir (${error.name})</strong><br><br>
+                            1. Pastikan izin di browser (ikon gembok/garis) sudah <strong>Allow</strong>.<br>
+                            2. Cek <strong>Pengaturan Privasi Windows/Ponsel</strong> (Izinkan Browser akses Kamera).<br>
+                            3. Tutup aplikasi lain (Zoom, Meet, WA) yang mungkin memakai kamera.<br>
+                            4. Gunakan browser Google Chrome terbaru.
+                        </div>
+                    `;
                 }
             } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-                msg = 'Kamera tidak ditemukan di perangkat ini.';
+                msg = 'Kamera tidak ditemukan di perangkat.';
+            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                msg = 'Kamera sudah dipakai aplikasi lain.';
             }
+            
             setInlineStatus(els.checkinStatus, msg, 'error');
             if (window.Toast) window.Toast.show(msg, 'error');
         } finally {
