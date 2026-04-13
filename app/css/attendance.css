@@ -381,6 +381,41 @@
 .camera-permission-overlay h4 { font-size: 1.1rem; margin-bottom: 8px; color: white; }
 .camera-permission-overlay p { font-size: 0.88rem; color: #9ca3af; line-height: 1.5; }
 
+.secure-context-warning {
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    border-radius: 12px;
+    color: #fca5a5;
+}
+
+.secure-context-warning i { font-size: 1.5rem; color: #f87171; margin-bottom: 8px; }
+.secure-context-warning strong { display: block; margin-bottom: 4px; color: white; }
+
+.attendance-device-selector {
+    margin-bottom: 12px;
+}
+
+.attendance-select {
+    width: 100%;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--att-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.attendance-select:focus {
+    border-color: var(--att-primary-light);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
 .attendance-preview { position: relative; width: 100%; height: 100%; }
 .attendance-preview img { width: 100%; height: 100%; object-fit: cover; }
 .preview-badge {

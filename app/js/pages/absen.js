@@ -690,12 +690,24 @@
             } catch (e) {}
         }
 
+        if (!window.isSecureContext) {
+            console.error('[Camera] Insecure context. HTTPS is required.');
+            if (els.cameraOverlay) els.cameraOverlay.hidden = false;
+            if (els.secureWarning) els.secureWarning.hidden = false;
+            if (els.cameraErrorMessage) els.cameraErrorMessage.hidden = true;
+            if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+            showToast('Fitur kamera memerlukan koneksi aman (HTTPS).', 'error');
+            return;
+        }
+
+        if (window.AppLoader) window.AppLoader.show('Menyiapkan Kamera...');
+        
         try {
             await stopCamera();
-            if (window.AppLoader) window.AppLoader.show('Menyiapkan Kamera...');
             
+            const selectedDeviceId = els.cameraSelect?.value;
             const constraints = {
-                video: { 
+                video: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : { 
                     facingMode: 'user',
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
@@ -703,6 +715,7 @@
                 audio: false
             };
 
+            // Immediate call to preserve user gesture
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             state.selfieStream = stream;
             
@@ -710,6 +723,7 @@
                 els.cameraVideo.srcObject = stream;
                 els.cameraVideo.hidden = false;
                 if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+                if (els.cameraOverlay) els.cameraOverlay.hidden = true;
                 
                 // Wait for video metadata to be loaded to ensure smooth transition
                 await new Promise((resolve) => {
@@ -718,6 +732,9 @@
                 await els.cameraVideo.play();
                 els.cameraVideo.classList.add('is-active');
             }
+
+            // Enumerate devices after first successful access
+            await enumerateCameras();
 
             if (els.captureCameraBtn) els.captureCameraBtn.hidden = false;
             if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
@@ -729,9 +746,13 @@
             console.error('[Camera] Error:', error);
             let msg = 'Gagal membuka kamera perangkat.';
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                msg = 'Izin kamera ditolak. Mohon izinkan akses kamera di pengaturan browser Anda.';
+                msg = 'Izin kamera ditolak atau diblokir sistem browser.';
                 if (els.cameraOverlay) els.cameraOverlay.hidden = false;
                 if (els.cameraPlaceholder) els.cameraPlaceholder.hidden = true;
+                if (els.cameraErrorMessage) {
+                    els.cameraErrorMessage.hidden = false;
+                    els.cameraErrorMessage.textContent = 'Aplikasi tidak mendapatkan izin kamera. Klik ikon gembok di alamat bar atas untuk mengizinkan.';
+                }
             } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
                 msg = 'Kamera tidak ditemukan di perangkat ini.';
             }
@@ -739,6 +760,39 @@
             if (window.Toast) window.Toast.show(msg, 'error');
         } finally {
             if (window.AppLoader) window.AppLoader.hide();
+        }
+    }
+
+    async function enumerateCameras() {
+        if (!navigator.mediaDevices?.enumerateDevices) return;
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            const select = els.cameraSelect;
+            const container = els.deviceSelector;
+            
+            if (!select || !container || videoDevices.length <= 1) {
+                if (container) container.hidden = true;
+                return;
+            }
+
+            container.hidden = false;
+            const currentVal = select.value;
+            select.innerHTML = '';
+            
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Kamera ${index + 1}`;
+                select.appendChild(option);
+            });
+
+            if (currentVal && videoDevices.some(d => d.deviceId === currentVal)) {
+                select.value = currentVal;
+            }
+        } catch (err) {
+            console.error('[Camera] Enumerate failed:', err);
         }
     }
 
@@ -866,6 +920,10 @@
         els.cameraVideo = document.getElementById('attendance-camera-video');
         els.cameraPlaceholder = document.getElementById('attendance-camera-placeholder');
         els.cameraOverlay = document.getElementById('camera-permission-overlay');
+        els.cameraErrorMessage = document.getElementById('camera-error-message');
+        els.secureWarning = document.getElementById('secure-context-warning');
+        els.deviceSelector = document.getElementById('attendance-device-selector');
+        els.cameraSelect = document.getElementById('attendance-camera-select');
         els.selfiePreview = document.getElementById('attendance-selfie-preview');
         els.selfieImage = document.getElementById('attendance-selfie-image');
         setCodeModalOpen(false);
@@ -900,6 +958,7 @@
         els.openCameraBtn?.addEventListener('click', openCamera);
         els.captureCameraBtn?.addEventListener('click', captureSelfie);
         els.retakeCameraBtn?.addEventListener('click', openCamera);
+        els.cameraSelect?.addEventListener('change', openCamera);
         els.roomGrid?.addEventListener('click', (event) => {
             const card = event.target.closest('[data-room-id]');
             if (!card) return;

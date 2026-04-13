@@ -209,11 +209,21 @@
                                 <div class="camera-permission-overlay" id="camera-permission-overlay" hidden>
                                     <i class="fas fa-lock"></i>
                                     <h4>Akses Kamera Diblokir</h4>
-                                    <p>Klik ikon gembok di alamat bar atas untuk mengizinkan kamera pada situs ini.</p>
+                                    <p id="camera-error-message">Klik ikon gembok di alamat bar atas untuk mengizinkan kamera pada situs ini.</p>
+                                    <div class="secure-context-warning" id="secure-context-warning" hidden>
+                                        <i class="fas fa-shield-slash"></i>
+                                        <strong>Harus gunakan HTTPS</strong>
+                                        <p>Fitur kamera hanya aktif jika alamat web dimulai dengan https://</p>
+                                    </div>
                                 </div>
                             </div>
                             <label class="attendance-field">
                                 <span>Selfie wajib dari kamera</span>
+                                <div class="attendance-device-selector" id="attendance-device-selector" hidden>
+                                    <select id="attendance-camera-select" class="attendance-select">
+                                        <option value="">Pilih Kamera...</option>
+                                    </select>
+                                </div>
                                 <div class="attendance-camera-actions">
                                     <button type="button" class="attendance-secondary-btn" id="attendance-open-camera-btn">
                                         <i class="fas fa-video"></i> Buka Kamera
