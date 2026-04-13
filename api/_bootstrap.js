@@ -306,6 +306,25 @@ async function ensureSchema() {
     updated_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS discussions (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    category TEXT DEFAULT 'Umum',
+    views INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS discussion_replies (
+    id SERIAL PRIMARY KEY,
+    discussion_id INT REFERENCES discussions(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;

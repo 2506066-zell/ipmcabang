@@ -466,6 +466,12 @@
             desc: 'Atur data user, kirim broadcast, dan tindak lanjuti feedback secara terkontrol.',
             scope: 'Relasi Pengguna'
         },
+        attendance: {
+            label: 'Absensi',
+            title: 'Absensi Room',
+            desc: 'Kelola room absensi, kode akses, event rapat, dan rekap kader aktif atau pasif.',
+            scope: 'Kehadiran Kader'
+        },
         logs: {
             label: 'Komunikasi',
             title: 'Riwayat Aktivitas',
@@ -647,7 +653,7 @@
         });
 
         // Hide all tabs
-        ['dashboard', 'questions', 'results', 'users', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
+        ['dashboard', 'questions', 'results', 'users', 'attendance', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
@@ -677,6 +683,24 @@
             loadNotifySchedules();
             loadPimpinanOptions();
             loadFeedbackMessages();
+        }
+        if (tabName === 'attendance') {
+            console.log('[Admin] Loading attendance module...');
+            import(`./attendance.js?v=${MODULE_VER}`).then(mod => {
+                if (!state.attendanceInitialized) {
+                    mod.initAttendance(state, {
+                        apiAdminVercel,
+                        fetchJsonWithRetry,
+                        escapeHtml,
+                        showLoader,
+                        hideLoader,
+                        setStatus
+                    });
+                    state.attendanceInitialized = true;
+                } else if (typeof window.__adminAttendanceReload === 'function') {
+                    window.__adminAttendanceReload();
+                }
+            }).catch(err => console.error('[Admin] Failed to load attendance module:', err));
         }
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();

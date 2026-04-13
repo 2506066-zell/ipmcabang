@@ -1,6 +1,8 @@
-const STATIC_CACHE = 'static-v38';
+const STATIC_CACHE = 'static-v40';
 const RUNTIME_CACHE = 'runtime-v3';
 const CDN_CACHE = 'cdn-v2';
+const APP_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
+const APP_NOTIFICATION_BADGE = '/icons/icon-192-maskable.png';
 const CDN_ORIGINS = [
   'https://cdnjs.cloudflare.com',
   'https://fonts.googleapis.com',
@@ -17,6 +19,7 @@ const STATIC_ASSETS = [
   '/profile/',
   '/profile/index.html',
   '/quiz-gamified.html',
+  '/absen.html',
   '/materi.html',
   '/ranking.html',
   '/login.html',
@@ -30,6 +33,7 @@ const STATIC_ASSETS = [
   '/app/css/style.css',
   '/app/css/home-dynamic.css',
   '/app/css/profile.css',
+  '/app/css/attendance.css',
   '/app/css/article-enhancements.css',
   '/app/css/quiz-enhancements.css',
   '/app/css/ranking.css',
@@ -52,6 +56,7 @@ const STATIC_ASSETS = [
   '/app/js/features/quiz/quiz-react.js',
   '/app/js/features/quiz/quiz-react.js?v=27',
   '/app/js/pages/quiz.js',
+  '/app/js/pages/absen.js',
   '/app/js/pages/quiz.js?v=7',
   '/app/js/pages/ranking.js',
   '/app/js/pages/ranking.js?v=3',
@@ -60,6 +65,7 @@ const STATIC_ASSETS = [
   '/scripts/login.js',
   '/scripts/register.js',
   '/manifest.json',
+  '/app/media/brand/ipm-logo.png',
   '/admin/editor.css',
   '/ipm%20(2).png',
   '/icons/icon-192.png',
@@ -315,8 +321,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Notifikasi IPM';
   const options = {
     body: data.body || 'Ada pembaruan baru.',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    icon: data.icon || APP_NOTIFICATION_ICON,
+    badge: data.badge || APP_NOTIFICATION_BADGE,
     actions: [
       { action: 'open', title: 'Buka' }
     ],

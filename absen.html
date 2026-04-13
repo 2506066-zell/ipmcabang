@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0f5132">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Absensi Room - PC IPM Panawuan</title>
+    <link rel="icon" href="/ipm%20(2).png">
+    <link rel="stylesheet" href="/app/css/style.css">
+    <link rel="stylesheet" href="/app/css/profile.css">
+    <link rel="stylesheet" href="/app/css/attendance.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="page-attendance">
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <img src="ipm%20(2).png" alt="Logo IPM" class="header-logo">
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <div class="header-right-icons">
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false"
+                aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="/articles" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="materi.html" class="mobile-nav-link"><i class="fas fa-book"></i> Perpustakaan</a></li>
+            <li><a href="quiz-gamified.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+            <li><a href="absen.html" class="mobile-nav-link active"><i class="fas fa-camera"></i> Absensi</a></li>
+            <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
+        </ul>
+    </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+    <main class="main-content attendance-main">
+        <section class="attendance-hero card-shell">
+            <div class="attendance-hero-copy">
+                <span class="attendance-kicker">Room Absensi</span>
+                <h1>Masuk room, buat event rapat, lalu hadir dengan selfie.</h1>
+                <p>Setiap room mengikuti pimpinan yang sudah terdaftar. Akses masuk memakai kode room, sementara absensi mandiri hanya untuk anggota pimpinan yang sesuai.</p>
+            </div>
+            <div class="attendance-hero-side">
+                <div class="attendance-user-chip" id="attendance-user-chip">Memuat akun...</div>
+                <div class="attendance-tip">
+                    <i class="fas fa-shield-heart"></i>
+                    <span>Kode room memberi akses masuk. Selfie wajib saat check-in untuk bukti kehadiran.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="attendance-section">
+            <div class="attendance-section-head">
+                <div>
+                    <h2>5 Room Absensi</h2>
+                    <p>Pilih room sesuai rapat yang sedang berjalan, lalu masukkan kodenya untuk membuka akses.</p>
+                </div>
+                <button type="button" class="attendance-secondary-btn" id="attendance-refresh-btn">
+                    <i class="fas fa-rotate"></i> Muat ulang
+                </button>
+            </div>
+            <div class="attendance-room-grid" id="attendance-room-grid">
+                <div class="attendance-empty-card">Memuat room absensi...</div>
+            </div>
+        </section>
+
+        <section class="attendance-section" id="attendance-room-panel" hidden>
+            <div class="attendance-room-shell">
+                <div class="attendance-room-header">
+                    <div>
+                        <span class="attendance-room-label" id="attendance-room-label">Room</span>
+                        <h2 id="attendance-room-title">Detail Room</h2>
+                        <p id="attendance-room-subtitle">Ringkasan event aktif, histori rapat, dan status keaktifan pribadi.</p>
+                    </div>
+                    <button type="button" class="attendance-secondary-btn" id="attendance-change-room-btn">
+                        <i class="fas fa-key"></i> Ganti Kode
+                    </button>
+                </div>
+
+                <div class="attendance-summary-grid" id="attendance-summary-grid">
+                    <article class="attendance-summary-card">
+                        <span class="attendance-summary-label">Total Event</span>
+                        <strong id="attendance-summary-total">0</strong>
+                    </article>
+                    <article class="attendance-summary-card">
+                        <span class="attendance-summary-label">Hadir</span>
+                        <strong id="attendance-summary-hadir">0</strong>
+                    </article>
+                    <article class="attendance-summary-card">
+                        <span class="attendance-summary-label">Persentase</span>
+                        <strong id="attendance-summary-percent">0%</strong>
+                    </article>
+                    <article class="attendance-summary-card">
+                        <span class="attendance-summary-label">Status</span>
+                        <strong id="attendance-summary-status">Pasif</strong>
+                    </article>
+                </div>
+
+                <div class="attendance-detail-grid">
+                    <section class="attendance-panel-card">
+                        <div class="attendance-panel-head">
+                            <div>
+                                <h3>Event Aktif Hari Ini</h3>
+                                <p id="attendance-event-helper">Kalau belum ada event, kamu bisa membuat event rapat dari room ini.</p>
+                            </div>
+                            <span class="attendance-status-badge" id="attendance-event-badge">Menunggu</span>
+                        </div>
+                        <div id="attendance-current-event">
+                            <div class="attendance-empty-state">Belum ada event aktif untuk room ini hari ini.</div>
+                        </div>
+                    </section>
+
+                    <section class="attendance-panel-card">
+                        <div class="attendance-panel-head">
+                            <div>
+                                <h3>Buat Event Rapat</h3>
+                                <p>Semua user yang sudah masuk room boleh membuat event aktif untuk rapat hari ini.</p>
+                            </div>
+                        </div>
+                        <form id="attendance-create-form" class="attendance-form">
+                            <label class="attendance-field">
+                                <span>Judul rapat</span>
+                                <input type="text" id="attendance-event-title" placeholder="Contoh: Rapat Koordinasi Pekanan" required>
+                            </label>
+                            <label class="attendance-field">
+                                <span>Keterangan singkat</span>
+                                <textarea id="attendance-event-description" rows="3" placeholder="Opsional: agenda, lokasi, atau catatan rapat"></textarea>
+                            </label>
+                            <button type="submit" class="attendance-primary-btn" id="attendance-create-btn">
+                                <i class="fas fa-plus"></i> Buat Event Hari Ini
+                            </button>
+                            <p class="attendance-inline-status" id="attendance-create-status"></p>
+                        </form>
+                    </section>
+                </div>
+
+                <div class="attendance-detail-grid">
+                    <section class="attendance-panel-card">
+                        <div class="attendance-panel-head">
+                            <div>
+                                <h3>Absensi Saya</h3>
+                                <p>Check-in mandiri hanya muncul kalau pimpinan akunmu sama dengan pimpinan room ini.</p>
+                            </div>
+                        </div>
+                        <form id="attendance-checkin-form" class="attendance-form">
+                            <label class="attendance-field">
+                                <span>Ambil selfie</span>
+                                <input type="file" id="attendance-selfie-input" accept="image/*" capture="user">
+                            </label>
+                            <div class="attendance-preview" id="attendance-selfie-preview" hidden>
+                                <img src="" alt="Preview selfie" id="attendance-selfie-image">
+                            </div>
+                            <button type="submit" class="attendance-primary-btn" id="attendance-checkin-btn">
+                                <i class="fas fa-camera"></i> Hadir Sekarang
+                            </button>
+                            <p class="attendance-inline-status" id="attendance-checkin-status"></p>
+                        </form>
+                    </section>
+
+                    <section class="attendance-panel-card">
+                        <div class="attendance-panel-head">
+                            <div>
+                                <h3>Riwayat Room</h3>
+                                <p>Event yang sudah ditutup akan masuk ke histori dan ikut memengaruhi status aktif atau pasif.</p>
+                            </div>
+                        </div>
+                        <div class="attendance-history-list" id="attendance-history-list">
+                            <div class="attendance-empty-state">Belum ada riwayat event untuk room ini.</div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="attendance-modal" id="attendance-code-modal" hidden>
+        <div class="attendance-modal-dialog">
+            <div class="attendance-modal-head">
+                <div>
+                    <span class="attendance-room-label">Akses Room</span>
+                    <h3 id="attendance-code-modal-title">Masukkan kode room</h3>
+                </div>
+                <button type="button" class="attendance-icon-btn" id="attendance-code-close" aria-label="Tutup">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="attendance-code-form" class="attendance-form">
+                <label class="attendance-field">
+                    <span>Kode room</span>
+                    <input type="text" id="attendance-room-code-input" placeholder="Contoh: CABA-1A2B" autocomplete="one-time-code" required>
+                </label>
+                <button type="submit" class="attendance-primary-btn" id="attendance-code-submit">
+                    <i class="fas fa-unlock"></i> Buka Room
+                </button>
+                <p class="attendance-inline-status" id="attendance-code-status"></p>
+            </form>
+        </div>
+    </div>
+
+    <footer class="public-footer">
+        <p class="footer-text">© 2026 Ikatan Pelajar Muhammadiyah - PC Panawuan</p>
+    </footer>
+
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
+            <a href="/articles"><i class="fas fa-newspaper"></i><span>Artikel</span></a>
+            <a href="materi.html"><i class="fas fa-book"></i><span>Materi</span></a>
+            <a href="quiz-gamified.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+            <a href="absen.html" class="active"><i class="fas fa-camera"></i><span>Absen</span></a>
+        </div>
+    </nav>
+
+    <script src="/app/js/core/toast.js" defer></script>
+    <script src="/app/js/core/main.js?v=16" defer></script>
+    <script src="/app/js/core/install-header.js" defer></script>
+    <script src="/app/js/core/profile.js" defer></script>
+    <script src="/app/js/pages/absen.js" defer></script>
+</body>
+
+</html>

@@ -896,6 +896,20 @@ document.addEventListener('DOMContentLoaded', () => {
             hour: '2-digit',
             minute: '2-digit'
         }) : '';
+        const renderSegments = (days, hours, minutes, seconds) => {
+            const makeSeg = (value, label) => `
+                <div class="program-countdown-seg">
+                    <span class="program-countdown-val">${value}</span>
+                    <span class="program-countdown-unit">${label}</span>
+                </div>
+            `;
+            return [
+                makeSeg(String(days).padStart(2, '0'), 'Hari'),
+                makeSeg(String(hours).padStart(2, '0'), 'Jam'),
+                makeSeg(String(minutes).padStart(2, '0'), 'Mnt'),
+                makeSeg(String(seconds).padStart(2, '0'), 'Dtk')
+            ].join('');
+        };
 
         if (start && now < start) {
             const diff = Math.max(0, start - now);
@@ -904,8 +918,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const hours = Math.floor((totalSeconds % 86400) / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-            programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = startLabel ? `Status: Akan dimulai � Mulai: ${startLabel}` : 'Status: Akan dimulai';
+            programCountdownTimer.innerHTML = renderSegments(days, hours, minutes, seconds);
+            programCountdownSub.innerHTML = startLabel ? `<strong>Status:</strong> Akan dimulai &diams; <strong>Mulai:</strong> ${startLabel}` : '<strong>Status:</strong> Akan dimulai';
             programCountdown.hidden = false;
             return;
         }
@@ -917,14 +931,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const hours = Math.floor((totalSeconds % 86400) / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-            programCountdownTimer.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-            programCountdownSub.textContent = endLabel ? `Status: Sedang berlangsung � Berakhir: ${endLabel}` : 'Status: Sedang berlangsung';
+            programCountdownTimer.innerHTML = renderSegments(days, hours, minutes, seconds);
+            programCountdownSub.innerHTML = endLabel ? `<strong>Status:</strong> Sedang berlangsung &diams; <strong>Berakhir:</strong> ${endLabel}` : '<strong>Status:</strong> Sedang berlangsung';
             programCountdown.hidden = false;
             return;
         }
 
-        programCountdownTimer.textContent = 'Selesai';
-        programCountdownSub.textContent = endLabel ? `Status: Selesai � Berakhir: ${endLabel}` : 'Status: Selesai';
+        programCountdownTimer.innerHTML = `<span class="program-countdown-state">Selesai</span>`;
+        programCountdownSub.innerHTML = endLabel ? `<strong>Status:</strong> Selesai &diams; <strong>Berakhir:</strong> ${endLabel}` : '<strong>Status:</strong> Selesai';
         programCountdown.hidden = false;
     };
 
@@ -1117,6 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <a href="javascript:void(0)" class="fab-option back-to-top" id="back-to-top" data-label="Kembali ke Atas"><i class="fas fa-chevron-up"></i></a>
             <button class="fab-main" id="fab-main"><i class="fas fa-plus"></i></button>
             <div class="fab-options">
+                <a href="absen.html" class="fab-option" data-label="Absensi"><i class="fas fa-camera"></i></a>
                 <a href="ranking.html" class="fab-option" data-label="Peringkat"><i class="fas fa-trophy"></i></a>
                 <a href="quiz-gamified.html" class="fab-option" data-label="Ikuti Kuis"><i class="fas fa-gamepad"></i></a>
                 <a href="help.html" class="fab-option" data-label="Bantuan"><i class="fas fa-question"></i></a>
@@ -1175,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 (() => {
     const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
     const isProd = !isLocalhost && location.protocol === 'https:';
-    const SW_VERSION = '38';
+    const SW_VERSION = '40';
     const SW_URL = `/sw.js?v=${SW_VERSION}`;
 
     if (isProd && 'serviceWorker' in navigator) {

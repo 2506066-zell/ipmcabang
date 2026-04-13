@@ -3,6 +3,8 @@ const { query } = require('./_db');
 const PUSH_SEND_CONCURRENCY = Math.max(1, Number(process.env.PUSH_SEND_CONCURRENCY || 20));
 const PUSH_TTL_SECONDS = Math.max(30, Number(process.env.PUSH_TTL_SECONDS || 300));
 const PUSH_TIMEOUT_MS = Math.max(3000, Number(process.env.PUSH_TIMEOUT_MS || 10000));
+const DEFAULT_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
+const DEFAULT_NOTIFICATION_BADGE = '/icons/icon-192-maskable.png';
 
 function getVapid() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
@@ -39,10 +41,17 @@ async function removeSubscription(endpoint) {
   await query`DELETE FROM push_subscriptions WHERE endpoint=${endpoint}`;
 }
 
+function withNotificationBranding(payload) {
+  const next = payload && typeof payload === 'object' ? { ...payload } : {};
+  if (!next.icon) next.icon = DEFAULT_NOTIFICATION_ICON;
+  if (!next.badge) next.badge = DEFAULT_NOTIFICATION_BADGE;
+  return next;
+}
+
 async function sendToSubscriptions(subs, payload) {
   const vapid = initWebPush();
   if (!vapid) return { sent: 0, failed: 0, error: 'VAPID missing' };
-  const body = JSON.stringify(payload || {});
+  const body = JSON.stringify(withNotificationBranding(payload));
   let sent = 0;
   let failed = 0;
   let index = 0;

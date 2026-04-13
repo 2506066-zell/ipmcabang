@@ -5,7 +5,7 @@ try {
     put = null;
     console.warn('Missing @vercel/blob dependency.');
 }
-const { requireAdminAuth } = require('./_auth');
+const { requireAdminAuth, getSessionUser } = require('./_auth');
 const { applySecurityHeaders } = require('./_util');
 const { getClientIp, checkRateLimit, setRateLimitHeaders } = require('./_rate_limit');
 
@@ -29,15 +29,26 @@ module.exports = async (req, res) => {
 
     try {
         const headers = req.headers || {};
+        const uploadScope = String(headers['x-upload-scope'] || '').trim().toLowerCase();
         const rl = checkRateLimit({ key: 'upload', id: getClientIp(req), limit: 25, windowMs: 10 * 60 * 1000 });
         setRateLimitHeaders(res, rl, 25);
         if (!rl.ok) {
             return json(res, 429, { status: 'error', message: 'Too many upload requests. Try again later.', error: 'Too many requests' });
         }
-        try {
-            await requireAdminAuth(req);
-        } catch {
-            return json(res, 401, { status: 'error', message: 'Unauthorized', error: 'Unauthorized' });
+        let uploader = null;
+        let folderPrefix = 'admin';
+        if (uploadScope === 'attendance-selfie') {
+            uploader = await getSessionUser(req);
+            if (!uploader) {
+                return json(res, 401, { status: 'error', message: 'Unauthorized', error: 'Unauthorized' });
+            }
+            folderPrefix = `attendance/user-${uploader.id}`;
+        } else {
+            try {
+                uploader = await requireAdminAuth(req);
+            } catch {
+                return json(res, 401, { status: 'error', message: 'Unauthorized', error: 'Unauthorized' });
+            }
         }
 
         const contentLength = Number(headers['content-length'] || 0);
@@ -54,16 +65,21 @@ module.exports = async (req, res) => {
 
         const filename = sanitizeFilename(headers['x-filename']);
         const contentType = String(headers['content-type'] || 'application/octet-stream');
+        if (uploadScope === 'attendance-selfie' && !contentType.startsWith('image/')) {
+            const msg = 'Upload selfie harus berupa file gambar.';
+            return json(res, 400, { status: 'error', message: msg, error: msg });
+        }
 
         // Direct put to Vercel Blob
-        const blob = await put(filename, req, {
+        const blob = await put(`${folderPrefix}/${Date.now()}-${filename}`, req, {
             access: 'public',
             contentType: contentType,
         });
 
         return json(res, 201, {
             status: 'success',
-            url: blob.url
+            url: blob.url,
+            uploaded_by: uploader?.id || null
         });
 
     } catch (error) {

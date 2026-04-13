@@ -76,7 +76,14 @@ async function handleLogin(req, res) {
     // Set Cookie
     setSessionCookie(res, token, expires);
 
-    return json(res, 200, { status: 'success', session: token, username: user.username, nama_panjang: user.nama_panjang, role });
+    return json(res, 200, {
+        status: 'success',
+        session: token,
+        username: user.username,
+        nama_panjang: user.nama_panjang,
+        pimpinan: user.pimpinan,
+        role
+    });
 }
 
 async function handleRegister(req, res) {

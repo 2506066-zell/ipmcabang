@@ -17,7 +17,9 @@ const routes = {
   'results': require('./_handler_results'),
   'users': require('./_handler_users'),
   'feedback': require('./_handler_feedback'),
-  'push': require('./_handler_push')
+  'push': require('./_handler_push'),
+  'attendance': require('./_handler_attendance'),
+  'discussions': require('./_handler_discussions')
 };
 
 module.exports = async (req, res) => {
