@@ -1156,21 +1156,37 @@
     async function showAttendeesDrawer(eventId, title, meta) {
         if (!eventId || !els.drawerOverlay || !els.drawerContent) return;
         
+        // 1. Setup UI Immediately
         els.drawerTitle.textContent = title || 'Daftar Hadir';
-        els.drawerMeta.textContent = `Event pada ${meta || '--'}`;
-        els.drawerContent.innerHTML = '<div class="attendance-loading">Memuat daftar hadir...</div>';
+        els.drawerMeta.textContent = `Riwayat: ${meta || '--'}`;
+        els.drawerContent.innerHTML = `
+            <div class="attendance-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Memuat data partisipan...</p>
+            </div>
+        `;
+        
+        // 2. Show Overlay
         els.drawerOverlay.hidden = false;
-        document.body.style.overflow = 'hidden'; // Lock scroll
+        document.body.style.overflow = 'hidden'; 
         
         try {
+            // 3. Fetch Data
             const result = await apiFetch(`/api/attendance?action=exportEvent&event_id=${eventId}`, { method: 'GET' }, state.currentRoomId);
-            if (result.status === 'success' && result.data) {
+            if (result.status === 'success' && Array.isArray(result.data)) {
                 renderAttendeesList(result.data);
             } else {
-                els.drawerContent.innerHTML = '<div class="attendance-empty-state">Gagal memuat data hadir.</div>';
+                throw new Error('Data hadir tidak valid.');
             }
         } catch (error) {
-            els.drawerContent.innerHTML = `<div class="attendance-empty-state">${error.message || 'Error memuat data.'}</div>`;
+            console.error('[Drawer] Fetch failed:', error);
+            els.drawerContent.innerHTML = `
+                <div class="attendance-empty-state">
+                    <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 12px;"></i>
+                    <p>${error.message || 'Gagal memuat daftar hadir.'}</p>
+                    <button class="attendance-pill" style="margin-top: 12px; background: #fee2e2; color: #b91c1c; border: none; cursor: pointer;" onclick="location.reload()">Refresh Halaman</button>
+                </div>
+            `;
         }
     }
 
@@ -1216,6 +1232,9 @@
             btn.addEventListener('click', () => {
                 const targetId = btn.dataset.target;
                 if (!targetId) return;
+
+                // CRITICAL FIX: Close any open drawer when switching tabs
+                closeAttendeesDrawer();
 
                 // Stop camera if moving away from attendance tab
                 if (targetId !== 'tab-attendance') {

@@ -682,7 +682,7 @@
     inset: 0;
     background: rgba(11, 45, 36, 0.4);
     backdrop-filter: blur(8px);
-    z-index: 1000;
+    z-index: 950; /* Lowered from 1000 to allow global escapes */
     display: flex;
     align-items: flex-end;
     animation: fadeIn 0.3s ease;
@@ -1010,3 +1010,25 @@
 }
 
 .attendance-pill.is-alert { background: #fff7ed; color: #f97316; }
+
+.attendance-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--att-muted);
+    gap: 16px;
+    text-align: center;
+}
+
+.attendance-loading i {
+    font-size: 2.5rem;
+    color: var(--att-primary-light);
+}
+
+.attendance-loading p {
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+}
