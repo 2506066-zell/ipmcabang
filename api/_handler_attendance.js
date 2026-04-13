@@ -647,6 +647,8 @@ async function handleCheckIn(req, res) {
     return json(res, error.status || 403, { status: 'error', message: error.message || 'Forbidden' });
   }
 
+  // Skip user-level duplicate check to allow for representative attendance (multi-checkin from one account)
+  /*
   const existing = (await query`
     SELECT id, attendance_status
     FROM attendance_records
@@ -656,6 +658,7 @@ async function handleCheckIn(req, res) {
   if (existing) {
     return json(res, 409, { status: 'error', message: 'Anda sudah tercatat pada event ini' });
   }
+  */
 
   let targetOrgMemberId = null;
   let attendeeNameSnapshot = cleanString(user.nama_panjang || user.username, 160);
