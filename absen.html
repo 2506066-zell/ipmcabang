@@ -142,15 +142,8 @@
                 </div>
 
 
-                <div class="attendance-detail-grid">
-                    <section class="attendance-panel-card">
-                        <div class="attendance-panel-head">
-                            <div>
-                                <h3>Event Aktif Hari Ini</h3>
-                                <p id="attendance-event-helper">Kalau belum ada event, kamu bisa membuat event rapat dari room ini.</p>
-                            </div>
                 <!-- Segmented Tab Control (Mobile First) -->
-                <div class="attendance-tabs-nav">
+                <nav class="attendance-tabs-nav">
                     <button class="tab-btn active" data-target="tab-attendance">
                         <i class="fas fa-fingerprint"></i> Absensi
                     </button>
@@ -160,7 +153,7 @@
                     <button class="tab-btn" data-target="tab-history">
                         <i class="fas fa-clock-rotate-left"></i> Riwayat
                     </button>
-                </div>
+                </nav>
 
                 <div class="attendance-tabs-container">
                     <!-- TAB 1: ABSENSI (PRIMARY) -->
@@ -169,7 +162,7 @@
                             <div class="attendance-panel-head">
                                 <div>
                                     <h3>Absensi Mandiri</h3>
-                                    <p>Identitas & verifikasi wajah diperlukan untuk kehadiran sah.</p>
+                                    <p>Identitas & verifikasi wajah diperlukan.</p>
                                 </div>
                             </div>
                             
@@ -256,7 +249,7 @@
                             <div class="attendance-panel-head">
                                 <div>
                                     <h3>Event Aktif</h3>
-                                    <p>Status rapat saat ini di room ini.</p>
+                                    <p>Status rapat saat ini.</p>
                                 </div>
                                 <span class="attendance-status-badge" id="attendance-event-badge">Menunggu</span>
                             </div>
@@ -269,17 +262,17 @@
                             <div class="attendance-panel-head">
                                 <div>
                                     <h3>Buat Event Baru</h3>
-                                    <p>Khusus admin atau pengelola room.</p>
+                                    <p id="attendance-event-helper">Admin/pengelola room.</p>
                                 </div>
                             </div>
                             <form id="attendance-create-form" class="attendance-form">
                                 <label class="attendance-field">
                                     <span>Judul Rapat</span>
-                                    <input type="text" id="attendance-event-title" placeholder="Nama rapat hari ini..." required>
+                                    <input type="text" id="attendance-event-title" placeholder="Nama rapat..." required>
                                 </label>
                                 <label class="attendance-field">
                                     <span>Keterangan</span>
-                                    <textarea id="attendance-event-description" rows="2" placeholder="Agenda singkat..."></textarea>
+                                    <textarea id="attendance-event-description" rows="2" placeholder="Agenda..."></textarea>
                                 </label>
                                 <button type="submit" class="attendance-primary-btn" id="attendance-create-btn">
                                     <i class="fas fa-plus"></i> Buat Event
@@ -298,7 +291,6 @@
                                     <p>Arsip kegiatan di room ini.</p>
                                 </div>
                             </div>
-                            <!-- Search & Filter Bar -->
                             <div class="attendance-history-controls">
                                 <div class="history-search-box">
                                     <i class="fas fa-search"></i>
