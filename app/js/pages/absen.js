@@ -511,14 +511,12 @@
         renderMemberOptions();
 
         if (els.checkinForm) {
-            els.checkinForm.hidden = !canSelfCheckIn || !!myRecord;
+            els.checkinForm.hidden = !canSelfCheckIn; // Form stays open allowing multiple proxy check-ins
         }
         if (!canSelfCheckIn) {
             setInlineStatus(els.checkinStatus, 'Self check-in dinonaktifkan karena pimpinan akunmu berbeda dengan room ini.', 'error');
-        } else if (myRecord) {
-            setInlineStatus(els.checkinStatus, `Absensi kamu sudah masuk dengan status ${myRecord.attendance_status}.`, 'success');
         } else {
-            setInlineStatus(els.checkinStatus, 'Ambil selfie terbaru lalu kirim kehadiran sekarang.');
+            setInlineStatus(els.checkinStatus, 'Ambil selfie terbaru lalu kirim (bisa check-in berulang untuk perwakilan).');
         }
     }
 
@@ -958,12 +956,25 @@
             }, Number(state.currentRoomId));
 
             // SUCCESS STATE
-            stopCamera();
             if (els.successOverlay) {
                 els.successOverlay.hidden = false;
                 els.successOverlay.classList.add('reveal');
+                setTimeout(() => {
+                    els.successOverlay.hidden = true;
+                    els.successOverlay.classList.remove('reveal');
+                }, 2500);
             }
             showToast('Absensi Berhasil!', 'success');
+            
+            // Reset for the next proxy check-in
+            state.selfieFile = null;
+            if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
+            if (els.memberSearch) els.memberSearch.value = '';
+            
+            updateStepHighlight();
+            if (els.cameraSelect?.value !== 'disabled') {
+                openCamera();
+            }
             
             await loadRooms(state.currentRoomId);
         } catch (error) {
