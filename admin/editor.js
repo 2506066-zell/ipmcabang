@@ -154,7 +154,13 @@
         lowGradeModal: document.getElementById('low-grade-confirm-modal'),
         lowGradeGrade: document.getElementById('low-grade-confirm-grade'),
         lowGradeCancelBtn: document.getElementById('low-grade-cancel-btn'),
-        lowGradeConfirmBtn: document.getElementById('low-grade-confirm-btn')
+        lowGradeConfirmBtn: document.getElementById('low-grade-confirm-btn'),
+        wordProgressFill: document.getElementById('word-progress-fill'),
+        wordProgressLabel: document.getElementById('word-progress-label'),
+        floatingPill: document.getElementById('floating-quality-pill'),
+        fqpGrade: document.getElementById('fqp-grade'),
+        fqpScore: document.getElementById('fqp-score'),
+        fqpLabel: document.getElementById('fqp-label')
     };
 
     function getRenderer() {
@@ -277,6 +283,13 @@
     function updateStatus(wordCount) {
         if (els.statusText) {
             els.statusText.textContent = `Draft - ${wordCount} kata`;
+        }
+        // Word progress bar
+        if (els.wordProgressFill && els.wordProgressLabel) {
+            const pct = Math.min(100, Math.round((wordCount / MIN_WORD_COUNT) * 100));
+            els.wordProgressFill.style.width = pct + '%';
+            els.wordProgressFill.className = 'word-progress-fill' + (pct >= 100 ? (wordCount >= 300 ? ' good' : ' ok') : '');
+            els.wordProgressLabel.textContent = wordCount + ' kata';
         }
     }
 
@@ -1354,12 +1367,17 @@
         if (els.qualityScoreSummary) els.qualityScoreSummary.textContent = quality.summary;
 
         if (els.qualityDomainBreakdown) {
-            els.qualityDomainBreakdown.innerHTML = quality.domains.map((domain) => `
+            els.qualityDomainBreakdown.innerHTML = quality.domains.map((domain) => {
+                const pct = domain.max > 0 ? Math.round((domain.score / domain.max) * 100) : 0;
+                const cls = pct >= 80 ? 'high' : (pct >= 50 ? 'mid' : 'low');
+                return `
                 <div class="quality-domain-item">
                     <strong>${domain.label}</strong>
                     <span>${domain.score}/${domain.max}</span>
+                    <div class="quality-domain-bar"><div class="quality-domain-bar-fill ${cls}" style="width:${pct}%"></div></div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         if (els.qualityParamsList) {
@@ -1372,6 +1390,16 @@
                     <p class="quality-param-note">${item.message}</p>
                 </li>
             `).join('');
+        }
+
+        // Floating quality pill
+        if (els.floatingPill && els.fqpGrade && els.fqpScore && els.fqpLabel) {
+            const gl = String(quality.grade || '').toLowerCase() || 'pending';
+            els.fqpGrade.textContent = quality.grade || '-';
+            els.fqpGrade.className = 'fqp-grade grade-' + gl;
+            els.fqpScore.textContent = quality.score + '/100';
+            els.fqpLabel.textContent = quality.summary || 'Mulai menulis...';
+            els.floatingPill.classList.add('visible');
         }
     }
 
@@ -1458,6 +1486,17 @@
     function updateWordAndStatus() {
         const count = getWordCountFromHtml(els.editorArea ? els.editorArea.innerHTML : '');
         updateStatus(count);
+    }
+
+    
+    // Floating quality pill: scroll to quality panel on click
+    if (els.floatingPill) {
+        els.floatingPill.addEventListener('click', () => {
+            const panel = document.getElementById('article-lint-panel');
+            if (panel) {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
     }
 
     const handleEditorContentChange = debounce(() => {
