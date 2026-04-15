@@ -3361,6 +3361,158 @@ button.priority-card:hover {
     white-space: pre-wrap;
 }
 
+.forms-admin-answer-value.strong {
+    margin-top: 8px;
+    color: #0f172a;
+    line-height: 1.65;
+    font-size: 0.95rem;
+    background: #f8fafc;
+    border: 1px solid #dbe2ea;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.forms-admin-review-shell {
+    display: grid;
+    gap: 14px;
+}
+
+.forms-review-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.forms-review-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.forms-review-filter {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #334155;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.forms-review-filter.active {
+    background: #0f172a;
+    color: #fff;
+    border-color: #0f172a;
+}
+
+.forms-review-list {
+    display: grid;
+    gap: 10px;
+}
+
+.forms-review-list-item {
+    width: 100%;
+    text-align: left;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 12px;
+    display: grid;
+    gap: 8px;
+}
+
+.forms-review-list-item.active {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
+    background: #f8fafc;
+}
+
+.forms-review-list-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.forms-review-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.forms-review-badge-stack {
+    display: grid;
+    gap: 6px;
+    justify-items: end;
+}
+
+.forms-review-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    background: #f8fafc;
+}
+
+.forms-review-badge.is-time {
+    background: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+}
+
+.forms-review-badge.is-focus {
+    background: #dcfce7;
+    color: #14532d;
+    border-color: #86efac;
+}
+
+.forms-review-badge.is-new {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.forms-review-badge.is-read {
+    background: #e2e8f0;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+.forms-review-preview {
+    color: #334155;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.forms-review-detail-card h3 {
+    margin: 0 0 6px;
+}
+
+.forms-review-detail-card p {
+    margin: 0;
+}
+
+.forms-review-detail-empty {
+    display: grid;
+    place-items: center;
+    min-height: 220px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.forms-admin-answer-list-strong {
+    gap: 12px;
+}
+
 @media (min-width: 1080px) {
     .forms-admin-layout {
         grid-template-columns: 360px minmax(0, 1fr);
@@ -3368,6 +3520,16 @@ button.priority-card:hover {
     }
 
     .forms-admin-sidebar {
+        position: sticky;
+        top: 24px;
+    }
+
+    .forms-admin-review-shell {
+        grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .forms-review-list-panel {
         position: sticky;
         top: 24px;
     }

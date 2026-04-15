@@ -10,7 +10,12 @@ export function initFormsAdmin(state, els, deps) {
         detail: null,
         submissions: [],
         inbox: [],
-        editor: null
+        editor: null,
+        readState: {},
+        review: {
+            submissions: { sort: 'newest', filter: 'all', selectedId: 0 },
+            inbox: { sort: 'newest', filter: 'all', selectedId: 0 }
+        }
     };
 
     const FIELD_TYPES = [
@@ -20,6 +25,42 @@ export function initFormsAdmin(state, els, deps) {
         { value: 'multiple_choice', label: 'Multiple Choice' },
         { value: 'dropdown', label: 'Dropdown' }
     ];
+
+    const READ_STATE_KEY = 'ipm_admin_forms_read_v1';
+
+    function readStateKey(type, formId, itemId) {
+        return `${type}:${Number(formId || 0)}:${Number(itemId || 0)}`;
+    }
+
+    function loadReadState() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(READ_STATE_KEY) || '{}');
+            local.readState = parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+            local.readState = {};
+        }
+    }
+
+    function saveReadState() {
+        try {
+            localStorage.setItem(READ_STATE_KEY, JSON.stringify(local.readState));
+        } catch {}
+    }
+
+    function isRead(type, itemId) {
+        return local.readState[readStateKey(type, local.activeId, itemId)] === true;
+    }
+
+    function markRead(type, itemId) {
+        if (!itemId) return;
+        local.readState[readStateKey(type, local.activeId, itemId)] = true;
+        saveReadState();
+    }
+
+    function formatDateTime(value) {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('id-ID');
+    }
 
     function createBlankField() {
         return {
@@ -68,19 +109,29 @@ export function initFormsAdmin(state, els, deps) {
     async function loadSubmissions() {
         if (!local.activeId) {
             local.submissions = [];
+            local.review.submissions.selectedId = 0;
             return;
         }
         const data = await apiAdminVercel('GET', `/api/admin/forms?action=submissions&id=${local.activeId}`);
         local.submissions = Array.isArray(data.items) ? data.items : [];
+        const hasCurrent = local.submissions.some((item) => Number(item.id) === Number(local.review.submissions.selectedId));
+        if (!hasCurrent) {
+            local.review.submissions.selectedId = Number(local.submissions[0]?.id || 0);
+        }
     }
 
     async function loadInbox() {
         if (!local.activeId) {
             local.inbox = [];
+            local.review.inbox.selectedId = 0;
             return;
         }
         const data = await apiAdminVercel('GET', `/api/admin/forms?action=inbox&id=${local.activeId}`);
         local.inbox = Array.isArray(data.items) ? data.items : [];
+        const hasCurrent = local.inbox.some((item) => Number(item.id) === Number(local.review.inbox.selectedId));
+        if (!hasCurrent) {
+            local.review.inbox.selectedId = Number(local.inbox[0]?.id || 0);
+        }
     }
 
     function renderList() {
@@ -330,10 +381,200 @@ export function initFormsAdmin(state, els, deps) {
         `;
     }
 
+    function getSortedSubmissions() {
+        const mode = local.review.submissions.sort || 'newest';
+        const list = [...local.submissions];
+        list.sort((a, b) => {
+            if (mode === 'oldest') return new Date(a.submitted_at || 0) - new Date(b.submitted_at || 0);
+            if (mode === 'name_asc') {
+                return String(a.nama_panjang || a.username || '').localeCompare(String(b.nama_panjang || b.username || ''), 'id', { sensitivity: 'base' });
+            }
+            return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
+        });
+        const filter = local.review.submissions.filter || 'all';
+        if (filter === 'focus') return list.filter((item) => (item.answers || []).some((answer) => answer.focus_inbox === true));
+        if (filter === 'unread') return list.filter((item) => !isRead('submission', item.id));
+        return list;
+    }
+
+    function getSortedInbox() {
+        const mode = local.review.inbox.sort || 'newest';
+        const list = [...local.inbox];
+        list.sort((a, b) => {
+            if (mode === 'oldest') return new Date(a.submitted_at || 0) - new Date(b.submitted_at || 0);
+            if (mode === 'name_asc') {
+                return String(a.nama_panjang || a.username || '').localeCompare(String(b.nama_panjang || b.username || ''), 'id', { sensitivity: 'base' });
+            }
+            return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
+        });
+        const filter = local.review.inbox.filter || 'all';
+        if (filter === 'unread') return list.filter((item) => !isRead('inbox', item.id));
+        return list;
+    }
+
+    function renderReviewToolbar(view) {
+        const review = view === 'inbox' ? local.review.inbox : local.review.submissions;
+        const refreshAction = view === 'inbox' ? 'reload-inbox' : 'reload-submissions';
+        return `
+            <div class="forms-admin-toolbar">
+                <div class="forms-admin-view-switch">
+                    <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder">Form Builder</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions">Submissions</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox">Inbox</button>
+                </div>
+                <div class="forms-review-controls">
+                    <select class="toolbar-select" data-action="${view}-sort">
+                        <option value="newest" ${review.sort === 'newest' ? 'selected' : ''}>Urut: Terbaru</option>
+                        <option value="oldest" ${review.sort === 'oldest' ? 'selected' : ''}>Urut: Terlama</option>
+                        <option value="name_asc" ${review.sort === 'name_asc' ? 'selected' : ''}>Urut: Nama A-Z</option>
+                    </select>
+                    <div class="forms-review-filter-group">
+                        <button type="button" class="forms-review-filter ${review.filter === 'all' ? 'active' : ''}" data-action="${view}-filter" data-filter="all">Semua</button>
+                        <button type="button" class="forms-review-filter ${review.filter === 'focus' ? 'active' : ''}" data-action="${view}-filter" data-filter="focus">Focus Inbox</button>
+                        <button type="button" class="forms-review-filter ${review.filter === 'unread' ? 'active' : ''}" data-action="${view}-filter" data-filter="unread">Belum dibaca</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-action="${refreshAction}"><i class="fas fa-rotate"></i> Refresh</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSubmissionDetail(item) {
+        if (!item) return `<section class="forms-admin-card forms-review-detail-empty">Pilih submission di panel kiri untuk melihat jawaban lengkap.</section>`;
+        return `
+            <section class="forms-admin-card forms-review-detail-card">
+                <div class="forms-admin-card-head">
+                    <div>
+                        <h3>${escapeHtml(item.nama_panjang || item.username)}</h3>
+                        <p>@${escapeHtml(item.username || '-')} • ${escapeHtml(item.pimpinan || '-')}</p>
+                    </div>
+                    <div class="forms-review-badge-stack">
+                        <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
+                        <span class="forms-review-badge ${isRead('submission', item.id) ? 'is-read' : 'is-new'}">${isRead('submission', item.id) ? 'Sudah dibaca' : 'Baru'}</span>
+                    </div>
+                </div>
+                <div class="forms-admin-answer-list forms-admin-answer-list-strong">
+                    ${(item.answers || []).map((answer) => `
+                        <div class="forms-admin-answer-item ${answer.focus_inbox ? 'focus' : ''}">
+                            <div class="forms-admin-answer-label">${escapeHtml(answer.label)}</div>
+                            <div class="forms-admin-answer-value strong">${escapeHtml(Array.isArray(answer.answer_json) ? answer.answer_json.join(', ') : (answer.answer_text || '-'))}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderSubmissionsViewV2() {
+        const list = getSortedSubmissions();
+        const selected = list.find((item) => Number(item.id) === Number(local.review.submissions.selectedId)) || list[0] || null;
+        return `
+            <div class="forms-admin-workspace">
+                ${renderReviewToolbar('submissions')}
+                <div class="forms-admin-review-shell">
+                    <section class="forms-admin-card forms-review-list-panel">
+                        <div class="forms-admin-card-head">
+                            <div>
+                                <h3>Submission Masuk</h3>
+                                <p>Pilih pengisi di kiri, baca jawaban di panel kanan.</p>
+                            </div>
+                        </div>
+                        <div class="forms-review-list">
+                            ${list.length ? list.map((item) => {
+                                const hasFocus = (item.answers || []).some((answer) => answer.focus_inbox === true);
+                                const read = isRead('submission', item.id);
+                                return `
+                                    <button type="button" class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}" data-action="pick-submission" data-id="${item.id}">
+                                        <div class="forms-review-list-head">
+                                            <strong>${escapeHtml(item.nama_panjang || item.username)}</strong>
+                                            <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
+                                        </div>
+                                        <div class="small muted">@${escapeHtml(item.username || '-')} • ${escapeHtml(item.pimpinan || '-')}</div>
+                                        <div class="forms-review-badge-row">
+                                            <span class="forms-review-badge ${read ? 'is-read' : 'is-new'}">${read ? 'Sudah dibaca' : 'Baru'}</span>
+                                            ${hasFocus ? '<span class="forms-review-badge is-focus">Focus Inbox</span>' : ''}
+                                        </div>
+                                    </button>
+                                `;
+                            }).join('') : '<div class="small muted">Belum ada submission untuk form ini.</div>'}
+                        </div>
+                    </section>
+                    ${renderSubmissionDetail(selected)}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderInboxDetail(item) {
+        if (!item) return `<section class="forms-admin-card forms-review-detail-empty">Pilih item inbox di panel kiri untuk membaca jawaban lengkap.</section>`;
+        return `
+            <section class="forms-admin-card forms-review-detail-card">
+                <div class="forms-admin-card-head">
+                    <div>
+                        <h3>${escapeHtml(item.nama_panjang || item.username)}</h3>
+                        <p>${escapeHtml(item.field_label || 'Field teks')} • ${escapeHtml(item.form_title || '-')}</p>
+                    </div>
+                    <div class="forms-review-badge-stack">
+                        <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
+                        <span class="forms-review-badge ${isRead('inbox', item.id) ? 'is-read' : 'is-new'}">${isRead('inbox', item.id) ? 'Sudah dibaca' : 'Baru'}</span>
+                    </div>
+                </div>
+                <div class="forms-admin-answer-item focus">
+                    <div class="forms-admin-answer-label">${escapeHtml(item.field_label || 'Jawaban')}</div>
+                    <div class="forms-admin-answer-value strong">${escapeHtml(item.answer_text || '-')}</div>
+                </div>
+                <div class="forms-review-badge-row mt-12">
+                    <span class="forms-review-badge is-focus">Focus Inbox</span>
+                    <button type="button" class="btn btn-secondary" data-action="open-submission-from-inbox" data-id="${item.submission_id}">Buka Submission Asal</button>
+                </div>
+            </section>
+        `;
+    }
+
+    function renderInboxViewV2() {
+        const list = getSortedInbox();
+        const selected = list.find((item) => Number(item.id) === Number(local.review.inbox.selectedId)) || list[0] || null;
+        return `
+            <div class="forms-admin-workspace">
+                ${renderReviewToolbar('inbox')}
+                <div class="forms-admin-review-shell">
+                    <section class="forms-admin-card forms-review-list-panel">
+                        <div class="forms-admin-card-head">
+                            <div>
+                                <h3>Kotak Surat Jawaban</h3>
+                                <p>Pilih item inbox untuk membaca jawaban penting secara penuh.</p>
+                            </div>
+                        </div>
+                        <div class="forms-review-list">
+                            ${list.length ? list.map((item) => {
+                                const read = isRead('inbox', item.id);
+                                return `
+                                    <button type="button" class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}" data-action="pick-inbox-item" data-id="${item.id}">
+                                        <div class="forms-review-list-head">
+                                            <strong>${escapeHtml(item.nama_panjang || item.username)}</strong>
+                                            <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
+                                        </div>
+                                        <div class="small muted">${escapeHtml(item.field_label || '-')}</div>
+                                        <div class="forms-review-preview">${escapeHtml(item.answer_text || '-')}</div>
+                                        <div class="forms-review-badge-row">
+                                            <span class="forms-review-badge ${read ? 'is-read' : 'is-new'}">${read ? 'Sudah dibaca' : 'Baru'}</span>
+                                            <span class="forms-review-badge is-focus">Focus Inbox</span>
+                                        </div>
+                                    </button>
+                                `;
+                            }).join('') : '<div class="small muted">Inbox masih kosong. Tandai field teks sebagai focus inbox untuk mulai mengumpulkan jawaban penting.</div>'}
+                        </div>
+                    </section>
+                    ${renderInboxDetail(selected)}
+                </div>
+            </div>
+        `;
+    }
+
     function render() {
         const workspace = local.activeView === 'submissions'
-            ? renderSubmissionsView()
-            : (local.activeView === 'inbox' ? renderInboxView() : renderBuilderView());
+            ? renderSubmissionsViewV2()
+            : (local.activeView === 'inbox' ? renderInboxViewV2() : renderBuilderView());
         root.innerHTML = `
             <div class="forms-admin-layout">
                 ${renderList()}
@@ -414,6 +655,8 @@ export function initFormsAdmin(state, els, deps) {
             if (action === 'pick-form') {
                 local.activeId = Number(actionEl.dataset.id || 0);
                 local.activeView = 'builder';
+                local.review.submissions.selectedId = 0;
+                local.review.inbox.selectedId = 0;
                 await Promise.all([loadDetail(), loadSubmissions(), loadInbox()]);
                 render();
                 return;
@@ -466,6 +709,38 @@ export function initFormsAdmin(state, els, deps) {
             if (action === 'reload-inbox') {
                 await loadInbox();
                 render();
+                return;
+            }
+            if (action === 'pick-submission') {
+                const id = Number(actionEl.dataset.id || 0);
+                local.review.submissions.selectedId = id;
+                markRead('submission', id);
+                render();
+                return;
+            }
+            if (action === 'pick-inbox-item') {
+                const id = Number(actionEl.dataset.id || 0);
+                local.review.inbox.selectedId = id;
+                markRead('inbox', id);
+                render();
+                return;
+            }
+            if (action === 'submissions-filter') {
+                local.review.submissions.filter = actionEl.dataset.filter || 'all';
+                render();
+                return;
+            }
+            if (action === 'inbox-filter') {
+                local.review.inbox.filter = actionEl.dataset.filter || 'all';
+                render();
+                return;
+            }
+            if (action === 'open-submission-from-inbox') {
+                local.activeView = 'submissions';
+                local.review.submissions.selectedId = Number(actionEl.dataset.id || 0);
+                markRead('submission', local.review.submissions.selectedId);
+                render();
+                return;
             }
         } catch (error) {
             setStatus(error.message || 'Terjadi kesalahan pada modul form.', 'error');
@@ -474,17 +749,30 @@ export function initFormsAdmin(state, els, deps) {
 
     root.addEventListener('input', (event) => {
         const action = event.target.dataset.action || '';
-        if (!action) return;
+        if (!action || (!action.startsWith('meta-') && !action.startsWith('field-'))) return;
         updateEditorValue(action, Number(event.target.dataset.index || -1), event.target.value, event.target.checked);
     });
 
     root.addEventListener('change', (event) => {
         const action = event.target.dataset.action || '';
         if (!action) return;
+        if (action === 'submissions-sort') {
+            local.review.submissions.sort = event.target.value || 'newest';
+            render();
+            return;
+        }
+        if (action === 'inbox-sort') {
+            local.review.inbox.sort = event.target.value || 'newest';
+            render();
+            return;
+        }
+        if (!action.startsWith('meta-') && !action.startsWith('field-')) return;
         updateEditorValue(action, Number(event.target.dataset.index || -1), event.target.value, event.target.checked);
     });
 
     window.__adminFormsReload = reloadAll;
+
+    loadReadState();
 
     reloadAll().catch((error) => {
         root.innerHTML = `<div class="small muted">Gagal memuat modul form: ${escapeHtml(error.message || 'error')}</div>`;
