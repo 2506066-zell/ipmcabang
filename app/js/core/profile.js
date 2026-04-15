@@ -362,8 +362,10 @@
             const trigger = document.getElementById('profile-header-btn');
             if (trigger) {
                 const rect = trigger.getBoundingClientRect();
-                root.style.setProperty('--profile-trigger-top', `${Math.round(rect.bottom + window.scrollY)}px`);
-                root.style.setProperty('--profile-trigger-right', `${Math.round(window.innerWidth - rect.right)}px`);
+                const top = Math.max(60, Math.round(rect.bottom + 8));
+                const right = Math.max(8, Math.round(window.innerWidth - rect.right));
+                root.style.setProperty('--profile-trigger-top', `${top}px`);
+                root.style.setProperty('--profile-trigger-right', `${right}px`);
             }
             renderProfile(root);
             loadProfileData(root);

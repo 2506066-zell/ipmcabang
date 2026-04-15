@@ -26,8 +26,21 @@
             .replace(/'/g, '&#039;');
     }
 
+    function getSessionToken() {
+        return (
+            sessionStorage.getItem('ipmquiz_user_session') ||
+            localStorage.getItem('ipmquiz_user_session') ||
+            sessionStorage.getItem('ipmquiz_admin_session') ||
+            localStorage.getItem('ipmquiz_admin_session') ||
+            ''
+        );
+    }
+
     async function fetchJson(url, init = {}) {
-        const response = await fetch(url, { credentials: 'include', ...init });
+        const headers = { ...(init.headers || {}) };
+        const token = String(getSessionToken() || '').trim();
+        if (token && !headers.Authorization) headers.Authorization = `Bearer ${token}`;
+        const response = await fetch(url, { credentials: 'include', ...init, headers });
         const data = await response.json().catch(() => null);
         if (!response.ok) {
             const error = new Error(data?.message || `HTTP ${response.status}`);
@@ -49,6 +62,11 @@
 
     function setPanelCopy(text) {
         if (els.panelCopy) els.panelCopy.textContent = text;
+    }
+
+    function redirectToLogin() {
+        const next = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login.html?next=${next}`;
     }
 
     function filteredItems() {
@@ -325,6 +343,7 @@
                     `).join('')}
                     <div class="forms-footer-bar">
                         <div class="forms-draft-indicator" id="forms-draft-indicator">Draft tersimpan otomatis</div>
+                        <button type="button" class="forms-secondary-btn" id="forms-login-btn" hidden>Login sekarang</button>
                         <button type="submit" class="forms-submit-btn" ${!state.auth || form.already_submitted ? 'disabled' : ''}>
                             ${form.already_submitted ? 'Jawaban terkirim' : 'Kirim jawaban'}
                         </button>
@@ -338,6 +357,7 @@
         bindDraftAutosave(formEl, form);
         updateRuntimeUI(formEl, form);
         formEl?.addEventListener('submit', (event) => handleSubmit(event, form));
+        $('forms-login-btn')?.addEventListener('click', redirectToLogin);
     }
 
     function collectAnswers(formEl, form) {
@@ -438,6 +458,13 @@
                 note: state.submitError || 'Koneksi terganggu. Coba kirim lagi.'
             };
         }
+        if (state.submitState === 'auth_required' || !state.auth) {
+            return {
+                code: 'auth_required',
+                badge: 'Perlu login',
+                note: state.submitError || 'Sesi login belum aktif. Login dulu untuk kirim jawaban.'
+            };
+        }
         if (!analysis.started) {
             return {
                 code: 'not_started',
@@ -474,6 +501,8 @@
         if (metaStatus) metaStatus.textContent = `Status: ${statusView.badge.toLowerCase()}`;
 
         const submitBtn = formEl.querySelector('.forms-submit-btn');
+        const loginBtn = formEl.querySelector('#forms-login-btn');
+        if (loginBtn) loginBtn.hidden = statusView.code !== 'auth_required';
         if (!submitBtn) return;
         if (form.already_submitted) {
             submitBtn.disabled = true;
@@ -484,6 +513,7 @@
         const canSubmit = analysis.readyToSubmit && Boolean(state.auth) && state.submitState !== 'sending';
         submitBtn.disabled = !(canSubmit || canRetry);
         if (state.submitState === 'sending') submitBtn.textContent = 'Sedang mengirim...';
+        else if (state.submitState === 'auth_required' || !state.auth) submitBtn.textContent = 'Perlu login';
         else if (state.submitState === 'failed') submitBtn.textContent = 'Coba kirim lagi';
         else submitBtn.textContent = 'Kirim jawaban';
     }
@@ -550,8 +580,8 @@
             return;
         }
         if (!state.auth) {
-            state.submitState = 'idle';
-            state.submitError = '';
+            state.submitState = 'auth_required';
+            state.submitError = 'Silakan login untuk mengisi form.';
             updateRuntimeUI(formEl, form);
             window.Toast?.show('Silakan login terlebih dahulu.', 'warning');
             return;
@@ -584,8 +614,15 @@
             });
             window.Toast?.show('Form berhasil dikirim.', 'success');
         } catch (error) {
-            state.submitState = 'failed';
-            state.submitError = error.message || 'Gagal mengirim form.';
+            if (error.status === 401) {
+                state.auth = null;
+                setAuthState('Belum login');
+                state.submitState = 'auth_required';
+                state.submitError = 'Sesi login habis. Login ulang untuk mengirim jawaban.';
+            } else {
+                state.submitState = 'failed';
+                state.submitError = error.message || 'Gagal mengirim form.';
+            }
             updateRuntimeUI(formEl, form);
             window.Toast?.show(error.message || 'Gagal mengirim form.', 'error');
         }

@@ -8,6 +8,7 @@
     username: { inputId: 'username', errorId: 'username-field-error' },
     password: { inputId: 'password', errorId: 'password-field-error' }
   };
+  let nextRedirect = 'quiz-gamified.html';
 
   function qs(id) { return document.getElementById(id); }
 
@@ -100,6 +101,18 @@
     submitBtn.textContent = isSubmitting ? 'Memproses...' : 'Masuk';
   }
 
+  function resolveNextRedirect() {
+    try {
+      const raw = String(new URLSearchParams(window.location.search).get('next') || '').trim();
+      if (!raw) return 'quiz-gamified.html';
+      if (!raw.startsWith('/')) return 'quiz-gamified.html';
+      if (raw.startsWith('//')) return 'quiz-gamified.html';
+      return raw;
+    } catch {
+      return 'quiz-gamified.html';
+    }
+  }
+
   function onSubmit(e) {
     e.preventDefault();
     const rememberEl = qs('remember-me');
@@ -141,7 +154,7 @@
       try {
         await autoSubscribePush(token);
       } catch {}
-      window.location.href = 'quiz-gamified.html';
+      window.location.href = nextRedirect;
     })
     .catch((e) => {
       const msg = (e && e.message && /username|password|salah|unauthorized/i.test(e.message))
@@ -161,6 +174,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    nextRedirect = resolveNextRedirect();
     const form = qs(FORM_ID);
     if (form) form.addEventListener('submit', onSubmit);
     const usernameInput = qs('username');
@@ -213,7 +227,7 @@
 
                     if (window.Toast) window.Toast.show('Berhasil masuk via sidik jari.', 'success');
                     try { await autoSubscribePush(token); } catch {}
-                    window.location.href = 'quiz-gamified.html';
+                    window.location.href = nextRedirect;
                 } else {
                     const errorMsg = result.message || 'Gagal login biometrik.';
                     showError(errorMsg);
