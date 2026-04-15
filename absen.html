@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body class="page-attendance">
+<body class="page-attendance mode-room-picker">
     <header class="mobile-header" id="mobile-header">
         <div class="logo-container">
             <img src="ipm%20(2).png" alt="Logo IPM" class="header-logo">
@@ -53,7 +53,7 @@
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
 
     <main class="main-content attendance-main">
-        <section class="attendance-hero reveal">
+        <section class="attendance-hero reveal" id="attendance-hero-section">
             <div class="attendance-hero-copy">
                 <span class="attendance-kicker"><i class="fas fa-fingerprint"></i> Absensi Digital</span>
                 <h1>Room Absensi</h1>
@@ -70,7 +70,7 @@
 
 
 
-        <section class="attendance-section">
+        <section class="attendance-section" id="attendance-room-list-section">
             <div class="attendance-section-head">
                 <div>
                     <h2>5 Room Absensi</h2>
@@ -93,9 +93,14 @@
                         <h2 id="attendance-room-title">Detail Room</h2>
                         <p id="attendance-room-subtitle">Ringkasan event aktif, histori rapat, dan status keaktifan pribadi.</p>
                     </div>
-                    <button type="button" class="attendance-secondary-btn" id="attendance-change-room-btn">
-                        <i class="fas fa-key"></i> Ganti Kode
-                    </button>
+                    <div class="attendance-room-header-actions">
+                        <button type="button" class="attendance-secondary-btn" id="attendance-back-to-rooms-btn">
+                            <i class="fas fa-arrow-left"></i> Kembali ke daftar
+                        </button>
+                        <button type="button" class="attendance-secondary-btn" id="attendance-change-room-btn">
+                            <i class="fas fa-key"></i> Ganti Kode
+                        </button>
+                    </div>
                 </div>
 
                 <div class="attendance-status-container" id="attendance-access-strip"></div>
@@ -345,7 +350,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>
-    <script src="/app/js/pages/absen.js?v=7" defer></script>
+    <script src="/app/js/pages/absen.js?v=8" defer></script>
 </body>
 
 </html>

@@ -65,6 +65,20 @@
     font-feature-settings: 'cv11', 'ss01';
 }
 
+/* Flow Modes */
+.page-attendance.mode-room-picker #attendance-room-panel {
+    display: none !important;
+}
+
+.page-attendance.mode-room-focus #attendance-room-list-section,
+.page-attendance.mode-room-focus #attendance-hero-section {
+    display: none !important;
+}
+
+.page-attendance.mode-room-focus #attendance-room-panel {
+    animation: fadeInUp 0.25s var(--ease-out) both;
+}
+
 /* ── Base Typography ── */
 .page-attendance h1, .page-attendance h2,
 .page-attendance h3, .page-attendance h4 {
@@ -295,6 +309,13 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
+}
+
+.attendance-room-header-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 .attendance-room-header h2 { margin: 0 0 4px; }

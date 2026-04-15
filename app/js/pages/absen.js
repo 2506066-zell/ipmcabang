@@ -24,6 +24,33 @@
 
     const els = {};
 
+    function setPageMode(mode) {
+        const root = document.body;
+        if (!root) return;
+        const nextMode = mode === 'room-focus' ? 'mode-room-focus' : 'mode-room-picker';
+        root.classList.remove('mode-room-picker', 'mode-room-focus');
+        root.classList.add(nextMode);
+    }
+
+    function syncRoomUrl(roomId) {
+        try {
+            const url = new URL(window.location.href);
+            if (roomId) url.searchParams.set('room_id', String(roomId));
+            else url.searchParams.delete('room_id');
+            window.history.replaceState({}, '', url.toString());
+        } catch {}
+    }
+
+    function backToRoomPicker() {
+        state.currentRoomId = 0;
+        state.detail = null;
+        stopCamera();
+        renderRooms();
+        renderDetail();
+        setPageMode('room-picker');
+        syncRoomUrl(0);
+    }
+
     function getStored(key) {
         return sessionStorage.getItem(key) || localStorage.getItem(key) || '';
     }
@@ -126,6 +153,8 @@
             state.pollingInterval = null;
         }
         if (els.roomPanel) els.roomPanel.hidden = true;
+        setPageMode('room-picker');
+        syncRoomUrl(0);
         if (els.roomGrid) {
             els.roomGrid.innerHTML = `
                 <div class="attendance-empty-card">
@@ -528,10 +557,13 @@
         const detail = state.detail;
         if (!detail || !detail.room) {
             if (els.roomPanel) els.roomPanel.hidden = true;
+            setPageMode('room-picker');
             return;
         }
 
         if (els.roomPanel) els.roomPanel.hidden = false;
+        setPageMode('room-focus');
+        syncRoomUrl(detail.room.id);
         setText('attendance-room-label', `Room ${detail.room.pimpinan}`);
         setText('attendance-room-title', detail.room.pimpinan);
         setText(
@@ -638,6 +670,8 @@
                 state.detail = null;
                 renderRooms();
                 renderDetail();
+                setPageMode('room-picker');
+                syncRoomUrl(0);
                 if (openCodeWhenNeeded !== false) openCodeModal(roomId, room.pimpinan);
                 return;
             }
@@ -1076,6 +1110,7 @@
         els.historyList = document.getElementById('attendance-history-list');
         els.refreshBtn = document.getElementById('attendance-refresh-btn');
         els.changeRoomBtn = document.getElementById('attendance-change-room-btn');
+        els.backToRoomsBtn = document.getElementById('attendance-back-to-rooms-btn');
         els.codeModal = document.getElementById('attendance-code-modal');
         els.codeClose = document.getElementById('attendance-code-close');
         els.codeForm = document.getElementById('attendance-code-form');
@@ -1133,11 +1168,14 @@
 
     function bindEvents() {
         els.refreshBtn?.addEventListener('click', () => loadRooms(state.currentRoomId));
+        els.backToRoomsBtn?.addEventListener('click', backToRoomPicker);
         els.changeRoomBtn?.addEventListener('click', () => {
             const room = state.rooms.find((item) => Number(item.id) === Number(state.currentRoomId));
             if (!room) return;
             setRoomAccess(room.id, '');
             renderRooms();
+            setPageMode('room-picker');
+            syncRoomUrl(0);
             openCodeModal(room.id, room.pimpinan);
         });
         els.codeClose?.addEventListener('click', closeCodeModal);
@@ -1396,11 +1434,13 @@
         if (!requireLogin()) return;
         bindElements();
         bindEvents();
+        setPageMode('room-picker');
         state.accessMap = loadRoomAccessMap();
         updateUserChip();
         const valid = await validateSession();
         if (!valid) return;
-        await loadRooms();
+        const roomFromUrl = Number(new URLSearchParams(window.location.search).get('room_id') || 0);
+        await loadRooms(roomFromUrl || 0);
     }
 
     document.addEventListener('DOMContentLoaded', init);
