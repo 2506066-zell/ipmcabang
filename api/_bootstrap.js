@@ -587,6 +587,15 @@ async function ensureSchema() {
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS submitter_name TEXT`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_code TEXT`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS confidentiality_level TEXT DEFAULT 'internal'`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS retention_years INT DEFAULT 2`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_status TEXT DEFAULT 'active_archive'`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_note TEXT`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_due_at TIMESTAMP`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_updated_by INT`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_updated_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_text TEXT`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_json JSONB`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
@@ -631,6 +640,9 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_form_fields_form_sort ON form_fields(form_id, sort_order, id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_form_submitted ON form_submissions(form_id, submitted_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_user_submitted ON form_submissions(user_id, submitted_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_archive_status ON form_submissions(archive_status, archive_updated_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_archive_due_at ON form_submissions(archive_due_at)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_archive_code ON form_submissions(archive_code)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_answers_submission ON form_answers(submission_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_workflow_form_item ON form_submission_workflow(form_id, item_type, item_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_workflow_status_updated ON form_submission_workflow(workflow_status, updated_at DESC)`;

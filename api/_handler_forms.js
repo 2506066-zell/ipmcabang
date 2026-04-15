@@ -8,6 +8,8 @@ const FORM_TYPES = new Set(['pretest', 'posttest']);
 const FORM_STATUSES = new Set(['draft', 'published', 'archived']);
 const WORKFLOW_STATUSES = new Set(['unread', 'follow_up', 'done']);
 const WORKFLOW_ITEM_TYPES = new Set(['submission', 'inbox']);
+const ARCHIVE_STATUSES = new Set(['active_archive', 'inactive_archive', 'destroy_scheduled']);
+const CONFIDENTIALITY_LEVELS = new Set(['internal', 'restricted', 'secret']);
 
 function sanitizeText(value, maxLen = 255) {
   return String(value || '')
@@ -48,6 +50,26 @@ function normalizeFieldType(value) {
   const type = String(value || '').trim().toLowerCase();
   if (!FIELD_TYPES.has(type)) throw new Error(`Tipe field tidak didukung: ${type || 'kosong'}`);
   return type;
+}
+
+function normalizeArchiveStatus(value) {
+  const status = String(value || '').trim().toLowerCase();
+  if (!ARCHIVE_STATUSES.has(status)) throw new Error('archive_status tidak valid.');
+  return status;
+}
+
+function normalizeConfidentialityLevel(value) {
+  const level = String(value || '').trim().toLowerCase();
+  if (!CONFIDENTIALITY_LEVELS.has(level)) throw new Error('confidentiality_level tidak valid.');
+  return level;
+}
+
+function normalizeRetentionYears(value) {
+  const years = Number(value);
+  if (!Number.isInteger(years) || years < 1 || years > 25) {
+    throw new Error('retention_years harus bilangan bulat antara 1 sampai 25.');
+  }
+  return years;
 }
 
 function normalizeOptions(fieldType, value) {
@@ -588,7 +610,10 @@ async function handleAdminSubmissions(req, res) {
 
   const rows = (
     await query`
-      SELECT s.id, s.form_id, s.user_id, s.status, s.submitted_at, s.submitter_name, u.username, u.nama_panjang, u.pimpinan
+      SELECT s.id, s.form_id, s.user_id, s.status, s.submitted_at, s.submitter_name,
+             s.archive_code, s.confidentiality_level, s.retention_years, s.archive_status,
+             s.archive_note, s.archived_at, s.archive_due_at, s.archive_updated_by, s.archive_updated_at,
+             u.username, u.nama_panjang, u.pimpinan
       FROM form_submissions s
       JOIN users u ON u.id = s.user_id
       WHERE s.form_id=${formId}
@@ -645,12 +670,171 @@ async function handleAdminSubmissions(req, res) {
       status: row.status || 'submitted',
       submitted_at: row.submitted_at,
       submitter_name: row.submitter_name || '',
+      archive_code: row.archive_code || '',
+      confidentiality_level: row.confidentiality_level || 'internal',
+      retention_years: Number(row.retention_years || 2),
+      archive_status: row.archive_status || 'active_archive',
+      archive_note: row.archive_note || '',
+      archived_at: row.archived_at || null,
+      archive_due_at: row.archive_due_at || null,
+      archive_updated_by: row.archive_updated_by ? Number(row.archive_updated_by) : null,
+      archive_updated_at: row.archive_updated_at || null,
       username: row.username || '',
       nama_panjang: row.nama_panjang || '',
       pimpinan: row.pimpinan || '',
       workflow_status: workflowMap.get(Number(row.id)) || 'unread',
       answers: answersMap.get(Number(row.id)) || []
     }))
+  });
+}
+
+async function handleUpdateArchiveMeta(req, res) {
+  let admin = null;
+  try {
+    admin = await requireAdminAuth(req);
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const body = parseJsonBody(req) || {};
+  const formId = Number(body.form_id || 0);
+  const submissionId = Number(body.submission_id || 0);
+  const archiveCode = sanitizeText(body.archive_code, 120);
+  const confidentialityLevel = normalizeConfidentialityLevel(body.confidentiality_level || 'internal');
+  const retentionYears = normalizeRetentionYears(body.retention_years ?? 2);
+  const archiveStatus = normalizeArchiveStatus(body.archive_status || 'active_archive');
+  const archiveNote = sanitizeParagraph(body.archive_note, 1200);
+
+  if (!formId || !submissionId) {
+    return json(res, 400, { status: 'error', message: 'form_id dan submission_id wajib diisi.' });
+  }
+
+  const existing = (
+    await query`
+      SELECT id, archive_code, confidentiality_level, retention_years, archive_status, archive_note
+      FROM form_submissions
+      WHERE id=${submissionId} AND form_id=${formId}
+      LIMIT 1
+    `
+  ).rows[0];
+  if (!existing) {
+    return json(res, 404, { status: 'error', message: 'Submission tidak ditemukan.' });
+  }
+
+  const updated = (
+    await query`
+      UPDATE form_submissions
+      SET archive_code=${archiveCode || null},
+          confidentiality_level=${confidentialityLevel},
+          retention_years=${retentionYears},
+          archive_status=${archiveStatus},
+          archive_note=${archiveNote || null},
+          archived_at=CASE
+            WHEN ${archiveStatus} IN ('active_archive', 'inactive_archive') THEN COALESCE(archived_at, NOW())
+            ELSE archived_at
+          END,
+          archive_due_at=NOW() + (${retentionYears} * INTERVAL '1 year'),
+          archive_updated_by=${admin.id},
+          archive_updated_at=NOW(),
+          updated_at=NOW()
+      WHERE id=${submissionId} AND form_id=${formId}
+      RETURNING id, form_id, archive_code, confidentiality_level, retention_years, archive_status,
+                archive_note, archived_at, archive_due_at, archive_updated_by, archive_updated_at
+    `
+  ).rows[0];
+
+  await writeActivity(admin.id, 'UPDATE_FORM_ARCHIVE_META', {
+    form_id: formId,
+    submission_id: submissionId,
+    before: {
+      archive_code: existing.archive_code || '',
+      confidentiality_level: existing.confidentiality_level || 'internal',
+      retention_years: Number(existing.retention_years || 2),
+      archive_status: existing.archive_status || 'active_archive',
+      archive_note: existing.archive_note || ''
+    },
+    after: {
+      archive_code: updated.archive_code || '',
+      confidentiality_level: updated.confidentiality_level || 'internal',
+      retention_years: Number(updated.retention_years || 2),
+      archive_status: updated.archive_status || 'active_archive',
+      archive_note: updated.archive_note || ''
+    }
+  });
+
+  return json(res, 200, {
+    status: 'success',
+    item: {
+      id: Number(updated.id),
+      form_id: Number(updated.form_id),
+      archive_code: updated.archive_code || '',
+      confidentiality_level: updated.confidentiality_level || 'internal',
+      retention_years: Number(updated.retention_years || 2),
+      archive_status: updated.archive_status || 'active_archive',
+      archive_note: updated.archive_note || '',
+      archived_at: updated.archived_at || null,
+      archive_due_at: updated.archive_due_at || null,
+      archive_updated_by: updated.archive_updated_by ? Number(updated.archive_updated_by) : null,
+      archive_updated_at: updated.archive_updated_at || null
+    }
+  });
+}
+
+async function handleArchiveSummary(req, res) {
+  try {
+    await requireAdminAuth(req);
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const formId = Number(req.query?.id || 0);
+  if (!formId) return json(res, 400, { status: 'error', message: 'ID form tidak valid.' });
+
+  const grouped = (
+    await query`
+      SELECT archive_status, COUNT(*)::int AS c
+      FROM form_submissions
+      WHERE form_id=${formId}
+      GROUP BY archive_status
+    `
+  ).rows;
+  const confidentialityRows = (
+    await query`
+      SELECT confidentiality_level, COUNT(*)::int AS c
+      FROM form_submissions
+      WHERE form_id=${formId}
+      GROUP BY confidentiality_level
+    `
+  ).rows;
+  const dueSoonRow = (
+    await query`
+      SELECT COUNT(*)::int AS c
+      FROM form_submissions
+      WHERE form_id=${formId}
+        AND archive_due_at IS NOT NULL
+        AND archive_due_at <= NOW() + INTERVAL '30 days'
+    `
+  ).rows[0];
+
+  const archiveStatus = { active_archive: 0, inactive_archive: 0, destroy_scheduled: 0 };
+  grouped.forEach((row) => {
+    const key = String(row.archive_status || '').trim().toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(archiveStatus, key)) archiveStatus[key] = Number(row.c || 0);
+  });
+
+  const confidentiality = { internal: 0, restricted: 0, secret: 0 };
+  confidentialityRows.forEach((row) => {
+    const key = String(row.confidentiality_level || '').trim().toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(confidentiality, key)) confidentiality[key] = Number(row.c || 0);
+  });
+
+  return json(res, 200, {
+    status: 'success',
+    summary: {
+      archive_status: archiveStatus,
+      confidentiality,
+      due_in_30_days: Number(dueSoonRow?.c || 0)
+    }
   });
 }
 
@@ -801,9 +985,11 @@ module.exports = async (req, res) => {
     if (req.method === 'GET' && action === 'detail') return await handleAdminDetail(req, res);
     if (req.method === 'GET' && action === 'submissions') return await handleAdminSubmissions(req, res);
     if (req.method === 'GET' && action === 'inbox') return await handleAdminInbox(req, res);
+    if (req.method === 'GET' && action === 'archiveSummary') return await handleArchiveSummary(req, res);
     if (req.method === 'POST' && action === 'saveTemplate') return await handleSaveTemplate(req, res);
     if (req.method === 'POST' && action === 'publish') return await handlePublish(req, res);
     if (req.method === 'POST' && action === 'markWorkflow') return await handleMarkWorkflow(req, res);
+    if (req.method === 'POST' && action === 'updateArchiveMeta') return await handleUpdateArchiveMeta(req, res);
 
     return json(res, 404, { status: 'error', message: `Unknown action: ${action || 'none'}` });
   } catch (e) {

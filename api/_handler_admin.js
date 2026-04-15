@@ -658,7 +658,16 @@ async function handleAdminPermissions(req, res) {
         status: 'success',
         role: 'admin',
         permissions: {
-            forms: { read: true, write: true, publish: true, export: true, inbox_review: true, workflow_mark: true },
+            forms: {
+                read: true,
+                write: true,
+                publish: true,
+                export: true,
+                inbox_review: true,
+                workflow_mark: true,
+                archive_read: true,
+                archive_manage: true
+            },
             attendance: { read: true, manage: true },
             users: { read: true, write: true, broadcast: true },
             content: { articles: true, materials: true, organization: true },

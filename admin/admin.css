@@ -3414,13 +3414,19 @@ button.priority-card:hover {
 
 .forms-admin-answer-value.strong {
     margin-top: 8px;
-    color: #0f172a;
-    line-height: 1.65;
-    font-size: 0.95rem;
-    background: #f8fafc;
-    border: 1px solid #dbe2ea;
-    border-radius: 10px;
-    padding: 12px;
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-size: 0.98rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.forms-admin-answer-item.focus .forms-admin-answer-value.strong {
+    border-color: rgba(59, 130, 246, 0.4);
+    background: rgba(59, 130, 246, 0.08);
 }
 
 .forms-admin-review-shell {
@@ -3432,42 +3438,75 @@ button.priority-card:hover {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    margin-bottom: 8px;
 }
 
 .forms-review-selected-context {
     width: 100%;
-    color: var(--text-secondary);
-    font-size: 0.84rem;
+    color: var(--accent-secondary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.forms-review-selected-context::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-secondary);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-secondary);
 }
 
 .forms-review-action-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin: 12px 0;
+    gap: 10px;
+    margin: 16px 0;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .forms-review-filter-group {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .forms-review-filter {
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    color: #334155;
-    border-radius: 999px;
-    padding: 8px 12px;
-    font-size: 0.82rem;
-    font-weight: 700;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.forms-review-filter:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .forms-review-filter.active {
-    background: #0f172a;
+    background: var(--accent-secondary);
     color: #fff;
-    border-color: #0f172a;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .forms-review-list {
@@ -3478,79 +3517,82 @@ button.priority-card:hover {
 .forms-review-list-item {
     width: 100%;
     text-align: left;
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
-    background: #ffffff;
-    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(30, 41, 59, 0.4);
+    padding: 16px;
     display: grid;
-    gap: 8px;
+    gap: 10px;
+    transition: all 0.24s var(--ease-out);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.forms-review-list-item:hover {
+    background: rgba(51, 65, 85, 0.4);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
 }
 
 .forms-review-list-item.active {
-    border-color: #0f172a;
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
-    background: #f8fafc;
+    background: rgba(59, 130, 246, 0.08);
+    border-color: var(--accent-secondary);
+    box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.1);
 }
 
-.forms-review-list-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.forms-review-badge-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.forms-review-badge-stack {
-    display: grid;
-    gap: 6px;
-    justify-items: end;
+.forms-review-list-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-secondary);
+    box-shadow: 0 0 10px var(--accent-secondary);
 }
 
 .forms-review-badge {
     display: inline-flex;
     align-items: center;
-    border-radius: 999px;
+    border-radius: 6px;
     padding: 4px 10px;
-    font-size: 0.74rem;
-    font-weight: 800;
-    border: 1px solid #cbd5e1;
-    color: #334155;
-    background: #f8fafc;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
 }
 
 .forms-review-badge.is-time {
-    background: #eef2ff;
-    color: #3730a3;
-    border-color: #c7d2fe;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-weight: 400;
 }
 
 .forms-review-badge.is-focus {
-    background: #dcfce7;
-    color: #14532d;
-    border-color: #86efac;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
 }
 
 .forms-review-badge.is-new {
-    background: #fee2e2;
-    color: #991b1b;
-    border-color: #fca5a5;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.3);
 }
 
 .forms-review-badge.is-read {
-    background: #e2e8f0;
-    color: #334155;
-    border-color: #cbd5e1;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-muted);
 }
 
 .forms-review-badge.is-follow-up {
-    background: #fef3c7;
-    color: #92400e;
-    border-color: #fcd34d;
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
 }
 
 .forms-review-preview {

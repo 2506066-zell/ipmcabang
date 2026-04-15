@@ -13,7 +13,7 @@ export function initFormsAdmin(state, els, deps) {
         editor: null,
         readState: {},
         review: {
-            submissions: { sort: 'newest', filter: 'all', selectedId: 0 },
+            submissions: { sort: 'newest', filter: 'all', selectedId: 0, archiveStatus: 'all', confidentiality: 'all' },
             inbox: { sort: 'newest', filter: 'all', selectedId: 0 }
         },
         workflowState: {},
@@ -86,6 +86,19 @@ export function initFormsAdmin(state, els, deps) {
         setWorkflowStatus(type, itemId, desired);
     }
 
+    async function saveArchiveMeta(submissionId, payload) {
+        if (!local.activeId || !submissionId) return;
+        await apiAdminVercel('POST', '/api/admin/forms?action=updateArchiveMeta', {
+            form_id: Number(local.activeId),
+            submission_id: Number(submissionId),
+            archive_code: payload.archive_code || '',
+            confidentiality_level: payload.confidentiality_level || 'internal',
+            retention_years: Number(payload.retention_years || 2),
+            archive_status: payload.archive_status || 'active_archive',
+            archive_note: payload.archive_note || ''
+        });
+    }
+
     function setActionBusy(action, busy = true) {
         local.busy[action] = Boolean(busy);
     }
@@ -116,6 +129,20 @@ export function initFormsAdmin(state, els, deps) {
         if (value === 'done') return { text: 'Selesai', className: 'is-read' };
         if (value === 'follow_up') return { text: 'Follow Up', className: 'is-follow-up' };
         return { text: 'Baru', className: 'is-new' };
+    }
+
+    function archiveStatusBadge(status) {
+        const value = String(status || 'active_archive').trim().toLowerCase();
+        if (value === 'inactive_archive') return { text: 'Arsip Inaktif', className: 'is-follow-up' };
+        if (value === 'destroy_scheduled') return { text: 'Jadwal Musnah', className: 'is-new' };
+        return { text: 'Arsip Aktif', className: 'is-read' };
+    }
+
+    function confidentialityBadge(level) {
+        const value = String(level || 'internal').trim().toLowerCase();
+        if (value === 'secret') return { text: 'Rahasia', className: 'is-new' };
+        if (value === 'restricted') return { text: 'Terbatas', className: 'is-follow-up' };
+        return { text: 'Internal', className: 'is-read' };
     }
 
     function createBlankField() {
@@ -454,9 +481,18 @@ export function initFormsAdmin(state, els, deps) {
             return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
         });
         const filter = local.review.submissions.filter || 'all';
-        if (filter === 'focus') return list.filter((item) => (item.answers || []).some((answer) => answer.focus_inbox === true));
-        if (filter === 'unread') return list.filter((item) => getWorkflowStatus('submission', item.id) !== 'done');
-        return list;
+        let filtered = list;
+        if (filter === 'focus') filtered = filtered.filter((item) => (item.answers || []).some((answer) => answer.focus_inbox === true));
+        if (filter === 'unread') filtered = filtered.filter((item) => getWorkflowStatus('submission', item.id) !== 'done');
+        const archiveStatus = local.review.submissions.archiveStatus || 'all';
+        if (archiveStatus !== 'all') {
+            filtered = filtered.filter((item) => String(item.archive_status || 'active_archive').trim().toLowerCase() === archiveStatus);
+        }
+        const confidentiality = local.review.submissions.confidentiality || 'all';
+        if (confidentiality !== 'all') {
+            filtered = filtered.filter((item) => String(item.confidentiality_level || 'internal').trim().toLowerCase() === confidentiality);
+        }
+        return filtered;
     }
 
     function getSortedInbox() {
@@ -486,24 +522,51 @@ export function initFormsAdmin(state, els, deps) {
         return `
             <div class="forms-admin-toolbar">
                 <div class="forms-admin-view-switch">
-                    <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder">Form Builder</button>
-                    <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions">Submissions</button>
-                    <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox">Inbox</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder"><i class="fas fa-layer-group"></i> Form Builder</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions"><i class="fas fa-list-check"></i> Submissions</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox"><i class="fas fa-inbox"></i> Inbox</button>
                 </div>
                 <div class="forms-review-controls">
-                    <select class="toolbar-select" data-action="${view}-sort">
-                        <option value="newest" ${review.sort === 'newest' ? 'selected' : ''}>Urut: Terbaru</option>
-                        <option value="oldest" ${review.sort === 'oldest' ? 'selected' : ''}>Urut: Terlama</option>
-                        <option value="name_asc" ${review.sort === 'name_asc' ? 'selected' : ''}>Urut: Nama A-Z</option>
-                    </select>
+                    <div class="toolbar-select-wrapper">
+                        <i class="fas fa-sort-amount-down-alt"></i>
+                        <select class="toolbar-select" data-action="${view}-sort">
+                            <option value="newest" ${review.sort === 'newest' ? 'selected' : ''}>Terbaru</option>
+                            <option value="oldest" ${review.sort === 'oldest' ? 'selected' : ''}>Terlama</option>
+                            <option value="name_asc" ${review.sort === 'name_asc' ? 'selected' : ''}>Nama A-Z</option>
+                        </select>
+                    </div>
                     <div class="forms-review-filter-group">
                         <button type="button" class="forms-review-filter ${review.filter === 'all' ? 'active' : ''}" data-action="${view}-filter" data-filter="all">Semua</button>
-                        <button type="button" class="forms-review-filter ${review.filter === 'focus' ? 'active' : ''}" data-action="${view}-filter" data-filter="focus">Focus Inbox</button>
-                        <button type="button" class="forms-review-filter ${review.filter === 'unread' ? 'active' : ''}" data-action="${view}-filter" data-filter="unread">Belum dibaca</button>
+                        <button type="button" class="forms-review-filter ${review.filter === 'focus' ? 'active' : ''}" data-action="${view}-filter" data-filter="focus"><i class="fas fa-star"></i> Focus</button>
+                        <button type="button" class="forms-review-filter ${review.filter === 'unread' ? 'active' : ''}" data-action="${view}-filter" data-filter="unread"><i class="fas fa-eye-slash"></i> Baru</button>
                     </div>
-                    <button type="button" class="btn btn-secondary ${refreshBusy ? 'is-loading' : ''}" data-action="${refreshAction}" ${refreshBusy ? 'disabled' : ''}><i class="fas fa-rotate"></i> ${refreshBusy ? 'Memuat...' : 'Refresh'}</button>
+                    ${view === 'submissions' ? `
+                        <div class="toolbar-select-wrapper">
+                            <i class="fas fa-box-archive"></i>
+                            <select class="toolbar-select" data-action="submissions-archive-status">
+                                <option value="all" ${review.archiveStatus === 'all' ? 'selected' : ''}>Semua Arsip</option>
+                                <option value="active_archive" ${review.archiveStatus === 'active_archive' ? 'selected' : ''}>Arsip Aktif</option>
+                                <option value="inactive_archive" ${review.archiveStatus === 'inactive_archive' ? 'selected' : ''}>Arsip Inaktif</option>
+                                <option value="destroy_scheduled" ${review.archiveStatus === 'destroy_scheduled' ? 'selected' : ''}>Jadwal Musnah</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-select-wrapper">
+                            <i class="fas fa-shield-alt"></i>
+                            <select class="toolbar-select" data-action="submissions-confidentiality">
+                                <option value="all" ${review.confidentiality === 'all' ? 'selected' : ''}>Semua Akses</option>
+                                <option value="internal" ${review.confidentiality === 'internal' ? 'selected' : ''}>Internal</option>
+                                <option value="restricted" ${review.confidentiality === 'restricted' ? 'selected' : ''}>Terbatas</option>
+                                <option value="secret" ${review.confidentiality === 'secret' ? 'selected' : ''}>Rahasia</option>
+                            </select>
+                        </div>
+                    ` : ''}
+                    <button type="button" class="btn btn-secondary ${refreshBusy ? 'is-loading' : ''}" data-action="${refreshAction}" ${refreshBusy ? 'disabled' : ''}>
+                        <i class="fas fa-rotate"></i> ${refreshBusy ? 'Memuat...' : 'Refresh'}
+                    </button>
                 </div>
-                <div class="forms-review-selected-context">Terpilih: <strong>${selectedLabel}</strong></div>
+                <div class="forms-review-selected-context">
+                    <i class="fas fa-user-check"></i> <span>Sedang meninjau: <strong>${selectedLabel}</strong></span>
+                </div>
             </div>
         `;
     }
@@ -511,6 +574,10 @@ export function initFormsAdmin(state, els, deps) {
     function renderSubmissionDetail(item) {
         if (!item) return `<section class="forms-admin-card forms-review-detail-empty">Pilih submission di panel kiri untuk melihat jawaban lengkap.</section>`;
         const status = workflowBadge(getWorkflowStatus('submission', item.id));
+        const archive = archiveStatusBadge(item.archive_status);
+        const confidentiality = confidentialityBadge(item.confidentiality_level);
+        const canArchiveRead = can('forms.archive_read');
+        const canArchiveManage = can('forms.archive_manage');
         return `
             <section class="forms-admin-card forms-review-detail-card">
                 <div class="forms-admin-card-head">
@@ -521,12 +588,14 @@ export function initFormsAdmin(state, els, deps) {
                     <div class="forms-review-badge-stack">
                         <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
                         <span class="forms-review-badge ${status.className}">${status.text}</span>
+                        ${canArchiveRead ? `<span class="forms-review-badge ${archive.className}">${archive.text}</span>` : ''}
+                        ${canArchiveRead ? `<span class="forms-review-badge ${confidentiality.className}">${confidentiality.text}</span>` : ''}
                     </div>
                 </div>
                 <div class="forms-review-action-row">
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="unread">Set Unread</button>
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up">Set Follow Up</button>
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done">Set Selesai</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="unread"><i class="fas fa-envelope"></i> Set Baru</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up"><i class="fas fa-clock"></i> Set Follow Up</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done"><i class="fas fa-check-double"></i> Set Selesai</button>
                 </div>
                 <div class="forms-admin-answer-list forms-admin-answer-list-strong">
                     ${(item.answers || []).map((answer) => `
@@ -536,6 +605,55 @@ export function initFormsAdmin(state, els, deps) {
                         </div>
                     `).join('')}
                 </div>
+                ${canArchiveRead ? `
+                    <div class="forms-admin-card-head mt-12">
+                        <div>
+                            <h3>Metadata Arsip</h3>
+                            <p>Kelola klasifikasi, retensi, dan status arsip submission ini.</p>
+                        </div>
+                    </div>
+                    <div class="forms-builder-grid forms-builder-meta-grid">
+                        <label class="forms-builder-label">
+                            <span>Kode Arsip</span>
+                            <input type="text" data-action="archive-code" data-id="${item.id}" value="${escapeHtml(item.archive_code || '')}" placeholder="FRM-PRETEST-001" ${!canArchiveManage ? 'disabled' : ''}>
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Kerahasiaan</span>
+                            <select data-action="archive-confidentiality" data-id="${item.id}" ${!canArchiveManage ? 'disabled' : ''}>
+                                <option value="internal" ${String(item.confidentiality_level || 'internal') === 'internal' ? 'selected' : ''}>Internal</option>
+                                <option value="restricted" ${String(item.confidentiality_level || '') === 'restricted' ? 'selected' : ''}>Terbatas</option>
+                                <option value="secret" ${String(item.confidentiality_level || '') === 'secret' ? 'selected' : ''}>Rahasia</option>
+                            </select>
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Retensi (tahun)</span>
+                            <input type="number" min="1" max="25" step="1" data-action="archive-retention" data-id="${item.id}" value="${Number(item.retention_years || 2)}" ${!canArchiveManage ? 'disabled' : ''}>
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Status Arsip</span>
+                            <select data-action="archive-status" data-id="${item.id}" ${!canArchiveManage ? 'disabled' : ''}>
+                                <option value="active_archive" ${String(item.archive_status || 'active_archive') === 'active_archive' ? 'selected' : ''}>Arsip Aktif</option>
+                                <option value="inactive_archive" ${String(item.archive_status || '') === 'inactive_archive' ? 'selected' : ''}>Arsip Inaktif</option>
+                                <option value="destroy_scheduled" ${String(item.archive_status || '') === 'destroy_scheduled' ? 'selected' : ''}>Jadwal Musnah</option>
+                            </select>
+                        </label>
+                        <label class="forms-builder-label forms-builder-span-2">
+                            <span>Catatan Arsip</span>
+                            <textarea rows="3" data-action="archive-note" data-id="${item.id}" placeholder="Catatan admin arsip..." ${!canArchiveManage ? 'disabled' : ''}>${escapeHtml(item.archive_note || '')}</textarea>
+                        </label>
+                        <label class="forms-builder-label forms-builder-span-2">
+                            <span>Jatuh Tempo Retensi</span>
+                            <input type="text" value="${escapeHtml(item.archive_due_at ? formatDateTime(item.archive_due_at) : '-')}" readonly>
+                        </label>
+                    </div>
+                    ${canArchiveManage ? `
+                        <div class="forms-review-action-row">
+                            <button type="button" class="btn btn-primary forms-inline-btn" data-action="save-archive-meta" data-id="${item.id}">
+                                <i class="fas fa-floppy-disk"></i> Simpan Metadata Arsip
+                            </button>
+                        </div>
+                    ` : '<div class="small muted">Mode baca saja: Anda tidak memiliki izin untuk mengubah metadata arsip.</div>'}
+                ` : ''}
             </section>
         `;
     }
@@ -558,6 +676,8 @@ export function initFormsAdmin(state, els, deps) {
                             ${list.length ? list.map((item) => {
                                 const hasFocus = (item.answers || []).some((answer) => answer.focus_inbox === true);
                                 const status = workflowBadge(getWorkflowStatus('submission', item.id));
+                                const archive = archiveStatusBadge(item.archive_status);
+                                const confidentiality = confidentialityBadge(item.confidentiality_level);
                                 return `
                                     <button type="button" class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}" data-action="pick-submission" data-id="${item.id}">
                                         <div class="forms-review-list-head">
@@ -568,6 +688,8 @@ export function initFormsAdmin(state, els, deps) {
                                         <div class="forms-review-badge-row">
                                             <span class="forms-review-badge ${status.className}">${status.text}</span>
                                             ${hasFocus ? '<span class="forms-review-badge is-focus">Focus Inbox</span>' : ''}
+                                            <span class="forms-review-badge ${archive.className}">${archive.text}</span>
+                                            <span class="forms-review-badge ${confidentiality.className}">${confidentiality.text}</span>
                                         </div>
                                     </button>
                                 `;
@@ -596,9 +718,9 @@ export function initFormsAdmin(state, els, deps) {
                     </div>
                 </div>
                 <div class="forms-review-action-row">
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="unread">Set Unread</button>
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="follow_up">Set Follow Up</button>
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="done">Set Selesai</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="unread"><i class="fas fa-envelope"></i> Set Baru</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="follow_up"><i class="fas fa-clock"></i> Set Follow Up</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="done"><i class="fas fa-check-double"></i> Set Selesai</button>
                 </div>
                 <div class="forms-admin-answer-item focus">
                     <div class="forms-admin-answer-label">${escapeHtml(item.field_label || 'Jawaban')}</div>
@@ -751,6 +873,10 @@ export function initFormsAdmin(state, els, deps) {
                 setStatus('Aksi ditolak: izin workflow tidak tersedia.', 'error');
                 return;
             }
+            if (action === 'save-archive-meta' && !can('forms.archive_manage')) {
+                setStatus('Aksi ditolak: izin arsip tidak tersedia.', 'error');
+                return;
+            }
 
             if (view) {
                 local.activeView = view;
@@ -887,6 +1013,26 @@ export function initFormsAdmin(state, els, deps) {
                 render();
                 return;
             }
+            if (action === 'save-archive-meta') {
+                const id = Number(actionEl.dataset.id || 0);
+                if (!id) return;
+                const fieldCode = root.querySelector(`[data-action="archive-code"][data-id="${id}"]`);
+                const fieldConf = root.querySelector(`[data-action="archive-confidentiality"][data-id="${id}"]`);
+                const fieldRetention = root.querySelector(`[data-action="archive-retention"][data-id="${id}"]`);
+                const fieldStatus = root.querySelector(`[data-action="archive-status"][data-id="${id}"]`);
+                const fieldNote = root.querySelector(`[data-action="archive-note"][data-id="${id}"]`);
+                await saveArchiveMeta(id, {
+                    archive_code: fieldCode?.value || '',
+                    confidentiality_level: fieldConf?.value || 'internal',
+                    retention_years: Number(fieldRetention?.value || 2),
+                    archive_status: fieldStatus?.value || 'active_archive',
+                    archive_note: fieldNote?.value || ''
+                });
+                setStatus('Metadata arsip berhasil disimpan.', 'ok');
+                await loadSubmissions();
+                render();
+                return;
+            }
         } catch (error) {
             setActionBusy(action, false);
             setStatus(error.message || 'Terjadi kesalahan pada modul form.', 'error');
@@ -911,6 +1057,16 @@ export function initFormsAdmin(state, els, deps) {
         }
         if (action === 'inbox-sort') {
             local.review.inbox.sort = event.target.value || 'newest';
+            render();
+            return;
+        }
+        if (action === 'submissions-archive-status') {
+            local.review.submissions.archiveStatus = event.target.value || 'all';
+            render();
+            return;
+        }
+        if (action === 'submissions-confidentiality') {
+            local.review.submissions.confidentiality = event.target.value || 'all';
             render();
             return;
         }
