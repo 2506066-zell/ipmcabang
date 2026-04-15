@@ -151,6 +151,7 @@
             // Tabs
             tabDashboard: document.getElementById('tab-dashboard'),
             tabQuestions: document.getElementById('tab-questions'),
+            tabForms: document.getElementById('tab-forms'),
             tabResults: document.getElementById('tab-results'),
             tabUsers: document.getElementById('tab-users'),
             tabLogs: document.getElementById('tab-logs'),
@@ -169,6 +170,7 @@
             adminFocusGrid: document.getElementById('admin-focus-grid'),
             focusArticlesMeta: document.getElementById('focus-articles-meta'),
             focusQuestionsMeta: document.getElementById('focus-questions-meta'),
+            focusFormsMeta: document.getElementById('focus-forms-meta'),
             focusUsersMeta: document.getElementById('focus-users-meta'),
             focusAttendanceMeta: document.getElementById('focus-attendance-meta'),
             focusSystemMeta: document.getElementById('focus-system-meta'),
@@ -455,6 +457,12 @@
             desc: 'Kelola kualitas soal, kategori, dan set kuis yang dipublikasikan.',
             scope: 'Operasional Kuis'
         },
+        forms: {
+            label: 'Form Evaluasi',
+            title: 'Pretest & Posttest',
+            desc: 'Bangun form premium, baca inbox jawaban esai, dan pantau submission tanpa skor otomatis.',
+            scope: 'Builder Form'
+        },
         results: {
             label: 'Kuis & Penilaian',
             title: 'Hasil Peserta',
@@ -551,6 +559,8 @@
         if (!els.dashboardPriorityList) return;
         const users = Array.isArray(context.users) ? context.users : [];
         const questionCount = asNumber(context.questionCount);
+        const publishedForms = asNumber(context.publishedForms);
+        const formInboxItems = asNumber(context.formInboxItems);
         const activeSchedules = asNumber(context.activeSchedules);
         const articleCount = asNumber(context.articleCount);
         const materialCount = asNumber(context.materialCount);
@@ -592,6 +602,22 @@
                 tab: 'attendance',
                 title: `${passiveAttendanceMembers} kader berstatus pasif`,
                 text: 'Lihat rekap absensi untuk menentukan kader yang perlu diingatkan atau ditindaklanjuti.'
+            });
+        }
+        if (publishedForms === 0) {
+            items.push({
+                tone: 'warn',
+                tab: 'forms',
+                title: 'Belum ada form pretest atau posttest yang dipublikasikan',
+                text: 'Siapkan minimal satu form agar alur evaluasi non-skor bisa langsung dipakai pengisi.'
+            });
+        }
+        if (formInboxItems > 0) {
+            items.push({
+                tone: 'info',
+                tab: 'forms',
+                title: `${formInboxItems} jawaban esai menunggu ditinjau`,
+                text: 'Buka inbox form untuk membaca jawaban penting yang ditandai fokus oleh admin.'
             });
         }
         if (activeSchedules === 0) {
@@ -672,7 +698,7 @@
         });
 
         // Hide all tabs
-        ['dashboard', 'questions', 'results', 'users', 'attendance', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
+        ['dashboard', 'questions', 'forms', 'results', 'users', 'attendance', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
@@ -696,6 +722,21 @@
             loadDashboard();
         }
         if (tabName === 'questions' && state.questions.length === 0) loadQuestions();
+        if (tabName === 'forms') {
+            console.log('[Admin] Loading forms module...');
+            import(`./forms.js?v=${MODULE_VER}`).then(mod => {
+                if (!state.formsInitialized) {
+                    mod.initFormsAdmin(state, els, {
+                        apiAdminVercel,
+                        escapeHtml,
+                        setStatus
+                    });
+                    state.formsInitialized = true;
+                } else if (typeof window.__adminFormsReload === 'function') {
+                    window.__adminFormsReload();
+                }
+            }).catch(err => console.error('[Admin] Failed to load forms module:', err));
+        }
         if (tabName === 'results' && state.results.length === 0) loadResults();
         if (tabName === 'users' && state.users.length === 0) loadUsers();
         if (tabName === 'users') {
@@ -774,9 +815,10 @@
     async function loadDashboard() {
         // Parallel fetch for stats
         try {
-            const [usersData, questionsData, logsData, schedulesData, resultsData, articlesData, materialsData, feedbackData, notifyData, attendanceData] = await Promise.all([
+            const [usersData, questionsData, formsData, logsData, schedulesData, resultsData, articlesData, materialsData, feedbackData, notifyData, attendanceData] = await Promise.all([
                 apiAdminVercel('GET', '/api/admin/users?action=extended'),
                 apiGetVercel('/api/questions?size=1'), // Just to get total count
+                apiAdminVercel('GET', '/api/admin/forms?action=list'),
                 apiAdminVercel('GET', '/api/admin/questions?action=activityLogs'),
                 apiAdminVercel('GET', '/api/admin/questions?action=schedules'),
                 apiGetVercel('/api/results'),
@@ -789,6 +831,9 @@
 
             const userCount = usersData.users ? usersData.users.length : 0;
             const questionCount = questionsData.total || 0;
+            const formItems = Array.isArray(formsData.items) ? formsData.items : [];
+            const publishedForms = formItems.filter(item => String(item.status || '') === 'published').length;
+            const formInboxItems = formItems.reduce((sum, item) => sum + Number(item.inbox_count || 0), 0);
             const activeSchedules = (schedulesData.schedules || []).filter(s => s.active).length;
             const finished = resultsData.results ? resultsData.results.length : 0;
             const articleCount = Number(articlesData.total || (articlesData.articles || []).length || 0);
@@ -819,6 +864,9 @@
             if (els.focusQuestionsMeta) {
                 els.focusQuestionsMeta.textContent = `${questionCount} soal, ${finished} hasil masuk`;
             }
+            if (els.focusFormsMeta) {
+                els.focusFormsMeta.textContent = `${publishedForms} form aktif, ${formInboxItems} item inbox`;
+            }
             if (els.focusUsersMeta) {
                 els.focusUsersMeta.textContent = `${openFeedback} feedback, ${pendingNotifications} notifikasi tertunda`;
             }
@@ -832,6 +880,8 @@
             renderDashboardPriorities({
                 users: usersData.users || [],
                 questionCount,
+                publishedForms,
+                formInboxItems,
                 activeSchedules,
                 articleCount,
                 materialCount,

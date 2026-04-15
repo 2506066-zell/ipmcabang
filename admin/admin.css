@@ -3164,6 +3164,225 @@ button.priority-card:hover {
     flex: 1;
 }
 
+/* Forms Admin */
+.forms-admin-shell {
+    display: block;
+}
+
+.forms-admin-layout {
+    display: grid;
+    gap: 18px;
+}
+
+.forms-admin-sidebar,
+.forms-admin-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: var(--shadow-sm);
+}
+
+.forms-admin-side-head,
+.forms-admin-card-head,
+.forms-admin-toolbar,
+.forms-builder-field-head,
+.forms-admin-submission-head,
+.forms-admin-inbox-top,
+.forms-admin-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.forms-admin-list,
+.forms-builder-field-list,
+.forms-admin-submissions,
+.forms-admin-inbox {
+    display: grid;
+    gap: 14px;
+}
+
+.forms-admin-list-card,
+.forms-builder-field,
+.forms-admin-submission-card,
+.forms-admin-inbox-card {
+    width: 100%;
+    text-align: left;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg-alt);
+    padding: 16px;
+}
+
+.forms-admin-list-card.active {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 1px rgba(74, 124, 93, 0.15);
+}
+
+.forms-admin-list-card p,
+.forms-admin-card p,
+.forms-admin-submission-card .small,
+.forms-admin-inbox-card .small {
+    margin: 6px 0 0;
+}
+
+.forms-admin-inline-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.forms-admin-mini-status {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    background: rgba(148, 163, 184, 0.14);
+    color: var(--text-secondary);
+}
+
+.forms-admin-mini-status.published {
+    background: rgba(16, 185, 129, 0.14);
+    color: #047857;
+}
+
+.forms-admin-mini-status.archived {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}
+
+.forms-admin-workspace {
+    display: grid;
+    gap: 18px;
+}
+
+.forms-admin-view-switch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.forms-view-btn {
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: transparent;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.forms-view-btn.active {
+    background: var(--accent-soft);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.forms-builder-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.forms-builder-meta-grid {
+    margin-top: 16px;
+}
+
+.forms-builder-label,
+.forms-builder-check {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.forms-builder-label input,
+.forms-builder-label textarea,
+.forms-builder-label select {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    padding: 12px 14px;
+}
+
+.forms-builder-check {
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    padding-top: 10px;
+}
+
+.forms-builder-span-2 {
+    grid-column: span 2;
+}
+
+.forms-builder-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.forms-inline-btn {
+    min-width: 38px;
+    padding-inline: 10px;
+}
+
+.forms-builder-counter,
+.forms-admin-answer-label {
+    font-weight: 700;
+}
+
+.forms-admin-answer-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.forms-admin-answer-item {
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.forms-admin-answer-item.focus,
+.forms-admin-inbox-card {
+    border-color: rgba(59, 130, 246, 0.28);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.forms-admin-answer-value {
+    margin-top: 6px;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
+@media (min-width: 1080px) {
+    .forms-admin-layout {
+        grid-template-columns: 360px minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .forms-admin-sidebar {
+        position: sticky;
+        top: 24px;
+    }
+}
+
+@media (max-width: 720px) {
+    .forms-builder-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .forms-builder-span-2 {
+        grid-column: auto;
+    }
+}
+
 .toolbar-input {
     flex: 1;
     min-width: 220px;

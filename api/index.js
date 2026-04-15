@@ -1,5 +1,9 @@
 const { json } = require('./_util');
 
+function lazy(handlerPath) {
+  return async (req, res) => require(handlerPath)(req, res);
+}
+
 // Internal Route Map
 const routes = {
   'auth': require('./_handler_auth'),
@@ -17,10 +21,12 @@ const routes = {
   'results': require('./_handler_results'),
   'users': require('./_handler_users'),
   'feedback': require('./_handler_feedback'),
+  'forms': require('./_handler_forms'),
+  'admin/forms': require('./_handler_forms'),
   'push': require('./_handler_push'),
   'attendance': require('./_handler_attendance'),
   'discussions': require('./_handler_discussions'),
-  'webauthn': require('./_handler_webauthn'),
+  'webauthn': lazy('./_handler_webauthn'),
   'upload': require('./upload')
 };
 

@@ -425,6 +425,56 @@ async function ensureSchema() {
     UNIQUE (room_id, user_id)
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS form_templates (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    type TEXT NOT NULL DEFAULT 'pretest',
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
+    allow_multiple BOOLEAN DEFAULT FALSE,
+    theme_variant TEXT DEFAULT 'aurora-premium',
+    created_by INT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS form_fields (
+    id SERIAL PRIMARY KEY,
+    form_id INT NOT NULL REFERENCES form_templates(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    field_type TEXT NOT NULL DEFAULT 'short_text',
+    required BOOLEAN DEFAULT FALSE,
+    placeholder TEXT,
+    options_json JSONB DEFAULT '[]'::jsonb,
+    sort_order INT DEFAULT 1,
+    focus_inbox BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS form_submissions (
+    id SERIAL PRIMARY KEY,
+    form_id INT NOT NULL REFERENCES form_templates(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'submitted',
+    submitted_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (form_id, user_id)
+  )`;
+
+  await query`CREATE TABLE IF NOT EXISTS form_answers (
+    id SERIAL PRIMARY KEY,
+    submission_id INT NOT NULL REFERENCES form_submissions(id) ON DELETE CASCADE,
+    field_id INT NOT NULL REFERENCES form_fields(id) ON DELETE CASCADE,
+    answer_text TEXT,
+    answer_json JSONB,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (submission_id, field_id)
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -505,6 +555,29 @@ async function ensureSchema() {
   await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP`;
   await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE attendance_room_sessions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS description TEXT`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'pretest'`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft'`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS allow_multiple BOOLEAN DEFAULT FALSE`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS theme_variant TEXT DEFAULT 'aurora-premium'`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS created_by INT`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS required BOOLEAN DEFAULT FALSE`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS placeholder TEXT`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS options_json JSONB DEFAULT '[]'::jsonb`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 1`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS focus_inbox BOOLEAN DEFAULT FALSE`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'submitted'`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_text TEXT`;
+  await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_json JSONB`;
+  await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
 
   await seedOrganizationData();
 
@@ -535,6 +608,11 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_attendance_records_org_member ON attendance_records(org_member_id, updated_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_attendance_sessions_user_room ON attendance_room_sessions(user_id, room_id)`;
   await query`CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_records_event_org_member_unique ON attendance_records(event_id, org_member_id) WHERE org_member_id IS NOT NULL`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_templates_status_type ON form_templates(status, type, updated_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_fields_form_sort ON form_fields(form_id, sort_order, id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_form_submitted ON form_submissions(form_id, submitted_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_user_submitted ON form_submissions(user_id, submitted_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_answers_submission ON form_answers(submission_id)`;
 }
 
 module.exports = { ensureSchema };

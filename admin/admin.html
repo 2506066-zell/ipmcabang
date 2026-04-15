@@ -9,7 +9,7 @@
     <title>Admin Kuis IPM</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="admin.css?v=20260223a">
+    <link rel="stylesheet" href="admin.css?v=20260415b">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -51,6 +51,9 @@
                 <p class="nav-group-title">Kuis &amp; Penilaian</p>
                 <button class="nav-item" data-tab="questions">
                     <i class="fas fa-list-ul"></i> <span>Bank Soal</span>
+                </button>
+                <button class="nav-item" data-tab="forms">
+                    <i class="fas fa-file-lines"></i> <span>Pre/Post Test</span>
                 </button>
                 <button class="nav-item" data-tab="results">
                     <i class="fas fa-square-poll-vertical"></i> <span>Hasil Peserta</span>
@@ -207,6 +210,14 @@
                                 </div>
                                 <div class="focus-card-meta" id="focus-questions-meta">Buka modul</div>
                             </button>
+                            <button type="button" class="focus-card" data-tab="forms">
+                                <div class="focus-card-icon accent-quiz"><i class="fas fa-file-circle-plus"></i></div>
+                                <div class="focus-card-body">
+                                    <div class="focus-card-title">Kelola Pre/Post Test</div>
+                                    <div class="focus-card-text">Bangun form premium, pantau submission, dan baca inbox jawaban esai.</div>
+                                </div>
+                                <div class="focus-card-meta" id="focus-forms-meta">Buka modul</div>
+                            </button>
                             <button type="button" class="focus-card" data-tab="users">
                                 <div class="focus-card-icon accent-people"><i class="fas fa-bullhorn"></i></div>
                                 <div class="focus-card-body">
@@ -252,6 +263,11 @@
                                 <span class="workflow-badge">Kuis &amp; Penilaian</span>
                                 <h4>Soal, hasil peserta, dan evaluasi</h4>
                                 <p>Untuk menyiapkan assessment, memantau hasil, dan menjaga kualitas pengalaman belajar.</p>
+                            </button>
+                            <button type="button" class="workflow-card" data-tab="forms">
+                                <span class="workflow-badge">Form Evaluasi</span>
+                                <h4>Pretest, posttest, dan inbox jawaban</h4>
+                                <p>Untuk membangun form tanpa skor otomatis yang terasa premium dan mudah dibaca admin.</p>
                             </button>
                             <button type="button" class="workflow-card" data-tab="users">
                                 <span class="workflow-badge">Komunikasi</span>
@@ -321,6 +337,17 @@
                         <button class="btn btn-secondary" id="q-prev">Prev</button>
                         <span id="q-page-info" class="small">Page 1</span>
                         <button class="btn btn-secondary" id="q-next">Next</button>
+                    </div>
+                </div>
+
+                <!-- FORMS TAB -->
+                <div id="tab-forms" class="hidden">
+                    <section class="section-intro">
+                        <h3>Form Ops: Pretest &amp; Posttest</h3>
+                        <p>Halaman ini untuk membuat form evaluasi seperti Google Form, memantau kiriman, dan membaca jawaban esai prioritas.</p>
+                    </section>
+                    <div id="forms-admin-root" class="forms-admin-shell">
+                        <div class="small muted">Memuat modul form...</div>
                     </div>
                 </div>
 
@@ -1523,7 +1550,7 @@
         })();
     </script>
     <script src="../scripts/toast.js"></script>
-    <script src="admin.js?v=20" defer></script>
+    <script src="admin.js?v=21" defer></script>
 </body>
 
 </html>
