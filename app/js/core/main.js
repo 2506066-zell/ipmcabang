@@ -105,16 +105,28 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
 
 
+    const mobileHeader = document.getElementById('mobile-header');
     const hamburgerMenu = document.getElementById('hamburger-menu');
     const mobileNav = document.getElementById('mobile-nav');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
     const headerRight = document.querySelector('.header-right-icons');
 
+    const syncHeaderScrolledState = () => {
+        if (!mobileHeader) return;
+        const isScrolled = (window.scrollY || window.pageYOffset || 0) > 8;
+        mobileHeader.classList.toggle('is-scrolled', isScrolled);
+    };
+    syncHeaderScrolledState();
+    window.addEventListener('scroll', syncHeaderScrolledState, { passive: true });
+
     const openMobileNav = () => {
         mobileNav.classList.add('open');
         mobileNav.setAttribute('aria-hidden', 'false');
         if (mobileNavOverlay) mobileNavOverlay.classList.add('open');
-        if (hamburgerMenu) hamburgerMenu.setAttribute('aria-expanded', 'true');
+        if (hamburgerMenu) {
+            hamburgerMenu.setAttribute('aria-expanded', 'true');
+            hamburgerMenu.classList.add('is-open');
+        }
         document.body.classList.add('body-no-scroll');
         uiBack.open('mobile-nav');
     };
@@ -123,7 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileNav.classList.remove('open');
         mobileNav.setAttribute('aria-hidden', 'true');
         if (mobileNavOverlay) mobileNavOverlay.classList.remove('open');
-        if (hamburgerMenu) hamburgerMenu.setAttribute('aria-expanded', 'false');
+        if (hamburgerMenu) {
+            hamburgerMenu.setAttribute('aria-expanded', 'false');
+            hamburgerMenu.classList.remove('is-open');
+        }
         document.body.classList.remove('body-no-scroll');
         if (!fromPop) uiBack.requestClose('mobile-nav');
     };
@@ -199,31 +214,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (headerRight && !document.getElementById('profile-header-btn')) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'profile-header-btn';
-        btn.className = 'header-icon profile-icon-btn';
-        syncProfileHeaderButton(btn);
-        const anchor = headerRight.querySelector('#hamburger-menu');
-        if (anchor) headerRight.insertBefore(btn, anchor);
-        else headerRight.appendChild(btn);
+    const ensureGlobalHeaderActions = () => {
+        if (!headerRight) return {};
 
-        btn.addEventListener('click', () => {
-            const session = getSession();
-            if (!session) {
-                window.location.href = '/login.html';
-                return;
-            }
-            if (window.ProfilePage && window.ProfilePage.open) {
-                window.ProfilePage.open();
-            } else {
-                console.warn('[Profile] Modal belum siap');
-            }
+        // Remove duplicate legacy profile icons so we only keep one global profile control.
+        const legacyProfiles = Array.from(headerRight.querySelectorAll('a[aria-label="Profil"], a[href="/profile"], a[href="profile.html"]'));
+        const existingProfileButton = document.getElementById('profile-header-btn');
+        legacyProfiles.forEach((legacy) => {
+            if (existingProfileButton && legacy === existingProfileButton) return;
+            legacy.remove();
         });
 
+        let trophy = headerRight.querySelector('.header-icon[href="ranking.html"], .header-icon[href="/ranking.html"]');
+        if (!trophy) {
+            trophy = document.createElement('a');
+            trophy.className = 'header-icon header-icon-btn header-trophy-btn';
+            trophy.href = '/ranking.html';
+            trophy.setAttribute('aria-label', 'Peringkat');
+            trophy.innerHTML = '<i class="fas fa-trophy" aria-hidden="true"></i>';
+            headerRight.appendChild(trophy);
+        } else {
+            trophy.classList.add('header-icon-btn', 'header-trophy-btn');
+            trophy.setAttribute('aria-label', 'Peringkat');
+        }
+        try {
+            const pathname = String(window.location.pathname || '').toLowerCase();
+            const onRankingPage = pathname.endsWith('/ranking.html') || pathname === '/ranking';
+            trophy.classList.toggle('is-active', onRankingPage);
+            if (onRankingPage) trophy.setAttribute('aria-current', 'page');
+            else trophy.removeAttribute('aria-current');
+        } catch {}
+
+        let profileBtn = document.getElementById('profile-header-btn');
+        if (!profileBtn) {
+            profileBtn = document.createElement('button');
+            profileBtn.type = 'button';
+            profileBtn.id = 'profile-header-btn';
+            profileBtn.className = 'header-icon profile-icon-btn header-icon-btn';
+            headerRight.appendChild(profileBtn);
+        } else {
+            profileBtn.classList.add('header-icon-btn');
+        }
+        profileBtn.setAttribute('aria-haspopup', 'dialog');
+        profileBtn.setAttribute('aria-expanded', 'false');
+
+        let bell = document.getElementById('notif-bell');
+        if (bell) {
+            bell.classList.add('header-icon', 'notif-bell', 'header-icon-btn');
+            bell.setAttribute('aria-label', 'Notifikasi');
+            if (!bell.getAttribute('type') && bell.tagName === 'BUTTON') bell.setAttribute('type', 'button');
+            if (!bell.querySelector('.notif-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'notif-badge';
+                badge.id = 'notif-badge';
+                badge.hidden = true;
+                badge.textContent = '0';
+                bell.appendChild(badge);
+            }
+        }
+
+        const hamburger = headerRight.querySelector('#hamburger-menu');
+        const order = [bell, trophy, profileBtn, hamburger].filter(Boolean);
+        order.forEach((el) => headerRight.appendChild(el));
+
+        return { bell, trophy, profileBtn, hamburger };
+    };
+
+    const { profileBtn: profileHeaderBtn } = ensureGlobalHeaderActions();
+
+    if (profileHeaderBtn) {
+        syncProfileHeaderButton(profileHeaderBtn);
+        if (!profileHeaderBtn.dataset.profileBound) {
+            profileHeaderBtn.dataset.profileBound = '1';
+            profileHeaderBtn.addEventListener('click', () => {
+                const session = getSession();
+                if (!session) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                if (window.ProfilePage && window.ProfilePage.open) {
+                    window.ProfilePage.open();
+                } else {
+                    console.warn('[Profile] Modal belum siap');
+                }
+            });
+        }
+
         window.addEventListener('storage', () => {
-            syncProfileHeaderButton(btn);
+            syncProfileHeaderButton(profileHeaderBtn);
         });
     }
 
@@ -247,12 +325,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 bell = document.createElement('button');
                 bell.type = 'button';
                 bell.id = 'notif-bell';
-                bell.className = 'header-icon notif-bell';
+                bell.className = 'header-icon notif-bell header-icon-btn';
                 bell.setAttribute('aria-label', 'Notifikasi');
                 bell.innerHTML = '<i class="fas fa-bell"></i><span class="notif-badge" id="notif-badge" hidden>0</span>';
-                const anchor = headerRight.querySelector('#profile-header-btn') || headerRight.querySelector('#hamburger-menu');
+                const anchor = headerRight.querySelector('.header-trophy-btn') || headerRight.querySelector('#profile-header-btn') || headerRight.querySelector('#hamburger-menu');
                 if (anchor) headerRight.insertBefore(bell, anchor);
                 else headerRight.appendChild(bell);
+            } else {
+                bell.classList.add('header-icon', 'notif-bell', 'header-icon-btn');
             }
             return bell;
         };

@@ -352,6 +352,8 @@
         }
 
         if (overlayEl) return;
+        const triggerBtn = document.getElementById('profile-header-btn');
+        if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
         overlayEl = document.createElement('div');
         overlayEl.className = 'profile-overlay';
         overlayEl.innerHTML = '<div id="profile-root" class="profile-root"></div>';
@@ -394,6 +396,8 @@
             return;
         }
         if (!overlayEl) return;
+        const triggerBtn = document.getElementById('profile-header-btn');
+        if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
         overlayEl.classList.remove('show');
         document.body.classList.remove('body-no-scroll');
         setTimeout(() => {

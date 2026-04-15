@@ -20,6 +20,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" fetchpriority="low">
     <link rel="stylesheet" href="app/css/style.css">
+    <link rel="stylesheet" href="app/css/profile.css">
     <link rel="stylesheet" href="app/css/discussions.css?v=2">
 </head>
 <body class="safe-area-padding hidden-scroll">
@@ -36,12 +37,20 @@
     <!-- Header Mobile -->
     <header class="mobile-header" id="mobile-header">
         <div class="logo-container">
-            <a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
-                <i class="fas fa-arrow-left" style="color:#1a1a1a; font-size: 1.2rem; margin-right: 12px;"></i>
-                <span class="header-title">Ruang Diskusi</span>
-            </a>
+            <img src="ipm%20(2).png" alt="Logo IPM" class="header-logo">
+            <span class="header-title">PC IPM Panawuan</span>
         </div>
         <div class="header-right-icons">
+            <button class="header-icon notif-bell" id="notif-bell" aria-label="Notifikasi">
+                <i class="fas fa-bell"></i>
+                <span class="notif-badge" id="notif-badge" hidden>0</span>
+            </button>
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="/profile" class="header-icon" aria-label="Profil">
+                <i class="fas fa-user-circle"></i>
+            </a>
             <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
@@ -154,7 +163,8 @@
     </main>
 
     <script src="/app/js/core/toast.js" defer></script>
-    <script src="/app/js/core/main.js" defer></script>
+    <script src="/app/js/core/main.js?v=16" defer></script>
+    <script src="/app/js/core/profile.js" defer></script>
     <script src="/app/js/pages/discussions.js?v=2" defer></script>
 </body>
 </html>

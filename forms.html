@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="/app/css/forms.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="page-forms mode-picker
+<body class="page-forms mode-picker">
 
     <div class="forms-bg-grid" aria-hidden="true"></div>
     <div class="forms-bg-glow forms-bg-glow-a" aria-hidden="true"></div>
@@ -29,15 +29,12 @@
             <span class="header-title">PC IPM Panawuan</span>
         </div>
         <div class="header-right-icons">
-            <button class="header-icon notif-bell" id="notif-bell" aria-label="Notifikasi">
+            <button class="header-icon header-icon-btn notif-bell" id="notif-bell" aria-label="Notifikasi">
                 <i class="fas fa-bell"></i>
                 <span class="notif-badge" id="notif-badge" hidden>0</span>
             </button>
-            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+            <a href="ranking.html" class="header-icon header-icon-btn" aria-label="Peringkat">
                 <i class="fas fa-trophy"></i>
-            </a>
-            <a href="/profile" class="header-icon" aria-label="Profil">
-                <i class="fas fa-user-circle"></i>
             </a>
             <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false"
                 aria-controls="mobile-nav">
@@ -47,18 +44,6 @@
             </button>
         </div>
     </header>
-    <div class="notif-overlay" id="notif-overlay" hidden></div>
-    <div class="notif-panel" id="notif-panel" hidden>
-        <div class="notif-panel-header">
-            <span>Notifikasi</span>
-            <button class="notif-close" id="notif-close" aria-label="Tutup">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="notif-panel-list" id="notif-panel-list"></div>
-        <button class="notif-mark-read" id="notif-mark-read">Tandai semua dibaca</button>
-    </div>
-
     <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
         <ul class="mobile-nav-links">
             <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>

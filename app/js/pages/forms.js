@@ -64,6 +64,12 @@
         if (els.panelCopy) els.panelCopy.textContent = text;
     }
 
+    function setButtonLoading(button, loading) {
+        if (!button) return;
+        button.classList.toggle('is-loading', Boolean(loading));
+        button.setAttribute('aria-busy', loading ? 'true' : 'false');
+    }
+
     function redirectToLogin() {
         const next = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.href = `/login.html?next=${next}`;
@@ -504,6 +510,7 @@
         const loginBtn = formEl.querySelector('#forms-login-btn');
         if (loginBtn) loginBtn.hidden = statusView.code !== 'auth_required';
         if (!submitBtn) return;
+        setButtonLoading(submitBtn, state.submitState === 'sending');
         if (form.already_submitted) {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Jawaban terkirim';
@@ -678,7 +685,17 @@
             });
         });
 
-        els.refreshBtn?.addEventListener('click', () => init());
+        els.refreshBtn?.addEventListener('click', async () => {
+            if (!els.refreshBtn || els.refreshBtn.disabled) return;
+            els.refreshBtn.disabled = true;
+            setButtonLoading(els.refreshBtn, true);
+            try {
+                await init();
+            } finally {
+                setButtonLoading(els.refreshBtn, false);
+                els.refreshBtn.disabled = false;
+            }
+        });
         els.backBtn?.addEventListener('click', backToPicker);
     }
 
