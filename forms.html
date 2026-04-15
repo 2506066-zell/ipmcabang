@@ -24,10 +24,11 @@
     <header class="mobile-header" id="mobile-header">
         <div class="logo-container">
             <img src="ipm%20(2).png" alt="Logo IPM" class="header-logo">
+            <span class="header-title">PC IPM Panawuan</span>
         </div>
         <div class="header-right-icons">
-            <a href="quiz-gamified.html" class="header-icon" aria-label="Quiz">
-                <i class="fas fa-layer-group"></i>
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
             </a>
             <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
                 <span class="hamburger-line"></span>
@@ -40,10 +41,14 @@
     <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
         <ul class="mobile-nav-links">
             <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="/articles" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="materi.html" class="mobile-nav-link"><i class="fas fa-book"></i> Perpustakaan</a></li>
             <li><a href="quiz-gamified.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
             <li><a href="forms.html" class="mobile-nav-link active"><i class="fas fa-file-lines"></i> Pre/Post Test</a></li>
             <li><a href="absen.html" class="mobile-nav-link"><i class="fas fa-camera"></i> Absensi</a></li>
-            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur</a></li>
+            <li><a href="discussions.html" class="mobile-nav-link"><i class="fas fa-comments"></i> Ruang Diskusi</a></li>
+            <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
         </ul>
     </nav>
     <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
@@ -94,9 +99,24 @@
         </section>
     </main>
 
+    <footer class="public-footer">
+        <p class="footer-text">© 2026 Ikatan Pelajar Muhammadiyah - PC Panawuan</p>
+    </footer>
+
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="index.html"><i class="fas fa-home"></i><span>Beranda</span></a>
+            <a href="/articles"><i class="fas fa-newspaper"></i><span>Artikel</span></a>
+            <a href="materi.html"><i class="fas fa-book"></i><span>Materi</span></a>
+            <a href="quiz-gamified.html"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+            <a href="forms.html" class="active"><i class="fas fa-file-lines"></i><span>Form</span></a>
+        </div>
+    </nav>
+
     <script src="/app/js/core/toast.js" defer></script>
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/profile.js" defer></script>
     <script src="/app/js/pages/forms.js?v=2" defer></script>
 </body>
 </html>
+

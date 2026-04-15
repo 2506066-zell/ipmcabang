@@ -335,7 +335,7 @@
         const selected = options.find((item) => String(item.id) === String(els.memberSelect.value || ''));
         if (selected) {
             els.memberMeta.textContent = `${selected.role_title || 'Anggota'}${selected.bidang_name ? ` • ${selected.bidang_name}` : ''}`;
-            els.memberMeta.style.color = 'var(--att-muted)';
+            els.memberMeta.style.color = 'var(--c-text-muted)';
         } else if (queryText && filtered.length === 0) {
             els.memberMeta.textContent = `Nama "${filterText}" tidak ditemukan.`;
             els.memberMeta.style.color = '#ef4444';
@@ -346,7 +346,7 @@
             els.memberMeta.textContent = queryText 
                 ? `${filtered.length} nama ditemukan.`
                 : 'Pilih nama kader aktif dari struktur organisasi.';
-            els.memberMeta.style.color = 'var(--att-muted)';
+            els.memberMeta.style.color = 'var(--c-text-muted)';
         }
         updateStepHighlight();
     }
@@ -430,7 +430,7 @@
                                      data-event-title="${escapeHtml(item.title)}" 
                                      data-event-date="${escapeHtml(String(item.event_date || '').slice(0, 10))}">
                                 <div class="attendance-history-content">
-                                    <div class="attendance-pill" style="margin-bottom: 8px; font-size: 10px; padding: 4px 10px; background: ${item.status === 'active' ? 'var(--att-primary-soft)' : '#f1f5f9'}; color: ${item.status === 'active' ? 'var(--att-primary-light)' : '#64748b'};">
+                                    <div class="attendance-pill" style="margin-bottom: 8px; font-size: 10px; padding: 4px 10px; background: ${item.status === 'active' ? 'var(--c-emerald-50)' : '#f1f5f9'}; color: ${item.status === 'active' ? 'var(--c-emerald-700)' : '#64748b'};">
                                         ${item.status === 'active' ? 'AKTIF' : 'DIARSIPKAN'}
                                     </div>
                                     <h4 class="attendance-history-title">${escapeHtml(item.title)}</h4>

@@ -21,11 +21,6 @@
     overflow-x: hidden;
 }
 
-.page-forms .mobile-header,
-.page-forms .mobile-nav {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-}
 
 .forms-bg-grid {
     position: fixed;
@@ -94,15 +89,6 @@
     animation: formsFadeUp 240ms ease;
 }
 
-.page-forms.mode-filling .header-right-icons {
-    opacity: 0.25;
-    pointer-events: none;
-}
-
-.page-forms.mode-filling .header-right-icons .header-icon,
-.page-forms.mode-filling .header-right-icons .hamburger-menu {
-    display: none;
-}
 
 .forms-topbar,
 .forms-picker-card,
