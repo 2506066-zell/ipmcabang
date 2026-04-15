@@ -14,8 +14,8 @@ export function initFormsAdmin(state, els, deps) {
         editor: null,
         readState: {},
         review: {
-            submissions: { sort: 'newest', filter: 'all', selectedId: 0, archiveStatus: 'all', confidentiality: 'all' },
-            inbox: { sort: 'newest', filter: 'all', selectedId: 0 }
+            submissions: { sort: 'newest', filter: 'all', selectedId: 0, archiveStatus: 'all', confidentiality: 'all', query: '' },
+            inbox: { sort: 'newest', filter: 'all', selectedId: 0, query: '' }
         },
         workflowState: {},
         busy: {}
@@ -518,6 +518,21 @@ export function initFormsAdmin(state, els, deps) {
         if (confidentiality !== 'all') {
             filtered = filtered.filter((item) => String(item.confidentiality_level || 'internal').trim().toLowerCase() === confidentiality);
         }
+        const queryText = String(local.review.submissions.query || '').trim().toLowerCase();
+        if (queryText) {
+            filtered = filtered.filter((item) => {
+                const haystack = [
+                    item.nama_panjang,
+                    item.username,
+                    item.pimpinan,
+                    item.archive_code,
+                    item.archive_note
+                ]
+                    .map((v) => String(v || '').toLowerCase())
+                    .join(' ');
+                return haystack.includes(queryText);
+            });
+        }
         return filtered;
     }
 
@@ -534,7 +549,20 @@ export function initFormsAdmin(state, els, deps) {
         const filter = local.review.inbox.filter || 'all';
         if (filter === 'focus') return list;
         if (filter === 'unread') return list.filter((item) => getWorkflowStatus('inbox', item.id) !== 'done');
-        return list;
+        const queryText = String(local.review.inbox.query || '').trim().toLowerCase();
+        if (!queryText) return list;
+        return list.filter((item) => {
+            const haystack = [
+                item.nama_panjang,
+                item.username,
+                item.field_label,
+                item.form_title,
+                item.answer_text
+            ]
+                .map((v) => String(v || '').toLowerCase())
+                .join(' ');
+            return haystack.includes(queryText);
+        });
     }
 
     function renderReviewToolbar(view) {
@@ -560,6 +588,10 @@ export function initFormsAdmin(state, els, deps) {
                             <option value="oldest" ${review.sort === 'oldest' ? 'selected' : ''}>Terlama</option>
                             <option value="name_asc" ${review.sort === 'name_asc' ? 'selected' : ''}>Nama A-Z</option>
                         </select>
+                    </div>
+                    <div class="toolbar-select-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="search" class="toolbar-input" data-action="${view}-query" value="${escapeHtml(review.query || '')}" placeholder="${view === 'submissions' ? 'Cari nama / username / kode arsip…' : 'Cari nama / field / jawaban…'}">
                     </div>
                     <div class="forms-review-filter-group">
                         <button type="button" class="forms-review-filter ${review.filter === 'all' ? 'active' : ''}" data-action="${view}-filter" data-filter="all">Semua</button>
@@ -917,6 +949,7 @@ export function initFormsAdmin(state, els, deps) {
             if (view) {
                 local.activeView = view;
                 if (view === 'submissions') await loadSubmissions();
+                if (view === 'submissions') await loadArchiveSummary();
                 if (view === 'inbox') await loadInbox();
                 render();
                 return;
@@ -926,7 +959,7 @@ export function initFormsAdmin(state, els, deps) {
                 local.activeView = 'builder';
                 local.review.submissions.selectedId = 0;
                 local.review.inbox.selectedId = 0;
-                await Promise.all([loadDetail(), loadSubmissions(), loadInbox()]);
+                await Promise.all([loadDetail(), loadSubmissions(), loadInbox(), loadArchiveSummary()]);
                 render();
                 return;
             }
@@ -984,7 +1017,7 @@ export function initFormsAdmin(state, els, deps) {
                 if (isActionBusy(action)) return;
                 setActionBusy(action, true);
                 render();
-                await loadSubmissions();
+                await Promise.all([loadSubmissions(), loadArchiveSummary()]);
                 setActionBusy(action, false);
                 render();
                 return;
@@ -1065,7 +1098,7 @@ export function initFormsAdmin(state, els, deps) {
                     archive_note: fieldNote?.value || ''
                 });
                 setStatus('Metadata arsip berhasil disimpan.', 'ok');
-                await loadSubmissions();
+                await Promise.all([loadSubmissions(), loadArchiveSummary()]);
                 render();
                 return;
             }
@@ -1078,7 +1111,18 @@ export function initFormsAdmin(state, els, deps) {
 
     root.addEventListener('input', (event) => {
         const action = event.target.dataset.action || '';
-        if (!action || (!action.startsWith('meta-') && !action.startsWith('field-'))) return;
+        if (!action) return;
+        if (action === 'submissions-query') {
+            local.review.submissions.query = event.target.value || '';
+            render();
+            return;
+        }
+        if (action === 'inbox-query') {
+            local.review.inbox.query = event.target.value || '';
+            render();
+            return;
+        }
+        if (!action.startsWith('meta-') && !action.startsWith('field-')) return;
         if (!can('forms.write')) return;
         updateEditorValue(action, Number(event.target.dataset.index || -1), event.target.value, event.target.checked);
     });
