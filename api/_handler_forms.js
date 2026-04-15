@@ -703,6 +703,11 @@ module.exports = async (req, res) => {
     if (/duplicate key/i.test(message) && /form_submissions/.test(message)) {
       return json(res, 409, { status: 'error', message: 'Akun ini sudah pernah mengisi form tersebut.' });
     }
-    return json(res, 500, { status: 'error', message });
+    
+    // Catch common validation error phrases to return 400 instead of 500
+    const isValidationError = /wajib diisi|tidak didukung|minimal satu|tidak valid/i.test(message);
+    const statusCode = isValidationError ? 400 : 500;
+    
+    return json(res, statusCode, { status: 'error', message });
   }
 };
