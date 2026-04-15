@@ -19,7 +19,8 @@
         selfieFile: null,
         selfieStream: null,
         pollingInterval: null,
-        deferredPrompt: null
+        deferredPrompt: null,
+        flowStatus: { tone: 'pending', title: 'Belum mulai', note: 'Pilih room lalu verifikasi kode untuk mulai absensi.' }
     };
 
     const els = {};
@@ -47,6 +48,7 @@
         stopCamera();
         renderRooms();
         renderDetail();
+        setFlowStatus('pending', 'Pilih room', 'Pilih room lalu masukkan kode akses.');
         setPageMode('room-picker');
         syncRoomUrl(0);
     }
@@ -120,6 +122,54 @@
         el.style.color = type === 'error' ? '#b42318' : (type === 'success' ? '#0f7b42' : '#526171');
     }
 
+    function setFlowStatus(tone, title, note) {
+        state.flowStatus = {
+            tone: tone || 'pending',
+            title: title || 'Belum mulai',
+            note: note || ''
+        };
+        if (els.flowStatus) els.flowStatus.dataset.flow = state.flowStatus.tone;
+        if (els.flowBadge) els.flowBadge.innerHTML = `<i class="fas fa-circle"></i> ${escapeHtml(state.flowStatus.title)}`;
+        if (els.flowNote) els.flowNote.textContent = state.flowStatus.note;
+    }
+
+    function hasValue(value) {
+        return Array.isArray(value) ? value.length > 0 : Boolean(String(value || '').trim());
+    }
+
+    function evaluateCheckinFlowStatus() {
+        const detail = state.detail;
+        const currentEvent = detail?.current_event;
+        const canSelfCheckIn = !!detail?.permissions?.can_self_check_in;
+        if (!detail?.room) {
+            setFlowStatus('pending', 'Pilih room', 'Pilih room lalu masukkan kode akses.');
+            return;
+        }
+        if (!currentEvent) {
+            setFlowStatus('pending', 'Menunggu event aktif', 'Buat atau tunggu event rapat aktif untuk melanjutkan absensi.');
+            return;
+        }
+        if (!canSelfCheckIn) {
+            setFlowStatus('pending', 'Mode verifikasi manual', 'Akun ini tidak bisa self check-in di room ini. Gunakan admin manual.');
+            return;
+        }
+
+        const identityMode = currentIdentityMode();
+        const needsMember = identityMode === 'org_member_select';
+        const hasMember = needsMember ? hasValue(els.memberSelect?.value) : true;
+        const hasSelfie = Boolean(state.selfieFile);
+
+        if (!hasMember) {
+            setFlowStatus('pending', 'Langkah 1: pilih nama', 'Pilih nama kader dulu untuk lanjut ke kamera.');
+            return;
+        }
+        if (!hasSelfie) {
+            setFlowStatus('pending', 'Langkah 2: ambil selfie', 'Buka kamera lalu ambil selfie sebagai bukti kehadiran.');
+            return;
+        }
+        setFlowStatus('ready', 'Siap kirim absensi', 'Semua syarat terpenuhi. Tekan tombol Kirim Kehadiran.');
+    }
+
     function redirectToLogin(message) {
         try {
             sessionStorage.setItem('ipmquiz_flash', message || 'Silakan login dulu untuk membuka room absensi.');
@@ -164,6 +214,7 @@
                 </div>
             `;
         }
+        setFlowStatus('error', 'Sesi login diperlukan', 'Login ulang untuk melanjutkan absensi.');
         updateUserChip();
     }
 
@@ -228,6 +279,7 @@
         }
         setText('attendance-code-modal-title', `Masukkan kode room ${roomName || ''}`.trim());
         setCodeModalOpen(true);
+        setFlowStatus('pending', 'Masukkan kode room', `Masukkan kode untuk membuka room ${roomName || ''}`.trim());
         if (els.codeInput) {
             els.codeInput.value = '';
             els.codeInput.focus();
@@ -244,6 +296,7 @@
         setCodeModalOpen(false);
         if (els.codeForm) els.codeForm.reset();
         setInlineStatus(els.codeStatus, '');
+        evaluateCheckinFlowStatus();
     }
 
     function renderRooms() {
@@ -489,6 +542,7 @@
                     : 'Kamu bisa masuk room ini, tapi absensi mandiri hanya untuk anggota pimpinan yang sama.'
             );
             renderMemberOptions();
+            evaluateCheckinFlowStatus();
             return;
         }
 
@@ -551,6 +605,7 @@
         } else {
             setInlineStatus(els.checkinStatus, 'Ambil selfie terbaru lalu kirim (bisa check-in berulang untuk perwakilan).');
         }
+        evaluateCheckinFlowStatus();
     }
 
     function renderDetail() {
@@ -622,6 +677,7 @@
 
     async function loadRooms(preferredRoomId) {
         if (els.refreshBtn) els.refreshBtn.disabled = true;
+        setFlowStatus('progress', 'Memuat room...', 'Mengambil daftar room absensi.');
         try {
             const data = await apiFetch('/api/attendance?action=rooms');
             state.user = data.user || state.user || null;
@@ -632,6 +688,8 @@
             const targetRoomId = Number(preferredRoomId || state.currentRoomId || state.rooms.find((room) => room.has_access)?.id || 0);
             if (targetRoomId) {
                 await loadRoomDetail(targetRoomId, false);
+            } else {
+                setFlowStatus('pending', 'Pilih room', 'Pilih room lalu masukkan kode akses.');
             }
         } catch (error) {
             if (error.status === 401) {
@@ -647,6 +705,7 @@
             if (els.roomGrid) {
                 els.roomGrid.innerHTML = `<div class="attendance-empty-card">${escapeHtml(error.message || 'Gagal memuat room absensi.')}</div>`;
             }
+            setFlowStatus('error', 'Gagal memuat room', error.message || 'Coba muat ulang halaman.');
         } finally {
             if (els.refreshBtn) els.refreshBtn.disabled = false;
         }
@@ -657,12 +716,14 @@
         if (!room) return;
 
         try {
+            setFlowStatus('progress', 'Membuka room...', 'Memuat detail room dan event aktif.');
             const data = await apiFetch(`/api/attendance?action=roomDetail&room_id=${encodeURIComponent(roomId)}`, { method: 'GET' }, roomId);
             state.currentRoomId = Number(roomId);
             state.detail = data;
             renderRooms();
             renderDetail();
             await loadMemberOptions(roomId);
+            evaluateCheckinFlowStatus();
         } catch (error) {
             if (error.status === 403) {
                 setRoomAccess(roomId, '');
@@ -675,6 +736,7 @@
                 if (openCodeWhenNeeded !== false) openCodeModal(roomId, room.pimpinan);
                 return;
             }
+            setFlowStatus('error', 'Gagal membuka room', error.message || 'Detail room tidak bisa dimuat.');
             showToast(error.message || 'Gagal memuat detail room', 'error');
         }
     }
@@ -690,6 +752,7 @@
         state.pendingRoomId = roomId;
         if (els.codeSubmit) els.codeSubmit.disabled = true;
         setInlineStatus(els.codeStatus, 'Memverifikasi kode room...');
+        setFlowStatus('progress', 'Verifikasi kode room', 'Memastikan kode room sesuai.');
         try {
             const data = await apiFetch('/api/attendance?action=verifyRoom', {
                 method: 'POST',
@@ -702,6 +765,7 @@
             setRoomAccess(roomId, data.access_token || '');
             closeCodeModal();
             await loadRooms(roomId);
+            setFlowStatus('success', 'Room terbuka', 'Kode valid. Lanjutkan ke event dan absensi.');
             showToast('Room berhasil dibuka', 'success');
         } catch (error) {
             if (error.status === 401) {
@@ -712,6 +776,7 @@
                 return;
             }
             setInlineStatus(els.codeStatus, error.message || 'Kode room tidak sesuai.', 'error');
+            setFlowStatus('error', 'Kode room gagal', error.message || 'Kode room tidak sesuai.');
         } finally {
             if (els.codeSubmit) els.codeSubmit.disabled = false;
         }
@@ -730,6 +795,7 @@
 
         if (els.createBtn) els.createBtn.disabled = true;
         setInlineStatus(els.createStatus, 'Membuat event rapat...');
+        setFlowStatus('progress', 'Membuat event', 'Menyimpan event rapat untuk hari ini.');
         try {
             await apiFetch('/api/attendance?action=createEvent', {
                 method: 'POST',
@@ -739,6 +805,7 @@
             if (els.createForm) els.createForm.reset();
             showToast('Event rapat berhasil dibuat', 'success');
             await loadRooms(roomId);
+            setFlowStatus('success', 'Event aktif dibuat', 'Event sudah aktif. Lanjutkan ke pengisian absensi.');
         } catch (error) {
             if (error.status === 401) {
                 clearStoredSession();
@@ -747,6 +814,7 @@
                 return;
             }
             setInlineStatus(els.createStatus, error.message || 'Gagal membuat event.', 'error');
+            setFlowStatus('error', 'Gagal membuat event', error.message || 'Coba lagi beberapa saat.');
         } finally {
             renderCreateFormState(state.detail?.current_event || null);
         }
@@ -789,6 +857,7 @@
             if (els.cameraOverlay) els.cameraOverlay.hidden = false;
             if (els.secureWarning) els.secureWarning.hidden = false;
             if (els.cameraErrorMessage) els.cameraErrorMessage.hidden = true;
+            setFlowStatus('error', 'Kamera tidak tersedia', 'Akses kamera butuh koneksi aman (HTTPS).');
             return;
         }
 
@@ -848,6 +917,7 @@
             
             updateSelfiePreview(null);
             setInlineStatus(els.checkinStatus, 'Kamera aktif.', 'success');
+            setFlowStatus('ready', 'Kamera aktif', 'Ambil selfie untuk melanjutkan absensi.');
         } catch (error) {
             console.error('[Camera] Final Error:', error);
             let msg = `Gagal akses kamera: ${error.name}`;
@@ -875,6 +945,7 @@
             }
             
             setInlineStatus(els.checkinStatus, msg, 'error');
+            setFlowStatus('error', 'Akses kamera gagal', msg);
             if (window.Toast) window.Toast.show(msg, 'error');
         } finally {
             if (window.AppLoader) window.AppLoader.hide();
@@ -954,6 +1025,7 @@
     async function captureSelfie() {
         if (!state.selfieStream || !els.cameraVideo) {
             setInlineStatus(els.checkinStatus, 'Buka kamera dulu sebelum mengambil selfie.', 'error');
+            setFlowStatus('pending', 'Kamera belum aktif', 'Buka kamera lalu ambil selfie.');
             return;
         }
 
@@ -964,6 +1036,7 @@
         const ctx = rawCanvas.getContext('2d');
         if (!ctx) {
             setInlineStatus(els.checkinStatus, 'Gagal menyiapkan kamera untuk capture selfie.', 'error');
+            setFlowStatus('error', 'Selfie gagal', 'Gagal menyiapkan kamera. Coba buka kamera ulang.');
             return;
         }
         ctx.drawImage(els.cameraVideo, 0, 0, rawCanvas.width, rawCanvas.height);
@@ -972,6 +1045,7 @@
         const blob = await compressImage(rawCanvas, 800, 200 * 1024);
         if (!blob) {
             setInlineStatus(els.checkinStatus, 'Selfie gagal diproses. Coba ambil ulang.', 'error');
+            setFlowStatus('error', 'Selfie gagal diproses', 'Coba ambil selfie ulang.');
             return;
         }
 
@@ -981,6 +1055,7 @@
         await stopCamera();
         if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = false;
         setInlineStatus(els.checkinStatus, `Selfie siap (${sizeKB}KB). Periksa lalu kirim.`, 'success');
+        evaluateCheckinFlowStatus();
     }
 
     async function uploadSelfie(file) {
@@ -1012,22 +1087,26 @@
         const identityMode = currentIdentityMode();
         if (!currentEvent) {
             setInlineStatus(els.checkinStatus, 'Belum ada event aktif untuk dihadiri.', 'error');
+            setFlowStatus('pending', 'Belum ada event aktif', 'Buat atau tunggu event aktif dulu.');
             return;
         }
         const selectedMemberId = Number(els.memberSelect?.value || 0);
         if (identityMode === 'org_member_select' && !selectedMemberId) {
             setInlineStatus(els.checkinStatus, 'Pilih nama kamu dulu (Langkah 1)', 'error');
+            setFlowStatus('pending', 'Langkah 1 belum selesai', 'Pilih nama kader terlebih dahulu.');
             showToast('Pilih nama di Langkah 1', 'error');
             return;
         }
         if (!state.selfieFile) {
             setInlineStatus(els.checkinStatus, 'Ambil foto selfie dulu (Langkah 2)', 'error');
+            setFlowStatus('pending', 'Langkah 2 belum selesai', 'Ambil selfie terlebih dahulu.');
             showToast('Ambil foto di Langkah 2', 'error');
             return;
         }
 
         if (els.checkinBtn) els.checkinBtn.disabled = true;
         setInlineStatus(els.checkinStatus, 'Mengunggah selfie dan memverifikasi...');
+        setFlowStatus('progress', 'Sedang mengirim absensi...', 'Mengunggah selfie dan memverifikasi kehadiran.');
         
         try {
             const photoUrl = await uploadSelfie(state.selfieFile);
@@ -1044,6 +1123,7 @@
             // SUCCESS STATE - Immediate Reset for Seamless Multi-Entry
             showToast('Absensi Berhasil!', 'success');
             setInlineStatus(els.checkinStatus, 'Absensi Berhasil! Silakan pilih kader lain untuk mengabsensi lagi.', 'success');
+            setFlowStatus('success', 'Absensi terkirim', 'Data kehadiran berhasil masuk.');
             
             // Reset state & fields
             state.selfieFile = null;
@@ -1066,9 +1146,11 @@
                 return;
             }
             setInlineStatus(els.checkinStatus, error.message || 'Gagal mengirim absensi. Coba lagi.', 'error');
+            setFlowStatus('error', 'Gagal kirim absensi', error.message || 'Periksa koneksi lalu kirim ulang.');
             showToast(error.message || 'Gagal mengirim absensi', 'error');
         } finally {
             if (els.checkinBtn) els.checkinBtn.disabled = false;
+            evaluateCheckinFlowStatus();
         }
     }
 
@@ -1100,6 +1182,7 @@
             const f = els.stepSubmit.querySelector('.attendance-field');
             if (f) f.style.display = 'flex';
         }
+        evaluateCheckinFlowStatus();
     }
 
     function bindElements() {
@@ -1150,6 +1233,9 @@
         els.historyFilters = document.querySelectorAll('.history-filter-btn');
         els.tabBtns = document.querySelectorAll('.tab-btn');
         els.tabPanels = document.querySelectorAll('.attendance-tab-panel');
+        els.flowStatus = document.getElementById('attendance-flow-status');
+        els.flowBadge = document.getElementById('attendance-flow-badge');
+        els.flowNote = document.getElementById('attendance-flow-note');
         
         // PWA Install
         els.pwaInstallSection = document.getElementById('pwa-install-section');
@@ -1164,6 +1250,7 @@
         els.drawerContent = document.getElementById('attendees-list-content');
         
         setCodeModalOpen(false);
+        setFlowStatus('pending', 'Pilih room', 'Pilih room lalu masukkan kode akses.');
     }
 
     function bindEvents() {

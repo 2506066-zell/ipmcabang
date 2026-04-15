@@ -457,6 +457,7 @@ async function ensureSchema() {
     id SERIAL PRIMARY KEY,
     form_id INT NOT NULL REFERENCES form_templates(id) ON DELETE CASCADE,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    submitter_name TEXT,
     status TEXT NOT NULL DEFAULT 'submitted',
     submitted_at TIMESTAMP DEFAULT NOW(),
     created_at TIMESTAMP DEFAULT NOW(),
@@ -574,6 +575,7 @@ async function ensureSchema() {
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS submitter_name TEXT`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_text TEXT`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_json JSONB`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;

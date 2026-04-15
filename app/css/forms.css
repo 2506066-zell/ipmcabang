@@ -62,7 +62,7 @@
 .forms-main {
     position: relative;
     z-index: 1;
-    width: min(1080px, calc(100% - 24px));
+    width: min(1240px, calc(100% - 12px));
     margin: 0 auto;
     padding: calc(90px + env(safe-area-inset-top)) 0 calc(96px + env(safe-area-inset-bottom));
 }
@@ -317,7 +317,7 @@
 }
 
 .forms-stage-card {
-    padding: 20px;
+    padding: 22px;
 }
 
 .forms-form-head {
@@ -355,6 +355,66 @@
     background: linear-gradient(90deg, var(--forms-accent), var(--forms-focus));
 }
 
+.forms-runtime-status {
+    position: sticky;
+    top: calc(68px + env(safe-area-inset-top));
+    z-index: 8;
+    border-radius: 14px;
+    border: 1px solid var(--forms-border);
+    background: #fff;
+    box-shadow: 0 10px 18px rgba(31, 67, 45, 0.08);
+    padding: 10px 12px;
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.forms-runtime-badge {
+    font-weight: 800;
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.forms-runtime-badge i {
+    font-size: 0.56rem;
+}
+
+.forms-runtime-note {
+    color: var(--forms-muted);
+    font-size: 0.83rem;
+}
+
+.forms-runtime-status[data-status='not_started'] .forms-runtime-badge {
+    color: #5e6f63;
+}
+
+.forms-runtime-status[data-status='draft'] .forms-runtime-badge {
+    color: #5d6f2a;
+}
+
+.forms-runtime-status[data-status='ready'] .forms-runtime-badge {
+    color: #2f6546;
+}
+
+.forms-runtime-status[data-status='sending'] .forms-runtime-badge {
+    color: #375783;
+}
+
+.forms-runtime-status[data-status='failed'] {
+    border-color: #efbcc2;
+    background: #fff6f7;
+}
+
+.forms-runtime-status[data-status='failed'] .forms-runtime-badge {
+    color: #b03b4b;
+}
+
+.forms-runtime-status[data-status='submitted'] .forms-runtime-badge {
+    color: #2b7153;
+}
+
 .forms-auth-warning {
     border-radius: 12px;
     border: 1px solid #f2d783;
@@ -365,9 +425,13 @@
 }
 
 .forms-form-card {
-    padding: 16px;
+    padding: 18px;
     display: grid;
-    gap: 12px;
+    gap: 14px;
+}
+
+.forms-identity-card {
+    background: var(--forms-surface-soft);
 }
 
 .forms-question-card {
@@ -457,6 +521,15 @@
 .forms-footer-bar {
     display: grid;
     gap: 10px;
+    position: sticky;
+    bottom: calc(74px + env(safe-area-inset-bottom));
+    z-index: 7;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid var(--forms-border);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 10px 20px rgba(31, 67, 45, 0.08);
+    backdrop-filter: blur(4px);
 }
 
 .forms-submit-btn {
@@ -534,11 +607,57 @@
     }
 
     .forms-focus-shell {
-        width: min(820px, 100%);
+        width: 100%;
         margin: 0 auto;
     }
 
     .page-forms.mode-filling .forms-main {
-        width: min(960px, calc(100% - 32px));
+        width: min(1240px, calc(100% - 24px));
+    }
+
+    .forms-stage-card {
+        padding: 24px;
+    }
+
+    .forms-form-card {
+        padding: 20px;
+    }
+
+    .forms-runtime-status {
+        position: static;
+        margin-bottom: 12px;
+    }
+
+    .forms-footer-bar {
+        position: static;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        backdrop-filter: none;
+    }
+}
+
+@media (max-width: 430px) {
+    .forms-main {
+        width: calc(100% - 8px);
+    }
+
+    .forms-stage-card {
+        padding: 14px;
+    }
+
+    .forms-form-card {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .forms-question-card {
+        padding: 12px;
+    }
+
+    .forms-runtime-status {
+        top: calc(62px + env(safe-area-inset-top));
     }
 }

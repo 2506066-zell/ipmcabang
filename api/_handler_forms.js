@@ -130,7 +130,7 @@ async function getSubmissionCount(formId) {
 
 async function getUserSubmission(formId, userId) {
   const row = (await query`
-    SELECT id, submitted_at, status
+    SELECT id, submitted_at, status, submitter_name
     FROM form_submissions
     WHERE form_id=${formId} AND user_id=${userId}
     LIMIT 1
@@ -139,7 +139,8 @@ async function getUserSubmission(formId, userId) {
     ? {
         id: Number(row.id),
         submitted_at: row.submitted_at,
-        status: row.status || 'submitted'
+        status: row.status || 'submitted',
+        submitter_name: row.submitter_name || ''
       }
     : null;
 }
@@ -260,8 +261,10 @@ async function handleSubmit(req, res) {
 
   const body = parseJsonBody(req) || {};
   const formId = Number(body.form_id || 0);
+  const submitterName = sanitizeText(body.submitter_name, 120);
   const answers = Array.isArray(body.answers) ? body.answers : [];
   if (!formId) return json(res, 400, { status: 'error', message: 'Form tidak valid.' });
+  if (!submitterName) return json(res, 400, { status: 'error', message: 'Nama pengisi wajib diisi.' });
 
   const form = (await query`
     SELECT id, title, slug, status, allow_multiple
@@ -293,9 +296,9 @@ async function handleSubmit(req, res) {
 
   const submissionRow = (
     await query`
-      INSERT INTO form_submissions (form_id, user_id, status, submitted_at, created_at, updated_at)
-      VALUES (${formId}, ${user.id}, 'submitted', NOW(), NOW(), NOW())
-      RETURNING id, submitted_at, status
+      INSERT INTO form_submissions (form_id, user_id, submitter_name, status, submitted_at, created_at, updated_at)
+      VALUES (${formId}, ${user.id}, ${submitterName}, 'submitted', NOW(), NOW(), NOW())
+      RETURNING id, submitted_at, status, submitter_name
     `
   ).rows[0];
 
@@ -311,7 +314,8 @@ async function handleSubmit(req, res) {
     submission: {
       id: Number(submissionRow.id),
       submitted_at: submissionRow.submitted_at,
-      status: submissionRow.status || 'submitted'
+      status: submissionRow.status || 'submitted',
+      submitter_name: submissionRow.submitter_name || submitterName
     },
     message: 'Form berhasil dikirim.'
   });
@@ -322,7 +326,7 @@ async function handleMySubmissions(req, res) {
   if (!user) return json(res, 401, { status: 'error', message: 'Silakan login untuk melihat riwayat.' });
 
   const rows = (await query`
-    SELECT s.id, s.submitted_at, s.status, f.id AS form_id, f.title, f.slug, f.type, f.theme_variant
+    SELECT s.id, s.submitted_at, s.status, s.submitter_name, f.id AS form_id, f.title, f.slug, f.type, f.theme_variant
     FROM form_submissions s
     JOIN form_templates f ON f.id = s.form_id
     WHERE s.user_id=${user.id}
@@ -339,7 +343,8 @@ async function handleMySubmissions(req, res) {
       type: row.type || 'pretest',
       theme_variant: row.theme_variant || 'aurora-premium',
       status: row.status || 'submitted',
-      submitted_at: row.submitted_at
+      submitted_at: row.submitted_at,
+      submitter_name: row.submitter_name || ''
     }))
   });
 }
@@ -581,7 +586,7 @@ async function handleAdminSubmissions(req, res) {
 
   const rows = (
     await query`
-      SELECT s.id, s.form_id, s.user_id, s.status, s.submitted_at, u.username, u.nama_panjang, u.pimpinan
+      SELECT s.id, s.form_id, s.user_id, s.status, s.submitted_at, s.submitter_name, u.username, u.nama_panjang, u.pimpinan
       FROM form_submissions s
       JOIN users u ON u.id = s.user_id
       WHERE s.form_id=${formId}
@@ -623,6 +628,7 @@ async function handleAdminSubmissions(req, res) {
       user_id: Number(row.user_id),
       status: row.status || 'submitted',
       submitted_at: row.submitted_at,
+      submitter_name: row.submitter_name || '',
       username: row.username || '',
       nama_panjang: row.nama_panjang || '',
       pimpinan: row.pimpinan || '',
@@ -644,7 +650,7 @@ async function handleAdminInbox(req, res) {
   const rows = (
     await query`
       SELECT a.id, a.answer_text, s.id AS submission_id, s.submitted_at, ff.label, ff.field_type,
-             u.username, u.nama_panjang, f.title AS form_title
+             s.submitter_name, u.username, u.nama_panjang, f.title AS form_title
       FROM form_answers a
       JOIN form_fields ff ON ff.id = a.field_id
       JOIN form_submissions s ON s.id = a.submission_id
@@ -668,6 +674,7 @@ async function handleAdminInbox(req, res) {
       field_label: row.label || '',
       field_type: row.field_type || 'short_text',
       answer_text: row.answer_text || '',
+      submitter_name: row.submitter_name || '',
       username: row.username || '',
       nama_panjang: row.nama_panjang || ''
     }))

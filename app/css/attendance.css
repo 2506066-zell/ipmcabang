@@ -343,6 +343,64 @@
     gap: 8px;
 }
 
+.attendance-flow-status {
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+    display: grid;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(8px);
+}
+
+.attendance-flow-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 0.8125rem;
+    color: var(--c-emerald-700);
+}
+
+.attendance-flow-badge i {
+    font-size: 0.5625rem;
+}
+
+.attendance-flow-note {
+    margin: 0;
+    color: var(--c-text-muted);
+    font-size: 0.75rem;
+}
+
+.attendance-flow-status[data-flow='pending'] .attendance-flow-badge {
+    color: #8b5e13;
+}
+
+.attendance-flow-status[data-flow='ready'] .attendance-flow-badge {
+    color: var(--c-emerald-700);
+}
+
+.attendance-flow-status[data-flow='progress'] .attendance-flow-badge {
+    color: #1d4ed8;
+}
+
+.attendance-flow-status[data-flow='error'] {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.attendance-flow-status[data-flow='error'] .attendance-flow-badge {
+    color: #b91c1c;
+}
+
+.attendance-flow-status[data-flow='success'] .attendance-flow-badge {
+    color: #0f7b42;
+}
+
 .attendance-status-bar {
     display: flex;
     flex-wrap: wrap;
@@ -1469,6 +1527,10 @@
 
     .attendance-room-card { padding: 16px; }
 
+    .attendance-flow-status {
+        top: 64px;
+    }
+
     .attendance-step-tag { display: none; }
 
     .attendance-camera-shell { aspect-ratio: 3/4; }
@@ -1504,4 +1566,8 @@
 
     .attendance-hero-copy { flex: 1; }
     .attendance-hero-side { flex-shrink: 0; }
+
+    .attendance-flow-status {
+        position: static;
+    }
 }

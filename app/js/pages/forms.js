@@ -6,7 +6,9 @@
         filter: 'all',
         mode: 'picker',
         activeSlug: '',
-        activeForm: null
+        activeForm: null,
+        submitState: 'idle',
+        submitError: ''
     };
 
     const els = {};
@@ -71,6 +73,19 @@
         return `ipm_forms_draft_${slug}`;
     }
 
+    function hasValue(value) {
+        return Array.isArray(value) ? value.length > 0 : Boolean(String(value || '').trim());
+    }
+
+    function hasAnyAnswer(answers) {
+        if (!answers || typeof answers !== 'object') return false;
+        return Object.values(answers).some((value) => hasValue(value));
+    }
+
+    function hasDraftStarted(draft) {
+        return Boolean(String(draft?.submitter_name || '').trim()) || hasAnyAnswer(draft?.answers || {});
+    }
+
     function readDraft(slug) {
         try {
             return JSON.parse(localStorage.getItem(autosaveStorageKey(slug)) || '{}');
@@ -79,11 +94,13 @@
         }
     }
 
-    function saveDraft(slug, answers) {
+    function saveDraft(slug, draftPayload) {
         if (!slug) return;
+        const payload = draftPayload && typeof draftPayload === 'object' ? draftPayload : {};
         localStorage.setItem(autosaveStorageKey(slug), JSON.stringify({
             updated_at: new Date().toISOString(),
-            answers
+            answers: payload.answers || {},
+            submitter_name: String(payload.submitter_name || '').trim()
         }));
     }
 
@@ -115,16 +132,22 @@
             <button type="button" class="forms-list-card ${item.slug === state.activeSlug ? 'active' : ''}" data-slug="${escapeHtml(item.slug)}">
                 <div class="forms-card-meta">
                     <span class="forms-form-type">${escapeHtml(item.type)}</span>
-                    <span class="forms-meta-pill">${item.already_submitted ? 'Sudah submit' : 'Belum submit'}</span>
+                    <span class="forms-meta-pill">${getCardStatusLabel(item)}</span>
                 </div>
                 <h3>${escapeHtml(item.title)}</h3>
                 <p>${escapeHtml(item.description || 'Form evaluasi.')}</p>
                 <div class="forms-inline-meta">
-                    <span class="forms-meta-pill">${Number(item.submission_count || 0)} pengisi</span>
+                    <span class="forms-meta-pill">${item.my_submission?.submitted_at ? `Dikirim ${formatDate(item.my_submission.submitted_at)}` : `${Number(item.submission_count || 0)} pengisi`}</span>
                     <span class="forms-meta-pill">${item.already_submitted ? 'Lihat form' : 'Mulai isi'}</span>
                 </div>
             </button>
         `).join('');
+    }
+
+    function getCardStatusLabel(item) {
+        if (item?.already_submitted) return 'Status: sudah terkirim';
+        const draft = readDraft(item?.slug || '');
+        return hasDraftStarted(draft) ? 'Status: draft tersimpan' : 'Status: belum mulai';
     }
 
     async function loadAuth() {
@@ -220,6 +243,10 @@
         return readDraft(form.slug)?.answers || {};
     }
 
+    function getDraftSubmitterName(form) {
+        return String(readDraft(form.slug)?.submitter_name || '').trim();
+    }
+
     function renderSuccess(form) {
         const latest = state.mySubmissions.find((item) => item.form_id === form.id) || form.my_submission;
         els.stage.innerHTML = `
@@ -227,10 +254,11 @@
                 <div class="forms-success-icon"><i class="fas fa-check"></i></div>
                 <span class="forms-form-type">${escapeHtml(form.type)}</span>
                 <h2>Jawaban terkirim</h2>
-                <p>Form berhasil dikirim.</p>
+                <p>Status: jawaban sudah masuk ke sistem.</p>
                 <div class="forms-success-meta">
                     <span>${escapeHtml(form.title)}</span>
                     <span>${latest?.submitted_at ? formatDate(latest.submitted_at) : 'Baru saja'}</span>
+                    <span>${latest?.submitter_name ? `Nama pengisi: ${escapeHtml(latest.submitter_name)}` : ''}</span>
                 </div>
                 <div class="forms-result-meta">
                     <button type="button" class="forms-secondary-btn" id="forms-back-to-picker">Kembali ke daftar</button>
@@ -249,13 +277,10 @@
     }
 
     function renderForm(form) {
+        state.submitState = 'idle';
+        state.submitError = '';
         const draftAnswers = getDraftAnswers(form);
-        const total = form.fields.length;
-        const filled = form.fields.filter((field) => {
-            const val = draftAnswers[field.id];
-            return Array.isArray(val) ? val.length > 0 : Boolean(String(val || '').trim());
-        }).length;
-        const draftTime = readDraft(form.slug)?.updated_at;
+        const draftSubmitterName = getDraftSubmitterName(form);
         const loginWarning = !state.auth ? '<div class="forms-auth-warning">Belum login. Login dulu untuk kirim jawaban.</div>' : '';
 
         els.stage.innerHTML = `
@@ -263,17 +288,31 @@
                 <div class="forms-form-head">
                     <span class="forms-form-type">${escapeHtml(form.type)}</span>
                     <h2>${escapeHtml(form.title)}</h2>
-                    <p>${escapeHtml(form.description || 'Isi semua pertanyaan yang diperlukan.')}</p>
+                    <p>${escapeHtml(form.description || 'Isi jawaban lalu kirim.')}</p>
                     <div class="forms-result-meta">
-                        <span class="forms-meta-pill">${total} pertanyaan</span>
-                        <span class="forms-meta-pill">${filled}/${total} terisi</span>
+                        <span class="forms-meta-pill" id="forms-meta-status">Status: belum mulai</span>
+                        <span class="forms-meta-pill" id="forms-meta-total">${form.fields.length} pertanyaan</span>
+                        <span class="forms-meta-pill" id="forms-meta-progress">0/${form.fields.length} terisi</span>
                     </div>
                 </div>
                 ${loginWarning}
+                <div class="forms-runtime-status" id="forms-runtime-status" data-status="not_started" aria-live="polite">
+                    <div class="forms-runtime-badge" id="forms-runtime-badge"><i class="fas fa-circle"></i> Belum mulai</div>
+                    <div class="forms-runtime-note" id="forms-runtime-note">Mulai isi jawaban untuk menyimpan draft otomatis.</div>
+                </div>
                 <div class="forms-progress-bar">
-                    <span style="width:${total ? Math.round((filled / total) * 100) : 0}%"></span>
+                    <span id="forms-progress-fill" style="width:0%"></span>
                 </div>
                 <form id="forms-submit-form" class="forms-form-card">
+                    <div class="forms-question-card forms-identity-card">
+                        <div class="forms-question-label">
+                            <span>Nama Pengisi</span>
+                            <span class="forms-required">Wajib</span>
+                        </div>
+                        <input id="forms-submitter-name" class="forms-text-input" maxlength="120" value="${escapeHtml(draftSubmitterName)}" placeholder="Tulis nama lengkap Anda">
+                        <div id="forms-submitter-name-error" class="forms-inline-error" hidden></div>
+                        <div class="forms-field-help">Nama ini dipakai sebagai identitas utama pengisian form.</div>
+                    </div>
                     ${form.fields.map((field, index) => `
                         <div class="forms-question-card" data-question-id="${field.id}">
                             <div class="forms-question-label">
@@ -281,13 +320,13 @@
                                 ${field.required ? '<span class="forms-required">Wajib</span>' : ''}
                             </div>
                             ${buildFieldInput(field, draftAnswers[field.id])}
-                            <div class="forms-field-help">${field.focus_inbox ? 'Jawaban ini masuk inbox admin.' : ''}</div>
+                            <div class="forms-field-help">${field.focus_inbox ? 'Masuk inbox admin.' : ''}</div>
                         </div>
                     `).join('')}
                     <div class="forms-footer-bar">
-                        <div class="forms-draft-indicator">${draftTime ? `Draft: ${formatDate(draftTime)}` : 'Draft tersimpan otomatis'}</div>
+                        <div class="forms-draft-indicator" id="forms-draft-indicator">Draft tersimpan otomatis</div>
                         <button type="submit" class="forms-submit-btn" ${!state.auth || form.already_submitted ? 'disabled' : ''}>
-                            ${form.already_submitted ? 'Sudah submit' : 'Kirim jawaban'}
+                            ${form.already_submitted ? 'Jawaban terkirim' : 'Kirim jawaban'}
                         </button>
                     </div>
                 </form>
@@ -295,7 +334,9 @@
         `;
 
         const formEl = $('forms-submit-form');
+        bindProgressObserver(formEl, form);
         bindDraftAutosave(formEl, form);
+        updateRuntimeUI(formEl, form);
         formEl?.addEventListener('submit', (event) => handleSubmit(event, form));
     }
 
@@ -333,6 +374,127 @@
         }
     }
 
+    function showSubmitterNameError(formEl, message) {
+        const card = formEl.querySelector('.forms-identity-card');
+        card?.classList.add('invalid');
+        const errorEl = formEl.querySelector('#forms-submitter-name-error');
+        if (errorEl) {
+            errorEl.hidden = false;
+            errorEl.textContent = message;
+        }
+    }
+
+    function getSubmitterName(formEl) {
+        return String(formEl.querySelector('#forms-submitter-name')?.value || '').trim();
+    }
+
+    function updateProgressText(formEl, form) {
+        if (!formEl || !form) return;
+        const analysis = analyzeFormProgress(formEl, form);
+        const total = form.fields.length;
+        const textEl = $('forms-meta-progress');
+        if (textEl) textEl.textContent = `${analysis.filled}/${total} terisi`;
+        const barEl = $('forms-progress-fill');
+        if (barEl) barEl.style.width = `${total ? Math.round((analysis.filled / total) * 100) : 0}%`;
+        const draftIndicator = $('forms-draft-indicator');
+        const draftTime = readDraft(form.slug)?.updated_at;
+        if (draftIndicator) {
+            draftIndicator.textContent = draftTime ? `Draft: ${formatDate(draftTime)}` : 'Draft tersimpan otomatis';
+        }
+    }
+
+    function analyzeFormProgress(formEl, form) {
+        const answers = collectAnswers(formEl, form);
+        const submitterName = getSubmitterName(formEl);
+        const total = form.fields.length;
+        const filled = form.fields.filter((field) => hasValue(answers[field.id])).length;
+        const requiredReady = form.fields.every((field) => !field.required || hasValue(answers[field.id]));
+        const started = hasAnyAnswer(answers) || Boolean(submitterName);
+        const readyToSubmit = Boolean(submitterName) && requiredReady;
+        return { total, filled, requiredReady, started, readyToSubmit, submitterName };
+    }
+
+    function resolveStatusView(form, analysis) {
+        if (form.already_submitted) {
+            return {
+                code: 'submitted',
+                badge: 'Sudah terkirim',
+                note: form.my_submission?.submitted_at
+                    ? `Jawaban terkirim ${formatDate(form.my_submission.submitted_at)}.`
+                    : 'Jawaban sudah masuk ke sistem.'
+            };
+        }
+        if (state.submitState === 'sending') {
+            return {
+                code: 'sending',
+                badge: 'Sedang mengirim...',
+                note: 'Mohon tunggu, jawaban sedang diproses.'
+            };
+        }
+        if (state.submitState === 'failed') {
+            return {
+                code: 'failed',
+                badge: 'Gagal mengirim',
+                note: state.submitError || 'Koneksi terganggu. Coba kirim lagi.'
+            };
+        }
+        if (!analysis.started) {
+            return {
+                code: 'not_started',
+                badge: 'Belum mulai',
+                note: 'Mulai isi jawaban untuk menyimpan draft otomatis.'
+            };
+        }
+        if (analysis.readyToSubmit) {
+            return {
+                code: 'ready',
+                badge: 'Siap dikirim',
+                note: state.auth ? 'Semua syarat terpenuhi. Tekan Kirim jawaban.' : 'Login dulu agar bisa kirim jawaban.'
+            };
+        }
+        return {
+            code: 'draft',
+            badge: 'Draft tersimpan',
+            note: 'Lengkapi semua pertanyaan wajib lalu kirim.'
+        };
+    }
+
+    function updateRuntimeUI(formEl, form) {
+        if (!formEl || !form) return;
+        updateProgressText(formEl, form);
+        const analysis = analyzeFormProgress(formEl, form);
+        const statusView = resolveStatusView(form, analysis);
+        const runtime = $('forms-runtime-status');
+        const badge = $('forms-runtime-badge');
+        const note = $('forms-runtime-note');
+        const metaStatus = $('forms-meta-status');
+        if (runtime) runtime.dataset.status = statusView.code;
+        if (badge) badge.innerHTML = `<i class="fas fa-circle"></i> ${escapeHtml(statusView.badge)}`;
+        if (note) note.textContent = statusView.note;
+        if (metaStatus) metaStatus.textContent = `Status: ${statusView.badge.toLowerCase()}`;
+
+        const submitBtn = formEl.querySelector('.forms-submit-btn');
+        if (!submitBtn) return;
+        if (form.already_submitted) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Jawaban terkirim';
+            return;
+        }
+        const canRetry = state.submitState === 'failed' && analysis.readyToSubmit && Boolean(state.auth);
+        const canSubmit = analysis.readyToSubmit && Boolean(state.auth) && state.submitState !== 'sending';
+        submitBtn.disabled = !(canSubmit || canRetry);
+        if (state.submitState === 'sending') submitBtn.textContent = 'Sedang mengirim...';
+        else if (state.submitState === 'failed') submitBtn.textContent = 'Coba kirim lagi';
+        else submitBtn.textContent = 'Kirim jawaban';
+    }
+
+    function bindProgressObserver(formEl, form) {
+        if (!formEl) return;
+        const sync = () => updateRuntimeUI(formEl, form);
+        formEl.addEventListener('input', sync);
+        formEl.addEventListener('change', sync);
+    }
+
     function validateAnswers(formEl, form, answers) {
         clearValidation(formEl);
         let valid = true;
@@ -349,7 +511,17 @@
 
     function bindDraftAutosave(formEl, form) {
         if (!formEl) return;
-        const save = () => saveDraft(form.slug, collectAnswers(formEl, form));
+        const save = () => {
+            if (state.submitState === 'failed') {
+                state.submitState = 'idle';
+                state.submitError = '';
+            }
+            saveDraft(form.slug, {
+                submitter_name: getSubmitterName(formEl),
+                answers: collectAnswers(formEl, form)
+            });
+            updateRuntimeUI(formEl, form);
+        };
         formEl.addEventListener('input', save);
         formEl.addEventListener('change', save);
     }
@@ -358,21 +530,36 @@
         event.preventDefault();
         const formEl = event.currentTarget;
         const answers = collectAnswers(formEl, form);
+        const submitterName = getSubmitterName(formEl);
+
+        clearValidation(formEl);
+        if (!submitterName) {
+            showSubmitterNameError(formEl, 'Nama pengisi wajib diisi.');
+            state.submitState = 'idle';
+            state.submitError = '';
+            updateRuntimeUI(formEl, form);
+            window.Toast?.show('Nama pengisi wajib diisi.', 'warning');
+            return;
+        }
 
         if (!validateAnswers(formEl, form, answers)) {
+            state.submitState = 'idle';
+            state.submitError = '';
+            updateRuntimeUI(formEl, form);
             window.Toast?.show('Masih ada pertanyaan wajib yang belum diisi.', 'warning');
             return;
         }
         if (!state.auth) {
+            state.submitState = 'idle';
+            state.submitError = '';
+            updateRuntimeUI(formEl, form);
             window.Toast?.show('Silakan login terlebih dahulu.', 'warning');
             return;
         }
 
-        const submitBtn = formEl.querySelector('.forms-submit-btn');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Mengirim...';
-        }
+        state.submitState = 'sending';
+        state.submitError = '';
+        updateRuntimeUI(formEl, form);
 
         try {
             await fetchJson('/api/forms?action=submit', {
@@ -380,6 +567,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     form_id: form.id,
+                    submitter_name: submitterName,
                     answers: form.fields.map((field) => ({
                         field_id: field.id,
                         value: answers[field.id]
@@ -396,10 +584,9 @@
             });
             window.Toast?.show('Form berhasil dikirim.', 'success');
         } catch (error) {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Kirim jawaban';
-            }
+            state.submitState = 'failed';
+            state.submitError = error.message || 'Gagal mengirim form.';
+            updateRuntimeUI(formEl, form);
             window.Toast?.show(error.message || 'Gagal mengirim form.', 'error');
         }
     }

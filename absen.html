@@ -129,6 +129,13 @@
                 <div class="attendance-tabs-container">
                     <!-- TAB 1: ABSENSI (PRIMARY) -->
                     <div id="tab-attendance" class="attendance-tab-panel active">
+                        <section class="attendance-flow-status" id="attendance-flow-status" aria-live="polite">
+                            <div class="attendance-flow-badge" id="attendance-flow-badge">
+                                <i class="fas fa-circle"></i> Belum mulai
+                            </div>
+                            <p class="attendance-flow-note" id="attendance-flow-note">Pilih room lalu verifikasi kode untuk mulai absensi.</p>
+                        </section>
+
                         <section class="attendance-panel-card hero-panel">
                             <div class="attendance-panel-head">
                                 <div>
@@ -350,7 +357,7 @@
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>
-    <script src="/app/js/pages/absen.js?v=8" defer></script>
+    <script src="/app/js/pages/absen.js?v=9" defer></script>
 </body>
 
 </html>
