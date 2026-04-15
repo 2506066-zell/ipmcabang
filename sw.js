@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v40';
+const STATIC_CACHE = 'static-v41';
 const RUNTIME_CACHE = 'runtime-v3';
 const CDN_CACHE = 'cdn-v2';
 const APP_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
@@ -78,7 +78,9 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
+  // NOTE: Do NOT call self.skipWaiting() here automatically.
+  // It is triggered via postMessage('SKIP_WAITING') from the client
+  // so the page can control when the reload happens and avoid loops.
 });
 
 self.addEventListener('activate', (event) => {

@@ -1156,15 +1156,22 @@ document.addEventListener('DOMContentLoaded', () => {
 (() => {
     const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
     const isProd = !isLocalhost && location.protocol === 'https:';
-    const SW_VERSION = '40';
+    const SW_VERSION = '41';
     const SW_URL = `/sw.js?v=${SW_VERSION}`;
 
     if (isProd && 'serviceWorker' in navigator) {
+        // Track whether a controller existed before registration so we can
+        // distinguish a first-time install from a genuine update.
+        const hadController = !!navigator.serviceWorker.controller;
+
         window.addEventListener('load', () => {
             navigator.serviceWorker.register(SW_URL)
                 .then((reg) => {
                     console.log('SW registered');
-                    reg.update();
+
+                    // Only prompt for update when the user already had an
+                    // active SW (i.e. this is a revisit, not the very first load).
+                    if (!hadController) return;
 
                     if (reg.waiting) {
                         reg.waiting.postMessage('SKIP_WAITING');
@@ -1183,8 +1190,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch((err) => console.log('SW failed', err));
         });
 
+        // Only reload when there was a previous controller (real update) and
+        // only once per page-session to prevent infinite reload loops.
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (window.__swReloading) return;
+            if (!hadController) return;           // first install - no reload needed
+            if (window.__swReloading) return;     // already reloading
+            try {
+                if (sessionStorage.getItem('__swReloaded')) return;
+                sessionStorage.setItem('__swReloaded', '1');
+            } catch (e) {}
             window.__swReloading = true;
             window.location.reload();
         });
