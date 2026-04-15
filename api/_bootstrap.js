@@ -596,6 +596,18 @@ async function ensureSchema() {
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_due_at TIMESTAMP`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_updated_by INT`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS archive_updated_at TIMESTAMP DEFAULT NOW()`;
+
+  // Add CHECK constraints for archive metadata (Phase 1)
+  try {
+    await query`ALTER TABLE form_submissions ADD CONSTRAINT chk_form_submissions_confidentiality CHECK (confidentiality_level IN ('internal', 'restricted', 'secret'))`;
+  } catch (e) { /* Ignore if constraint already exists */ }
+  try {
+    await query`ALTER TABLE form_submissions ADD CONSTRAINT chk_form_submissions_archive_status CHECK (archive_status IN ('active_archive', 'inactive_archive', 'destroy_scheduled'))`;
+  } catch (e) { /* Ignore if constraint already exists */ }
+  try {
+    await query`ALTER TABLE form_submissions ADD CONSTRAINT chk_form_submissions_retention_years CHECK (retention_years >= 1 AND retention_years <= 25)`;
+  } catch (e) { /* Ignore if constraint already exists */ }
+
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_text TEXT`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_json JSONB`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;

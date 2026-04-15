@@ -9,6 +9,7 @@ export function initFormsAdmin(state, els, deps) {
         activeView: 'builder',
         detail: null,
         submissions: [],
+        archiveSummary: null,
         inbox: [],
         editor: null,
         readState: {},
@@ -136,6 +137,31 @@ export function initFormsAdmin(state, els, deps) {
         if (value === 'inactive_archive') return { text: 'Arsip Inaktif', className: 'is-follow-up' };
         if (value === 'destroy_scheduled') return { text: 'Jadwal Musnah', className: 'is-new' };
         return { text: 'Arsip Aktif', className: 'is-read' };
+    }
+
+    function renderArchiveSummary() {
+        if (!local.archiveSummary) return '';
+        const s = local.archiveSummary;
+        return `
+            <div class="forms-archive-summary">
+                <div class="summary-item">
+                    <span class="label">Arsip Aktif</span>
+                    <span class="value">${s.archive_status.active_archive}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Arsip Inaktif</span>
+                    <span class="value">${s.archive_status.inactive_archive}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Jadwal Musnah</span>
+                    <span class="value">${s.archive_status.destroy_scheduled}</span>
+                </div>
+                <div class="summary-item ${s.due_in_30_days > 0 ? 'highlight' : ''}">
+                    <span class="label">Retensi Selesai (30 hr)</span>
+                    <span class="value">${s.due_in_30_days}</span>
+                </div>
+            </div>
+        `;
     }
 
     function confidentialityBadge(level) {
@@ -673,6 +699,7 @@ export function initFormsAdmin(state, els, deps) {
                             </div>
                         </div>
                         <div class="forms-review-list">
+                            ${can('forms.archive_read') ? renderArchiveSummary() : ''}
                             ${list.length ? list.map((item) => {
                                 const hasFocus = (item.answers || []).some((answer) => answer.focus_inbox === true);
                                 const status = workflowBadge(getWorkflowStatus('submission', item.id));
@@ -832,10 +859,19 @@ export function initFormsAdmin(state, els, deps) {
         await reloadAll();
     }
 
+    async function loadArchiveSummary() {
+        if (!local.activeId) {
+            local.archiveSummary = null;
+            return;
+        }
+        const data = await apiAdminVercel('GET', `/api/admin/forms?action=archiveSummary&id=${local.activeId}`);
+        local.archiveSummary = data.summary || null;
+    }
+
     async function reloadAll() {
         await loadList();
         if (local.activeId) {
-            await Promise.all([loadDetail(), loadSubmissions(), loadInbox()]);
+            await Promise.all([loadDetail(), loadSubmissions(), loadInbox(), loadArchiveSummary()]);
         }
         render();
     }
