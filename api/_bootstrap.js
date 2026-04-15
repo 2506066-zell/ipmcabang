@@ -572,16 +572,33 @@ async function ensureSchema() {
   await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft'`;
   await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS allow_multiple BOOLEAN DEFAULT FALSE`;
   await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS theme_variant TEXT DEFAULT 'aurora-premium'`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS version INT DEFAULT 1`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS target_participants INT DEFAULT 0`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS start_at TIMESTAMP`;
+  await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS end_at TIMESTAMP`;
   await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS created_by INT`;
   await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_templates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS required BOOLEAN DEFAULT FALSE`;
   await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS placeholder TEXT`;
   await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS options_json JSONB DEFAULT '[]'::jsonb`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS answer_key_text TEXT`;
+  await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS score_weight INT DEFAULT 1`;
   await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 1`;
   await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS focus_inbox BOOLEAN DEFAULT FALSE`;
   await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_fields ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+
+  // Lightweight constraints for form management
+  try {
+    await query`ALTER TABLE form_templates ADD CONSTRAINT chk_form_templates_version CHECK (version >= 1 AND version <= 99)`;
+  } catch (e) { /* Ignore if constraint already exists */ }
+  try {
+    await query`ALTER TABLE form_templates ADD CONSTRAINT chk_form_templates_target_participants CHECK (target_participants >= 0 AND target_participants <= 100000)`;
+  } catch (e) { /* Ignore if constraint already exists */ }
+  try {
+    await query`ALTER TABLE form_fields ADD CONSTRAINT chk_form_fields_score_weight CHECK (score_weight >= 0 AND score_weight <= 100)`;
+  } catch (e) { /* Ignore if constraint already exists */ }
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'submitted'`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_submissions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;

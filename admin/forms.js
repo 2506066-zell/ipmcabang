@@ -14,7 +14,7 @@ export function initFormsAdmin(state, els, deps) {
         editor: null,
         readState: {},
         review: {
-            submissions: { sort: 'newest', filter: 'all', selectedId: 0, archiveStatus: 'all', confidentiality: 'all', query: '' },
+            submissions: { sort: 'newest', filter: 'all', selectedId: 0, archiveStatus: 'all', confidentiality: 'all', query: '', page: 1, pageSize: 8 },
             inbox: { sort: 'newest', filter: 'all', selectedId: 0, query: '' }
         },
         workflowState: {},
@@ -171,6 +171,14 @@ export function initFormsAdmin(state, els, deps) {
         return { text: 'Internal', className: 'is-read' };
     }
 
+    function lifecycleBadge(status) {
+        const value = String(status || 'draft').trim().toLowerCase();
+        if (value === 'aktif') return { text: 'Aktif', className: 'is-read' };
+        if (value === 'selesai') return { text: 'Selesai', className: 'is-follow-up' };
+        if (value === 'kadaluarsa') return { text: 'Kadaluarsa', className: 'is-new' };
+        return { text: 'Draft', className: 'is-time' };
+    }
+
     function createBlankField() {
         return {
             id: 0,
@@ -179,6 +187,8 @@ export function initFormsAdmin(state, els, deps) {
             required: true,
             placeholder: '',
             options_json: [],
+            answer_key_text: '',
+            score_weight: 1,
             focus_inbox: false
         };
     }
@@ -191,6 +201,10 @@ export function initFormsAdmin(state, els, deps) {
             type: 'pretest',
             description: '',
             status: 'draft',
+            version: 1,
+            target_participants: 0,
+            start_at: '',
+            end_at: '',
             allow_multiple: false,
             theme_variant: 'aurora-premium',
             fields: [createBlankField()]
@@ -267,14 +281,17 @@ export function initFormsAdmin(state, els, deps) {
                         <button type="button" class="forms-admin-list-card ${Number(item.id) === local.activeId ? 'active' : ''}" data-action="pick-form" data-id="${item.id}">
                             <div class="forms-admin-card-top">
                                 <span class="status-badge status-muted">${escapeHtml(item.type)}</span>
-                                <span class="forms-admin-mini-status ${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
+                                <span class="forms-admin-mini-status ${escapeHtml(item.status)}">${escapeHtml(lifecycleBadge(item.lifecycle_status).text)}</span>
                             </div>
-                            <strong>${escapeHtml(item.title)}</strong>
+                            <strong>${escapeHtml(item.display_name || item.title)}</strong>
                             <p>${escapeHtml(item.description || 'Belum ada deskripsi form.')}</p>
                             <div class="forms-admin-inline-stats">
                                 <span>${Number(item.submission_count || 0)} submission</span>
+                                <span>${Number(item.submission_progress_percent || 0)}% progres</span>
+                                <span>${Number(item.reviewed_count || 0)} direview</span>
                                 <span>${Number(item.inbox_count || 0)} inbox</span>
                             </div>
+                            <div class="small muted">Diupdate: ${formatDateTime(item.updated_at)}</div>
                         </button>
                     `).join('') : '<div class="small muted">Belum ada form. Buat form pertama dari tombol Baru.</div>'}
                 </div>
@@ -314,6 +331,14 @@ export function initFormsAdmin(state, els, deps) {
                             <span>Opsi pilihan (satu baris satu opsi)</span>
                             <textarea rows="4" data-action="field-options" data-index="${index}" placeholder="Opsi A&#10;Opsi B&#10;Opsi C">${escapeHtml((field.options_json || []).join('\n'))}</textarea>
                         </label>
+                        <label class="forms-builder-label">
+                            <span>Kunci jawaban ${field.field_type === 'multiple_choice' ? '(pisahkan dengan |)' : ''}</span>
+                            <input type="text" data-action="field-answer-key" data-index="${index}" value="${escapeHtml(field.answer_key_text || '')}" placeholder="${field.field_type === 'multiple_choice' ? 'Contoh: Opsi A|Opsi C' : 'Contoh: Opsi B'}">
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Bobot skor</span>
+                            <input type="number" min="0" max="100" step="1" data-action="field-score-weight" data-index="${index}" value="${Number(field.score_weight || 1)}">
+                        </label>
                     ` : ''}
                     <label class="forms-builder-check">
                         <input type="checkbox" data-action="field-required" data-index="${index}" ${field.required !== false ? 'checked' : ''}>
@@ -330,7 +355,7 @@ export function initFormsAdmin(state, els, deps) {
 
     function renderBuilderView() {
         const editor = local.editor || createBlankForm();
-        const stats = local.detail?.stats || { submission_count: 0, inbox_count: 0 };
+        const stats = local.detail?.stats || { submission_count: 0, inbox_count: 0, reviewed_count: 0, submission_progress_percent: 0 };
         return `
             <div class="forms-admin-workspace">
                 <div class="forms-admin-toolbar">
@@ -341,6 +366,8 @@ export function initFormsAdmin(state, els, deps) {
                     </div>
                     <div class="forms-admin-inline-stats">
                         <span>${Number(stats.submission_count || 0)} submission</span>
+                        <span>${Number(stats.submission_progress_percent || 0)}% progres</span>
+                        <span>${Number(stats.reviewed_count || 0)} direview</span>
                         <span>${Number(stats.inbox_count || 0)} inbox</span>
                     </div>
                 </div>
@@ -349,7 +376,7 @@ export function initFormsAdmin(state, els, deps) {
                     <div class="forms-admin-card-head">
                         <div>
                             <h3>${editor.id ? 'Editor Template' : 'Template Baru'}</h3>
-                            <p>Builder ini dirancang untuk pretest dan posttest tanpa skor, dengan fokus pada kualitas jawaban dan inbox admin.</p>
+                            <p>Kelola pretest/posttest dengan nama jelas, jadwal, versi, dan target peserta agar tidak ambigu.</p>
                         </div>
                         <div class="forms-admin-header-actions">
                             ${editor.id ? `
@@ -383,14 +410,34 @@ export function initFormsAdmin(state, els, deps) {
                             <span>Status</span>
                             <select data-action="meta-status">
                                 <option value="draft" ${editor.status === 'draft' ? 'selected' : ''}>Draft</option>
-                                <option value="published" ${editor.status === 'published' ? 'selected' : ''}>Published</option>
-                                <option value="archived" ${editor.status === 'archived' ? 'selected' : ''}>Archived</option>
+                                <option value="published" ${editor.status === 'published' ? 'selected' : ''}>Aktif</option>
+                                <option value="archived" ${editor.status === 'archived' ? 'selected' : ''}>Selesai</option>
                             </select>
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Versi</span>
+                            <input type="number" min="1" max="99" step="1" data-action="meta-version" value="${Number(editor.version || 1)}" placeholder="1">
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Target Peserta</span>
+                            <input type="number" min="0" max="100000" step="1" data-action="meta-target-participants" value="${Number(editor.target_participants || 0)}" placeholder="0">
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Mulai</span>
+                            <input type="datetime-local" data-action="meta-start-at" value="${escapeHtml(String(editor.start_at || '').slice(0, 16))}">
+                        </label>
+                        <label class="forms-builder-label">
+                            <span>Selesai</span>
+                            <input type="datetime-local" data-action="meta-end-at" value="${escapeHtml(String(editor.end_at || '').slice(0, 16))}">
                         </label>
                         <label class="forms-builder-label forms-builder-span-2">
                             <span>Deskripsi</span>
                             <textarea rows="3" data-action="meta-description" placeholder="Jelaskan konteks pengisian form...">${escapeHtml(editor.description || '')}</textarea>
                         </label>
+                        <div class="forms-builder-label forms-builder-span-2">
+                            <span>Nama Test Otomatis</span>
+                            <small class="muted">${escapeHtml((editor.title || 'Tanpa Judul').trim() || 'Tanpa Judul')} • ${new Date().toLocaleDateString('id-ID')} • v${Number(editor.version || 1)}</small>
+                        </div>
                         <label class="forms-builder-check">
                             <input type="checkbox" data-action="meta-allow-multiple" ${editor.allow_multiple === true ? 'checked' : ''}>
                             <span>Izinkan multiple submission</span>
@@ -536,6 +583,24 @@ export function initFormsAdmin(state, els, deps) {
         return filtered;
     }
 
+    function getPaginatedSubmissions() {
+        const list = getSortedSubmissions();
+        const pageSize = Math.max(1, Number(local.review.submissions.pageSize || 8));
+        const totalItems = list.length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        const page = Math.min(Math.max(1, Number(local.review.submissions.page || 1)), totalPages);
+        local.review.submissions.page = page;
+        const start = (page - 1) * pageSize;
+        return {
+            page,
+            pageSize,
+            totalItems,
+            totalPages,
+            items: list.slice(start, start + pageSize),
+            allItems: list
+        };
+    }
+
     function getSortedInbox() {
         const mode = local.review.inbox.sort || 'newest';
         const list = [...local.inbox];
@@ -547,11 +612,11 @@ export function initFormsAdmin(state, els, deps) {
             return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
         });
         const filter = local.review.inbox.filter || 'all';
-        if (filter === 'focus') return list;
-        if (filter === 'unread') return list.filter((item) => getWorkflowStatus('inbox', item.id) !== 'done');
+        let filtered = list;
+        if (filter === 'unread') filtered = filtered.filter((item) => getWorkflowStatus('inbox', item.id) !== 'done');
         const queryText = String(local.review.inbox.query || '').trim().toLowerCase();
-        if (!queryText) return list;
-        return list.filter((item) => {
+        if (!queryText) return filtered;
+        return filtered.filter((item) => {
             const haystack = [
                 item.nama_panjang,
                 item.username,
@@ -576,12 +641,12 @@ export function initFormsAdmin(state, els, deps) {
         return `
             <div class="forms-admin-toolbar">
                 <div class="forms-admin-view-switch">
-                    <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder"><i class="fas fa-layer-group"></i> Form Builder</button>
-                    <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions"><i class="fas fa-list-check"></i> Submissions</button>
-                    <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox"><i class="fas fa-inbox"></i> Inbox</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder" title="Kelola struktur dan pengaturan test"><i class="fas fa-layer-group"></i> Form Builder</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions" title="Lihat daftar peserta dan hasil jawaban"><i class="fas fa-list-check"></i> Submissions</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox" title="Lihat jawaban fokus yang perlu ditindaklanjuti"><i class="fas fa-inbox"></i> Inbox</button>
                 </div>
                 <div class="forms-review-controls">
-                    <div class="toolbar-select-wrapper">
+                    <div class="toolbar-select-wrapper" title="Urutkan daftar peserta/jawaban">
                         <i class="fas fa-sort-amount-down-alt"></i>
                         <select class="toolbar-select" data-action="${view}-sort">
                             <option value="newest" ${review.sort === 'newest' ? 'selected' : ''}>Terbaru</option>
@@ -589,7 +654,7 @@ export function initFormsAdmin(state, els, deps) {
                             <option value="name_asc" ${review.sort === 'name_asc' ? 'selected' : ''}>Nama A-Z</option>
                         </select>
                     </div>
-                    <div class="toolbar-select-wrapper">
+                    <div class="toolbar-select-wrapper" title="Cari data lebih cepat">
                         <i class="fas fa-search"></i>
                         <input type="search" class="toolbar-input" data-action="${view}-query" value="${escapeHtml(review.query || '')}" placeholder="${view === 'submissions' ? 'Cari nama / username / kode arsip…' : 'Cari nama / field / jawaban…'}">
                     </div>
@@ -655,11 +720,21 @@ export function initFormsAdmin(state, els, deps) {
                     <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up"><i class="fas fa-clock"></i> Set Follow Up</button>
                     <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done"><i class="fas fa-check-double"></i> Set Selesai</button>
                 </div>
+                <div class="forms-review-score-row">
+                    <span class="forms-review-badge is-focus">Skor: ${Number(item.score_obtained || 0)} / ${Number(item.score_max || 0)}</span>
+                    <span class="small muted">Dinilai otomatis untuk soal pilihan yang punya kunci jawaban.</span>
+                </div>
                 <div class="forms-admin-answer-list forms-admin-answer-list-strong">
                     ${(item.answers || []).map((answer) => `
                         <div class="forms-admin-answer-item ${answer.focus_inbox ? 'focus' : ''}">
-                            <div class="forms-admin-answer-label">${escapeHtml(answer.label)}</div>
+                            <div class="forms-admin-answer-label">
+                                ${escapeHtml(answer.label)}
+                                <span class="forms-review-badge ${answer.answer_status === 'benar' ? 'is-read' : (answer.answer_status === 'salah' ? 'is-new' : 'is-time')}">
+                                    ${answer.answer_status === 'benar' ? 'Benar' : (answer.answer_status === 'salah' ? 'Salah' : 'Perlu Review')}
+                                </span>
+                            </div>
                             <div class="forms-admin-answer-value strong">${escapeHtml(Array.isArray(answer.answer_json) ? answer.answer_json.join(', ') : (answer.answer_text || '-'))}</div>
+                            ${answer.answer_key_text ? `<div class="small muted mt-12">Kunci: ${escapeHtml(answer.answer_key_text)}</div>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -717,8 +792,9 @@ export function initFormsAdmin(state, els, deps) {
     }
 
     function renderSubmissionsViewV2() {
-        const list = getSortedSubmissions();
-        const selected = list.find((item) => Number(item.id) === Number(local.review.submissions.selectedId)) || list[0] || null;
+        const pagination = getPaginatedSubmissions();
+        const list = pagination.items;
+        const selected = pagination.allItems.find((item) => Number(item.id) === Number(local.review.submissions.selectedId)) || pagination.allItems[0] || null;
         return `
             <div class="forms-admin-workspace">
                 ${renderReviewToolbar('submissions')}
@@ -744,6 +820,7 @@ export function initFormsAdmin(state, els, deps) {
                                             <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
                                         </div>
                                         <div class="small muted">@${escapeHtml(item.username || '-')} • ${escapeHtml(item.pimpinan || '-')}</div>
+                                        <div class="small muted">Skor: ${Number(item.score_obtained || 0)} / ${Number(item.score_max || 0)}</div>
                                         <div class="forms-review-badge-row">
                                             <span class="forms-review-badge ${status.className}">${status.text}</span>
                                             ${hasFocus ? '<span class="forms-review-badge is-focus">Focus Inbox</span>' : ''}
@@ -753,6 +830,11 @@ export function initFormsAdmin(state, els, deps) {
                                     </button>
                                 `;
                             }).join('') : '<div class="small muted">Belum ada submission untuk form ini.</div>'}
+                        </div>
+                        <div class="forms-review-pagination">
+                            <button type="button" class="btn btn-secondary" data-action="submissions-page-prev" ${pagination.page <= 1 ? 'disabled' : ''}>Sebelumnya</button>
+                            <span class="small muted">Halaman ${pagination.page} / ${pagination.totalPages} (${pagination.totalItems} peserta)</span>
+                            <button type="button" class="btn btn-secondary" data-action="submissions-page-next" ${pagination.page >= pagination.totalPages ? 'disabled' : ''}>Berikutnya</button>
                         </div>
                     </section>
                     ${renderSubmissionDetail(selected)}
@@ -850,6 +932,10 @@ export function initFormsAdmin(state, els, deps) {
         if (action.startsWith('meta-')) {
             const key = action.replace('meta-', '').replace(/-([a-z])/g, (_, char) => char.toUpperCase());
             if (key === 'allowMultiple') editor.allow_multiple = checked;
+            else if (key === 'version') editor.version = Number(value || 1);
+            else if (key === 'targetParticipants') editor.target_participants = Number(value || 0);
+            else if (key === 'startAt') editor.start_at = value || '';
+            else if (key === 'endAt') editor.end_at = value || '';
             else editor[key] = value;
             return;
         }
@@ -862,6 +948,8 @@ export function initFormsAdmin(state, els, deps) {
         }
         if (action === 'field-placeholder') field.placeholder = value;
         if (action === 'field-options') field.options_json = String(value || '').split('\n').map((item) => item.trim()).filter(Boolean);
+        if (action === 'field-answer-key') field.answer_key_text = value;
+        if (action === 'field-score-weight') field.score_weight = Number(value || 1);
         if (action === 'field-required') field.required = checked;
         if (action === 'field-focus') field.focus_inbox = checked;
     }
@@ -874,6 +962,10 @@ export function initFormsAdmin(state, els, deps) {
             type: local.editor.type,
             description: local.editor.description,
             status: local.editor.status,
+            version: Number(local.editor.version || 1),
+            target_participants: Number(local.editor.target_participants || 0),
+            start_at: local.editor.start_at || null,
+            end_at: local.editor.end_at || null,
             allow_multiple: local.editor.allow_multiple === true,
             theme_variant: 'aurora-premium',
             fields: local.editor.fields || []
@@ -957,6 +1049,7 @@ export function initFormsAdmin(state, els, deps) {
             if (action === 'pick-form') {
                 local.activeId = Number(actionEl.dataset.id || 0);
                 local.activeView = 'builder';
+                local.review.submissions.page = 1;
                 local.review.submissions.selectedId = 0;
                 local.review.inbox.selectedId = 0;
                 await Promise.all([loadDetail(), loadSubmissions(), loadInbox(), loadArchiveSummary()]);
@@ -1039,6 +1132,16 @@ export function initFormsAdmin(state, els, deps) {
                 render();
                 return;
             }
+            if (action === 'submissions-page-prev') {
+                local.review.submissions.page = Math.max(1, Number(local.review.submissions.page || 1) - 1);
+                render();
+                return;
+            }
+            if (action === 'submissions-page-next') {
+                local.review.submissions.page = Number(local.review.submissions.page || 1) + 1;
+                render();
+                return;
+            }
             if (action === 'pick-inbox-item') {
                 const id = Number(actionEl.dataset.id || 0);
                 local.review.inbox.selectedId = id;
@@ -1049,6 +1152,7 @@ export function initFormsAdmin(state, els, deps) {
             }
             if (action === 'submissions-filter') {
                 local.review.submissions.filter = actionEl.dataset.filter || 'all';
+                local.review.submissions.page = 1;
                 render();
                 return;
             }
@@ -1060,6 +1164,7 @@ export function initFormsAdmin(state, els, deps) {
             if (action === 'open-submission-from-inbox') {
                 local.activeView = 'submissions';
                 local.review.submissions.selectedId = Number(actionEl.dataset.id || 0);
+                local.review.submissions.page = 1;
                 markRead('submission', local.review.submissions.selectedId);
                 if (can('forms.workflow_mark')) await markWorkflow('submission', local.review.submissions.selectedId, 'done');
                 await loadSubmissions();
@@ -1114,6 +1219,7 @@ export function initFormsAdmin(state, els, deps) {
         if (!action) return;
         if (action === 'submissions-query') {
             local.review.submissions.query = event.target.value || '';
+            local.review.submissions.page = 1;
             render();
             return;
         }
@@ -1132,6 +1238,7 @@ export function initFormsAdmin(state, els, deps) {
         if (!action) return;
         if (action === 'submissions-sort') {
             local.review.submissions.sort = event.target.value || 'newest';
+            local.review.submissions.page = 1;
             render();
             return;
         }
@@ -1142,11 +1249,13 @@ export function initFormsAdmin(state, els, deps) {
         }
         if (action === 'submissions-archive-status') {
             local.review.submissions.archiveStatus = event.target.value || 'all';
+            local.review.submissions.page = 1;
             render();
             return;
         }
         if (action === 'submissions-confidentiality') {
             local.review.submissions.confidentiality = event.target.value || 'all';
+            local.review.submissions.page = 1;
             render();
             return;
         }

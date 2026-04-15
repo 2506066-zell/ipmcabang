@@ -72,6 +72,29 @@ function normalizeRetentionYears(value) {
   return years;
 }
 
+function normalizeVersion(value) {
+  const version = Number(value || 1);
+  if (!Number.isInteger(version) || version < 1 || version > 99) {
+    throw new Error('Versi test harus bilangan bulat antara 1 sampai 99.');
+  }
+  return version;
+}
+
+function normalizeTargetParticipants(value) {
+  const count = Number(value || 0);
+  if (!Number.isInteger(count) || count < 0 || count > 100000) {
+    throw new Error('Target peserta harus bilangan bulat antara 0 sampai 100000.');
+  }
+  return count;
+}
+
+function normalizeDateTime(value) {
+  if (!value) return null;
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) throw new Error('Format tanggal/jam tidak valid.');
+  return dt.toISOString();
+}
+
 function normalizeOptions(fieldType, value) {
   if (!['single_choice', 'multiple_choice', 'dropdown'].includes(fieldType)) return [];
   const source = Array.isArray(value)
@@ -94,13 +117,21 @@ function normalizeFields(rawFields) {
     const fieldType = normalizeFieldType(field.field_type);
     const label = sanitizeText(field.label, 300);
     if (!label) throw new Error(`Label pertanyaan ke-${index + 1} wajib diisi.`);
+    const options = normalizeOptions(fieldType, field.options_json || field.options || []);
+    const answerKeyText = sanitizeText(field.answer_key_text, 200);
+    const scoreWeight = Math.max(0, Math.min(100, Number(field.score_weight || 1)));
+    if (['single_choice', 'dropdown'].includes(fieldType) && answerKeyText && !options.includes(answerKeyText)) {
+      throw new Error(`Kunci jawaban untuk pertanyaan ke-${index + 1} harus salah satu opsi yang tersedia.`);
+    }
     return {
       id: Number(field.id || 0),
       label,
       field_type: fieldType,
       required: field.required !== false,
       placeholder: sanitizeText(field.placeholder, 240),
-      options_json: normalizeOptions(fieldType, field.options_json || field.options || []),
+      options_json: options,
+      answer_key_text: answerKeyText,
+      score_weight: Number.isFinite(scoreWeight) ? Math.trunc(scoreWeight) : 1,
       sort_order: index + 1,
       focus_inbox: field.focus_inbox === true
     };
@@ -117,9 +148,55 @@ function serializeField(row) {
     required: row.required !== false,
     placeholder: row.placeholder || '',
     options_json: options,
+    answer_key_text: row.answer_key_text || '',
+    score_weight: Number(row.score_weight || 1),
     sort_order: Number(row.sort_order || 1),
     focus_inbox: row.focus_inbox === true
   };
+}
+
+function getLifecycleStatus(status, startAt, endAt) {
+  const s = String(status || 'draft').trim().toLowerCase();
+  if (s === 'draft') return 'draft';
+  if (s === 'archived') return 'selesai';
+  const now = Date.now();
+  const startMs = startAt ? new Date(startAt).getTime() : null;
+  const endMs = endAt ? new Date(endAt).getTime() : null;
+  if (endMs && !Number.isNaN(endMs) && now > endMs) return 'kadaluarsa';
+  if (startMs && !Number.isNaN(startMs) && now < startMs) return 'draft';
+  return 'aktif';
+}
+
+function buildDisplayName(row) {
+  const created = row.created_at ? new Date(row.created_at) : null;
+  const y = created && !Number.isNaN(created.getTime()) ? created.getFullYear() : new Date().getFullYear();
+  const m = created && !Number.isNaN(created.getTime()) ? String(created.getMonth() + 1).padStart(2, '0') : '01';
+  const d = created && !Number.isNaN(created.getTime()) ? String(created.getDate()).padStart(2, '0') : '01';
+  const version = Number(row.version || 1);
+  return `${row.title || 'Test Tanpa Judul'} • ${y}${m}${d} • v${version}`;
+}
+
+function evaluateAnswer(answerRow) {
+  const fieldType = String(answerRow.field_type || '').trim().toLowerCase();
+  const key = String(answerRow.answer_key_text || '').trim();
+  const weight = Number(answerRow.score_weight || 1);
+  const safeWeight = Number.isFinite(weight) && weight > 0 ? Math.trunc(weight) : 1;
+  if (!key || !['single_choice', 'dropdown', 'multiple_choice'].includes(fieldType)) {
+    return { status: 'perlu_review', score: 0, score_max: 0 };
+  }
+  if (fieldType === 'multiple_choice') {
+    const selected = Array.isArray(answerRow.answer_json)
+      ? answerRow.answer_json.map((v) => String(v || '').trim()).filter(Boolean).sort()
+      : [];
+    const target = key.split('|').map((v) => String(v || '').trim()).filter(Boolean).sort();
+    if (!target.length) return { status: 'perlu_review', score: 0, score_max: 0 };
+    const isCorrect = selected.length === target.length && selected.every((v, i) => v === target[i]);
+    return { status: isCorrect ? 'benar' : 'salah', score: isCorrect ? safeWeight : 0, score_max: safeWeight };
+  }
+  const selectedText = String(answerRow.answer_text || '').trim();
+  if (!selectedText) return { status: 'salah', score: 0, score_max: safeWeight };
+  const isCorrect = selectedText === key;
+  return { status: isCorrect ? 'benar' : 'salah', score: isCorrect ? safeWeight : 0, score_max: safeWeight };
 }
 
 async function ensureUniqueSlug(baseSlug, formId = 0) {
@@ -137,7 +214,7 @@ async function ensureUniqueSlug(baseSlug, formId = 0) {
 
 async function getFormFields(formId) {
   const rows = (await query`
-    SELECT id, form_id, label, field_type, required, placeholder, options_json, sort_order, focus_inbox
+    SELECT id, form_id, label, field_type, required, placeholder, options_json, answer_key_text, score_weight, sort_order, focus_inbox
     FROM form_fields
     WHERE form_id=${formId}
     ORDER BY sort_order ASC, id ASC
@@ -381,32 +458,62 @@ async function handleAdminList(req, res) {
   }
 
   const rows = (await query`
-    SELECT f.id, f.title, f.slug, f.type, f.description, f.status, f.allow_multiple, f.theme_variant, f.updated_at,
-      COUNT(DISTINCT s.id)::int AS submission_count,
-      COUNT(DISTINCT CASE WHEN ff.focus_inbox = true AND COALESCE(a.answer_text, '') <> '' THEN a.id END)::int AS inbox_count
+    SELECT
+      f.id, f.title, f.slug, f.type, f.description, f.status, f.allow_multiple, f.theme_variant,
+      f.version, f.target_participants, f.start_at, f.end_at, f.created_at, f.updated_at,
+      (SELECT COUNT(*)::int FROM form_submissions s WHERE s.form_id = f.id) AS submission_count,
+      (
+        SELECT COUNT(a.id)::int
+        FROM form_answers a
+        JOIN form_fields ff ON ff.id = a.field_id
+        JOIN form_submissions s ON s.id = a.submission_id
+        WHERE s.form_id = f.id
+          AND ff.focus_inbox = true
+          AND ff.field_type IN ('short_text', 'paragraph')
+          AND COALESCE(a.answer_text, '') <> ''
+      ) AS inbox_count,
+      (
+        SELECT COUNT(*)::int
+        FROM form_submission_workflow w
+        WHERE w.form_id = f.id
+          AND w.item_type = 'submission'
+          AND w.workflow_status = 'done'
+      ) AS reviewed_count
     FROM form_templates f
-    LEFT JOIN form_submissions s ON s.form_id = f.id
-    LEFT JOIN form_fields ff ON ff.form_id = f.id
-    LEFT JOIN form_answers a ON a.field_id = ff.id
-    GROUP BY f.id
     ORDER BY f.updated_at DESC, f.id DESC
   `).rows;
 
   return json(res, 200, {
     status: 'success',
-    items: rows.map((row) => ({
-      id: Number(row.id),
-      title: row.title || '',
-      slug: row.slug || '',
-      type: row.type || 'pretest',
-      description: row.description || '',
-      status: row.status || 'draft',
-      allow_multiple: row.allow_multiple === true,
-      theme_variant: row.theme_variant || 'aurora-premium',
-      updated_at: row.updated_at,
-      submission_count: Number(row.submission_count || 0),
-      inbox_count: Number(row.inbox_count || 0)
-    }))
+    items: rows.map((row) => {
+      const submissionCount = Number(row.submission_count || 0);
+      const targetParticipants = Number(row.target_participants || 0);
+      const progressPercent = targetParticipants > 0
+        ? Math.max(0, Math.min(100, Math.round((submissionCount / targetParticipants) * 100)))
+        : 0;
+      return {
+        id: Number(row.id),
+        title: row.title || '',
+        display_name: buildDisplayName(row),
+        slug: row.slug || '',
+        type: row.type || 'pretest',
+        description: row.description || '',
+        status: row.status || 'draft',
+        lifecycle_status: getLifecycleStatus(row.status, row.start_at, row.end_at),
+        allow_multiple: row.allow_multiple === true,
+        theme_variant: row.theme_variant || 'aurora-premium',
+        version: Number(row.version || 1),
+        target_participants: targetParticipants,
+        start_at: row.start_at || null,
+        end_at: row.end_at || null,
+        created_at: row.created_at || null,
+        updated_at: row.updated_at,
+        submission_count: submissionCount,
+        reviewed_count: Number(row.reviewed_count || 0),
+        submission_progress_percent: progressPercent,
+        inbox_count: Number(row.inbox_count || 0)
+      };
+    })
   });
 }
 
@@ -421,7 +528,8 @@ async function handleAdminDetail(req, res) {
   if (!formId) return json(res, 400, { status: 'error', message: 'ID form tidak valid.' });
 
   const form = (await query`
-    SELECT id, title, slug, type, description, status, allow_multiple, theme_variant, created_by, created_at, updated_at
+    SELECT id, title, slug, type, description, status, allow_multiple, theme_variant,
+           version, target_participants, start_at, end_at, created_by, created_at, updated_at
     FROM form_templates
     WHERE id=${formId}
     LIMIT 1
@@ -444,6 +552,21 @@ async function handleAdminDetail(req, res) {
       `
     ).rows[0]?.c || 0
   );
+  const reviewedCount = Number(
+    (
+      await query`
+        SELECT COUNT(*)::int AS c
+        FROM form_submission_workflow
+        WHERE form_id=${formId}
+          AND item_type='submission'
+          AND workflow_status='done'
+      `
+    ).rows[0]?.c || 0
+  );
+  const targetParticipants = Number(form.target_participants || 0);
+  const progressPercent = targetParticipants > 0
+    ? Math.max(0, Math.min(100, Math.round((submissionCount / targetParticipants) * 100)))
+    : 0;
 
   return json(res, 200, {
     status: 'success',
@@ -454,15 +577,23 @@ async function handleAdminDetail(req, res) {
       type: form.type || 'pretest',
       description: form.description || '',
       status: form.status || 'draft',
+      lifecycle_status: getLifecycleStatus(form.status, form.start_at, form.end_at),
       allow_multiple: form.allow_multiple === true,
       theme_variant: form.theme_variant || 'aurora-premium',
+      version: Number(form.version || 1),
+      target_participants: targetParticipants,
+      start_at: form.start_at || null,
+      end_at: form.end_at || null,
+      display_name: buildDisplayName(form),
       created_by: form.created_by ? Number(form.created_by) : null,
       created_at: form.created_at,
       updated_at: form.updated_at,
       fields,
       stats: {
         submission_count: submissionCount,
-        inbox_count: inboxCount
+        inbox_count: inboxCount,
+        reviewed_count: reviewedCount,
+        submission_progress_percent: progressPercent
       }
     }
   });
@@ -495,6 +626,13 @@ async function handleSaveTemplate(req, res) {
   const description = sanitizeParagraph(body.description, 1600);
   const allowMultiple = body.allow_multiple === true;
   const themeVariant = sanitizeText(body.theme_variant, 80) || 'aurora-premium';
+  const version = normalizeVersion(body.version || 1);
+  const targetParticipants = normalizeTargetParticipants(body.target_participants || 0);
+  const startAt = normalizeDateTime(body.start_at);
+  const endAt = normalizeDateTime(body.end_at);
+  if (startAt && endAt && new Date(startAt).getTime() > new Date(endAt).getTime()) {
+    return json(res, 400, { status: 'error', message: 'Tanggal mulai tidak boleh lebih besar dari tanggal selesai.' });
+  }
   const fields = normalizeFields(body.fields);
   const desiredSlug = sanitizeText(body.slug, 120) || title;
   const slug = await ensureUniqueSlug(desiredSlug, id);
@@ -511,9 +649,14 @@ async function handleSaveTemplate(req, res) {
             status=${status},
             allow_multiple=${allowMultiple},
             theme_variant=${themeVariant},
+            version=${version},
+            target_participants=${targetParticipants},
+            start_at=${startAt},
+            end_at=${endAt},
             updated_at=NOW()
         WHERE id=${id}
-        RETURNING id, title, slug, type, description, status, allow_multiple, theme_variant, updated_at
+        RETURNING id, title, slug, type, description, status, allow_multiple, theme_variant,
+                  version, target_participants, start_at, end_at, created_at, updated_at
       `
     ).rows[0];
     if (!formRow) return json(res, 404, { status: 'error', message: 'Form tidak ditemukan.' });
@@ -523,9 +666,16 @@ async function handleSaveTemplate(req, res) {
   } else {
     formRow = (
       await query`
-        INSERT INTO form_templates (title, slug, type, description, status, allow_multiple, theme_variant, created_by, created_at, updated_at)
-        VALUES (${title}, ${slug}, ${type}, ${description}, ${status}, ${allowMultiple}, ${themeVariant}, ${admin.id}, NOW(), NOW())
-        RETURNING id, title, slug, type, description, status, allow_multiple, theme_variant, updated_at
+        INSERT INTO form_templates (
+          title, slug, type, description, status, allow_multiple, theme_variant,
+          version, target_participants, start_at, end_at, created_by, created_at, updated_at
+        )
+        VALUES (
+          ${title}, ${slug}, ${type}, ${description}, ${status}, ${allowMultiple}, ${themeVariant},
+          ${version}, ${targetParticipants}, ${startAt}, ${endAt}, ${admin.id}, NOW(), NOW()
+        )
+        RETURNING id, title, slug, type, description, status, allow_multiple, theme_variant,
+                  version, target_participants, start_at, end_at, created_at, updated_at
       `
     ).rows[0];
     await writeActivity(admin.id, 'CREATE_FORM_TEMPLATE', { form_id: formRow?.id, title, type, status });
@@ -533,7 +683,9 @@ async function handleSaveTemplate(req, res) {
 
   for (const field of fields) {
     await query`
-      INSERT INTO form_fields (form_id, label, field_type, required, placeholder, options_json, sort_order, focus_inbox, created_at, updated_at)
+      INSERT INTO form_fields (
+        form_id, label, field_type, required, placeholder, options_json, answer_key_text, score_weight, sort_order, focus_inbox, created_at, updated_at
+      )
       VALUES (
         ${Number(formRow.id)},
         ${field.label},
@@ -541,6 +693,8 @@ async function handleSaveTemplate(req, res) {
         ${field.required},
         ${field.placeholder || null},
         ${field.options_json},
+        ${field.answer_key_text || null},
+        ${field.score_weight},
         ${field.sort_order},
         ${field.focus_inbox},
         NOW(),
@@ -558,8 +712,14 @@ async function handleSaveTemplate(req, res) {
       type: formRow.type || 'pretest',
       description: formRow.description || '',
       status: formRow.status || 'draft',
+      lifecycle_status: getLifecycleStatus(formRow.status, formRow.start_at, formRow.end_at),
       allow_multiple: formRow.allow_multiple === true,
       theme_variant: formRow.theme_variant || 'aurora-premium',
+      version: Number(formRow.version || 1),
+      target_participants: Number(formRow.target_participants || 0),
+      start_at: formRow.start_at || null,
+      end_at: formRow.end_at || null,
+      display_name: buildDisplayName(formRow),
       updated_at: formRow.updated_at,
       fields: await getFormFields(Number(formRow.id))
     }
@@ -624,7 +784,7 @@ async function handleAdminSubmissions(req, res) {
   const answersRows = (
     await query`
       SELECT a.submission_id, a.answer_text, a.answer_json,
-             ff.id AS field_id, ff.label, ff.field_type, ff.focus_inbox, ff.sort_order
+             ff.id AS field_id, ff.label, ff.field_type, ff.focus_inbox, ff.sort_order, ff.answer_key_text, ff.score_weight
       FROM form_answers a
       JOIN form_fields ff ON ff.id = a.field_id
       JOIN form_submissions s ON s.id = a.submission_id
@@ -634,17 +794,26 @@ async function handleAdminSubmissions(req, res) {
   ).rows;
 
   const answersMap = new Map();
+  const scoreMap = new Map();
   for (const row of answersRows) {
     const key = Number(row.submission_id);
     if (!answersMap.has(key)) answersMap.set(key, []);
+    const evaluation = evaluateAnswer(row);
     answersMap.get(key).push({
       field_id: Number(row.field_id),
       label: row.label || '',
       field_type: row.field_type || 'short_text',
       focus_inbox: row.focus_inbox === true,
       answer_text: row.answer_text || '',
-      answer_json: row.answer_json || null
+      answer_json: row.answer_json || null,
+      answer_key_text: row.answer_key_text || '',
+      score_weight: Number(row.score_weight || 1),
+      answer_status: evaluation.status
     });
+    if (!scoreMap.has(key)) scoreMap.set(key, { obtained: 0, max: 0 });
+    const score = scoreMap.get(key);
+    score.obtained += Number(evaluation.score || 0);
+    score.max += Number(evaluation.score_max || 0);
   }
 
   const submissionIds = rows.map((row) => Number(row.id)).filter(Boolean);
@@ -683,6 +852,8 @@ async function handleAdminSubmissions(req, res) {
       nama_panjang: row.nama_panjang || '',
       pimpinan: row.pimpinan || '',
       workflow_status: workflowMap.get(Number(row.id)) || 'unread',
+      score_obtained: Number(scoreMap.get(Number(row.id))?.obtained || 0),
+      score_max: Number(scoreMap.get(Number(row.id))?.max || 0),
       answers: answersMap.get(Number(row.id)) || []
     }))
   });

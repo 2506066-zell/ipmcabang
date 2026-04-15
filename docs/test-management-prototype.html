@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototype UI Manajemen Test</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --line: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 14px;
+      padding: 14px;
+      min-height: 100vh;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .muted { color: var(--muted); font-size: 12px; }
+    .test-item, .participant {
+      width: 100%;
+      text-align: left;
+      background: #1e293b;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 10px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    .active { border-color: var(--blue); box-shadow: 0 0 0 1px rgba(59,130,246,0.35) inset; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .ok { background: rgba(16,185,129,0.15); color: var(--green); }
+    .warn { background: rgba(245,158,11,0.15); color: var(--orange); }
+    .bad { background: rgba(239,68,68,0.15); color: var(--red); }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .toolbar input, .toolbar select {
+      background: #0b1220;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="card">
+      <h3>Daftar Test</h3>
+      <div class="muted">Penamaan unik: Judul • Tanggal • Versi</div>
+      <button class="test-item active">
+        PRETEST MUSYRAN 2026 • 20260415 • v1
+        <span class="badge ok">AKTIF</span>
+        <div class="muted">Progress 58% • 128 peserta</div>
+      </button>
+      <button class="test-item">
+        POSTTEST MUSYRAN 2026 • 20260420 • v2
+        <span class="badge bad">KADALUARSA</span>
+        <div class="muted">Progress 100% • 212 peserta</div>
+      </button>
+    </aside>
+
+    <main class="card">
+      <div class="row toolbar">
+        <select aria-label="Urutkan"><option>Terbaru</option><option>Terlama</option></select>
+        <input type="search" placeholder="Cari peserta..." aria-label="Cari peserta">
+        <select aria-label="Filter"><option>Semua</option><option>Baru</option><option>Selesai</option></select>
+      </div>
+
+      <div class="row" style="margin-top:10px; align-items:flex-start;">
+        <section style="flex:1; min-width:260px;">
+          <h4>Peserta</h4>
+          <button class="participant active">Zaldy <span class="badge ok">Skor 8/10</span></button>
+          <button class="participant">Alya <span class="badge warn">Skor 6/10</span></button>
+          <button class="participant">Raka <span class="badge ok">Skor 9/10</span></button>
+        </section>
+
+        <section style="flex:2; min-width:280px;">
+          <h4>Detail Jawaban: Zaldy</h4>
+          <div class="muted">Skor total: 8/10</div>
+          <div class="card" style="margin-top:8px;">
+            <strong>Q1. Materi dasar ...</strong>
+            <div>Jawaban: B <span class="badge ok">BENAR</span></div>
+          </div>
+          <div class="card" style="margin-top:8px;">
+            <strong>Q2. Prinsip ...</strong>
+            <div>Jawaban: A <span class="badge bad">SALAH</span></div>
+          </div>
+          <div class="card" style="margin-top:8px;">
+            <strong>Q3. Jelaskan pendapat ...</strong>
+            <div>Jawaban: ... <span class="badge warn">PERLU REVIEW</span></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

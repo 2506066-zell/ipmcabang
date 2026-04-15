@@ -3552,6 +3552,18 @@ button.priority-card:hover {
     border-bottom: 1px solid var(--border-color);
 }
 
+.forms-review-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
 .forms-review-filter-group {
     display: flex;
     align-items: center;
@@ -3686,6 +3698,16 @@ button.priority-card:hover {
     overflow: hidden;
 }
 
+.forms-review-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
 .forms-review-detail-card h3 {
     margin: 0 0 6px;
 }
@@ -3786,6 +3808,20 @@ button.priority-card:hover {
     .forms-review-list-panel {
         position: static !important;
     }
+
+    .forms-archive-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .forms-review-score-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .forms-review-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 @keyframes formsAdminSpin {
@@ -3796,6 +3832,7 @@ button.priority-card:hover {
 .toolbar-input {
     flex: 1;
     min-width: 220px;
+    color: var(--text-primary);
 }
 
 .toolbar-select {
