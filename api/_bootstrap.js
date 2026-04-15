@@ -476,6 +476,17 @@ async function ensureSchema() {
     UNIQUE (submission_id, field_id)
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS form_submission_workflow (
+    id SERIAL PRIMARY KEY,
+    form_id INT NOT NULL REFERENCES form_templates(id) ON DELETE CASCADE,
+    item_type TEXT NOT NULL,
+    item_id INT NOT NULL,
+    workflow_status TEXT NOT NULL DEFAULT 'unread',
+    updated_by INT REFERENCES users(id) ON DELETE SET NULL,
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (form_id, item_type, item_id)
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -580,6 +591,12 @@ async function ensureSchema() {
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS answer_json JSONB`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE form_answers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS form_id INT`;
+  await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS item_type TEXT`;
+  await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS item_id INT`;
+  await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS workflow_status TEXT DEFAULT 'unread'`;
+  await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS updated_by INT`;
+  await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
 
   await seedOrganizationData();
 
@@ -615,6 +632,9 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_form_submitted ON form_submissions(form_id, submitted_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_submissions_user_submitted ON form_submissions(user_id, submitted_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_answers_submission ON form_answers(submission_id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_workflow_form_item ON form_submission_workflow(form_id, item_type, item_id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_form_workflow_status_updated ON form_submission_workflow(workflow_status, updated_at DESC)`;
+  await query`CREATE UNIQUE INDEX IF NOT EXISTS idx_form_workflow_unique_form_item ON form_submission_workflow(form_id, item_type, item_id)`;
 }
 
 module.exports = { ensureSchema };

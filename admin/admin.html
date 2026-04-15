@@ -150,6 +150,42 @@
                         <h3>Pusat Kendali Admin</h3>
                         <p>Layar ini merangkum pekerjaan utama admin: cek kondisi sistem, buka modul yang paling sering dipakai, dan lanjutkan tugas prioritas tanpa harus mencari-cari menu.</p>
                     </section>
+                    <section class="card section-card command-center-shell">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title">Command Center</h3>
+                                <p class="section-support-text">Ringkasan KPI kritikal, antrean kerja, dan aksi cepat untuk percepatan operasional admin.</p>
+                            </div>
+                            <span class="status-badge status-muted" id="dashboard-health-badge">System: checking...</span>
+                        </div>
+                        <div class="command-center-kpi-grid mt-16" id="command-center-kpi-grid">
+                            <article class="command-kpi-card">
+                                <div class="command-kpi-label">Unread Queue</div>
+                                <div class="command-kpi-value" id="command-queue-unread">0</div>
+                                <div class="command-kpi-meta">Item belum dibaca</div>
+                            </article>
+                            <article class="command-kpi-card">
+                                <div class="command-kpi-label">Follow Up</div>
+                                <div class="command-kpi-value" id="command-queue-followup">0</div>
+                                <div class="command-kpi-meta">Butuh tindakan admin</div>
+                            </article>
+                            <article class="command-kpi-card">
+                                <div class="command-kpi-label">Open Feedback</div>
+                                <div class="command-kpi-value" id="command-open-feedback">0</div>
+                                <div class="command-kpi-meta">Masukan belum ditutup</div>
+                            </article>
+                            <article class="command-kpi-card">
+                                <div class="command-kpi-label">Attendance Active</div>
+                                <div class="command-kpi-value" id="command-attendance-active">0</div>
+                                <div class="command-kpi-meta">Event absensi berjalan</div>
+                            </article>
+                        </div>
+                        <div class="command-center-actions mt-16">
+                            <button type="button" class="btn btn-secondary panel-link" data-tab="forms">Buka Inbox Forms</button>
+                            <button type="button" class="btn btn-secondary panel-link" data-tab="users">Tindak Lanjut Feedback</button>
+                            <button type="button" class="btn btn-secondary panel-link" data-tab="attendance">Pantau Absensi</button>
+                        </div>
+                    </section>
                     <div class="dashboard-grid">
                         <div class="stat-card">
                             <div class="stat-icon stat-icon-users"><i

@@ -9,6 +9,8 @@ const routes = {
   'auth': require('./_handler_auth'),
   'auth_handler': require('./_handler_auth'), // Legacy support
   'admin/questions': require('./_handler_admin'),
+  'admin/dashboard': require('./_handler_admin'),
+  'admin/auth': require('./_handler_admin'),
   'admin/materials': require('./_handler_admin'), // Admin materials logic is here
   'admin/organization': require('./_handler_organization'),
   'admin/users': require('./_handler_users'),    // Admin users logic is here

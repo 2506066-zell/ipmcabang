@@ -30,6 +30,7 @@
         prefs: { tab: 'dashboard', search: '', status: 'all', set: 'all', category: 'all' },
         backend: 'vercel',
         adminToken: '',
+        permissions: null,
     };
     let modalDirty = false;
 
@@ -167,6 +168,11 @@
             statSchedules: document.getElementById('stat-schedules'),
             dashboardLogsList: document.getElementById('dashboard-logs-list'),
             dashboardPriorityList: document.getElementById('dashboard-priority-list'),
+            dashboardHealthBadge: document.getElementById('dashboard-health-badge'),
+            commandQueueUnread: document.getElementById('command-queue-unread'),
+            commandQueueFollowup: document.getElementById('command-queue-followup'),
+            commandOpenFeedback: document.getElementById('command-open-feedback'),
+            commandAttendanceActive: document.getElementById('command-attendance-active'),
             adminFocusGrid: document.getElementById('admin-focus-grid'),
             focusArticlesMeta: document.getElementById('focus-articles-meta'),
             focusQuestionsMeta: document.getElementById('focus-questions-meta'),
@@ -815,7 +821,7 @@
     async function loadDashboard() {
         // Parallel fetch for stats
         try {
-            const [usersData, questionsData, formsData, logsData, schedulesData, resultsData, articlesData, materialsData, feedbackData, notifyData, attendanceData] = await Promise.all([
+            const [usersData, questionsData, formsData, logsData, schedulesData, resultsData, articlesData, materialsData, feedbackData, notifyData, attendanceData, summaryData, permissionsData] = await Promise.all([
                 apiAdminVercel('GET', '/api/admin/users?action=extended'),
                 apiGetVercel('/api/questions?size=1'), // Just to get total count
                 apiAdminVercel('GET', '/api/admin/forms?action=list'),
@@ -826,8 +832,13 @@
                 apiGetVercel('/api/materials?size=1'),
                 apiAdminVercel('GET', '/api/feedback?action=list&status=open&size=20'),
                 apiAdminVercel('GET', '/api/admin/questions?action=listScheduledNotifications'),
-                apiAdminVercel('GET', '/api/attendance?action=adminOverview')
+                apiAdminVercel('GET', '/api/attendance?action=adminOverview'),
+                apiAdminVercel('GET', '/api/admin/dashboard?action=summary').catch(() => null),
+                apiAdminVercel('GET', '/api/admin/auth?action=permissions').catch(() => null)
             ]);
+
+            if (permissionsData?.permissions) state.permissions = permissionsData.permissions;
+            const summary = summaryData?.summary || null;
 
             const userCount = usersData.users ? usersData.users.length : 0;
             const questionCount = questionsData.total || 0;
@@ -845,6 +856,16 @@
             const attendanceRooms = Array.isArray(attendanceData.rooms) ? attendanceData.rooms : [];
             const activeAttendanceRooms = attendanceRooms.filter(item => item.active_event).length;
             const passiveAttendanceMembers = attendanceRooms.reduce((sum, item) => sum + Number(item.recap?.passive_members || 0), 0);
+
+            if (els.commandQueueUnread) els.commandQueueUnread.textContent = String(Number(summary?.queue?.unread ?? formInboxItems));
+            if (els.commandQueueFollowup) els.commandQueueFollowup.textContent = String(Number(summary?.queue?.follow_up ?? 0));
+            if (els.commandOpenFeedback) els.commandOpenFeedback.textContent = String(Number(summary?.queue?.open_feedback ?? openFeedback));
+            if (els.commandAttendanceActive) els.commandAttendanceActive.textContent = String(Number(summary?.queue?.active_attendance_events ?? activeAttendanceRooms));
+            if (els.dashboardHealthBadge) {
+                const healthLabel = String(summary?.health?.api || 'ok').toUpperCase();
+                els.dashboardHealthBadge.textContent = `System: ${healthLabel}`;
+                els.dashboardHealthBadge.className = `status-badge ${healthLabel === 'OK' ? 'status-success' : 'status-muted'}`;
+            }
 
             // Users Stat
             if (els.statUsers) els.statUsers.textContent = userCount;
@@ -908,6 +929,10 @@
 
         } catch (e) {
             console.error('Dashboard load error:', e);
+            if (els.dashboardHealthBadge) {
+                els.dashboardHealthBadge.textContent = 'System: degraded';
+                els.dashboardHealthBadge.className = 'status-badge status-danger';
+            }
             if (els.dashboardLogsList) {
                 els.dashboardLogsList.innerHTML = '<div class="small muted">Dashboard belum bisa memuat ringkasan terbaru.</div>';
             }

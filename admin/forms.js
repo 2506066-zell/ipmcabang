@@ -15,7 +15,9 @@ export function initFormsAdmin(state, els, deps) {
         review: {
             submissions: { sort: 'newest', filter: 'all', selectedId: 0 },
             inbox: { sort: 'newest', filter: 'all', selectedId: 0 }
-        }
+        },
+        workflowState: {},
+        busy: {}
     };
 
     const FIELD_TYPES = [
@@ -48,7 +50,21 @@ export function initFormsAdmin(state, els, deps) {
     }
 
     function isRead(type, itemId) {
+        const workflow = getWorkflowStatus(type, itemId);
+        if (workflow) return workflow === 'done';
         return local.readState[readStateKey(type, local.activeId, itemId)] === true;
+    }
+
+    function workflowKey(type, itemId) {
+        return `${type}:${Number(local.activeId || 0)}:${Number(itemId || 0)}`;
+    }
+
+    function getWorkflowStatus(type, itemId) {
+        return String(local.workflowState[workflowKey(type, itemId)] || '').trim().toLowerCase();
+    }
+
+    function setWorkflowStatus(type, itemId, status) {
+        local.workflowState[workflowKey(type, itemId)] = String(status || 'unread').trim().toLowerCase();
     }
 
     function markRead(type, itemId) {
@@ -57,9 +73,49 @@ export function initFormsAdmin(state, els, deps) {
         saveReadState();
     }
 
+    async function markWorkflow(type, itemId, status = 'done') {
+        if (!itemId || !local.activeId) return;
+        const itemType = type === 'inbox' ? 'inbox' : 'submission';
+        const desired = ['unread', 'follow_up', 'done'].includes(status) ? status : 'done';
+        await apiAdminVercel('POST', '/api/admin/forms?action=markWorkflow', {
+            form_id: Number(local.activeId),
+            item_type: itemType,
+            item_id: Number(itemId),
+            status: desired
+        });
+        setWorkflowStatus(type, itemId, desired);
+    }
+
+    function setActionBusy(action, busy = true) {
+        local.busy[action] = Boolean(busy);
+    }
+
+    function isActionBusy(action) {
+        return local.busy[action] === true;
+    }
+
     function formatDateTime(value) {
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('id-ID');
+    }
+
+    function can(permissionPath, fallback = true) {
+        const perms = state?.permissions;
+        if (!perms || typeof perms !== 'object') return fallback;
+        const parts = String(permissionPath || '').split('.').filter(Boolean);
+        let cursor = perms;
+        for (const part of parts) {
+            if (!cursor || typeof cursor !== 'object' || !(part in cursor)) return fallback;
+            cursor = cursor[part];
+        }
+        return cursor === true;
+    }
+
+    function workflowBadge(status) {
+        const value = String(status || 'unread').trim().toLowerCase();
+        if (value === 'done') return { text: 'Selesai', className: 'is-read' };
+        if (value === 'follow_up') return { text: 'Follow Up', className: 'is-follow-up' };
+        return { text: 'Baru', className: 'is-new' };
     }
 
     function createBlankField() {
@@ -114,6 +170,9 @@ export function initFormsAdmin(state, els, deps) {
         }
         const data = await apiAdminVercel('GET', `/api/admin/forms?action=submissions&id=${local.activeId}`);
         local.submissions = Array.isArray(data.items) ? data.items : [];
+        local.submissions.forEach((item) => {
+            setWorkflowStatus('submission', item.id, item.workflow_status || 'unread');
+        });
         const hasCurrent = local.submissions.some((item) => Number(item.id) === Number(local.review.submissions.selectedId));
         if (!hasCurrent) {
             local.review.submissions.selectedId = Number(local.submissions[0]?.id || 0);
@@ -128,6 +187,9 @@ export function initFormsAdmin(state, els, deps) {
         }
         const data = await apiAdminVercel('GET', `/api/admin/forms?action=inbox&id=${local.activeId}`);
         local.inbox = Array.isArray(data.items) ? data.items : [];
+        local.inbox.forEach((item) => {
+            setWorkflowStatus('inbox', item.id, item.workflow_status || 'unread');
+        });
         const hasCurrent = local.inbox.some((item) => Number(item.id) === Number(local.review.inbox.selectedId));
         if (!hasCurrent) {
             local.review.inbox.selectedId = Number(local.inbox[0]?.id || 0);
@@ -238,13 +300,13 @@ export function initFormsAdmin(state, els, deps) {
                         </div>
                         <div class="forms-admin-header-actions">
                             ${editor.id ? `
-                                <button type="button" class="btn btn-secondary" data-action="toggle-status" data-status="${editor.status === 'published' ? 'archived' : 'published'}">
+                                <button type="button" class="btn btn-secondary ${isActionBusy('toggle-status') ? 'is-loading' : ''}" data-action="toggle-status" data-status="${editor.status === 'published' ? 'archived' : 'published'}" ${(!can('forms.publish') || isActionBusy('toggle-status')) ? 'disabled' : ''} title="${can('forms.publish') ? '' : 'Tidak punya izin publish'}">
                                     <i class="fas ${editor.status === 'published' ? 'fa-box-archive' : 'fa-paper-plane'}"></i>
-                                    ${editor.status === 'published' ? 'Arsipkan' : 'Publikasikan'}
+                                    ${isActionBusy('toggle-status') ? 'Memproses...' : (editor.status === 'published' ? 'Arsipkan' : 'Publikasikan')}
                                 </button>
                             ` : ''}
-                            <button type="button" class="btn btn-primary" data-action="save-form">
-                                <i class="fas fa-floppy-disk"></i> Simpan Template
+                            <button type="button" class="btn btn-primary ${isActionBusy('save-form') ? 'is-loading' : ''}" data-action="save-form" ${(!can('forms.write') || isActionBusy('save-form')) ? 'disabled' : ''} title="${can('forms.write') ? '' : 'Tidak punya izin edit'}">
+                                <i class="fas fa-floppy-disk"></i> ${isActionBusy('save-form') ? 'Menyimpan...' : 'Simpan Template'}
                             </button>
                         </div>
                     </div>
@@ -289,7 +351,7 @@ export function initFormsAdmin(state, els, deps) {
                             <h3>Daftar Pertanyaan</h3>
                             <p>Tambahkan, urutkan, dan tandai pertanyaan esai penting agar masuk ke kotak surat admin.</p>
                         </div>
-                        <button type="button" class="btn btn-secondary" data-action="add-field">
+                        <button type="button" class="btn btn-secondary" data-action="add-field" ${!can('forms.write') ? 'disabled' : ''} title="${can('forms.write') ? '' : 'Tidak punya izin edit'}">
                             <i class="fas fa-plus"></i> Tambah Pertanyaan
                         </button>
                     </div>
@@ -393,7 +455,7 @@ export function initFormsAdmin(state, els, deps) {
         });
         const filter = local.review.submissions.filter || 'all';
         if (filter === 'focus') return list.filter((item) => (item.answers || []).some((answer) => answer.focus_inbox === true));
-        if (filter === 'unread') return list.filter((item) => !isRead('submission', item.id));
+        if (filter === 'unread') return list.filter((item) => getWorkflowStatus('submission', item.id) !== 'done');
         return list;
     }
 
@@ -408,13 +470,19 @@ export function initFormsAdmin(state, els, deps) {
             return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
         });
         const filter = local.review.inbox.filter || 'all';
-        if (filter === 'unread') return list.filter((item) => !isRead('inbox', item.id));
+        if (filter === 'focus') return list;
+        if (filter === 'unread') return list.filter((item) => getWorkflowStatus('inbox', item.id) !== 'done');
         return list;
     }
 
     function renderReviewToolbar(view) {
         const review = view === 'inbox' ? local.review.inbox : local.review.submissions;
         const refreshAction = view === 'inbox' ? 'reload-inbox' : 'reload-submissions';
+        const activeList = view === 'inbox' ? getSortedInbox() : getSortedSubmissions();
+        const selectedId = Number(review.selectedId || 0);
+        const selectedItem = activeList.find((item) => Number(item.id) === selectedId) || activeList[0] || null;
+        const selectedLabel = selectedItem ? escapeHtml(selectedItem.nama_panjang || selectedItem.username || '-') : 'Belum ada item dipilih';
+        const refreshBusy = isActionBusy(refreshAction);
         return `
             <div class="forms-admin-toolbar">
                 <div class="forms-admin-view-switch">
@@ -433,14 +501,16 @@ export function initFormsAdmin(state, els, deps) {
                         <button type="button" class="forms-review-filter ${review.filter === 'focus' ? 'active' : ''}" data-action="${view}-filter" data-filter="focus">Focus Inbox</button>
                         <button type="button" class="forms-review-filter ${review.filter === 'unread' ? 'active' : ''}" data-action="${view}-filter" data-filter="unread">Belum dibaca</button>
                     </div>
-                    <button type="button" class="btn btn-secondary" data-action="${refreshAction}"><i class="fas fa-rotate"></i> Refresh</button>
+                    <button type="button" class="btn btn-secondary ${refreshBusy ? 'is-loading' : ''}" data-action="${refreshAction}" ${refreshBusy ? 'disabled' : ''}><i class="fas fa-rotate"></i> ${refreshBusy ? 'Memuat...' : 'Refresh'}</button>
                 </div>
+                <div class="forms-review-selected-context">Terpilih: <strong>${selectedLabel}</strong></div>
             </div>
         `;
     }
 
     function renderSubmissionDetail(item) {
         if (!item) return `<section class="forms-admin-card forms-review-detail-empty">Pilih submission di panel kiri untuk melihat jawaban lengkap.</section>`;
+        const status = workflowBadge(getWorkflowStatus('submission', item.id));
         return `
             <section class="forms-admin-card forms-review-detail-card">
                 <div class="forms-admin-card-head">
@@ -450,8 +520,13 @@ export function initFormsAdmin(state, els, deps) {
                     </div>
                     <div class="forms-review-badge-stack">
                         <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
-                        <span class="forms-review-badge ${isRead('submission', item.id) ? 'is-read' : 'is-new'}">${isRead('submission', item.id) ? 'Sudah dibaca' : 'Baru'}</span>
+                        <span class="forms-review-badge ${status.className}">${status.text}</span>
                     </div>
+                </div>
+                <div class="forms-review-action-row">
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="unread">Set Unread</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up">Set Follow Up</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done">Set Selesai</button>
                 </div>
                 <div class="forms-admin-answer-list forms-admin-answer-list-strong">
                     ${(item.answers || []).map((answer) => `
@@ -482,7 +557,7 @@ export function initFormsAdmin(state, els, deps) {
                         <div class="forms-review-list">
                             ${list.length ? list.map((item) => {
                                 const hasFocus = (item.answers || []).some((answer) => answer.focus_inbox === true);
-                                const read = isRead('submission', item.id);
+                                const status = workflowBadge(getWorkflowStatus('submission', item.id));
                                 return `
                                     <button type="button" class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}" data-action="pick-submission" data-id="${item.id}">
                                         <div class="forms-review-list-head">
@@ -491,7 +566,7 @@ export function initFormsAdmin(state, els, deps) {
                                         </div>
                                         <div class="small muted">@${escapeHtml(item.username || '-')} • ${escapeHtml(item.pimpinan || '-')}</div>
                                         <div class="forms-review-badge-row">
-                                            <span class="forms-review-badge ${read ? 'is-read' : 'is-new'}">${read ? 'Sudah dibaca' : 'Baru'}</span>
+                                            <span class="forms-review-badge ${status.className}">${status.text}</span>
                                             ${hasFocus ? '<span class="forms-review-badge is-focus">Focus Inbox</span>' : ''}
                                         </div>
                                     </button>
@@ -507,6 +582,7 @@ export function initFormsAdmin(state, els, deps) {
 
     function renderInboxDetail(item) {
         if (!item) return `<section class="forms-admin-card forms-review-detail-empty">Pilih item inbox di panel kiri untuk membaca jawaban lengkap.</section>`;
+        const status = workflowBadge(getWorkflowStatus('inbox', item.id));
         return `
             <section class="forms-admin-card forms-review-detail-card">
                 <div class="forms-admin-card-head">
@@ -516,8 +592,13 @@ export function initFormsAdmin(state, els, deps) {
                     </div>
                     <div class="forms-review-badge-stack">
                         <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
-                        <span class="forms-review-badge ${isRead('inbox', item.id) ? 'is-read' : 'is-new'}">${isRead('inbox', item.id) ? 'Sudah dibaca' : 'Baru'}</span>
+                        <span class="forms-review-badge ${status.className}">${status.text}</span>
                     </div>
+                </div>
+                <div class="forms-review-action-row">
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="unread">Set Unread</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="follow_up">Set Follow Up</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-inbox" data-id="${item.id}" data-status="done">Set Selesai</button>
                 </div>
                 <div class="forms-admin-answer-item focus">
                     <div class="forms-admin-answer-label">${escapeHtml(item.field_label || 'Jawaban')}</div>
@@ -547,7 +628,7 @@ export function initFormsAdmin(state, els, deps) {
                         </div>
                         <div class="forms-review-list">
                             ${list.length ? list.map((item) => {
-                                const read = isRead('inbox', item.id);
+                                const status = workflowBadge(getWorkflowStatus('inbox', item.id));
                                 return `
                                     <button type="button" class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}" data-action="pick-inbox-item" data-id="${item.id}">
                                         <div class="forms-review-list-head">
@@ -557,7 +638,7 @@ export function initFormsAdmin(state, els, deps) {
                                         <div class="small muted">${escapeHtml(item.field_label || '-')}</div>
                                         <div class="forms-review-preview">${escapeHtml(item.answer_text || '-')}</div>
                                         <div class="forms-review-badge-row">
-                                            <span class="forms-review-badge ${read ? 'is-read' : 'is-new'}">${read ? 'Sudah dibaca' : 'Baru'}</span>
+                                            <span class="forms-review-badge ${status.className}">${status.text}</span>
                                             <span class="forms-review-badge is-focus">Focus Inbox</span>
                                         </div>
                                     </button>
@@ -637,6 +718,18 @@ export function initFormsAdmin(state, els, deps) {
         render();
     }
 
+    function moveSelection(delta = 1) {
+        if (local.activeView !== 'submissions' && local.activeView !== 'inbox') return;
+        const list = local.activeView === 'submissions' ? getSortedSubmissions() : getSortedInbox();
+        if (!list.length) return;
+        const review = local.activeView === 'submissions' ? local.review.submissions : local.review.inbox;
+        const currentId = Number(review.selectedId || 0);
+        const currentIndex = Math.max(0, list.findIndex((item) => Number(item.id) === currentId));
+        const nextIndex = Math.min(Math.max(currentIndex + delta, 0), list.length - 1);
+        review.selectedId = Number(list[nextIndex].id);
+        render();
+    }
+
     root.addEventListener('click', async (event) => {
         const actionEl = event.target.closest('[data-action], [data-view]');
         if (!actionEl) return;
@@ -645,6 +738,20 @@ export function initFormsAdmin(state, els, deps) {
         const index = Number(actionEl.dataset.index || -1);
 
         try {
+            const writeActions = new Set(['add-field', 'remove-field', 'move-up', 'move-down', 'save-form']);
+            if (writeActions.has(action) && !can('forms.write')) {
+                setStatus('Aksi ditolak: izin edit form tidak tersedia.', 'error');
+                return;
+            }
+            if (action === 'toggle-status' && !can('forms.publish')) {
+                setStatus('Aksi ditolak: izin publish tidak tersedia.', 'error');
+                return;
+            }
+            if ((action === 'workflow-submission' || action === 'workflow-inbox') && !can('forms.workflow_mark')) {
+                setStatus('Aksi ditolak: izin workflow tidak tersedia.', 'error');
+                return;
+            }
+
             if (view) {
                 local.activeView = view;
                 if (view === 'submissions') await loadSubmissions();
@@ -694,20 +801,38 @@ export function initFormsAdmin(state, els, deps) {
                 return;
             }
             if (action === 'save-form') {
+                if (isActionBusy(action)) return;
+                setActionBusy(action, true);
+                render();
                 await saveEditor();
+                setActionBusy(action, false);
+                render();
                 return;
             }
             if (action === 'toggle-status') {
+                if (isActionBusy(action)) return;
+                setActionBusy(action, true);
+                render();
                 await toggleStatus(actionEl.dataset.status || 'published');
+                setActionBusy(action, false);
+                render();
                 return;
             }
             if (action === 'reload-submissions') {
+                if (isActionBusy(action)) return;
+                setActionBusy(action, true);
+                render();
                 await loadSubmissions();
+                setActionBusy(action, false);
                 render();
                 return;
             }
             if (action === 'reload-inbox') {
+                if (isActionBusy(action)) return;
+                setActionBusy(action, true);
+                render();
                 await loadInbox();
+                setActionBusy(action, false);
                 render();
                 return;
             }
@@ -715,6 +840,7 @@ export function initFormsAdmin(state, els, deps) {
                 const id = Number(actionEl.dataset.id || 0);
                 local.review.submissions.selectedId = id;
                 markRead('submission', id);
+                if (can('forms.workflow_mark')) await markWorkflow('submission', id, 'done');
                 render();
                 return;
             }
@@ -722,6 +848,7 @@ export function initFormsAdmin(state, els, deps) {
                 const id = Number(actionEl.dataset.id || 0);
                 local.review.inbox.selectedId = id;
                 markRead('inbox', id);
+                if (can('forms.workflow_mark')) await markWorkflow('inbox', id, 'done');
                 render();
                 return;
             }
@@ -739,17 +866,38 @@ export function initFormsAdmin(state, els, deps) {
                 local.activeView = 'submissions';
                 local.review.submissions.selectedId = Number(actionEl.dataset.id || 0);
                 markRead('submission', local.review.submissions.selectedId);
+                if (can('forms.workflow_mark')) await markWorkflow('submission', local.review.submissions.selectedId, 'done');
+                await loadSubmissions();
+                render();
+                return;
+            }
+            if (action === 'workflow-submission') {
+                const id = Number(actionEl.dataset.id || 0);
+                await markWorkflow('submission', id, actionEl.dataset.status || 'done');
+                if (id) local.review.submissions.selectedId = id;
+                await loadSubmissions();
+                render();
+                return;
+            }
+            if (action === 'workflow-inbox') {
+                const id = Number(actionEl.dataset.id || 0);
+                await markWorkflow('inbox', id, actionEl.dataset.status || 'done');
+                if (id) local.review.inbox.selectedId = id;
+                await loadInbox();
                 render();
                 return;
             }
         } catch (error) {
+            setActionBusy(action, false);
             setStatus(error.message || 'Terjadi kesalahan pada modul form.', 'error');
+            render();
         }
     });
 
     root.addEventListener('input', (event) => {
         const action = event.target.dataset.action || '';
         if (!action || (!action.startsWith('meta-') && !action.startsWith('field-'))) return;
+        if (!can('forms.write')) return;
         updateEditorValue(action, Number(event.target.dataset.index || -1), event.target.value, event.target.checked);
     });
 
@@ -767,7 +915,51 @@ export function initFormsAdmin(state, els, deps) {
             return;
         }
         if (!action.startsWith('meta-') && !action.startsWith('field-')) return;
+        if (!can('forms.write')) return;
         updateEditorValue(action, Number(event.target.dataset.index || -1), event.target.value, event.target.checked);
+    });
+
+    document.addEventListener('keydown', async (event) => {
+        if (!root || !root.isConnected) return;
+        if (local.activeView !== 'submissions' && local.activeView !== 'inbox') return;
+        if (root.offsetParent === null) return;
+        const target = event.target;
+        const tag = String(target?.tagName || '').toLowerCase();
+        if (['input', 'textarea', 'select'].includes(tag) || target?.isContentEditable) return;
+
+        if (event.key === 'j' || event.key === 'J') {
+            event.preventDefault();
+            moveSelection(1);
+            return;
+        }
+        if (event.key === 'k' || event.key === 'K') {
+            event.preventDefault();
+            moveSelection(-1);
+            return;
+        }
+        if (event.key === 'm' || event.key === 'M') {
+            event.preventDefault();
+            if (!can('forms.workflow_mark')) return;
+            const activeId = local.activeView === 'submissions'
+                ? Number(local.review.submissions.selectedId || 0)
+                : Number(local.review.inbox.selectedId || 0);
+            if (!activeId) return;
+            const itemType = local.activeView === 'submissions' ? 'submission' : 'inbox';
+            await markWorkflow(itemType, activeId, 'done');
+            if (itemType === 'submission') await loadSubmissions();
+            else await loadInbox();
+            render();
+            return;
+        }
+        if (event.key === 'f' || event.key === 'F') {
+            event.preventDefault();
+            if (local.activeView === 'submissions') {
+                local.review.submissions.filter = local.review.submissions.filter === 'focus' ? 'all' : 'focus';
+            } else {
+                local.review.inbox.filter = local.review.inbox.filter === 'focus' ? 'all' : 'focus';
+            }
+            render();
+        }
     });
 
     window.__adminFormsReload = reloadAll;

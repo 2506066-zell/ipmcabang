@@ -6,6 +6,8 @@ const { requireAdminAuth, getSessionUser } = require('./_auth');
 const FIELD_TYPES = new Set(['short_text', 'paragraph', 'single_choice', 'multiple_choice', 'dropdown']);
 const FORM_TYPES = new Set(['pretest', 'posttest']);
 const FORM_STATUSES = new Set(['draft', 'published', 'archived']);
+const WORKFLOW_STATUSES = new Set(['unread', 'follow_up', 'done']);
+const WORKFLOW_ITEM_TYPES = new Set(['submission', 'inbox']);
 
 function sanitizeText(value, maxLen = 255) {
   return String(value || '')
@@ -620,6 +622,20 @@ async function handleAdminSubmissions(req, res) {
     });
   }
 
+  const submissionIds = rows.map((row) => Number(row.id)).filter(Boolean);
+  let workflowMap = new Map();
+  if (submissionIds.length) {
+    const workflowRows = (
+      await rawQuery(
+        `SELECT item_id, workflow_status
+         FROM form_submission_workflow
+         WHERE form_id = $1 AND item_type = 'submission' AND item_id = ANY($2::int[])`,
+        [formId, submissionIds]
+      )
+    ).rows;
+    workflowMap = new Map(workflowRows.map((row) => [Number(row.item_id), String(row.workflow_status || 'unread')]));
+  }
+
   return json(res, 200, {
     status: 'success',
     items: rows.map((row) => ({
@@ -632,6 +648,7 @@ async function handleAdminSubmissions(req, res) {
       username: row.username || '',
       nama_panjang: row.nama_panjang || '',
       pimpinan: row.pimpinan || '',
+      workflow_status: workflowMap.get(Number(row.id)) || 'unread',
       answers: answersMap.get(Number(row.id)) || []
     }))
   });
@@ -664,6 +681,20 @@ async function handleAdminInbox(req, res) {
     `
   ).rows;
 
+  const inboxIds = rows.map((row) => Number(row.id)).filter(Boolean);
+  let workflowMap = new Map();
+  if (inboxIds.length) {
+    const workflowRows = (
+      await rawQuery(
+        `SELECT item_id, workflow_status
+         FROM form_submission_workflow
+         WHERE form_id = $1 AND item_type = 'inbox' AND item_id = ANY($2::int[])`,
+        [formId, inboxIds]
+      )
+    ).rows;
+    workflowMap = new Map(workflowRows.map((row) => [Number(row.item_id), String(row.workflow_status || 'unread')]));
+  }
+
   return json(res, 200, {
     status: 'success',
     items: rows.map((row) => ({
@@ -676,8 +707,77 @@ async function handleAdminInbox(req, res) {
       answer_text: row.answer_text || '',
       submitter_name: row.submitter_name || '',
       username: row.username || '',
-      nama_panjang: row.nama_panjang || ''
+      nama_panjang: row.nama_panjang || '',
+      workflow_status: workflowMap.get(Number(row.id)) || 'unread'
     }))
+  });
+}
+
+async function handleMarkWorkflow(req, res) {
+  let admin = null;
+  try {
+    admin = await requireAdminAuth(req);
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const body = parseJsonBody(req) || {};
+  const formId = Number(body.form_id || 0);
+  const itemType = String(body.item_type || '').trim().toLowerCase();
+  const itemId = Number(body.item_id || 0);
+  const workflowStatus = String(body.status || '').trim().toLowerCase();
+
+  if (!formId || !itemId) return json(res, 400, { status: 'error', message: 'form_id dan item_id wajib diisi.' });
+  if (!WORKFLOW_ITEM_TYPES.has(itemType)) return json(res, 400, { status: 'error', message: 'item_type tidak valid.' });
+  if (!WORKFLOW_STATUSES.has(workflowStatus)) return json(res, 400, { status: 'error', message: 'status workflow tidak valid.' });
+
+  if (itemType === 'submission') {
+    const exists = (
+      await query`
+        SELECT id FROM form_submissions
+        WHERE id=${itemId} AND form_id=${formId}
+        LIMIT 1
+      `
+    ).rows[0];
+    if (!exists) return json(res, 404, { status: 'error', message: 'Submission tidak ditemukan.' });
+  } else {
+    const exists = (
+      await query`
+        SELECT a.id
+        FROM form_answers a
+        JOIN form_fields ff ON ff.id = a.field_id
+        JOIN form_submissions s ON s.id = a.submission_id
+        WHERE a.id=${itemId}
+          AND s.form_id=${formId}
+          AND ff.focus_inbox = true
+        LIMIT 1
+      `
+    ).rows[0];
+    if (!exists) return json(res, 404, { status: 'error', message: 'Item inbox tidak ditemukan.' });
+  }
+
+  await query`
+    INSERT INTO form_submission_workflow (form_id, item_type, item_id, workflow_status, updated_by, updated_at)
+    VALUES (${formId}, ${itemType}, ${itemId}, ${workflowStatus}, ${admin.id}, NOW())
+    ON CONFLICT (form_id, item_type, item_id)
+    DO UPDATE SET workflow_status=${workflowStatus}, updated_by=${admin.id}, updated_at=NOW()
+  `;
+
+  await writeActivity(admin.id, 'MARK_FORM_WORKFLOW', {
+    form_id: formId,
+    item_type: itemType,
+    item_id: itemId,
+    workflow_status: workflowStatus
+  });
+
+  return json(res, 200, {
+    status: 'success',
+    item: {
+      form_id: formId,
+      item_type: itemType,
+      item_id: itemId,
+      workflow_status: workflowStatus
+    }
   });
 }
 
@@ -703,6 +803,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET' && action === 'inbox') return await handleAdminInbox(req, res);
     if (req.method === 'POST' && action === 'saveTemplate') return await handleSaveTemplate(req, res);
     if (req.method === 'POST' && action === 'publish') return await handlePublish(req, res);
+    if (req.method === 'POST' && action === 'markWorkflow') return await handleMarkWorkflow(req, res);
 
     return json(res, 404, { status: 'error', message: `Unknown action: ${action || 'none'}` });
   } catch (e) {

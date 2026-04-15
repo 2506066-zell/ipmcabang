@@ -598,6 +598,75 @@ async function handleGetActivityLogs(req, res) {
     return json(res, 200, { status: 'success', logs });
 }
 
+async function handleDashboardSummary(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+
+    const [usersRow, resultsRow, questionsRow, schedulesRow, feedbackRow, workflowRows, pendingNotifRow, attendanceRow] = await Promise.all([
+        query`SELECT COUNT(*)::int AS c FROM users WHERE role='user' OR role IS NULL`,
+        query`SELECT COUNT(*)::int AS c FROM results`,
+        query`SELECT COUNT(*)::int AS c FROM questions`,
+        query`SELECT COUNT(*)::int AS c FROM quiz_schedules WHERE active=TRUE`,
+        query`SELECT COUNT(*)::int AS c FROM feedback_messages WHERE status='open'`,
+        query`
+            SELECT workflow_status, COUNT(*)::int AS c
+            FROM form_submission_workflow
+            GROUP BY workflow_status
+        `,
+        query`SELECT COUNT(*)::int AS c FROM scheduled_notifications WHERE status='pending'`,
+        query`SELECT COUNT(*)::int AS c FROM attendance_events WHERE status='active' AND event_date=CURRENT_DATE`
+    ]);
+
+    const workflowMap = { unread: 0, follow_up: 0, done: 0 };
+    (workflowRows.rows || []).forEach((row) => {
+        const key = String(row.workflow_status || '').toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(workflowMap, key)) workflowMap[key] = Number(row.c || 0);
+    });
+
+    return json(res, 200, {
+        status: 'success',
+        summary: {
+            kpi: {
+                users: Number(usersRow.rows[0]?.c || 0),
+                quizzes_finished: Number(resultsRow.rows[0]?.c || 0),
+                questions: Number(questionsRow.rows[0]?.c || 0),
+                active_schedules: Number(schedulesRow.rows[0]?.c || 0)
+            },
+            queue: {
+                unread: workflowMap.unread,
+                follow_up: workflowMap.follow_up,
+                done: workflowMap.done,
+                open_feedback: Number(feedbackRow.rows[0]?.c || 0),
+                pending_notifications: Number(pendingNotifRow.rows[0]?.c || 0),
+                active_attendance_events: Number(attendanceRow.rows[0]?.c || 0)
+            },
+            health: {
+                api: 'ok',
+                updated_at: new Date().toISOString()
+            }
+        }
+    });
+}
+
+async function handleAdminPermissions(req, res) {
+    try {
+        await requireAdminAuth(req);
+    } catch (e) {
+        return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+    }
+
+    return json(res, 200, {
+        status: 'success',
+        role: 'admin',
+        permissions: {
+            forms: { read: true, write: true, publish: true, export: true, inbox_review: true, workflow_mark: true },
+            attendance: { read: true, manage: true },
+            users: { read: true, write: true, broadcast: true },
+            content: { articles: true, materials: true, organization: true },
+            system: { schedules: true, logs: true, gamification: true }
+        }
+    });
+}
+
 // --- Gamification Settings ---
 async function handleGetGamification(req, res) {
     try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
@@ -709,6 +778,7 @@ async function handleMigrate(req, res) {
 
 module.exports = async (req, res) => {
     try {
+        await ensureSchema();
         req.query = req.query || {};
         const action = req.query.action;
 
@@ -716,6 +786,8 @@ module.exports = async (req, res) => {
             if (req.method === 'GET' && !action && String(req.url || '').includes('materials')) {
                 return await handleListMaterials(req, res);
             }
+            if (req.method === 'GET' && action === 'summary') return await handleDashboardSummary(req, res);
+            if (req.method === 'GET' && action === 'permissions') return await handleAdminPermissions(req, res);
             if (req.method === 'GET' && action === 'activityLogs') return await handleGetActivityLogs(req, res);
             if (req.method === 'GET' && action === 'schedules') return await handleGetSchedules(req, res);
             if (req.method === 'GET' && action === 'listQuestions') return await handleListQuestions(req, res);
