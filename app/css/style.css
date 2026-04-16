@@ -633,8 +633,9 @@ body.body-no-scroll {
 
 .bottom-nav .bottom-nav-inner {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    gap: 0;
+    padding: 0 4px;
 }
 
 .bottom-nav a {
@@ -642,10 +643,12 @@ body.body-no-scroll {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 4px;
+    padding: 10px 2px 8px;
     color: #1a1a1a;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11px;
+    min-width: 0;
+    word-break: break-word;
 }
 
 .bottom-nav a.active {
