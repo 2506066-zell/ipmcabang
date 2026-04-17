@@ -151,24 +151,27 @@ body.body-no-scroll {
 .logo-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .header-logo {
-    height: 32px;
+    height: 56px;
     width: auto;
     flex: 0 0 auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 }
 
 .header-title {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: #1a1a1a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 150px;
 }
 
 .header-right-icons {
@@ -763,7 +766,7 @@ main {
 /* Responsive */
 @media (max-width: 768px) {
     .header-logo {
-        height: 35px;
+        height: 48px;
     }
 
     .hero-section {
@@ -795,7 +798,7 @@ main {
     }
 
     .header-logo {
-        height: 30px;
+        height: 44px;
     }
 
     .hero-logo {

@@ -269,25 +269,28 @@ body.body-no-scroll {
 .logo-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .header-logo {
-    height: 52px;
+    height: 56px;
     width: auto;
     flex: 0 0 auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 }
 
 .header-title {
-    font-size: var(--text-base);
+    font-size: clamp(0.95rem, 1vw, 1.1rem);
     font-weight: 700;
     color: var(--slate-900);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     letter-spacing: -0.01em;
+    max-width: 150px;
 }
 
 .header-right-icons {
@@ -959,7 +962,7 @@ main {
 /* Responsive */
 @media (max-width: 768px) {
     .header-logo {
-        height: 42px;
+        height: 48px;
     }
 
     .hero-section {
@@ -991,7 +994,7 @@ main {
     }
 
     .header-logo {
-        height: 36px;
+        height: 44px;
     }
 
     .hero-logo {
