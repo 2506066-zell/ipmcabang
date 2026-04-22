@@ -36,6 +36,9 @@
                 <button class="nav-item active" data-tab="dashboard">
                     <i class="fas fa-chart-line"></i> <span>Beranda Admin</span>
                 </button>
+                <button class="nav-item" data-tab="traffic">
+                    <i class="fas fa-signal"></i> <span>Traffic</span>
+                </button>
 
                 <p class="nav-group-title">Konten Publik</p>
                 <button class="nav-item" data-tab="articles">
@@ -339,6 +342,77 @@
                     <section class="card section-card mt-24">
                         <h3 class="section-card-title">Aktivitas Terbaru</h3>
                         <div id="dashboard-logs-list" class="list-container mt-16"></div>
+                    </section>
+                </div>
+
+                <!-- TRAFFIC TAB -->
+                <div id="tab-traffic" class="hidden">
+                    <section class="section-intro">
+                        <h3>Traffic Ops</h3>
+                        <p>Ringkasan kunjungan publik: pageviews, pengunjung unik (perkiraan), halaman teratas, dan tren harian.</p>
+                    </section>
+
+                    <section class="card section-card traffic-shell">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title">Ringkasan 30 Hari</h3>
+                                <p class="section-support-text">Gunakan data ini untuk mengukur dampak artikel, quiz, dan program kerja.</p>
+                            </div>
+                            <div class="toolbar-row">
+                                <select id="traffic-range" class="toolbar-select">
+                                    <option value="7">7 hari</option>
+                                    <option value="30" selected>30 hari</option>
+                                    <option value="90">90 hari</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary" id="traffic-refresh-btn">
+                                    <i class="fas fa-rotate"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="traffic-kpi-grid mt-16">
+                            <article class="mini-summary-card">
+                                <div class="mini-summary-label">Pageviews</div>
+                                <div class="mini-summary-value" id="traffic-kpi-pageviews">0</div>
+                                <div class="mini-summary-meta">Total kunjungan halaman</div>
+                            </article>
+                            <article class="mini-summary-card">
+                                <div class="mini-summary-label">Visitors</div>
+                                <div class="mini-summary-value" id="traffic-kpi-visitors">0</div>
+                                <div class="mini-summary-meta">Perkiraan unik (hash IP)</div>
+                            </article>
+                            <article class="mini-summary-card">
+                                <div class="mini-summary-label">Sessions</div>
+                                <div class="mini-summary-value" id="traffic-kpi-sessions">0</div>
+                                <div class="mini-summary-meta">Perkiraan sesi</div>
+                            </article>
+                            <article class="mini-summary-card">
+                                <div class="mini-summary-label">Events</div>
+                                <div class="mini-summary-value" id="traffic-kpi-events">0</div>
+                                <div class="mini-summary-meta">Semua event</div>
+                            </article>
+                        </div>
+
+                        <div class="traffic-layout mt-24">
+                            <section class="traffic-panel">
+                                <div class="subsection-heading-row">
+                                    <div>
+                                        <h3 class="section-card-title">Top Pages</h3>
+                                        <p class="section-support-text">Halaman paling sering dibuka.</p>
+                                    </div>
+                                </div>
+                                <div id="traffic-top-pages" class="list-container mt-16"></div>
+                            </section>
+                            <section class="traffic-panel">
+                                <div class="subsection-heading-row">
+                                    <div>
+                                        <h3 class="section-card-title">Tren Harian</h3>
+                                        <p class="section-support-text">Pageviews dan visitors per hari.</p>
+                                    </div>
+                                </div>
+                                <div id="traffic-daily" class="traffic-daily-list mt-16"></div>
+                            </section>
+                        </div>
                     </section>
                 </div>
 

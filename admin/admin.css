@@ -254,6 +254,87 @@ body {
     gap: 10px;
 }
 
+.traffic-shell {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.traffic-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.traffic-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.traffic-panel {
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(15, 23, 42, 0.35);
+    padding: 16px;
+}
+
+.traffic-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.traffic-path {
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.traffic-count {
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.traffic-daily-list {
+    display: grid;
+    gap: 10px;
+}
+
+.traffic-day-row {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.traffic-day-label {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.traffic-day-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.12);
+    overflow: hidden;
+}
+
+.traffic-day-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.9), rgba(245, 158, 11, 0.9));
+}
+
+.traffic-day-meta {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
 .stat-card {
     background: var(--card-bg);
     border: var(--glass-border);
@@ -3778,6 +3859,23 @@ button.priority-card:hover {
 @media (max-width: 720px) {
     .command-center-kpi-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .traffic-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .traffic-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .traffic-day-row {
+        grid-template-columns: 92px minmax(0, 1fr);
+    }
+
+    .traffic-day-meta {
+        grid-column: span 2;
+        text-align: right;
     }
 
     .forms-builder-grid {

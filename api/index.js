@@ -11,6 +11,7 @@ const routes = {
   'admin/questions': require('./_handler_admin'),
   'admin/dashboard': require('./_handler_admin'),
   'admin/auth': require('./_handler_admin'),
+  'admin/analytics': require('./_handler_analytics'),
   'admin/materials': require('./_handler_admin'), // Admin materials logic is here
   'admin/organization': require('./_handler_organization'),
   'admin/users': require('./_handler_users'),    // Admin users logic is here
@@ -25,6 +26,7 @@ const routes = {
   'feedback': require('./_handler_feedback'),
   'forms': require('./_handler_forms'),
   'admin/forms': require('./_handler_forms'),
+  'analytics': require('./_handler_analytics'),
   'push': require('./_handler_push'),
   'attendance': require('./_handler_attendance'),
   'discussions': require('./_handler_discussions'),

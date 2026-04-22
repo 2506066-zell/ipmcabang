@@ -695,6 +695,52 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchNotifications();
     }
 
+    // --- Lightweight Analytics (Public) ---
+    try {
+        if (!document.body.classList.contains('page-admin')) {
+            const dnt = (navigator.doNotTrack === '1' || window.doNotTrack === '1');
+            const getSid = () => {
+                const key = 'ipm_analytics_sid';
+                try {
+                    let sid = localStorage.getItem(key) || sessionStorage.getItem(key) || '';
+                    if (!sid) {
+                        sid = (crypto?.randomUUID ? crypto.randomUUID() : `sid_${Date.now()}_${Math.random().toString(16).slice(2)}`);
+                        localStorage.setItem(key, sid);
+                    }
+                    return sid;
+                } catch {
+                    return '';
+                }
+            };
+
+            const send = (payload) => {
+                if (dnt) return;
+                const body = JSON.stringify(payload);
+                const url = '/api/analytics?action=track';
+                if (navigator.sendBeacon) {
+                    const blob = new Blob([body], { type: 'application/json' });
+                    navigator.sendBeacon(url, blob);
+                    return;
+                }
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body,
+                    credentials: 'omit',
+                    keepalive: true
+                }).catch(() => {});
+            };
+
+            send({
+                event_name: 'pageview',
+                path: `${window.location.pathname || '/'}${window.location.search || ''}`,
+                title: document.title || '',
+                referrer: document.referrer || '',
+                session_id: getSid()
+            });
+        }
+    } catch {}
+
     // --- PUSH SUBSCRIPTION (PWA) ---
     const pushState = { subscribed: false, inFlight: false, vapidMissing: false };
 

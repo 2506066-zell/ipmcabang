@@ -311,8 +311,27 @@
             menuModal: document.getElementById('menu-modal'),
             navMore: document.getElementById('nav-more'),
             menuThemeToggle: document.getElementById('menu-theme-toggle'),
-            menuLogoutBtn: document.getElementById('menu-logout-btn')
+            menuLogoutBtn: document.getElementById('menu-logout-btn'),
+
+            // Traffic
+            trafficRange: document.getElementById('traffic-range'),
+            trafficRefreshBtn: document.getElementById('traffic-refresh-btn'),
+            trafficKpiPageviews: document.getElementById('traffic-kpi-pageviews'),
+            trafficKpiVisitors: document.getElementById('traffic-kpi-visitors'),
+            trafficKpiSessions: document.getElementById('traffic-kpi-sessions'),
+            trafficKpiEvents: document.getElementById('traffic-kpi-events'),
+            trafficTopPages: document.getElementById('traffic-top-pages'),
+            trafficDaily: document.getElementById('traffic-daily')
         };
+    }
+
+    function bindTrafficEvents() {
+        if (els.trafficRefreshBtn) {
+            els.trafficRefreshBtn.addEventListener('click', () => loadTraffic());
+        }
+        if (els.trafficRange) {
+            els.trafficRange.addEventListener('change', () => loadTraffic());
+        }
     }
 
     const paging = {
@@ -704,7 +723,7 @@
         });
 
         // Hide all tabs
-        ['dashboard', 'questions', 'forms', 'results', 'users', 'attendance', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
+        ['dashboard', 'traffic', 'questions', 'forms', 'results', 'users', 'attendance', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
@@ -726,6 +745,9 @@
         // Load Data
         if (tabName === 'dashboard') {
             loadDashboard();
+        }
+        if (tabName === 'traffic') {
+            loadTraffic();
         }
         if (tabName === 'questions' && state.questions.length === 0) loadQuestions();
         if (tabName === 'forms') {
@@ -939,6 +961,64 @@
             if (els.dashboardPriorityList) {
                 els.dashboardPriorityList.innerHTML = '<div class="small muted">Prioritas kerja belum bisa dimuat saat ini.</div>';
             }
+        }
+    }
+
+    function renderTraffic(summary) {
+        if (!summary) return;
+        if (els.trafficKpiPageviews) els.trafficKpiPageviews.textContent = String(summary.summary?.pageviews || 0);
+        if (els.trafficKpiVisitors) els.trafficKpiVisitors.textContent = String(summary.summary?.unique_visitors || 0);
+        if (els.trafficKpiSessions) els.trafficKpiSessions.textContent = String(summary.summary?.sessions || 0);
+        if (els.trafficKpiEvents) els.trafficKpiEvents.textContent = String(summary.summary?.events || 0);
+
+        if (els.trafficTopPages) {
+            const top = Array.isArray(summary.top_pages) ? summary.top_pages : [];
+            if (!top.length) {
+                els.trafficTopPages.innerHTML = '<div class="small muted">Belum ada data pageview.</div>';
+            } else {
+                els.trafficTopPages.innerHTML = top.map((item) => `
+                    <div class="list-item traffic-list-item">
+                        <div class="traffic-path">${escapeHtml(item.path)}</div>
+                        <div class="traffic-count">${Number(item.pageviews || 0)}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        if (els.trafficDaily) {
+            const daily = Array.isArray(summary.daily) ? summary.daily : [];
+            if (!daily.length) {
+                els.trafficDaily.innerHTML = '<div class="small muted">Belum ada tren harian.</div>';
+            } else {
+                const maxPv = Math.max(...daily.map((d) => Number(d.pageviews || 0)), 1);
+                els.trafficDaily.innerHTML = daily.map((d) => {
+                    const pv = Number(d.pageviews || 0);
+                    const visitors = Number(d.visitors || 0);
+                    const width = Math.max(4, Math.round((pv / maxPv) * 100));
+                    return `
+                        <div class="traffic-day-row">
+                            <div class="traffic-day-label">${escapeHtml(d.day)}</div>
+                            <div class="traffic-day-bar" aria-hidden="true"><span style="width:${width}%"></span></div>
+                            <div class="traffic-day-meta">${pv} pv â€¢ ${visitors} v</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    }
+
+    async function loadTraffic() {
+        if (!els.trafficTopPages) return;
+        const days = Number(els.trafficRange?.value || 30) || 30;
+        if (els.trafficRefreshBtn) els.trafficRefreshBtn.disabled = true;
+        try {
+            const data = await apiAdminVercel('GET', `/api/admin/analytics?action=summary&days=${days}`);
+            renderTraffic(data);
+        } catch (e) {
+            if (els.trafficTopPages) els.trafficTopPages.innerHTML = '<div class="small muted">Gagal memuat data traffic.</div>';
+            if (els.trafficDaily) els.trafficDaily.innerHTML = '<div class="small muted">-</div>';
+        } finally {
+            if (els.trafficRefreshBtn) els.trafficRefreshBtn.disabled = false;
         }
     }
 
@@ -2620,6 +2700,7 @@
         loadPrefs();
         initTheme();
         initEvents();
+        bindTrafficEvents();
 
         const sess = sessionStorage.getItem(SESSION_KEYS.session);
         if (sess) {

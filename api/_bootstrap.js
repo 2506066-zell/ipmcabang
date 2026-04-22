@@ -487,6 +487,21 @@ async function ensureSchema() {
     UNIQUE (form_id, item_type, item_id)
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS analytics_events (
+    id SERIAL PRIMARY KEY,
+    event_name TEXT NOT NULL,
+    path TEXT NOT NULL,
+    title TEXT,
+    referrer TEXT,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    session_id TEXT,
+    ip_hash TEXT,
+    ua TEXT,
+    country TEXT,
+    props JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -635,6 +650,17 @@ async function ensureSchema() {
   await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS workflow_status TEXT DEFAULT 'unread'`;
   await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS updated_by INT`;
   await query`ALTER TABLE form_submission_workflow ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS event_name TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS path TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS title TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS referrer TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS user_id INT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS session_id TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS ip_hash TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS ua TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS country TEXT`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS props JSONB DEFAULT '{}'::jsonb`;
+  await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
 
   await seedOrganizationData();
 
@@ -676,6 +702,10 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_form_workflow_form_item ON form_submission_workflow(form_id, item_type, item_id)`;
   await query`CREATE INDEX IF NOT EXISTS idx_form_workflow_status_updated ON form_submission_workflow(workflow_status, updated_at DESC)`;
   await query`CREATE UNIQUE INDEX IF NOT EXISTS idx_form_workflow_unique_form_item ON form_submission_workflow(form_id, item_type, item_id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_analytics_events_path_created ON analytics_events(path, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_analytics_events_name_created ON analytics_events(event_name, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_analytics_events_user_created ON analytics_events(user_id, created_at DESC)`;
 }
 
 module.exports = { ensureSchema };
