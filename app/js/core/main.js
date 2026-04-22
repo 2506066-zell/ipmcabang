@@ -596,7 +596,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: `Artikel baru: ${state.latestArticle.title}`,
                     time: state.latestArticle.publish_date || state.latestArticle.created_at,
                     unread: true,
-                    link: getArticleHref(state.latestArticle)
+                    link: getArticleHref(state.latestArticle),
+                    image: state.latestArticle.image || ''
                 });
             }
             state.notifications.forEach(n => {
@@ -612,9 +613,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             list.innerHTML = items.map(item => `
                 <div class="notif-item ${item.unread ? 'unread' : ''}">
-                    <div class="notif-item-title">${item.title}</div>
-                    <div class="notif-item-meta">${item.time ? new Date(item.time).toLocaleString('id-ID') : ''}</div>
-                    ${item.link ? `<a class="notif-item-link" href="${item.link}">Buka Artikel</a>` : ''}
+                    ${item.image ? `<div class="notif-item-thumb"><img src="${item.image}" alt="${item.title}"></div>` : ''}
+                    <div class="notif-item-body">
+                        <div class="notif-item-title">${item.title}</div>
+                        <div class="notif-item-meta">${item.time ? new Date(item.time).toLocaleString('id-ID') : ''}</div>
+                        ${item.link ? `<a class="notif-item-link" href="${item.link}">Buka Artikel</a>` : ''}
+                    </div>
                 </div>
             `).join('');
         };

@@ -1,8 +1,10 @@
-const { query } = require('./_db');
+const { query, rawQuery } = require('./_db');
 const { json, parseJsonBody } = require('./_util');
 const { requireAdminAuth } = require('./_auth');
 const { ensureSchema } = require('./_bootstrap');
 const { hashPassword } = require('./_password');
+const { processPendingArticleNotifications } = require('./_article_notifications');
+const { processDailyDigestNotifications } = require('./_daily_digest');
 
 const DEFAULT_GAMIFICATION = {
     enabled: true,
@@ -131,6 +133,15 @@ async function saveInAppNotifications(message, target, userIds) {
     return userIds.length;
 }
 
+async function saveInAppNotificationsForUserIds(message, userIds) {
+    if (!message || !Array.isArray(userIds) || userIds.length === 0) return 0;
+    await rawQuery(
+        'INSERT INTO notifications (user_id, message) SELECT id, $1 FROM users WHERE id = ANY($2::int[])',
+        [message, userIds]
+    );
+    return userIds.length;
+}
+
 async function sendPushToTarget(payload, target, userIds) {
     try {
         const { sendToAll, sendToUsers } = require('./_push');
@@ -158,6 +169,26 @@ async function sendNotificationToTarget({ title, message, url, save, target }) {
         url: safeUrl
     }, target, userIds);
     return { userCount: Array.isArray(userIds) ? userIds.length : null };
+}
+
+async function sendNotificationToUserIds({ title, message, url, save, userIds }) {
+    const cleanedUserIds = Array.isArray(userIds) ? userIds.map(Number).filter(Boolean) : [];
+    if (!cleanedUserIds.length) return { userCount: 0, sent: 0, failed: 0 };
+    const msg = title && message ? `${title} - ${message}` : (message || title || '');
+    const safeUrl = normalizeNotificationUrl(url);
+    if (save !== false) {
+        await saveInAppNotificationsForUserIds(msg, cleanedUserIds);
+    }
+    const pushResult = await sendPushToTarget({
+        title: title || 'Notifikasi IPM',
+        body: message || title || 'Ada pembaruan baru.',
+        url: safeUrl
+    }, { type: 'users', value: 'direct' }, cleanedUserIds);
+    return {
+        userCount: cleanedUserIds.length,
+        sent: Number(pushResult?.sent || 0),
+        failed: Number(pushResult?.failed || 0)
+    };
 }
 
 // --- Questions Management ---
@@ -531,6 +562,100 @@ function isCronAuthorized(req) {
     return false;
 }
 
+async function processQuizAutomaticReminders() {
+    const schedules = (await query`
+        SELECT id, title, description, start_time, end_time, show_in_notif
+        FROM quiz_schedules
+        WHERE active = true
+          AND show_in_notif = true
+          AND start_time <= (NOW() AT TIME ZONE 'Asia/Bangkok')
+          AND (end_time IS NULL OR end_time > (NOW() AT TIME ZONE 'Asia/Bangkok'))
+        ORDER BY start_time ASC
+    `).rows;
+
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (const schedule of schedules) {
+        const startTime = schedule.start_time ? new Date(schedule.start_time) : null;
+        const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
+        if (!startTime) continue;
+
+        const now = new Date();
+        let reminderType = '';
+        if ((now.getTime() - startTime.getTime()) >= 0 && (now.getTime() - startTime.getTime()) <= 24 * 60 * 60 * 1000) {
+            reminderType = 'opening';
+        }
+        if (endTime && (endTime.getTime() - now.getTime()) > 0 && (endTime.getTime() - now.getTime()) <= 24 * 60 * 60 * 1000) {
+            reminderType = 'closing';
+        }
+        if (!reminderType) continue;
+
+        const recipients = (await query`
+            SELECT u.id
+            FROM users u
+            WHERE (u.role = 'user' OR u.role IS NULL)
+              AND NOT EXISTS (
+                SELECT 1
+                FROM results r
+                WHERE r.user_id = u.id
+                  AND r.created_at >= ${startTime.toISOString()}
+                  AND (${endTime ? endTime.toISOString() : null} IS NULL OR r.created_at <= ${endTime ? endTime.toISOString() : null})
+              )
+              AND NOT EXISTS (
+                SELECT 1
+                FROM quiz_reminder_logs qrl
+                WHERE qrl.schedule_id = ${Number(schedule.id)}
+                  AND qrl.user_id = u.id
+                  AND qrl.reminder_type = ${reminderType}
+              )
+        `).rows.map((row) => Number(row.id)).filter(Boolean);
+
+        if (!recipients.length) continue;
+
+        const title = reminderType === 'closing'
+            ? `Pengingat terakhir: ${String(schedule.title || 'Quiz aktif')}`
+            : `Quiz dimulai: ${String(schedule.title || 'Quiz aktif')}`;
+        const message = reminderType === 'closing'
+            ? 'Segera isi quiz sebelum jadwal ditutup.'
+            : 'Quiz sudah aktif. Buka sekarang dan kerjakan sebelum terlewat.';
+
+        try {
+            const pushSummary = await sendNotificationToUserIds({
+                title,
+                message,
+                url: `/quiz-gamified.html?source=auto-quiz-reminder&schedule=${Number(schedule.id)}`,
+                save: true,
+                userIds: recipients
+            });
+
+            const params = [];
+            const values = recipients.map((userId, index) => {
+                const base = index * 3;
+                params.push(Number(schedule.id), Number(userId), reminderType);
+                return `($${base + 1}, $${base + 2}, $${base + 3}, NOW())`;
+            }).join(',');
+            await rawQuery(
+                `INSERT INTO quiz_reminder_logs (schedule_id, user_id, reminder_type, created_at)
+                 VALUES ${values}
+                 ON CONFLICT (schedule_id, user_id, reminder_type) DO NOTHING`,
+                params
+            );
+
+            try {
+                await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${null}, 'AUTO_QUIZ_REMINDER', ${{ schedule_id: schedule.id, reminder_type: reminderType, recipients: recipients.length }})`;
+            } catch {}
+
+            sentCount += Number(pushSummary?.sent || 0);
+            failedCount += Number(pushSummary?.failed || 0);
+        } catch (e) {
+            failedCount += recipients.length;
+        }
+    }
+
+    return { schedules: schedules.length, sent: sentCount, failed: failedCount };
+}
+
 async function handleRunScheduledNotifications(req, res) {
     if (!isCronAuthorized(req)) {
         try {
@@ -573,11 +698,18 @@ async function handleRunScheduledNotifications(req, res) {
         WHERE created_at < NOW() - INTERVAL '7 days'
     `;
 
+    const quizReminder = await processQuizAutomaticReminders();
+    const articleReminder = await processPendingArticleNotifications(req);
+    const dailyDigest = await processDailyDigestNotifications();
+
     return json(res, 200, {
         status: 'success',
         due: due.length,
-        sent: sentCount,
-        failed: failedCount,
+        sent: sentCount + Number(quizReminder?.sent || 0) + Number(articleReminder?.sent || 0) + Number(dailyDigest?.sent || 0),
+        failed: failedCount + Number(quizReminder?.failed || 0) + Number(articleReminder?.failed || 0) + Number(dailyDigest?.failed || 0),
+        quizReminder,
+        articleReminder,
+        dailyDigest,
         removedOldNotifications: cleanup?.rowCount || 0
     });
 }
@@ -601,7 +733,7 @@ async function handleGetActivityLogs(req, res) {
 async function handleDashboardSummary(req, res) {
     try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
 
-    const [usersRow, resultsRow, questionsRow, schedulesRow, feedbackRow, workflowRows, pendingNotifRow, attendanceRow] = await Promise.all([
+    const [usersRow, resultsRow, questionsRow, schedulesRow, feedbackRow, workflowRows, pendingNotifRow, attendanceRow, digestRow] = await Promise.all([
         query`SELECT COUNT(*)::int AS c FROM users WHERE role='user' OR role IS NULL`,
         query`SELECT COUNT(*)::int AS c FROM results`,
         query`SELECT COUNT(*)::int AS c FROM questions`,
@@ -613,7 +745,8 @@ async function handleDashboardSummary(req, res) {
             GROUP BY workflow_status
         `,
         query`SELECT COUNT(*)::int AS c FROM scheduled_notifications WHERE status='pending'`,
-        query`SELECT COUNT(*)::int AS c FROM attendance_events WHERE status='active' AND event_date=CURRENT_DATE`
+        query`SELECT COUNT(*)::int AS c FROM attendance_events WHERE status='active' AND event_date=CURRENT_DATE`,
+        query`SELECT created_at, title_snapshot FROM daily_digest_logs WHERE digest_type='public_daily' ORDER BY digest_date DESC, created_at DESC LIMIT 1`
     ]);
 
     const workflowMap = { unread: 0, follow_up: 0, done: 0 };
@@ -639,6 +772,10 @@ async function handleDashboardSummary(req, res) {
                 pending_notifications: Number(pendingNotifRow.rows[0]?.c || 0),
                 active_attendance_events: Number(attendanceRow.rows[0]?.c || 0)
             },
+            digest: digestRow.rows[0] ? {
+                last_sent_at: digestRow.rows[0].created_at,
+                last_title: digestRow.rows[0].title_snapshot || ''
+            } : null,
             health: {
                 api: 'ok',
                 updated_at: new Date().toISOString()

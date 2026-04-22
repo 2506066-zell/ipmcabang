@@ -502,6 +502,37 @@ async function ensureSchema() {
     created_at TIMESTAMP DEFAULT NOW()
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS quiz_reminder_logs (
+    id SERIAL PRIMARY KEY,
+    schedule_id INT NOT NULL REFERENCES quiz_schedules(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reminder_type TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (schedule_id, user_id, reminder_type)
+  )`;
+  await query`CREATE TABLE IF NOT EXISTS article_notification_logs (
+    id SERIAL PRIMARY KEY,
+    article_id INT NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    title_snapshot TEXT,
+    push_sent INT DEFAULT 0,
+    push_failed INT DEFAULT 0,
+    notified_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (article_id)
+  )`;
+  await query`CREATE TABLE IF NOT EXISTS daily_digest_logs (
+    id SERIAL PRIMARY KEY,
+    digest_type TEXT NOT NULL DEFAULT 'public_daily',
+    digest_date DATE NOT NULL,
+    title_snapshot TEXT,
+    body_snapshot TEXT,
+    target_url TEXT,
+    push_sent INT DEFAULT 0,
+    push_failed INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (digest_type, digest_date)
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -661,6 +692,24 @@ async function ensureSchema() {
   await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS country TEXT`;
   await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS props JSONB DEFAULT '{}'::jsonb`;
   await query`ALTER TABLE analytics_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE quiz_reminder_logs ADD COLUMN IF NOT EXISTS schedule_id INT`;
+  await query`ALTER TABLE quiz_reminder_logs ADD COLUMN IF NOT EXISTS user_id INT`;
+  await query`ALTER TABLE quiz_reminder_logs ADD COLUMN IF NOT EXISTS reminder_type TEXT`;
+  await query`ALTER TABLE quiz_reminder_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE article_notification_logs ADD COLUMN IF NOT EXISTS article_id INT`;
+  await query`ALTER TABLE article_notification_logs ADD COLUMN IF NOT EXISTS title_snapshot TEXT`;
+  await query`ALTER TABLE article_notification_logs ADD COLUMN IF NOT EXISTS push_sent INT DEFAULT 0`;
+  await query`ALTER TABLE article_notification_logs ADD COLUMN IF NOT EXISTS push_failed INT DEFAULT 0`;
+  await query`ALTER TABLE article_notification_logs ADD COLUMN IF NOT EXISTS notified_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE article_notification_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS digest_type TEXT DEFAULT 'public_daily'`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS digest_date DATE`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS title_snapshot TEXT`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS body_snapshot TEXT`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS target_url TEXT`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS push_sent INT DEFAULT 0`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS push_failed INT DEFAULT 0`;
+  await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
 
   await seedOrganizationData();
 
@@ -706,6 +755,10 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_analytics_events_path_created ON analytics_events(path, created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_analytics_events_name_created ON analytics_events(event_name, created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_analytics_events_user_created ON analytics_events(user_id, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_quiz_reminder_logs_schedule_type ON quiz_reminder_logs(schedule_id, reminder_type, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_quiz_reminder_logs_user_created ON quiz_reminder_logs(user_id, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_article_notification_logs_notified_at ON article_notification_logs(notified_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_daily_digest_logs_date ON daily_digest_logs(digest_date DESC, created_at DESC)`;
 }
 
 module.exports = { ensureSchema };

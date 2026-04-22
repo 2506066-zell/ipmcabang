@@ -325,6 +325,9 @@ self.addEventListener('push', (event) => {
     body: data.body || 'Ada pembaruan baru.',
     icon: data.icon || APP_NOTIFICATION_ICON,
     badge: data.badge || APP_NOTIFICATION_BADGE,
+    image: data.image || undefined,
+    tag: data.tag || undefined,
+    renotify: Boolean(data.renotify),
     actions: [
       { action: 'open', title: 'Buka' }
     ],

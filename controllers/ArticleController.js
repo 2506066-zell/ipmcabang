@@ -1,6 +1,7 @@
 const ArticleModel = require('../models/ArticleModel');
 const { json, parseJsonBody, cacheHeaders } = require('../api/_util');
 const { requireAdminAuth } = require('../api/_auth');
+const { notifyPublishedArticle } = require('../api/_article_notifications');
 
 const MAX_ARTICLE_IMAGE_BYTES = 250 * 1024;
 
@@ -118,6 +119,7 @@ class ArticleController {
                 publish_date: body.publish_date || new Date(),
                 category: sanitizePlainText(body.category || 'Umum', 80)
             });
+            try { await notifyPublishedArticle(article, req); } catch (notifErr) { console.error('Article notif failed:', notifErr); }
             return json(res, 201, { status: 'success', article });
         } catch (e) {
             console.error(e);
@@ -147,6 +149,7 @@ class ArticleController {
 
             const article = await ArticleModel.update(id, patch);
             if (!article) return json(res, 404, { status: 'error', message: 'Article not found' });
+            try { await notifyPublishedArticle(article, req); } catch (notifErr) { console.error('Article notif failed:', notifErr); }
             return json(res, 200, { status: 'success', article });
         } catch (e) {
             return json(res, 500, { status: 'error', message: 'Update failed: ' + e.message });

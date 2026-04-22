@@ -911,7 +911,10 @@
                 els.focusFormsMeta.textContent = `${publishedForms} form aktif, ${formInboxItems} item inbox`;
             }
             if (els.focusUsersMeta) {
-                els.focusUsersMeta.textContent = `${openFeedback} feedback, ${pendingNotifications} notifikasi tertunda`;
+                const digestLabel = summary?.digest?.last_sent_at
+                    ? `digest ${new Date(summary.digest.last_sent_at).toLocaleDateString('id-ID')}`
+                    : 'digest belum terkirim';
+                els.focusUsersMeta.textContent = `${openFeedback} feedback, ${pendingNotifications} notifikasi tertunda, ${digestLabel}`;
             }
             if (els.focusAttendanceMeta) {
                 els.focusAttendanceMeta.textContent = `${activeAttendanceRooms} room aktif, ${passiveAttendanceMembers} kader pasif`;
@@ -1733,6 +1736,10 @@
                 </div>
                 <div class="sc-body">
                     <textarea class="sc-desc-edit" readonly onclick="editSchedule(${s.id})">${escapeHtml(s.description || '')}</textarea>
+                    <div class="forms-review-badge-row" style="margin: 0 0 10px;">
+                        <span class="forms-review-badge ${s.show_in_notif ? 'is-focus' : 'is-read'}">${s.show_in_notif ? 'Pengingat quiz aktif' : 'Pengingat quiz nonaktif'}</span>
+                        <span class="forms-review-badge ${s.show_in_quiz !== false ? 'is-time' : 'is-read'}">${s.show_in_quiz !== false ? 'Muncul di quiz' : 'Disembunyikan dari quiz'}</span>
+                    </div>
                     <div class="sc-time-range">
                         <span class="sc-time-label">WAKTU MULAI - SELESAI</span>
                         <div style="color:var(--text-primary); font-size:0.9rem;">
