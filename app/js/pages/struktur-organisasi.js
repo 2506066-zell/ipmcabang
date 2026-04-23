@@ -383,33 +383,18 @@
     const initials = bidang.name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
     const cardAria = `Buka detail ${bidang.name}, ${bidang.members.length} anggota, ${bidang.programs.length} program`;
     const nodeVariant = variant || 'field';
-    if (nodeVariant === 'leader' || nodeVariant === 'core') {
-      return `
-        <button type="button" class="org-node-card org-node-card-circle ${nodeVariant === 'leader' ? 'is-leader' : 'is-core'}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
-          <div class="org-node-circle-media">
-            <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}">
-              <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
-              ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
-            </div>
-          </div>
-          <div class="org-node-content">
-            <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
-            <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
-          </div>
-        </button>
-      `;
-    }
     const normalizedCode = normalizeCode(bidang.code);
     const defaultFocusY = resolveFieldImageFocusY(normalizedCode, false);
+
     return `
-      <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
+      <button type="button" class="org-node-card org-node-card-${nodeVariant}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
         <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}" data-bidang-code="${escapeHtml(normalizedCode)}" style="--field-focus-y: ${escapeHtml(defaultFocusY)};">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
         </div>
         <div class="org-node-content">
           <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
-          <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
+          <p class="org-node-meta">${bidang.members.length} Anggota &bull; ${bidang.programs.length} Program</p>
         </div>
       </button>
     `;
@@ -498,22 +483,20 @@
   function renderMemberNode(member, variant) {
     const safeName = escapeHtml(member.full_name || 'Anggota');
     const safeRole = escapeHtml(member.role_title || 'Anggota');
-    const safeQuote = escapeHtml(member.quote || 'Siap berkontribusi untuk bidang ini.');
     const initials = member.full_name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
     const photoMarkup = member.photo_url
       ? `<img data-src="${escapeHtml(member.photo_url)}" alt="${safeName}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">`
       : '';
+
     return `
-      <article class="anggota-card member-ring-node member-ring-node-${escapeHtml(variant)}${variant.startsWith('core') || variant === 'leadership-orbit' ? ' is-leadership' : ''}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
+      <article class="anggota-card" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
         <div class="anggota-card-photo${member.photo_url ? ' is-loading' : ' no-image'}">
           ${photoMarkup}
           <div class="anggota-card-avatar">${escapeHtml(initials || '?')}</div>
         </div>
-        <div class="anggota-card-info">
+        <div class="anggota-card-content">
           <div class="anggota-card-name">${safeName}</div>
           <div class="anggota-card-role">${safeRole}</div>
-          <div class="anggota-card-quote">${safeQuote}</div>
-          <div class="anggota-card-indicator"><i class="fas fa-chevron-right"></i></div>
         </div>
       </article>
     `;
@@ -605,38 +588,35 @@
       const card = document.createElement('article');
       const statusText = program.status === 'terlaksana' ? 'Terlaksana' : (program.status === 'rencana' ? 'Rencana' : 'Draft');
       card.className = 'program-card';
-      card.style.setProperty('--color-bidang', bidang.color || '#4A7C5D');
       
       const pBar = `
-        <div class="program-progress-wrapper" style="margin-top: 16px;">
-          <div class="program-progress-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:12px; font-weight:600; color:var(--color-bidang, #4A7C5D);">${program.progress_percent}% Kemajuan</span>
-            <span style="font-size:11px; color:#64748b; font-weight:500;">Target: ${statusText}</span>
+        <div class="program-progress-wrapper">
+          <div class="program-progress-header">
+            <span class="progress-label">${program.progress_percent}% Kemajuan</span>
+            <span class="progress-target">Target: ${statusText}</span>
           </div>
-          <div class="program-progress-track" style="background:#e2e8f0; height:8px; border-radius:10px; overflow:hidden; position:relative;">
-            <div class="program-progress-fill" style="background:var(--color-bidang, #4A7C5D); height:100%; width: ${program.progress_percent}%; transition:width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-                <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 2s infinite;"></div>
-            </div>
+          <div class="program-progress-track">
+            <div class="program-progress-fill" style="width: ${program.progress_percent}%;"></div>
           </div>
         </div>
       `;
 
       card.innerHTML = `
         <div class="program-card-head">
-          <div class="program-card-name" style="font-weight:700; font-size:16px; line-height:1.4;">${escapeHtml(program.title || 'Program')}</div>
-          <span class="program-card-status status-${escapeHtml(program.status)}" style="padding: 4px 10px; border-radius: 20px; font-size:11px; font-weight:600; letter-spacing:0.02em;">${statusText}</span>
+          <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
+          <span class="program-card-status status-${escapeHtml(program.status)}">${statusText}</span>
         </div>
         ${pBar}
-        <div class="program-card-desc" style="margin-top:12px; font-size:14px; color:#475569; line-height:1.6;">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
-        <div class="program-card-actions" style="display:flex; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid #f1f5f9;">
-           <button type="button" class="btn btn-secondary btn-sm btn-upvote" data-program-id="${program.id}" style="border-radius:12px; background: #fff; border: 1px solid #e2e8f0; font-weight:600;">
-              <i class="fas fa-thumbs-up" style="margin-right:6px;"></i> <span class="upvt-count">${program.upvote_count}</span> <span class="btn-lbl">Dukung</span>
+        <div class="program-card-desc">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
+        <div class="program-card-actions">
+           <button type="button" class="btn btn-secondary btn-sm btn-upvote" data-program-id="${program.id}">
+              <i class="fas fa-thumbs-up"></i> <span class="upvt-count">${program.upvote_count}</span> <span class="btn-lbl">Dukung</span>
            </button>
-           <button type="button" class="btn btn-secondary btn-sm btn-comment" data-program-id="${program.id}" style="border-radius:12px; background: #fff; border: 1px solid #e2e8f0; font-weight:600;">
-              <i class="fas fa-comments" style="margin-right:6px;"></i> Ruang Diskusi
+           <button type="button" class="btn btn-secondary btn-sm btn-comment" data-program-id="${program.id}">
+              <i class="fas fa-comments"></i> Ruang Diskusi
            </button>
         </div>
-        <div class="program-comment-section hidden" id="comments-${program.id}" style="background:#f8fafc; border-radius:12px; padding:16px; margin-top:16px; border: 1px solid #f1f5f9;"></div>
+        <div class="program-comment-section hidden" id="comments-${program.id}"></div>
       `;
       els.programList.appendChild(card);
     });
