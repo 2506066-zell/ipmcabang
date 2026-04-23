@@ -119,7 +119,8 @@
     function setInlineStatus(el, message, type) {
         if (!el) return;
         el.textContent = message || '';
-        el.style.color = type === 'error' ? '#b42318' : (type === 'success' ? '#0f7b42' : '#526171');
+        el.dataset.tone = type || 'neutral';
+        el.style.color = '';
     }
 
     function setFlowStatus(tone, title, note) {
@@ -131,6 +132,14 @@
         if (els.flowStatus) els.flowStatus.dataset.flow = state.flowStatus.tone;
         if (els.flowBadge) els.flowBadge.innerHTML = `<i class="fas fa-circle"></i> ${escapeHtml(state.flowStatus.title)}`;
         if (els.flowNote) els.flowNote.textContent = state.flowStatus.note;
+    }
+
+    function setStepStatus(stepEl, stateLabelEl, noteEl, mode, label, note) {
+        if (!stepEl) return;
+        stepEl.classList.remove('is-active', 'is-done', 'is-locked');
+        if (mode) stepEl.classList.add(`is-${mode}`);
+        if (stateLabelEl) stateLabelEl.textContent = label || 'Menunggu';
+        if (noteEl && note) noteEl.textContent = note;
     }
 
     function hasValue(value) {
@@ -1157,31 +1166,72 @@
     // Step Highlighting Logic
     function updateStepHighlight() {
         if (!els.stepIdentity || !els.stepPhoto || !els.stepSubmit) return;
-        
-        const isIdentityMode = currentIdentityMode() === 'org_member_select';
-        const isIdentityDone = isIdentityMode ? !!els.memberSelect?.value : true;
-        const isPhotoDone = !!state.selfieFile;
 
-        // Hide contents by default (Progressive Disclosure)
-        [els.stepIdentity, els.stepPhoto, els.stepSubmit].forEach(s => {
-            s.classList.remove('is-active');
+        const isIdentityMode = currentIdentityMode() === 'org_member_select';
+        const needsIdentityPick = isIdentityMode;
+        const isIdentityDone = needsIdentityPick ? !!els.memberSelect?.value : true;
+        const isPhotoDone = !!state.selfieFile;
+        const hasEvent = !!state.detail?.current_event;
+        const canSelfCheckIn = !!state.detail?.permissions?.can_self_check_in;
+
+        [els.stepIdentity, els.stepPhoto, els.stepSubmit].forEach((s) => {
             const field = s.querySelector('.attendance-field');
             if (field) field.style.display = 'none';
         });
 
-        if (!isIdentityDone) {
-            els.stepIdentity.classList.add('is-active');
-            const f = els.stepIdentity.querySelector('.attendance-field');
-            if (f) f.style.display = 'flex';
-        } else if (!isPhotoDone) {
-            els.stepPhoto.classList.add('is-active');
-            const f = els.stepPhoto.querySelector('.attendance-field');
-            if (f) f.style.display = 'flex';
-        } else {
-            els.stepSubmit.classList.add('is-active');
-            const f = els.stepSubmit.querySelector('.attendance-field');
-            if (f) f.style.display = 'flex';
+        const identityField = els.stepIdentity.querySelector('.attendance-field');
+        const photoField = els.stepPhoto.querySelector('.attendance-field');
+        const submitField = els.stepSubmit.querySelector('.attendance-field');
+
+        if (!hasEvent || !canSelfCheckIn) {
+            setStepStatus(
+                els.stepIdentity,
+                els.stepIdentityState,
+                els.stepIdentityNote,
+                needsIdentityPick ? 'active' : 'done',
+                needsIdentityPick ? 'Siapkan' : 'Selesai',
+                needsIdentityPick
+                    ? 'Buka event aktif dulu, lalu pilih nama jika room ini memakai struktur organisasi.'
+                    : 'Identitas akun sudah dipakai otomatis untuk room ini.'
+            );
+            setStepStatus(els.stepPhoto, els.stepPhotoState, els.stepPhotoNote, 'locked', 'Menunggu', 'Kamera bisa dipakai setelah event aktif tersedia.');
+            setStepStatus(els.stepSubmit, els.stepSubmitState, els.stepSubmitNote, 'locked', 'Menunggu', 'Kirim kehadiran tersedia setelah selfie siap.');
+            if (identityField) identityField.style.display = needsIdentityPick ? 'flex' : 'none';
+            evaluateCheckinFlowStatus();
+            return;
         }
+
+        if (!isIdentityDone) {
+            setStepStatus(els.stepIdentity, els.stepIdentityState, els.stepIdentityNote, 'active', 'Sedang diisi', 'Pilih nama kader yang akan diabsenkan.');
+            setStepStatus(els.stepPhoto, els.stepPhotoState, els.stepPhotoNote, 'locked', 'Menunggu', 'Buka kamera setelah identitas selesai.');
+            setStepStatus(els.stepSubmit, els.stepSubmitState, els.stepSubmitNote, 'locked', 'Menunggu', 'Kirim kehadiran tersedia setelah selfie siap.');
+            if (identityField) identityField.style.display = 'flex';
+        } else if (!isPhotoDone) {
+            setStepStatus(
+                els.stepIdentity,
+                els.stepIdentityState,
+                els.stepIdentityNote,
+                'done',
+                'Selesai',
+                needsIdentityPick ? 'Identitas sudah dipilih. Lanjut ke kamera.' : 'Identitas akun sudah siap dipakai.'
+            );
+            setStepStatus(els.stepPhoto, els.stepPhotoState, els.stepPhotoNote, 'active', 'Sedang diisi', 'Buka kamera lalu ambil selfie terbaru.');
+            setStepStatus(els.stepSubmit, els.stepSubmitState, els.stepSubmitNote, 'locked', 'Menunggu', 'Tombol kirim aktif setelah selfie siap.');
+            if (photoField) photoField.style.display = 'flex';
+        } else {
+            setStepStatus(
+                els.stepIdentity,
+                els.stepIdentityState,
+                els.stepIdentityNote,
+                'done',
+                'Selesai',
+                needsIdentityPick ? 'Identitas sudah dipilih dan siap dipakai.' : 'Identitas akun sudah siap dipakai.'
+            );
+            setStepStatus(els.stepPhoto, els.stepPhotoState, els.stepPhotoNote, 'done', 'Selesai', 'Selfie sudah siap. Kamu bisa ulang jika perlu.');
+            setStepStatus(els.stepSubmit, els.stepSubmitState, els.stepSubmitNote, 'active', 'Siap kirim', 'Periksa status lalu kirim kehadiran sekarang.');
+            if (submitField) submitField.style.display = 'flex';
+        }
+
         evaluateCheckinFlowStatus();
     }
 
@@ -1229,6 +1279,12 @@
         els.stepIdentity = document.getElementById('step-identity');
         els.stepPhoto = document.getElementById('step-photo');
         els.stepSubmit = document.getElementById('step-submit');
+        els.stepIdentityState = document.getElementById('attendance-step-identity-state');
+        els.stepPhotoState = document.getElementById('attendance-step-photo-state');
+        els.stepSubmitState = document.getElementById('attendance-step-submit-state');
+        els.stepIdentityNote = document.getElementById('attendance-step-identity-note');
+        els.stepPhotoNote = document.getElementById('attendance-step-photo-note');
+        els.stepSubmitNote = document.getElementById('attendance-step-submit-note');
         els.historySearch = document.getElementById('history-search-input');
         els.historyFilters = document.querySelectorAll('.history-filter-btn');
         els.tabBtns = document.querySelectorAll('.tab-btn');
@@ -1248,6 +1304,11 @@
         els.drawerTitle = document.getElementById('drawer-event-title');
         els.drawerMeta = document.getElementById('drawer-event-meta');
         els.drawerContent = document.getElementById('attendees-list-content');
+        els.photoModal = document.getElementById('attendance-photo-modal');
+        els.photoBackdrop = document.getElementById('attendance-photo-backdrop');
+        els.photoClose = document.getElementById('attendance-photo-close');
+        els.photoImage = document.getElementById('attendance-photo-image');
+        els.photoTitle = document.getElementById('attendance-photo-title');
         
         setCodeModalOpen(false);
         setFlowStatus('pending', 'Pilih room', 'Pilih room lalu masukkan kode akses.');
@@ -1300,6 +1361,13 @@
         els.drawerOverlay?.addEventListener('click', (e) => {
             if (e.target === els.drawerOverlay) closeAttendeesDrawer();
         });
+        els.drawerContent?.addEventListener('click', (event) => {
+            const previewBtn = event.target.closest('.attendee-preview-btn[data-photo-url]');
+            if (!previewBtn || previewBtn.classList.contains('is-disabled')) return;
+            openPhotoPreview(String(previewBtn.dataset.photoUrl || ''), String(previewBtn.dataset.photoName || ''));
+        });
+        els.photoClose?.addEventListener('click', closePhotoPreview);
+        els.photoBackdrop?.addEventListener('click', closePhotoPreview);
         els.memberSelect?.addEventListener('change', () => renderMemberOptions(false, els.memberSearch?.value));
         els.memberSearch?.addEventListener('input', (e) => renderMemberOptions(false, e.target.value));
         els.openCameraBtn?.addEventListener('click', openCamera);
@@ -1418,6 +1486,17 @@
                         <div class="attendee-time">
                             ${escapeHtml(item.waktu_absen || '--:--')}
                         </div>
+                        <div class="attendee-actions">
+                            ${item.foto ? `
+                                <button type="button" class="attendee-preview-btn" data-photo-url="${escapeHtml(item.foto)}" data-photo-name="${escapeHtml(item.nama || item.username || 'Kader')}">
+                                    <i class="fas fa-image"></i> Preview
+                                </button>
+                            ` : `
+                                <span class="attendee-preview-btn is-disabled">
+                                    <i class="fas fa-image"></i> Tidak ada foto
+                                </span>
+                            `}
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -1427,6 +1506,26 @@
     function closeAttendeesDrawer() {
         if (els.drawerOverlay) els.drawerOverlay.hidden = true;
         document.body.style.overflow = '';
+    }
+
+    function openPhotoPreview(url, name) {
+        if (!url || !els.photoModal || !els.photoImage) return;
+        els.photoImage.src = url;
+        els.photoImage.alt = `Preview foto absensi ${name || 'kader'}`;
+        if (els.photoTitle) els.photoTitle.textContent = name ? `Bukti Kehadiran - ${name}` : 'Bukti Kehadiran';
+        els.photoModal.hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePhotoPreview() {
+        if (els.photoModal) els.photoModal.hidden = true;
+        if (els.photoImage) {
+            els.photoImage.src = '';
+            els.photoImage.alt = 'Preview foto absensi';
+        }
+        if (!els.drawerOverlay || els.drawerOverlay.hidden) {
+            document.body.style.overflow = '';
+        }
     }
 
     function initTabs() {

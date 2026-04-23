@@ -278,7 +278,7 @@
                 <div class="forms-success-icon"><i class="fas fa-check"></i></div>
                 <span class="forms-form-type">${escapeHtml(form.type)}</span>
                 <h2>Jawaban terkirim</h2>
-                <p>Status: jawaban sudah masuk ke sistem.</p>
+                <p>Jawaban sudah masuk ke sistem dan form ini tidak perlu diisi ulang.</p>
                 <div class="forms-success-meta">
                     <span>${escapeHtml(form.title)}</span>
                     <span>${latest?.submitted_at ? formatDate(latest.submitted_at) : 'Baru saja'}</span>
@@ -308,21 +308,35 @@
         const loginWarning = !state.auth ? '<div class="forms-auth-warning">Belum login. Login dulu untuk kirim jawaban.</div>' : '';
 
         els.stage.innerHTML = `
-            <article class="forms-stage-card">
-                <div class="forms-form-head">
-                    <span class="forms-form-type">${escapeHtml(form.type)}</span>
-                    <h2>${escapeHtml(form.title)}</h2>
-                    <p>${escapeHtml(form.description || 'Isi jawaban lalu kirim.')}</p>
-                    <div class="forms-result-meta">
-                        <span class="forms-meta-pill" id="forms-meta-status">Status: belum mulai</span>
-                        <span class="forms-meta-pill" id="forms-meta-total">${form.fields.length} pertanyaan</span>
-                        <span class="forms-meta-pill" id="forms-meta-progress">0/${form.fields.length} terisi</span>
+            <article class="forms-stage-card forms-stage-card-focus">
+                <div class="forms-focus-hero">
+                    <div class="forms-form-head">
+                        <span class="forms-form-type">${escapeHtml(form.type)}</span>
+                        <h2>${escapeHtml(form.title)}</h2>
+                        <p>${escapeHtml(form.description || 'Isi semua bagian yang diperlukan, lalu kirim saat status sudah siap.')}</p>
+                    </div>
+                    <div class="forms-overview-strip">
+                        <div class="forms-overview-card">
+                            <span class="forms-overview-label">Status</span>
+                            <strong id="forms-meta-status">Belum mulai</strong>
+                        </div>
+                        <div class="forms-overview-card">
+                            <span class="forms-overview-label">Pertanyaan</span>
+                            <strong id="forms-meta-total">${form.fields.length}</strong>
+                        </div>
+                        <div class="forms-overview-card">
+                            <span class="forms-overview-label">Progres</span>
+                            <strong id="forms-meta-progress">0/${form.fields.length} terisi</strong>
+                        </div>
                     </div>
                 </div>
                 ${loginWarning}
                 <div class="forms-runtime-status" id="forms-runtime-status" data-status="not_started" aria-live="polite">
-                    <div class="forms-runtime-badge" id="forms-runtime-badge"><i class="fas fa-circle"></i> Belum mulai</div>
-                    <div class="forms-runtime-note" id="forms-runtime-note">Mulai isi jawaban untuk menyimpan draft otomatis.</div>
+                    <div class="forms-runtime-main">
+                        <div class="forms-runtime-badge" id="forms-runtime-badge"><i class="fas fa-circle"></i> Belum mulai</div>
+                        <div class="forms-runtime-note" id="forms-runtime-note">Mulai isi jawaban untuk menyimpan draft otomatis.</div>
+                    </div>
+                    <div class="forms-runtime-side" id="forms-runtime-side">Status kerja akan diperbarui otomatis.</div>
                 </div>
                 <div class="forms-progress-bar">
                     <span id="forms-progress-fill" style="width:0%"></span>
@@ -330,8 +344,8 @@
                 <form id="forms-submit-form" class="forms-form-card">
                     <div class="forms-question-card forms-identity-card">
                         <div class="forms-question-label">
-                            <span>Nama Pengisi</span>
-                            <span class="forms-required">Wajib</span>
+                            <span>Identitas Pengisi</span>
+                            <span class="forms-question-state is-required" id="forms-identity-state">Wajib</span>
                         </div>
                         <input id="forms-submitter-name" class="forms-text-input" maxlength="120" value="${escapeHtml(draftSubmitterName)}" placeholder="Tulis nama lengkap Anda">
                         <div id="forms-submitter-name-error" class="forms-inline-error" hidden></div>
@@ -341,14 +355,17 @@
                         <div class="forms-question-card" data-question-id="${field.id}">
                             <div class="forms-question-label">
                                 <span>${index + 1}. ${escapeHtml(field.label)}</span>
-                                ${field.required ? '<span class="forms-required">Wajib</span>' : ''}
+                                <span class="forms-question-state ${field.required ? 'is-required' : ''}" id="forms-question-state-${field.id}">${field.required ? 'Wajib' : 'Opsional'}</span>
                             </div>
                             ${buildFieldInput(field, draftAnswers[field.id])}
                             <div class="forms-field-help">${field.focus_inbox ? 'Masuk inbox admin.' : ''}</div>
                         </div>
                     `).join('')}
                     <div class="forms-footer-bar">
-                        <div class="forms-draft-indicator" id="forms-draft-indicator">Draft tersimpan otomatis</div>
+                        <div class="forms-footer-meta">
+                            <div class="forms-draft-indicator" id="forms-draft-indicator">Draft tersimpan otomatis</div>
+                            <div class="forms-footer-note" id="forms-footer-note">Tombol kirim aktif saat nama dan semua pertanyaan wajib sudah lengkap.</div>
+                        </div>
                         <button type="button" class="forms-secondary-btn" id="forms-login-btn" hidden>Login sekarang</button>
                         <button type="submit" class="forms-submit-btn" ${!state.auth || form.already_submitted ? 'disabled' : ''}>
                             ${form.already_submitted ? 'Jawaban terkirim' : 'Kirim jawaban'}
@@ -393,21 +410,40 @@
     function showFieldError(formEl, fieldId, message) {
         const card = formEl.querySelector(`[data-question-id="${fieldId}"]`);
         card?.classList.add('invalid');
+        card?.classList.remove('is-complete');
         const errorEl = formEl.querySelector(`#forms-error-${fieldId}`);
         if (errorEl) {
             errorEl.hidden = false;
             errorEl.textContent = message;
+        }
+        const stateEl = formEl.querySelector(`#forms-question-state-${fieldId}`);
+        if (stateEl) {
+            stateEl.textContent = 'Perlu isi';
+            stateEl.className = 'forms-question-state is-invalid';
         }
     }
 
     function showSubmitterNameError(formEl, message) {
         const card = formEl.querySelector('.forms-identity-card');
         card?.classList.add('invalid');
+        card?.classList.remove('is-complete');
         const errorEl = formEl.querySelector('#forms-submitter-name-error');
         if (errorEl) {
             errorEl.hidden = false;
             errorEl.textContent = message;
         }
+        const stateEl = formEl.querySelector('#forms-identity-state');
+        if (stateEl) {
+            stateEl.textContent = 'Perlu isi';
+            stateEl.className = 'forms-question-state is-invalid';
+        }
+    }
+
+    function focusFirstInvalidField(formEl) {
+        const target = formEl.querySelector('.forms-identity-card.invalid input, .forms-question-card.invalid input, .forms-question-card.invalid textarea, .forms-question-card.invalid select');
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        try { target.focus({ preventScroll: true }); } catch { target.focus(); }
     }
 
     function getSubmitterName(formEl) {
@@ -496,15 +532,55 @@
         if (!formEl || !form) return;
         updateProgressText(formEl, form);
         const analysis = analyzeFormProgress(formEl, form);
+        const answers = collectAnswers(formEl, form);
         const statusView = resolveStatusView(form, analysis);
         const runtime = $('forms-runtime-status');
         const badge = $('forms-runtime-badge');
         const note = $('forms-runtime-note');
+        const side = $('forms-runtime-side');
         const metaStatus = $('forms-meta-status');
+        const footerNote = $('forms-footer-note');
         if (runtime) runtime.dataset.status = statusView.code;
         if (badge) badge.innerHTML = `<i class="fas fa-circle"></i> ${escapeHtml(statusView.badge)}`;
         if (note) note.textContent = statusView.note;
-        if (metaStatus) metaStatus.textContent = `Status: ${statusView.badge.toLowerCase()}`;
+        if (side) side.textContent = analysis.readyToSubmit
+            ? 'Semua syarat kirim sudah terpenuhi.'
+            : `${analysis.filled}/${analysis.total} pertanyaan sudah terisi.`;
+        if (metaStatus) metaStatus.textContent = statusView.badge;
+        if (footerNote) {
+            footerNote.textContent = form.already_submitted
+                ? 'Form ini sudah terkirim dan tidak perlu diperbarui lagi.'
+                : (!state.auth
+                    ? 'Login diperlukan sebelum jawaban bisa dikirim.'
+                    : (analysis.readyToSubmit
+                        ? 'Semua pertanyaan wajib sudah lengkap. Kamu bisa kirim jawaban sekarang.'
+                        : 'Lanjutkan isi bagian yang belum lengkap agar tombol kirim aktif.'));
+        }
+
+        const identityCard = formEl.querySelector('.forms-identity-card');
+        const identityState = formEl.querySelector('#forms-identity-state');
+        const identityComplete = Boolean(analysis.submitterName);
+        if (identityCard) {
+            identityCard.classList.toggle('is-complete', identityComplete);
+            if (!identityCard.classList.contains('invalid')) identityCard.classList.remove('invalid');
+        }
+        if (identityState && !identityCard?.classList.contains('invalid')) {
+            identityState.textContent = identityComplete ? 'Siap' : 'Wajib';
+            identityState.className = `forms-question-state ${identityComplete ? 'is-complete' : 'is-required'}`;
+        }
+
+        form.fields.forEach((field) => {
+            const card = formEl.querySelector(`[data-question-id="${field.id}"]`);
+            if (!card) return;
+            const complete = hasValue(answers[field.id]);
+            const stateEl = formEl.querySelector(`#forms-question-state-${field.id}`);
+            card.classList.toggle('is-complete', complete);
+            if (!card.classList.contains('invalid')) card.classList.remove('invalid');
+            if (stateEl && !card.classList.contains('invalid')) {
+                stateEl.textContent = complete ? 'Terisi' : (field.required ? 'Wajib' : 'Opsional');
+                stateEl.className = `forms-question-state ${complete ? 'is-complete' : (field.required ? 'is-required' : '')}`;
+            }
+        });
 
         const submitBtn = formEl.querySelector('.forms-submit-btn');
         const loginBtn = formEl.querySelector('#forms-login-btn');
@@ -575,6 +651,7 @@
             state.submitState = 'idle';
             state.submitError = '';
             updateRuntimeUI(formEl, form);
+            focusFirstInvalidField(formEl);
             window.Toast?.show('Nama pengisi wajib diisi.', 'warning');
             return;
         }
@@ -583,6 +660,7 @@
             state.submitState = 'idle';
             state.submitError = '';
             updateRuntimeUI(formEl, form);
+            focusFirstInvalidField(formEl);
             window.Toast?.show('Masih ada pertanyaan wajib yang belum diisi.', 'warning');
             return;
         }
