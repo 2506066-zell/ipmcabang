@@ -79,6 +79,14 @@ function getIdentityMode(roomLike) {
   return isBranch ? 'org_member_select' : 'account_identity';
 }
 
+function canUserSelfCheckIn(user, roomLike) {
+  const identityMode = getIdentityMode(roomLike);
+  if (identityMode === 'org_member_select') {
+    return true;
+  }
+  return cleanString(user?.pimpinan, 80) === cleanString(roomLike?.pimpinan, 80);
+}
+
 function buildSummary(events, records) {
   const recordMap = new Map((records || []).map((item) => [Number(item.event_id), item]));
   const summary = {
@@ -550,7 +558,7 @@ async function handleRoomDetail(req, res) {
     },
     permissions: {
       can_create_event: true,
-      can_self_check_in: cleanString(user.pimpinan, 80) === cleanString(room.pimpinan, 80)
+      can_self_check_in: canUserSelfCheckIn(user, room)
     },
     current_event: activeEvent ? {
       ...activeEvent,
@@ -638,7 +646,7 @@ async function handleCheckIn(req, res) {
   if (cleanString(event.status, 20).toLowerCase() !== 'active' || (new Date() - new Date(event.created_at)) > 24 * 60 * 60 * 1000) {
     return json(res, 409, { status: 'error', message: 'Event tidak sedang aktif untuk absensi mandiri' });
   }
-  if (cleanString(user.pimpinan, 80) !== cleanString(event.pimpinan, 80)) {
+  if (!canUserSelfCheckIn(user, event)) {
     return json(res, 403, { status: 'error', message: 'Absensi mandiri hanya untuk anggota pimpinan room ini' });
   }
   try {
