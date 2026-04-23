@@ -714,6 +714,101 @@ async function handleRunScheduledNotifications(req, res) {
     });
 }
 
+async function handleNotificationDebug(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+
+    const { getVapid } = require('./_push');
+    const vapid = getVapid();
+    const [subscriptionStats, latestDigest, latestDailyActivity, latestReminderActivity, latestArticleActivity, pendingScheduled] = await Promise.all([
+        query`
+            SELECT
+                COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE user_id IS NOT NULL)::int AS linked_users,
+                MAX(created_at) AS latest_created_at,
+                MAX(updated_at) AS latest_updated_at
+            FROM push_subscriptions
+        `,
+        query`
+            SELECT digest_date, title_snapshot, body_snapshot, target_url, push_sent, push_failed, created_at
+            FROM daily_digest_logs
+            WHERE digest_type='public_daily'
+            ORDER BY digest_date DESC, created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_DAILY_DIGEST'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_QUIZ_REMINDER'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_ARTICLE_NOTIFICATION'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT COUNT(*)::int AS pending_count, MIN(send_at) AS next_send_at
+            FROM scheduled_notifications
+            WHERE status='pending'
+        `
+    ]);
+
+    const digestRow = latestDigest.rows[0] || null;
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const latestDigestDate = digestRow?.digest_date
+        ? new Date(digestRow.digest_date).toISOString().slice(0, 10)
+        : '';
+
+    return json(res, 200, {
+        status: 'success',
+        diagnostics: {
+            cron: {
+                route: '/api/cron/notifications',
+                schedule_utc: '0 13 * * *',
+                schedule_wib: '20:00 WIB',
+                cron_secret_configured: Boolean(process.env.CRON_SECRET)
+            },
+            push: {
+                vapid_configured: Boolean(vapid),
+                vapid_subject: vapid?.subject || null,
+                subscription_total: Number(subscriptionStats.rows[0]?.total || 0),
+                subscription_linked_users: Number(subscriptionStats.rows[0]?.linked_users || 0),
+                latest_subscription_created_at: subscriptionStats.rows[0]?.latest_created_at || null,
+                latest_subscription_updated_at: subscriptionStats.rows[0]?.latest_updated_at || null
+            },
+            daily_reminder: {
+                sent_today: latestDigestDate === todayIso,
+                latest_log: digestRow ? {
+                    digest_date: digestRow.digest_date,
+                    title: digestRow.title_snapshot,
+                    body: digestRow.body_snapshot,
+                    url: digestRow.target_url,
+                    push_sent: Number(digestRow.push_sent || 0),
+                    push_failed: Number(digestRow.push_failed || 0),
+                    created_at: digestRow.created_at
+                } : null,
+                latest_activity: latestDailyActivity.rows[0] || null
+            },
+            automation: {
+                latest_quiz_reminder_activity: latestReminderActivity.rows[0] || null,
+                latest_article_notification_activity: latestArticleActivity.rows[0] || null,
+                pending_scheduled_notifications: Number(pendingScheduled.rows[0]?.pending_count || 0),
+                next_scheduled_notification_at: pendingScheduled.rows[0]?.next_send_at || null
+            }
+        }
+    });
+}
+
 // --- System & Logs ---
 
 async function handleGetActivityLogs(req, res) {
@@ -941,6 +1036,7 @@ module.exports = async (req, res) => {
             if (req.method === 'GET' && action === 'gamificationGet') return await handleGetGamification(req, res);
             if (req.method === 'GET' && action === 'pimpinanGet') return await handleGetPimpinan(req, res);
             if (req.method === 'GET' && action === 'listScheduledNotifications') return await handleListScheduledNotifications(req, res);
+            if (req.method === 'GET' && action === 'notificationDebug') return await handleNotificationDebug(req, res);
             if (req.method === 'GET' && action === 'runScheduledNotifications') return await handleRunScheduledNotifications(req, res);
             return json(res, 405, { status: 'error', message: 'Method not allowed' });
         }
@@ -966,4 +1062,3 @@ module.exports = async (req, res) => {
         return json(res, 500, { status: 'error', message: String(e.message || e) });
     }
 };
-

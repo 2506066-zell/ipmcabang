@@ -3,8 +3,10 @@ const { query } = require('./_db');
 const PUSH_SEND_CONCURRENCY = Math.max(1, Number(process.env.PUSH_SEND_CONCURRENCY || 20));
 const PUSH_TTL_SECONDS = Math.max(30, Number(process.env.PUSH_TTL_SECONDS || 300));
 const PUSH_TIMEOUT_MS = Math.max(3000, Number(process.env.PUSH_TIMEOUT_MS || 10000));
+const APP_NAME = 'PC IPM Panawuan';
 const DEFAULT_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
 const DEFAULT_NOTIFICATION_BADGE = '/icons/icon-192-maskable.png';
+const DEFAULT_NOTIFICATION_IMAGE = '/app/media/icons/icon-512.png';
 
 function getVapid() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
@@ -43,8 +45,18 @@ async function removeSubscription(endpoint) {
 
 function withNotificationBranding(payload) {
   const next = payload && typeof payload === 'object' ? { ...payload } : {};
+  if (!next.title) next.title = APP_NAME;
   if (!next.icon) next.icon = DEFAULT_NOTIFICATION_ICON;
   if (!next.badge) next.badge = DEFAULT_NOTIFICATION_BADGE;
+  if (!next.image && next.useLargeImage !== false) next.image = DEFAULT_NOTIFICATION_IMAGE;
+  if (!next.tag) next.tag = 'ipm-general';
+  if (next.renotify === undefined) next.renotify = false;
+  if (next.requireInteraction === undefined) next.requireInteraction = false;
+  if (!Array.isArray(next.vibrate)) next.vibrate = [180, 60, 180];
+  if (!next.timestamp) next.timestamp = Date.now();
+  next.appName = APP_NAME;
+  next.trustLabel = next.trustLabel || 'Sumber resmi PC IPM Panawuan';
+  next.context = next.context || 'Informasi terverifikasi dari aplikasi IPM';
   return next;
 }
 
@@ -115,6 +127,7 @@ async function sendToAll(payload) {
 }
 
 module.exports = {
+  withNotificationBranding,
   getVapid,
   initWebPush,
   saveSubscription,

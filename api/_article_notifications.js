@@ -92,7 +92,9 @@ async function notifyPublishedArticle(article, req) {
     url,
     image,
     tag: `article-${Number(article.id)}`,
-    renotify: false
+    renotify: false,
+    context: 'Artikel terbit resmi di kanal informasi PC IPM Panawuan',
+    trustLabel: 'Konten resmi organisasi'
   });
   await recordArticleNotification(article, pushResult);
 

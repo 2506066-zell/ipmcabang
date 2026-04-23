@@ -1,6 +1,7 @@
 const { query } = require('./_db');
 const { json, parseJsonBody } = require('./_util');
 const { requireAdminAuth, requireUserAuth } = require('./_auth');
+const { notifyOrganizationProgram } = require('./_organization_notifications');
 
 function sanitizeText(value, max = 255) {
   return String(value || '')
@@ -278,6 +279,9 @@ async function handleUpsertProgram(req, res) {
   const id = Number(body.id || 0);
   const bidangId = await resolveBidangId(body.bidang_id, body.bidang_code);
   if (!bidangId) return json(res, 400, { status: 'error', message: 'Bidang tidak valid' });
+  const currentRow = id > 0
+    ? (await query`SELECT * FROM org_programs WHERE id=${id} LIMIT 1`).rows[0]
+    : null;
 
   const title = sanitizeText(body.title || body.name, 180);
   const description = sanitizeText(body.description || body.desc, 700);
@@ -322,6 +326,33 @@ async function handleUpsertProgram(req, res) {
     try {
       await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_ORG_PROGRAM', ${{ id: row?.id, title, bidang_id: bidangId, status }})`;
     } catch {}
+  }
+
+  const bidang = (await query`
+    SELECT id, code, name, image_url
+    FROM org_bidang
+    WHERE id=${bidangId}
+    LIMIT 1
+  `).rows[0];
+
+  const hasMeaningfulChange = !currentRow
+    || String(currentRow.title || '') !== String(row?.title || '')
+    || String(currentRow.description || '') !== String(row?.description || '')
+    || String(currentRow.status || '') !== String(row?.status || '')
+    || Number(currentRow.progress_percent || 0) !== Number(row?.progress_percent || 0)
+    || Number(currentRow.bidang_id || 0) !== Number(row?.bidang_id || 0);
+
+  if (row && bidang && hasMeaningfulChange) {
+    try {
+      await notifyOrganizationProgram({
+        program: row,
+        bidang,
+        eventType: currentRow ? 'update' : 'create',
+        adminId
+      });
+    } catch (e) {
+      console.error('Program notification failed:', e);
+    }
   }
 
   return json(res, 200, { status: 'success', program: row });
