@@ -120,18 +120,39 @@
 }
 
 .page-struktur .org-stage-label {
-    margin-bottom: 20px;
+    margin-bottom: 32px;
     text-align: center;
+    position: relative;
+    padding-bottom: 12px;
+}
+
+.page-struktur .org-stage-label::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 2px;
+    background: var(--zen-primary);
+    border-radius: 2px;
+    opacity: 0.3;
 }
 
 .page-struktur .org-stage-label h2 {
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.25em;
     color: var(--zen-slate-600);
-    font-weight: 700;
-    margin-bottom: 4px;
-    opacity: 0.8;
+    font-weight: 800;
+    margin-bottom: 6px;
+    opacity: 0.9;
+}
+
+.page-struktur .org-stage-label p {
+    font-size: 14px;
+    color: var(--zen-slate-600);
+    font-weight: 500;
 }
 
 /* Bidang Card: Zen Vertical Style */
@@ -139,7 +160,7 @@
     background: #fff;
     border: 1px solid var(--zen-slate-100);
     border-radius: var(--zen-radius);
-    padding: 0; /* Remove padding to let image bleed */
+    padding: 0;
     text-align: left;
     transition: var(--zen-transition);
     cursor: pointer;
@@ -148,6 +169,35 @@
     flex-direction: column;
     width: 100%;
     overflow: hidden;
+    position: relative;
+}
+
+.page-struktur .org-node-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid var(--zen-primary);
+    opacity: 0;
+    transition: var(--zen-transition);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.page-struktur .org-node-card-leader {
+    max-width: 400px;
+    margin: 0 auto;
+    border-color: var(--zen-primary-light);
+    box-shadow: var(--zen-shadow-md);
+}
+
+.page-struktur .org-node-card-leader .org-node-name {
+    font-size: 18px;
+    color: var(--zen-primary-dark);
+}
+
+.page-struktur .org-node-card-core {
+    border-color: var(--zen-slate-200);
 }
 
 .page-struktur .org-node-card:hover {
@@ -168,6 +218,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center var(--field-focus-y, 50%);
     display: block;
 }
 
@@ -185,7 +236,10 @@
 }
 
 .page-struktur .org-node-content {
-    padding: 16px;
+    padding: 20px;
+    background: #fff;
+    position: relative;
+    z-index: 2;
 }
 
 .page-struktur .org-node-name {
@@ -197,23 +251,34 @@
 }
 
 .page-struktur .org-node-meta {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--zen-slate-600);
-    font-weight: 500;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.7;
+    margin-top: 4px;
 }
 
 /* Layouts for Tracks */
-.page-struktur .org-leadership-track,
+.page-struktur .org-leadership-track {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 32px;
+}
+
 .page-struktur .org-core-track {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    gap: 24px;
     width: 100%;
+    justify-content: center;
 }
 
 .page-struktur .org-field-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Force 2 columns on mobile */
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     width: 100%;
 }
@@ -224,17 +289,40 @@
     }
     
     .page-struktur .org-node-media {
-        height: 200px;
+        height: 180px;
+    }
+
+    .page-struktur .org-node-card-leader .org-node-media {
+        height: 320px;
+    }
+
+    .page-struktur .org-node-card-core .org-node-media {
+        height: 220px;
     }
 }
 
 /* Connector Line: Ultra Minimalist */
 .page-struktur .org-stage-connector {
-    width: 1px;
-    height: 40px;
-    background: var(--zen-slate-200);
-    margin: -40px auto;
-    z-index: -1;
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--zen-primary), transparent);
+    margin: -32px auto 0;
+    opacity: 0.2;
+    position: relative;
+    z-index: 1;
+}
+
+.page-struktur .org-stage-connector::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 8px;
+    background: var(--zen-primary);
+    border-radius: 50%;
+    opacity: 0.5;
 }
 
 /* Detail Workspace: Full Screen Minimalist */
