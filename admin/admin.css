@@ -4524,3 +4524,49 @@ button.priority-card:hover {
         flex-direction: column;
     }
 }
+
+/* Quick Reminders */
+.quick-reminders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.quick-remind-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: left;
+    justify-content: flex-start;
+}
+
+.quick-remind-btn i {
+    font-size: 1.2rem;
+    color: var(--accent-primary);
+}
+
+.quick-remind-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+    transform: translateY(-2px);
+    border-color: var(--accent-primary);
+}
+
+.quick-remind-btn:hover i {
+    color: white;
+}
+
+.highlight-flash {
+    animation: highlight-flash-anim 2s ease;
+}
+
+@keyframes highlight-flash-anim {
+    0%, 100% { border-color: var(--border-color); box-shadow: none; }
+    20%, 80% { border-color: var(--accent-primary); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
+}

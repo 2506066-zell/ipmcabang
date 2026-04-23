@@ -286,6 +286,10 @@
             feedbackRefreshBtn: document.getElementById('feedback-refresh-btn'),
             feedbackStatusFilter: document.getElementById('feedback-status-filter'),
 
+            // Quick Reminders
+            btnRemindLibrary: document.getElementById('btn-remind-library'),
+            btnRemindQuiz: document.getElementById('btn-remind-quiz'),
+
             // Question Modal
             modal: document.getElementById('question-modal'),
             modalTitle: document.getElementById('modal-title'),
@@ -2698,7 +2702,53 @@
             e.preventDefault();
             savePimpinanOptions();
         });
+
+
+        // Quick Reminders
+        els.btnRemindLibrary?.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.prepareLibraryReminder();
+        });
+
+        els.btnRemindQuiz?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (els.notifyTitle) els.notifyTitle.value = 'Kuis Sedang Aktif!';
+            if (els.notifyMessage) els.notifyMessage.value = 'Ayo asah pengetahuanmu dengan mengerjakan kuis hari ini. Ada XP dan streak menantimu!';
+            if (els.notifyUrl) els.notifyUrl.value = '/quiz-gamified.html';
+            const card = document.getElementById('admin-notify-card');
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth' });
+                card.classList.add('highlight-flash');
+                setTimeout(() => card.classList.remove('highlight-flash'), 2000);
+            }
+        });
     }
+
+    // --- LIBRARY REMINDER CROSS-TAB ---
+    window.prepareLibraryReminder = function(material = null) {
+        // Switch to users tab
+        if (window.activateTab) window.activateTab('users');
+
+        if (material) {
+            // Pre-fill for specific material
+            if (els.notifyTitle) els.notifyTitle.value = `Materi Baru: ${material.title}`;
+            if (els.notifyMessage) els.notifyMessage.value = `Baca materi "${material.title}" di perpustakaan digital sekarang. Luangkan waktu untuk belajar hari ini!`;
+            if (els.notifyUrl) els.notifyUrl.value = '/materi.html';
+        } else {
+            // Generic library reminder
+            if (els.notifyTitle) els.notifyTitle.value = 'Update Perpustakaan Digital';
+            if (els.notifyMessage) els.notifyMessage.value = 'Sudahkah kamu membaca materi hari ini? Cek koleksi e-book dan dokumen terbaru di perpustakaan.';
+            if (els.notifyUrl) els.notifyUrl.value = '/materi.html';
+        }
+
+        // Visual feedback
+        const card = document.getElementById('admin-notify-card');
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth' });
+            card.classList.add('highlight-flash');
+            setTimeout(() => card.classList.remove('highlight-flash'), 2000);
+        }
+    };
 
     // --- INIT ---
     function init() {

@@ -349,6 +349,9 @@ export function initMaterials(state, els, api) {
                     <button class="btn btn-secondary btn-sm del-btn" style="color:red; border-color:red" data-id="${mat.id}">
                         <i class="fas fa-trash"></i> Hapus
                     </button>
+                    <button class="btn btn-secondary btn-sm notify-btn" data-id="${mat.id}" style="color:var(--accent-primary); border-color:var(--accent-primary)">
+                        <i class="fas fa-bell"></i> Kirim Notifikasi
+                    </button>
                     ${mat.file_url
                         ? `<a href="${mat.file_url}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm"><i class="fas fa-link"></i> Buka URL</a>`
                         : `<span class="btn btn-secondary btn-sm" style="opacity:0.6; cursor:not-allowed;"><i class="fas fa-file"></i> URL belum ada</span>`}
@@ -358,6 +361,14 @@ export function initMaterials(state, els, api) {
 
         list.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = () => openEdit(btn.dataset.id));
         list.querySelectorAll('.del-btn').forEach(btn => btn.onclick = () => handleDelete(btn.dataset.id));
+        list.querySelectorAll('.notify-btn').forEach(btn => {
+            btn.onclick = () => {
+                const mat = materials.find(m => String(m.id) === String(btn.dataset.id));
+                if (mat && window.prepareLibraryReminder) {
+                    window.prepareLibraryReminder(mat);
+                }
+            };
+        });
     }
 
     function updatePagination() {
