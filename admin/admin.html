@@ -630,6 +630,48 @@
                         </div>
                         <div id="notify-schedule-list" class="notify-schedule-list mt-16"></div>
                     </section>
+                    <section class="card section-card mt-20" id="admin-system-notify-card">
+                        <div class="subsection-heading-row">
+                            <div>
+                                <h3 class="section-card-title section-title-icon">
+                                    <i class="fas fa-satellite-dish"></i> Notifikasi Otomatis Sistem
+                                </h3>
+                                <p class="section-support-text">Pantau semua jalur notif yang dikirim otomatis oleh sistem tanpa mengubah form broadcast manual di atas.</p>
+                            </div>
+                            <span class="status-badge status-muted">Automasi Sistem</span>
+                        </div>
+                        <div class="toolbar-row toolbar-spread mb-16">
+                            <div class="small muted" id="system-notify-status">Memuat status notifikasi sistem...</div>
+                            <div class="action-group wrap">
+                                <button class="btn btn-secondary" id="system-notify-refresh">
+                                    <i class="fas fa-rotate"></i> Refresh Status
+                                </button>
+                                <button class="btn btn-primary" id="system-notify-run">
+                                    <i class="fas fa-bolt"></i> Jalankan Engine Sistem
+                                </button>
+                            </div>
+                        </div>
+                        <div id="system-notify-health" class="system-notify-health-grid">
+                            <div class="small muted">Memuat ringkasan automasi...</div>
+                        </div>
+                        <div class="system-notify-list-head mt-16">
+                            <div>
+                                <h4 class="section-card-title">Sumber Notifikasi Sistem</h4>
+                                <p class="section-support-text">Bagian ini menampilkan jenis notif otomatis, trigger pengiriman, dan aktivitas terakhir yang berhasil dicatat sistem.</p>
+                            </div>
+                            <div class="system-notify-list-actions">
+                                <div class="small muted" id="system-notify-meta">Menyiapkan ringkasan sumber notifikasi...</div>
+                                <div class="forms-review-filter-group" id="system-notify-filters">
+                                    <button type="button" class="forms-review-filter active" data-filter="all">Semua</button>
+                                    <button type="button" class="forms-review-filter" data-filter="today">Aktif Hari Ini</button>
+                                    <button type="button" class="forms-review-filter" data-filter="attention">Perlu Perhatian</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="system-notify-list" class="system-notify-grid mt-16">
+                            <div class="small muted">Memuat daftar notifikasi otomatis...</div>
+                        </div>
+                    </section>
                     <section class="card section-card mt-20" id="admin-feedback-card">
                         <div class="subsection-heading-row">
                             <div>

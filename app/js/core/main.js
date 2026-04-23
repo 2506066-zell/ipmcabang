@@ -382,8 +382,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return { overlay, panel };
         };
 
-        const state = { notifications: [], unread: 0, articleUnread: 0, latestArticle: null, schedule: null, scheduleMode: '', scheduleTimer: null };
+        const state = {
+            notifications: [],
+            unread: 0,
+            articleUnread: 0,
+            latestArticle: null,
+            schedule: null,
+            scheduleMode: '',
+            scheduleTimer: null,
+            authFailed: false,
+            markReadInFlight: false
+        };
         const session = getSession();
+
+        const getArticlePublishedTs = (article) => {
+            const ts = new Date(article?.publish_date || article?.created_at || 0).getTime();
+            return Number.isFinite(ts) ? ts : 0;
+        };
+
+        const syncUnreadCount = () => {
+            state.unread = state.notifications.filter((item) => item && !item.is_read).length;
+        };
 
         const updateNotifBadge = () => {
             const badge = document.getElementById('notif-badge');
@@ -396,6 +415,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (bell) bell.title = `${totalBadge} notifikasi`;
         };
 
+        const markArticleAsSeen = (article) => {
+            const published = getArticlePublishedTs(article);
+            if (!published) return;
+            localStorage.setItem(ARTICLE_SEEN_KEY, String(published));
+
+            const latestPublished = getArticlePublishedTs(state.latestArticle);
+            if (!latestPublished || published >= latestPublished) {
+                state.articleUnread = 0;
+                state.latestArticle = null;
+            }
+            updateNotifBadge();
+        };
+
         const fetchArticleNotif = async () => {
             try {
                 const artRes = await fetch('/api/articles?size=1&sort=newest');
@@ -403,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const artData = await artRes.json();
                     const latest = Array.isArray(artData.articles) ? artData.articles[0] : null;
                     if (latest) {
-                        const published = new Date(latest.publish_date || latest.created_at || Date.now()).getTime();
+                        const published = getArticlePublishedTs(latest);
                         const lastSeen = Number(localStorage.getItem(ARTICLE_SEEN_KEY) || 0);
                         if (published > lastSeen) {
                             state.articleUnread = 1;
@@ -412,6 +444,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             state.articleUnread = 0;
                             state.latestArticle = null;
                         }
+                    } else {
+                        state.articleUnread = 0;
+                        state.latestArticle = null;
                     }
                 }
             } catch {}
@@ -427,17 +462,25 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const fetchUserNotifications = async () => {
-            if (!session || state.authFailed) return;
+            if (!session || state.authFailed) {
+                state.notifications = [];
+                state.unread = 0;
+                return;
+            }
             try {
                 let res = await fetch('/api/users?action=notifications', { headers: { Authorization: `Bearer ${session}` } });
                 if (res.status === 401 || res.status === 403) {
                     state.authFailed = true;
+                    state.notifications = [];
+                    state.unread = 0;
                     return;
                 }
                 if (res.status === 404) {
                     res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session}` } });
                     if (res.status === 401 || res.status === 403) {
                         state.authFailed = true;
+                        state.notifications = [];
+                        state.unread = 0;
                         return;
                     }
                 }
@@ -446,10 +489,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.status === 'success' && Array.isArray(data.notifications)) {
                         const recent = filterRecentNotifications(data.notifications);
                         state.notifications = recent;
-                        state.unread = recent.filter(n => !n.is_read).length;
+                        syncUnreadCount();
                     }
                 }
             } catch {}
+        };
+
+        const markServerNotificationsRead = async () => {
+            if (!session || state.authFailed) return true;
+            if (!state.notifications.some((item) => item && !item.is_read)) return true;
+            try {
+                const res = await fetch('/api/users?action=markNotificationsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session}`
+                    }
+                });
+                if (res.status === 401 || res.status === 403) {
+                    state.authFailed = true;
+                    return false;
+                }
+                return res.ok;
+            } catch {
+                return false;
+            }
         };
 
         const selectScheduleForNotif = (schedules) => {
@@ -579,8 +643,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const fetchNotifications = async () => {
-            await fetchArticleNotif();
-            await fetchCountdownSchedule();
+            await Promise.all([
+                fetchArticleNotif(),
+                fetchUserNotifications(),
+                fetchCountdownSchedule()
+            ]);
             updateNotifBadge();
             if (state.articleUnread && window.Toast) {
                 window.Toast.show('Ada artikel terbaru. Lihat di notifikasi.', 'info');
@@ -653,15 +720,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         overlay?.addEventListener('click', closePanel);
         document.getElementById('notif-close')?.addEventListener('click', closePanel);
-        document.getElementById('notif-mark-read')?.addEventListener('click', () => {
+        document.getElementById('notif-mark-read')?.addEventListener('click', async () => {
+            if (state.markReadInFlight) return;
+            state.markReadInFlight = true;
+            const button = document.getElementById('notif-mark-read');
+            if (button) button.disabled = true;
+
             if (state.latestArticle) {
-                const published = new Date(state.latestArticle.publish_date || state.latestArticle.created_at || Date.now()).getTime();
-                localStorage.setItem(ARTICLE_SEEN_KEY, String(published));
+                markArticleAsSeen(state.latestArticle);
             }
-            state.unread = 0;
-            state.articleUnread = 0;
+            state.notifications = state.notifications.map((item) => item ? { ...item, is_read: true } : item);
+            syncUnreadCount();
             updateNotifBadge();
-            closePanel();
+            renderNotifList();
+
+            try {
+                await markServerNotificationsRead();
+            } finally {
+                state.markReadInFlight = false;
+                if (button) button.disabled = false;
+                closePanel();
+            }
         });
 
         // Fallback: event delegation to always close
@@ -688,8 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then(r => r.json())
                     .then(data => {
                         if (data.status === 'success' && data.article) {
-                            const published = new Date(data.article.publish_date || data.article.created_at || Date.now()).getTime();
-                            localStorage.setItem(ARTICLE_SEEN_KEY, String(published));
+                            markArticleAsSeen(data.article);
                         }
                     })
                     .catch(() => {});

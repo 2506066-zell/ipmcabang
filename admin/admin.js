@@ -24,6 +24,8 @@
         logs: [],
         feedbackMessages: [],
         scheduledNotifications: [],
+        notificationDiagnostics: null,
+        systemNotificationFilter: 'all',
         schedules: [],
         pimpinanOptions: [],
         connected: false,
@@ -285,6 +287,13 @@
             feedbackCount: document.getElementById('feedback-count'),
             feedbackRefreshBtn: document.getElementById('feedback-refresh-btn'),
             feedbackStatusFilter: document.getElementById('feedback-status-filter'),
+            systemNotifyStatus: document.getElementById('system-notify-status'),
+            systemNotifyRefresh: document.getElementById('system-notify-refresh'),
+            systemNotifyRun: document.getElementById('system-notify-run'),
+            systemNotifyHealth: document.getElementById('system-notify-health'),
+            systemNotifyMeta: document.getElementById('system-notify-meta'),
+            systemNotifyFilters: document.getElementById('system-notify-filters'),
+            systemNotifyList: document.getElementById('system-notify-list'),
 
             // Question Modal
             modal: document.getElementById('question-modal'),
@@ -769,6 +778,7 @@
         if (tabName === 'users' && state.users.length === 0) loadUsers();
         if (tabName === 'users') {
             loadNotifySchedules();
+            loadSystemNotificationDiagnostics();
             loadPimpinanOptions();
             loadFeedbackMessages();
         }
@@ -1163,11 +1173,13 @@
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat jadwal');
             state.scheduledNotifications = Array.isArray(data.items) ? data.items : [];
             renderNotifyScheduleList(state.scheduledNotifications);
+            syncSystemNotificationDiagnostics();
             renderUsersSummary();
         } catch (e) {
             console.error('Load scheduled notifications failed:', e);
             els.notifyScheduleList.innerHTML = '<div class="small muted">Gagal memuat jadwal notifikasi.</div>';
             state.scheduledNotifications = [];
+            syncSystemNotificationDiagnostics();
             renderUsersSummary();
         }
     }
@@ -1183,6 +1195,235 @@
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    function getLatestDateValue(values) {
+        let latest = 0;
+        values.forEach((value) => {
+            const ts = new Date(value || 0).getTime();
+            if (Number.isFinite(ts) && ts > latest) latest = ts;
+        });
+        return latest ? new Date(latest).toISOString() : '';
+    }
+
+    function formatSystemChip(isPositive, positiveLabel = 'Aktif', negativeLabel = 'Belum Aktif') {
+        if (isPositive) {
+            return { label: positiveLabel, tone: 'ok' };
+        }
+        return { label: negativeLabel, tone: 'muted' };
+    }
+
+    function summarizeSystemDigest(diagnostics) {
+        const latestLog = diagnostics?.daily_reminder?.latest_log || null;
+        const details = parseFeedbackContext(diagnostics?.daily_reminder?.latest_activity?.details);
+        const summaryMap = {
+            quiz: 'Quiz aktif',
+            form: 'Form aktif',
+            attendance: 'Absensi aktif',
+            article: 'Artikel pilihan',
+            materials: 'Materi terbaru',
+            discussions: 'Diskusi terbaru',
+            general: 'Ringkasan umum'
+        };
+        if (!latestLog && !details.summary) return 'Belum ada digest yang tercatat.';
+        const label = summaryMap[String(details.summary || '').toLowerCase()] || 'Ringkasan harian';
+        const pushSent = Number(latestLog?.push_sent || details.push_sent || 0);
+        const pushFailed = Number(latestLog?.push_failed || details.push_failed || 0);
+        return `${label} - Terkirim ${pushSent}, gagal ${pushFailed}`;
+    }
+
+    function buildSystemNotificationCards(diagnostics) {
+        const automation = diagnostics?.automation || {};
+        const dailyReminder = diagnostics?.daily_reminder || {};
+        const articleDetails = parseFeedbackContext(automation.latest_article_notification_activity?.details);
+        const quizDetails = parseFeedbackContext(automation.latest_quiz_reminder_activity?.details);
+        const programDetails = parseFeedbackContext(automation.latest_org_program_notification_activity?.details);
+
+        return [
+            {
+                icon: 'fas fa-newspaper',
+                title: 'Artikel Baru',
+                subtitle: 'Dikirim otomatis saat artikel yang sudah publish dibuat atau diperbarui dari editor admin.',
+                chip: formatSystemChip(Boolean(automation.latest_article_notification_activity), 'Aktif Tercatat', 'Belum Ada Log'),
+                points: [
+                    { label: 'Trigger', value: 'Publish artikel dari kanal konten admin' },
+                    { label: 'Target', value: 'Semua user yang sudah subscribe push' },
+                    { label: 'Aktivitas', value: automation.latest_article_notification_activity ? formatFeedbackDate(automation.latest_article_notification_activity.created_at) : 'Belum ada aktivitas tercatat' },
+                    { label: 'Batch', value: articleDetails.title ? `${articleDetails.title} - Terkirim ${Number(articleDetails.push_sent || 0)}, gagal ${Number(articleDetails.push_failed || 0)}` : 'Belum ada batch otomatis yang tersimpan' }
+                ]
+            },
+            {
+                icon: 'fas fa-moon',
+                title: 'Reminder Harian',
+                subtitle: 'Cron malam menyusun ringkasan dari quiz, form, absensi, artikel, materi, atau diskusi terbaru.',
+                chip: formatSystemChip(Boolean(dailyReminder.sent_today), 'Sudah Kirim Hari Ini', 'Belum Kirim Hari Ini'),
+                points: [
+                    { label: 'Trigger', value: 'Cron / engine sistem pada jadwal harian' },
+                    { label: 'Jadwal', value: `${diagnostics?.cron?.schedule_wib || '20:00 WIB'} - Route ${diagnostics?.cron?.route || '-'}` },
+                    { label: 'Aktivitas', value: dailyReminder.latest_log?.created_at ? formatFeedbackDate(dailyReminder.latest_log.created_at) : 'Belum ada digest tercatat' },
+                    { label: 'Batch', value: summarizeSystemDigest(diagnostics) }
+                ]
+            },
+            {
+                icon: 'fas fa-stopwatch',
+                title: 'Reminder Quiz Otomatis',
+                subtitle: 'Sistem menarget user yang belum submit saat quiz baru dibuka atau mendekati penutupan.',
+                chip: formatSystemChip(Boolean(automation.latest_quiz_reminder_activity), 'Aktif Tercatat', 'Belum Ada Log'),
+                points: [
+                    { label: 'Trigger', value: 'Quiz aktif dengan flag notifikasi aktif' },
+                    { label: 'Target', value: 'User yang belum punya hasil pada rentang jadwal quiz' },
+                    { label: 'Aktivitas', value: automation.latest_quiz_reminder_activity ? formatFeedbackDate(automation.latest_quiz_reminder_activity.created_at) : 'Belum ada batch reminder quiz' },
+                    { label: 'Batch', value: quizDetails.reminder_type ? `Mode ${String(quizDetails.reminder_type).toUpperCase()} - Kandidat penerima ${Number(quizDetails.recipients || 0)}` : 'Belum ada data batch terakhir' }
+                ]
+            },
+            {
+                icon: 'fas fa-diagram-project',
+                title: 'Program Kerja Organisasi',
+                subtitle: 'Notif otomatis dikirim ketika program kerja baru dibuat atau diperbarui dengan perubahan yang bermakna.',
+                chip: formatSystemChip(Boolean(automation.latest_org_program_notification_activity), 'Aktif Tercatat', 'Belum Ada Log'),
+                points: [
+                    { label: 'Trigger', value: 'Create / update program kerja organisasi' },
+                    { label: 'Target', value: 'Semua user yang sudah subscribe push' },
+                    { label: 'Aktivitas', value: automation.latest_org_program_notification_activity ? formatFeedbackDate(automation.latest_org_program_notification_activity.created_at) : 'Belum ada aktivitas program kerja' },
+                    { label: 'Batch', value: programDetails.event_type ? `Mode ${String(programDetails.event_type).toUpperCase()} - Terkirim ${Number(programDetails.push_sent || 0)}, gagal ${Number(programDetails.push_failed || 0)}` : 'Belum ada batch program kerja yang tercatat' }
+                ]
+            }
+        ];
+    }
+
+    function renderSystemNotificationDiagnostics() {
+        if (!els.systemNotifyHealth || !els.systemNotifyList) return;
+        const diagnostics = state.notificationDiagnostics;
+        if (!diagnostics) {
+            els.systemNotifyHealth.innerHTML = '<div class="system-notify-empty">Data automasi notifikasi belum tersedia.</div>';
+            els.systemNotifyList.innerHTML = '<div class="system-notify-empty">Belum ada data sumber notifikasi otomatis untuk ditampilkan.</div>';
+            if (els.systemNotifyStatus) els.systemNotifyStatus.textContent = 'Status automasi belum dimuat.';
+            return;
+        }
+
+        const push = diagnostics.push || {};
+        const dailyReminder = diagnostics.daily_reminder || {};
+        const automation = diagnostics.automation || {};
+        const latestUpdatedAt = getLatestDateValue([
+            push.latest_subscription_updated_at,
+            push.latest_subscription_created_at,
+            dailyReminder.latest_log?.created_at,
+            dailyReminder.latest_activity?.created_at,
+            automation.latest_quiz_reminder_activity?.created_at,
+            automation.latest_article_notification_activity?.created_at,
+            automation.latest_org_program_notification_activity?.created_at
+        ]);
+
+        const healthCards = [
+            {
+                label: 'VAPID Push',
+                value: push.vapid_configured ? 'Aktif' : 'Off',
+                meta: push.vapid_configured ? `Subject: ${push.vapid_subject || '-'}` : 'Kunci push belum dikonfigurasi'
+            },
+            {
+                label: 'Subscription',
+                value: String(Number(push.subscription_total || 0)),
+                meta: `${Number(push.subscription_linked_users || 0)} subscription terhubung ke akun user`
+            },
+            {
+                label: 'Digest Hari Ini',
+                value: dailyReminder.sent_today ? 'Sudah' : 'Belum',
+                meta: dailyReminder.latest_log?.title ? `Terakhir: ${dailyReminder.latest_log.title}` : 'Belum ada log digest terbaru'
+            },
+            {
+                label: 'Jadwal Pending',
+                value: String(Number(automation.pending_scheduled_notifications || 0)),
+                meta: automation.next_scheduled_notification_at ? `Berikutnya ${formatScheduleDate(automation.next_scheduled_notification_at)}` : 'Tidak ada jadwal notifikasi tertunda'
+            }
+        ];
+
+        els.systemNotifyHealth.innerHTML = healthCards.map((item) => `
+            <article class="system-notify-health-card">
+                <div class="system-notify-health-label">${escapeHtml(item.label)}</div>
+                <div class="system-notify-health-value">${escapeHtml(item.value)}</div>
+                <div class="system-notify-health-meta">${escapeHtml(item.meta)}</div>
+            </article>
+        `).join('');
+
+        const cards = buildSystemNotificationCards(diagnostics);
+        els.systemNotifyList.innerHTML = cards.map((item) => `
+            <article class="system-notify-card">
+                <div class="system-notify-card-top">
+                    <div class="system-notify-card-main">
+                        <div class="system-notify-icon">
+                            <i class="${escapeHtml(item.icon)}"></i>
+                        </div>
+                        <div>
+                            <div class="system-notify-title">${escapeHtml(item.title)}</div>
+                            <div class="system-notify-subtitle">${escapeHtml(item.subtitle)}</div>
+                        </div>
+                    </div>
+                    <span class="system-notify-chip ${escapeHtml(item.chip.tone)}">${escapeHtml(item.chip.label)}</span>
+                </div>
+                <div class="system-notify-points">
+                    ${item.points.map((point) => `
+                        <div class="system-notify-point">
+                            <div class="system-notify-point-label">${escapeHtml(point.label)}</div>
+                            <div class="system-notify-point-value">${escapeHtml(point.value)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </article>
+        `).join('');
+
+        if (els.systemNotifyStatus) {
+            const base = latestUpdatedAt
+                ? `Status automasi diperbarui ${formatFeedbackDate(latestUpdatedAt)}.`
+                : 'Status automasi berhasil dimuat.';
+            const cronText = diagnostics?.cron?.schedule_wib
+                ? ` Cron harian: ${diagnostics.cron.schedule_wib}.`
+                : '';
+            els.systemNotifyStatus.textContent = `${base}${cronText}`;
+        }
+    }
+
+    function syncSystemNotificationDiagnostics() {
+        if (!state.notificationDiagnostics?.automation) return;
+        const pending = (state.scheduledNotifications || [])
+            .filter(item => String(item.status || 'pending').toLowerCase() === 'pending')
+            .sort((a, b) => new Date(a.send_at || 0) - new Date(b.send_at || 0));
+        state.notificationDiagnostics.automation.pending_scheduled_notifications = pending.length;
+        state.notificationDiagnostics.automation.next_scheduled_notification_at = pending[0]?.send_at || null;
+        renderSystemNotificationDiagnostics();
+    }
+
+    async function loadSystemNotificationDiagnostics() {
+        if (!els.systemNotifyHealth || !els.systemNotifyList) return;
+        if (els.systemNotifyStatus) els.systemNotifyStatus.textContent = 'Memuat status automasi notifikasi sistem...';
+        els.systemNotifyHealth.innerHTML = '<div class="small muted">Memuat ringkasan automasi...</div>';
+        els.systemNotifyList.innerHTML = '<div class="small muted">Memuat sumber notifikasi sistem...</div>';
+        try {
+            const data = await apiAdminVercel('GET', '/api/admin/questions?action=notificationDebug');
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal memuat diagnostics');
+            state.notificationDiagnostics = data.diagnostics || null;
+            syncSystemNotificationDiagnostics();
+        } catch (e) {
+            console.error('Load system notification diagnostics failed:', e);
+            state.notificationDiagnostics = null;
+            if (els.systemNotifyStatus) els.systemNotifyStatus.textContent = `Gagal memuat status automasi: ${e.message || 'error'}`;
+            els.systemNotifyHealth.innerHTML = '<div class="system-notify-empty">Diagnostics notifikasi sistem gagal dimuat.</div>';
+            els.systemNotifyList.innerHTML = '<div class="system-notify-empty">Coba refresh lagi untuk mengambil data automasi terbaru.</div>';
+        }
+    }
+
+    async function runNotificationEngine(statusEl, successLabel = 'Jadwal dijalankan.') {
+        if (statusEl) statusEl.textContent = 'Menjalankan engine notifikasi...';
+        const data = await apiAdminVercel('GET', '/api/admin/questions?action=runScheduledNotifications');
+        const sent = Number(data?.sent ?? 0);
+        const failed = Number(data?.failed ?? 0);
+        if (statusEl) {
+            statusEl.textContent = `${successLabel} Terkirim: ${sent}, Gagal: ${failed}`;
+        }
+        await Promise.all([
+            loadNotifySchedules(),
+            loadSystemNotificationDiagnostics()
+        ]);
+        return data;
     }
 
     function parseFeedbackContext(input) {
@@ -2491,19 +2732,28 @@
 
         els.notifyScheduleRun?.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (els.notifyStatus) els.notifyStatus.textContent = 'Menjalankan jadwal...';
             try {
-                const data = await apiAdminVercel('GET', '/api/admin/questions?action=runScheduledNotifications');
-                if (els.notifyStatus) {
-                    const sent = data?.sent ?? 0;
-                    const failed = data?.failed ?? 0;
-                    els.notifyStatus.textContent = `Jadwal dijalankan. Terkirim: ${sent}, Gagal: ${failed}`;
-                }
+                await runNotificationEngine(els.notifyStatus, 'Jadwal dijalankan.');
                 if (window.Toast) Toast.show('Jadwal dijalankan', 'success');
-                loadNotifySchedules();
             } catch (err) {
                 if (els.notifyStatus) els.notifyStatus.textContent = `Gagal: ${err.message || 'Error'}`;
                 if (window.Toast) Toast.show('Gagal menjalankan jadwal', 'error');
+            }
+        });
+
+        els.systemNotifyRefresh?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await loadSystemNotificationDiagnostics();
+        });
+
+        els.systemNotifyRun?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await runNotificationEngine(els.systemNotifyStatus, 'Engine sistem dijalankan.');
+                if (window.Toast) Toast.show('Engine notifikasi sistem dijalankan', 'success');
+            } catch (err) {
+                if (els.systemNotifyStatus) els.systemNotifyStatus.textContent = `Gagal menjalankan engine sistem: ${err.message || 'Error'}`;
+                if (window.Toast) Toast.show('Gagal menjalankan engine sistem', 'error');
             }
         });
 

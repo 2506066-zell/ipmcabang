@@ -719,7 +719,7 @@ async function handleNotificationDebug(req, res) {
 
     const { getVapid } = require('./_push');
     const vapid = getVapid();
-    const [subscriptionStats, latestDigest, latestDailyActivity, latestReminderActivity, latestArticleActivity, pendingScheduled] = await Promise.all([
+    const [subscriptionStats, latestDigest, latestDailyActivity, latestReminderActivity, latestArticleActivity, latestOrgProgramActivity, pendingScheduled] = await Promise.all([
         query`
             SELECT
                 COUNT(*)::int AS total,
@@ -753,6 +753,13 @@ async function handleNotificationDebug(req, res) {
             SELECT created_at, details
             FROM activity_logs
             WHERE action='AUTO_ARTICLE_NOTIFICATION'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_ORG_PROGRAM_NOTIFICATION'
             ORDER BY created_at DESC
             LIMIT 1
         `,
@@ -802,6 +809,7 @@ async function handleNotificationDebug(req, res) {
             automation: {
                 latest_quiz_reminder_activity: latestReminderActivity.rows[0] || null,
                 latest_article_notification_activity: latestArticleActivity.rows[0] || null,
+                latest_org_program_notification_activity: latestOrgProgramActivity.rows[0] || null,
                 pending_scheduled_notifications: Number(pendingScheduled.rows[0]?.pending_count || 0),
                 next_scheduled_notification_at: pendingScheduled.rows[0]?.next_send_at || null
             }
