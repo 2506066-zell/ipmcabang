@@ -155,21 +155,20 @@
             return;
         }
         if (!currentEvent) {
-            setFlowStatus('pending', 'Menunggu event aktif', 'Buat atau tunggu event rapat aktif untuk melanjutkan absensi.');
+            setFlowStatus('pending', 'Menunggu rapat aktif', 'Buat atau tunggu rapat aktif untuk melanjutkan absensi.');
             return;
         }
         if (!canSelfCheckIn) {
-            setFlowStatus('pending', 'Mode verifikasi manual', 'Akun ini tidak bisa self check-in di room ini. Gunakan admin manual.');
+            setFlowStatus('pending', 'Mode verifikasi manual', 'Absensi mandiri sedang tidak tersedia di room ini. Gunakan admin manual.');
             return;
         }
 
-        const identityMode = currentIdentityMode();
-        const needsMember = identityMode === 'org_member_select';
-        const hasMember = needsMember ? hasValue(els.memberSelect?.value) : true;
+        const needsMember = requiresMemberSelection();
+        const hasMember = needsMember ? hasRepresentativeIdentity() : true;
         const hasSelfie = Boolean(state.selfieFile);
 
         if (!hasMember) {
-            setFlowStatus('pending', 'Langkah 1: pilih nama', 'Pilih nama kader dulu untuk lanjut ke kamera.');
+            setFlowStatus('pending', 'Langkah 1: pilih kader', 'Pilih kader dulu untuk lanjut ke kamera.');
             return;
         }
         if (!hasSelfie) {
@@ -268,6 +267,26 @@
         return String(state.detail?.room?.identity_mode || '').trim() || 'account_identity';
     }
 
+    function usesOrgMemberDirectory() {
+        return currentIdentityMode() === 'org_member_select';
+    }
+
+    function requiresMemberSelection() {
+        return true;
+    }
+
+    function getSelectedRepresentativeId() {
+        return Number(els.memberSelect?.value || 0);
+    }
+
+    function getManualRepresentativeName() {
+        return String(els.manualNameInput?.value || '').trim();
+    }
+
+    function hasRepresentativeIdentity() {
+        return usesOrgMemberDirectory() ? hasValue(els.memberSelect?.value) : hasValue(getManualRepresentativeName());
+    }
+
     function setCodeModalOpen(isOpen) {
         if (!els.codeModal) return;
         els.codeModal.hidden = !isOpen;
@@ -318,9 +337,7 @@
         els.roomGrid.innerHTML = state.rooms.map((room) => {
             const selected = Number(room.id) === Number(state.currentRoomId);
             const accessLabel = room.has_access ? 'Terbuka' : 'Terkunci';
-            const eventLabel = room.today_event ? `${escapeHtml(room.today_event.title)} sedang aktif` : 'Belum ada event aktif hari ini';
-            const isEligible = String(state.user?.pimpinan || '').trim() === String(room.pimpinan || '').trim();
-
+            const eventLabel = room.today_event ? `${escapeHtml(room.today_event.title)} sedang aktif` : 'Belum ada rapat aktif hari ini';
             return `
                 <button type="button" class="attendance-room-card reveal ${selected ? 'is-selected' : ''}" data-room-id="${room.id}" data-room-name="${escapeHtml(room.pimpinan)}">
                     <div class="attendance-room-head">
@@ -334,7 +351,7 @@
                     </div>
                     <div class="attendance-room-meta">
                         <span><i class="fas fa-signal"></i> ${escapeHtml(eventLabel)}</span>
-                        <span><i class="fas fa-shield-halved"></i> ${isEligible ? 'Verifikasi wajah tersedia.' : 'Self check-in ditutup.'}</span>
+                        <span><i class="fas fa-shield-halved"></i> Pilih kader room ini lalu lanjut selfie.</span>
                     </div>
                     <div class="attendance-room-actions">
                         <span class="attendance-primary-btn" style="padding: 10px 16px; font-size: 0.85rem; box-shadow: none;">
@@ -356,18 +373,25 @@
 
     function renderMemberOptions(isFirstLoad = false, filterText = '') {
         if (!els.memberField || !els.memberSelect || !els.memberMeta) return;
-        const isCabangRoom = currentIdentityMode() === 'org_member_select';
-        els.memberField.hidden = !isCabangRoom;
-        
-        if (!isCabangRoom) {
-            els.memberSelect.innerHTML = '<option value="">Pilih nama dari struktur organisasi</option>';
-            els.memberMeta.textContent = 'Room ini memakai identitas akun login, jadi pilihan nama organisasi tidak dipakai.';
-            updateStepHighlight();
-            return;
-        }
+        const isCabangRoom = usesOrgMemberDirectory();
+        els.memberField.hidden = false;
+        if (els.memberDirectory) els.memberDirectory.hidden = !isCabangRoom;
+        if (els.manualNameWrap) els.manualNameWrap.hidden = isCabangRoom;
 
         const queryText = String(filterText || '').toLowerCase().trim();
         const options = Array.isArray(state.memberOptions) ? state.memberOptions : [];
+        const defaultOption = isCabangRoom
+            ? 'Pilih nama dari struktur organisasi'
+            : 'Pilih kader dari room ini';
+
+        if (!isCabangRoom) {
+            els.memberMeta.textContent = hasValue(getManualRepresentativeName())
+                ? 'Nama kader manual siap dipakai untuk absensi.'
+                : 'Tulis nama kader yang akan diabsenkan untuk room ini.';
+            els.memberMeta.style.color = 'var(--c-text-muted)';
+            updateStepHighlight();
+            return;
+        }
         
         let filtered = options;
         if (queryText) {
@@ -384,7 +408,7 @@
 
         if (shouldRepopulate) {
             els.memberSelect.innerHTML = [
-                '<option value="">Pilih nama dari struktur organisasi</option>',
+                `<option value="">${defaultOption}</option>`,
                 ...filtered.map((item) => `<option value="${item.id}">${escapeHtml(item.full_name)}</option>`)
             ].join('');
             
@@ -402,12 +426,16 @@
             els.memberMeta.textContent = `Nama "${filterText}" tidak ditemukan.`;
             els.memberMeta.style.color = '#ef4444';
         } else if (options.length === 0) {
-            els.memberMeta.textContent = 'Data kader belum ada di struktur organisasi. Hubungi admin untuk input data.';
+            els.memberMeta.textContent = isCabangRoom
+                ? 'Data kader belum ada di struktur organisasi. Hubungi admin untuk input data.'
+                : 'Data kader room ini belum tersedia. Pastikan akun anggota dan pimpinan room sudah sesuai.';
             els.memberMeta.style.color = '#f59e0b'; // Amber warning
         } else {
             els.memberMeta.textContent = queryText 
                 ? `${filtered.length} nama ditemukan.`
-                : 'Pilih nama kader aktif dari struktur organisasi.';
+                : (isCabangRoom
+                    ? 'Pilih nama kader aktif dari struktur organisasi.'
+                    : 'Pilih kader yang akan diabsenkan dari room ini.');
             els.memberMeta.style.color = 'var(--c-text-muted)';
         }
         updateStepHighlight();
@@ -422,7 +450,7 @@
         els.accessStrip.innerHTML = `
             <div class="attendance-status-bar">
                 <span class="status-pill ${canSelfCheckIn ? 'is-success' : 'is-warning'}">
-                    <i class="fas fa-fingerprint"></i> ${canSelfCheckIn ? 'Akses Mandiri' : 'Verifikasi Manual'}
+                    <i class="fas fa-fingerprint"></i> ${canSelfCheckIn ? 'Akses Perwakilan' : 'Verifikasi Manual'}
                 </span>
                 <span class="status-pill ${currentEvent ? 'is-active' : 'is-muted'}">
                     <i class="fas fa-bolt"></i> ${currentEvent ? 'Rapat Aktif' : 'Standby'}
@@ -521,14 +549,14 @@
         if (els.createBtn) {
             els.createBtn.disabled = disabled;
             els.createBtn.innerHTML = disabled
-                ? '<i class="fas fa-lock"></i> Event Hari Ini Sudah Aktif'
-                : '<i class="fas fa-plus"></i> Buat Event Hari Ini';
+                ? '<i class="fas fa-lock"></i> Rapat Hari Ini Sudah Aktif'
+                : '<i class="fas fa-plus"></i> Buat Rapat Hari Ini';
         }
         setInlineStatus(
             els.createStatus,
             disabled
-                ? 'Event aktif sudah ada. Tunggu event ini ditutup dulu sebelum membuat event baru.'
-                : 'Kalau rapat belum dibuka hari ini, kamu bisa membuat event baru dari form ini.'
+                ? 'Rapat aktif sudah ada. Tunggu rapat ini ditutup dulu sebelum membuat rapat baru.'
+                : 'Kalau rapat belum dibuka hari ini, kamu bisa membuat rapat baru dari form ini.'
         );
     }
 
@@ -536,19 +564,18 @@
         const detail = state.detail;
         const currentEvent = detail?.current_event;
         const canSelfCheckIn = !!detail?.permissions?.can_self_check_in;
-        const isCabangRoom = currentIdentityMode() === 'org_member_select';
         if (!els.currentEventBox) return;
 
         if (!currentEvent) {
-            els.currentEventBox.innerHTML = '<div class="attendance-empty-state">Belum ada event aktif untuk room ini hari ini.</div>';
+            els.currentEventBox.innerHTML = '<div class="attendance-empty-state">Belum ada rapat aktif untuk room ini hari ini.</div>';
             setText('attendance-event-badge', 'Menunggu');
             if (els.checkinForm) els.checkinForm.hidden = true;
             renderCreateFormState(null);
             setInlineStatus(
                 els.checkinStatus,
                 canSelfCheckIn
-                    ? 'Buat atau tunggu event aktif lebih dulu sebelum check-in.'
-                    : 'Kamu bisa masuk room ini, tapi absensi mandiri hanya untuk anggota pimpinan yang sama.'
+                    ? 'Buat atau tunggu rapat aktif lebih dulu sebelum check-in.'
+                    : 'Kamu bisa masuk room ini, tetapi absensi mandiri sedang tidak tersedia.'
             );
             renderMemberOptions();
             evaluateCheckinFlowStatus();
@@ -610,9 +637,9 @@
             els.checkinForm.hidden = !canSelfCheckIn; // Form stays open allowing multiple proxy check-ins
         }
         if (!canSelfCheckIn) {
-            setInlineStatus(els.checkinStatus, 'Self check-in dinonaktifkan karena pimpinan akunmu berbeda dengan room ini.', 'error');
+            setInlineStatus(els.checkinStatus, 'Absensi mandiri sedang tidak tersedia untuk room ini.', 'error');
         } else {
-            setInlineStatus(els.checkinStatus, 'Ambil selfie terbaru lalu kirim (bisa check-in berulang untuk perwakilan).');
+            setInlineStatus(els.checkinStatus, 'Pilih kader, ambil selfie terbaru, lalu kirim. Kamu bisa check-in berulang untuk perwakilan.');
         }
         evaluateCheckinFlowStatus();
     }
@@ -633,8 +660,8 @@
         setText(
             'attendance-room-subtitle',
             detail.permissions?.can_self_check_in
-                ? 'Kamu bisa membuat event dan check-in mandiri di room ini.'
-                : 'Kamu bisa membuka room dan membuat event, tetapi absensi mandiri hanya untuk anggota pimpinan yang sama.'
+                ? 'Kamu bisa membuat rapat dan mengabsenkan kader dari room ini.'
+                : 'Kamu bisa membuka room dan membuat rapat, tetapi absensi mandiri sedang dibatasi.'
         );
 
         renderAccessStrip();
@@ -725,7 +752,7 @@
         if (!room) return;
 
         try {
-            setFlowStatus('progress', 'Membuka room...', 'Memuat detail room dan event aktif.');
+            setFlowStatus('progress', 'Membuka room...', 'Memuat detail room dan rapat aktif.');
             const data = await apiFetch(`/api/attendance?action=roomDetail&room_id=${encodeURIComponent(roomId)}`, { method: 'GET' }, roomId);
             state.currentRoomId = Number(roomId);
             state.detail = data;
@@ -1099,11 +1126,18 @@
             setFlowStatus('pending', 'Belum ada event aktif', 'Buat atau tunggu event aktif dulu.');
             return;
         }
-        const selectedMemberId = Number(els.memberSelect?.value || 0);
-        if (identityMode === 'org_member_select' && !selectedMemberId) {
-            setInlineStatus(els.checkinStatus, 'Pilih nama kamu dulu (Langkah 1)', 'error');
-            setFlowStatus('pending', 'Langkah 1 belum selesai', 'Pilih nama kader terlebih dahulu.');
-            showToast('Pilih nama di Langkah 1', 'error');
+        const selectedMemberId = getSelectedRepresentativeId();
+        const manualRepresentativeName = getManualRepresentativeName();
+        if (usesOrgMemberDirectory() && requiresMemberSelection() && !selectedMemberId) {
+            setInlineStatus(els.checkinStatus, 'Pilih dulu kader yang akan diabsenkan (Langkah 1)', 'error');
+            setFlowStatus('pending', 'Langkah 1 belum selesai', 'Pilih kader terlebih dahulu.');
+            showToast('Pilih kader di Langkah 1', 'error');
+            return;
+        }
+        if (!usesOrgMemberDirectory() && requiresMemberSelection() && !manualRepresentativeName) {
+            setInlineStatus(els.checkinStatus, 'Tulis dulu nama kader yang akan diabsenkan (Langkah 1)', 'error');
+            setFlowStatus('pending', 'Langkah 1 belum selesai', 'Tulis nama kader terlebih dahulu.');
+            showToast('Tulis nama kader di Langkah 1', 'error');
             return;
         }
         if (!state.selfieFile) {
@@ -1125,19 +1159,21 @@
                 body: JSON.stringify({
                     event_id: currentEvent.id,
                     photo_url: photoUrl,
-                    org_member_id: identityMode === 'org_member_select' ? selectedMemberId : null
+                    org_member_id: identityMode === 'org_member_select' ? selectedMemberId : null,
+                    attendee_name: identityMode === 'org_member_select' ? null : manualRepresentativeName
                 })
             }, Number(state.currentRoomId));
 
             // SUCCESS STATE - Immediate Reset for Seamless Multi-Entry
             showToast('Absensi Berhasil!', 'success');
-            setInlineStatus(els.checkinStatus, 'Absensi Berhasil! Silakan pilih kader lain untuk mengabsensi lagi.', 'success');
+            setInlineStatus(els.checkinStatus, 'Absensi berhasil. Silakan pilih kader lain jika ingin lanjut mengabsenkan perwakilan.', 'success');
             setFlowStatus('success', 'Absensi terkirim', 'Data kehadiran berhasil masuk.');
             
             // Reset state & fields
             state.selfieFile = null;
             if (els.memberSelect) els.memberSelect.value = '';
             if (els.memberSearch) els.memberSearch.value = '';
+            if (els.manualNameInput) els.manualNameInput.value = '';
             if (els.retakeCameraBtn) els.retakeCameraBtn.hidden = true;
             
             // Re-open camera for next person if applicable
@@ -1167,9 +1203,8 @@
     function updateStepHighlight() {
         if (!els.stepIdentity || !els.stepPhoto || !els.stepSubmit) return;
 
-        const isIdentityMode = currentIdentityMode() === 'org_member_select';
-        const needsIdentityPick = isIdentityMode;
-        const isIdentityDone = needsIdentityPick ? !!els.memberSelect?.value : true;
+        const needsIdentityPick = requiresMemberSelection();
+        const isIdentityDone = needsIdentityPick ? hasRepresentativeIdentity() : true;
         const isPhotoDone = !!state.selfieFile;
         const hasEvent = !!state.detail?.current_event;
         const canSelfCheckIn = !!state.detail?.permissions?.can_self_check_in;
@@ -1191,7 +1226,7 @@
                 needsIdentityPick ? 'active' : 'done',
                 needsIdentityPick ? 'Siapkan' : 'Selesai',
                 needsIdentityPick
-                    ? 'Buka event aktif dulu, lalu pilih nama jika room ini memakai struktur organisasi.'
+                    ? 'Buka event aktif dulu, lalu pilih kader yang akan diabsenkan.'
                     : 'Identitas akun sudah dipakai otomatis untuk room ini.'
             );
             setStepStatus(els.stepPhoto, els.stepPhotoState, els.stepPhotoNote, 'locked', 'Menunggu', 'Kamera bisa dipakai setelah event aktif tersedia.');
@@ -1262,6 +1297,9 @@
         els.memberSearch = document.getElementById('attendance-member-search');
         els.memberField = document.getElementById('attendance-member-field');
         els.memberMeta = document.getElementById('attendance-member-meta');
+        els.memberDirectory = document.getElementById('attendance-member-directory');
+        els.manualNameWrap = document.getElementById('attendance-manual-name-wrap');
+        els.manualNameInput = document.getElementById('attendance-manual-name');
         els.openCameraBtn = document.getElementById('attendance-open-camera-btn');
         els.captureCameraBtn = document.getElementById('attendance-capture-camera-btn');
         els.retakeCameraBtn = document.getElementById('attendance-retake-camera-btn');
@@ -1370,6 +1408,7 @@
         els.photoBackdrop?.addEventListener('click', closePhotoPreview);
         els.memberSelect?.addEventListener('change', () => renderMemberOptions(false, els.memberSearch?.value));
         els.memberSearch?.addEventListener('input', (e) => renderMemberOptions(false, e.target.value));
+        els.manualNameInput?.addEventListener('input', () => renderMemberOptions(false, ''));
         els.openCameraBtn?.addEventListener('click', openCamera);
         els.captureCameraBtn?.addEventListener('click', captureSelfie);
         els.retakeCameraBtn?.addEventListener('click', openCamera);

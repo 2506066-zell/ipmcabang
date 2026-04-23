@@ -80,11 +80,7 @@ function getIdentityMode(roomLike) {
 }
 
 function canUserSelfCheckIn(user, roomLike) {
-  const identityMode = getIdentityMode(roomLike);
-  if (identityMode === 'org_member_select') {
-    return true;
-  }
-  return cleanString(user?.pimpinan, 80) === cleanString(roomLike?.pimpinan, 80);
+  return !!user;
 }
 
 function buildSummary(events, records) {
@@ -178,6 +174,25 @@ async function getOrgMemberById(orgMemberId) {
     FROM org_members m
     LEFT JOIN org_bidang b ON b.id = m.bidang_id
     WHERE m.id=${orgMemberId}
+  `).rows[0] || null;
+}
+
+async function getAccountMembersByPimpinan(pimpinan) {
+  return (await query`
+    SELECT id, username, nama_panjang, pimpinan, role, created_at
+    FROM users
+    WHERE COALESCE(TRIM(pimpinan), '')=${cleanString(pimpinan, 80)}
+    ORDER BY nama_panjang ASC NULLS LAST, username ASC
+  `).rows;
+}
+
+async function getAccountMemberById(userId, pimpinan) {
+  return (await query`
+    SELECT id, username, nama_panjang, pimpinan, role, created_at
+    FROM users
+    WHERE id=${userId}
+      AND COALESCE(TRIM(pimpinan), '')=${cleanString(pimpinan, 80)}
+    LIMIT 1
   `).rows[0] || null;
 }
 
@@ -440,9 +455,9 @@ async function handleMemberOptions(req, res) {
     identity_mode: room.identity_mode,
     members: members.map((item) => ({
       id: item.id,
-      full_name: item.full_name,
-      role_title: item.role_title,
-      bidang_name: item.bidang_name || ''
+      full_name: item.full_name || item.nama_panjang || item.username || '',
+      role_title: item.role_title || item.role || '',
+      bidang_name: item.bidang_name || cleanString(room.pimpinan, 80) || ''
     }))
   }, cacheHeaders(0));
 }
@@ -595,7 +610,7 @@ async function handleCreateEvent(req, res) {
   const title = cleanString(body.title, 140);
   const description = cleanString(body.description, 500);
   if (!roomId || !title) {
-    return json(res, 400, { status: 'error', message: 'Room dan judul event wajib diisi' });
+    return json(res, 400, { status: 'error', message: 'Room dan judul rapat wajib diisi' });
   }
 
   const room = await getRoomById(roomId);
@@ -610,7 +625,7 @@ async function handleCreateEvent(req, res) {
 
   const existingActive = await getActiveEventForRoom(room.id);
   if (existingActive) {
-    return json(res, 409, { status: 'error', message: 'Room ini sudah memiliki event aktif hari ini' });
+    return json(res, 409, { status: 'error', message: 'Room ini sudah memiliki rapat aktif hari ini' });
   }
 
   const eventDate = todayDate();
@@ -637,14 +652,15 @@ async function handleCheckIn(req, res) {
   const eventId = toNumber(body.event_id);
   const photoUrl = cleanString(body.photo_url, 256000);
   const orgMemberId = toNumber(body.org_member_id);
+  const attendeeName = cleanString(body.attendee_name, 160);
   if (!eventId || !photoUrl) {
-    return json(res, 400, { status: 'error', message: 'Event dan foto selfie wajib diisi' });
+    return json(res, 400, { status: 'error', message: 'Rapat dan foto selfie wajib diisi' });
   }
 
   const event = await getEventById(eventId);
-  if (!event) return json(res, 404, { status: 'error', message: 'Event tidak ditemukan' });
+  if (!event) return json(res, 404, { status: 'error', message: 'Rapat tidak ditemukan' });
   if (cleanString(event.status, 20).toLowerCase() !== 'active' || (new Date() - new Date(event.created_at)) > 24 * 60 * 60 * 1000) {
-    return json(res, 409, { status: 'error', message: 'Event tidak sedang aktif untuk absensi mandiri' });
+    return json(res, 409, { status: 'error', message: 'Rapat tidak sedang aktif untuk absensi mandiri' });
   }
   if (!canUserSelfCheckIn(user, event)) {
     return json(res, 403, { status: 'error', message: 'Absensi mandiri hanya untuk anggota pimpinan room ini' });
@@ -655,20 +671,8 @@ async function handleCheckIn(req, res) {
     return json(res, error.status || 403, { status: 'error', message: error.message || 'Forbidden' });
   }
 
-  // Skip user-level duplicate check to allow for representative attendance (multi-checkin from one account)
-  /*
-  const existing = (await query`
-    SELECT id, attendance_status
-    FROM attendance_records
-    WHERE event_id=${event.id}
-      AND user_id=${user.id}
-  `).rows[0];
-  if (existing) {
-    return json(res, 409, { status: 'error', message: 'Anda sudah tercatat pada event ini' });
-  }
-  */
-
   let targetOrgMemberId = null;
+  let targetUserId = user.id;
   let attendeeNameSnapshot = cleanString(user.nama_panjang || user.username, 160);
   if (event.identity_mode === 'org_member_select') {
     if (!orgMemberId) {
@@ -689,19 +693,47 @@ async function handleCheckIn(req, res) {
     }
     targetOrgMemberId = orgMember.id;
     attendeeNameSnapshot = cleanString(orgMember.full_name, 160);
+  } else {
+    if (!attendeeName) {
+      return json(res, 400, { status: 'error', message: 'Tulis nama kader yang akan diabsenkan' });
+    }
+    targetUserId = null;
+    attendeeNameSnapshot = attendeeName;
+    const existing = (await query`
+      SELECT id
+      FROM attendance_records
+      WHERE event_id=${event.id}
+        AND LOWER(COALESCE(attendee_name_snapshot, '')) = LOWER(${attendeeNameSnapshot})
+      LIMIT 1
+    `).rows[0];
+    if (existing) {
+      return json(res, 409, { status: 'error', message: 'Kader ini sudah tercatat pada event yang sama' });
+    }
   }
 
-  const record = (await query`
-    INSERT INTO attendance_records (
-      event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at,
-      submitted_by_admin, submitted_by, note, created_at, updated_at
-    )
-    VALUES (
-      ${event.id}, ${user.id}, ${targetOrgMemberId}, ${attendeeNameSnapshot}, ${'hadir'}, ${photoUrl}, NOW(),
-      ${false}, ${user.id}, ${null}, NOW(), NOW()
-    )
-    RETURNING id, event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
-  `).rows[0];
+  let record;
+  try {
+    record = (await query`
+      INSERT INTO attendance_records (
+        event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at,
+        submitted_by_admin, submitted_by, note, created_at, updated_at
+      )
+      VALUES (
+        ${event.id}, ${targetUserId}, ${targetOrgMemberId}, ${attendeeNameSnapshot}, ${'hadir'}, ${photoUrl}, NOW(),
+        ${false}, ${user.id}, ${null}, NOW(), NOW()
+      )
+      RETURNING id, event_id, user_id, org_member_id, attendee_name_snapshot, attendance_status, photo_url, check_in_at, submitted_by_admin, submitted_by, note, created_at, updated_at
+    `).rows[0];
+  } catch (error) {
+    const message = String(error?.message || '');
+    if (message.includes('idx_attendance_records_event_org_member_unique') || message.includes('attendance_records_event_id_org_member_id')) {
+      return json(res, 409, { status: 'error', message: 'Nama anggota ini sudah tercatat pada event yang sama' });
+    }
+    if (message.includes('idx_attendance_records_event_user_account_unique') || message.includes('attendance_records_event_id_user_id_key')) {
+      return json(res, 409, { status: 'error', message: 'Kader ini sudah tercatat pada event yang sama' });
+    }
+    throw error;
+  }
 
   return json(res, 201, { status: 'success', record });
 }
@@ -868,6 +900,27 @@ async function handleAdminEventDetail(req, res) {
         submitted_by_username: record?.submitted_by_username || ''
       };
     });
+    const manualParticipants = records
+      .filter((item) => !item.user_id && cleanString(item.attendee_name_snapshot, 160))
+      .map((record) => ({
+        id: `manual-${record.id}`,
+        user_id: null,
+        org_member_id: null,
+        username: '',
+        nama_panjang: record.attendee_name_snapshot,
+        display_name: record.attendee_name_snapshot,
+        role_title: '',
+        bidang_name: '',
+        pimpinan: event.pimpinan,
+        attendance_status: record.attendance_status || 'belum',
+        photo_url: record.photo_url || '',
+        check_in_at: record.check_in_at || null,
+        source: record.submitted_by_admin ? 'admin manual' : 'self check-in',
+        note: record.note || '',
+        record_id: record.id,
+        submitted_by_username: record.submitted_by_username || ''
+      }));
+    participants = [...participants, ...manualParticipants];
   }
 
   const summary = participants.reduce((acc, item) => {
@@ -1033,11 +1086,11 @@ async function handleManualRecord(req, res) {
   const photoUrl = cleanString(body.photo_url, 256000) || null;
   const note = cleanString(body.note, 300) || null;
   if (!eventId || !attendanceStatus) {
-    return json(res, 400, { status: 'error', message: 'Event dan status wajib diisi' });
+    return json(res, 400, { status: 'error', message: 'Rapat dan status wajib diisi' });
   }
 
   const event = await getEventById(eventId);
-  if (!event) return json(res, 404, { status: 'error', message: 'Event tidak ditemukan' });
+  if (!event) return json(res, 404, { status: 'error', message: 'Rapat tidak ditemukan' });
 
   let targetUserId = userId || null;
   let targetOrgMemberId = null;

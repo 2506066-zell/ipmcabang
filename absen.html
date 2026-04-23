@@ -91,7 +91,7 @@
                     <div>
                         <span class="attendance-room-label" id="attendance-room-label">Room</span>
                         <h2 id="attendance-room-title">Detail Room</h2>
-                        <p id="attendance-room-subtitle">Ringkasan event aktif, histori rapat, dan status keaktifan pribadi.</p>
+                        <p id="attendance-room-subtitle">Ringkasan rapat aktif, histori rapat, dan status keaktifan pribadi.</p>
                     </div>
                     <div class="attendance-room-header-actions">
                         <button type="button" class="attendance-secondary-btn" id="attendance-back-to-rooms-btn">
@@ -106,7 +106,7 @@
                 <div class="attendance-status-container" id="attendance-access-strip"></div>
 
                 <div class="attendance-mini-stats" id="attendance-summary-grid">
-                    <span class="mini-stat"><b>Events:</b> <i id="attendance-summary-total">0</i></span>
+                    <span class="mini-stat"><b>Rapat:</b> <i id="attendance-summary-total">0</i></span>
                     <span class="mini-stat"><b>Hadir:</b> <i id="attendance-summary-hadir">0</i></span>
                     <span class="mini-stat"><b>Ratio:</b> <i id="attendance-summary-percent">0%</i></span>
                     <span class="mini-stat highlight"><b>Status:</b> <i id="attendance-summary-status">...</i></span>
@@ -153,19 +153,24 @@
                                         <span class="attendance-step-tag">1</span>
                                         <div class="attendance-step-copy">
                                             <strong>Pilih identitas</strong>
-                                            <small id="attendance-step-identity-note">Pilih nama jika room ini memakai struktur organisasi.</small>
+                                            <small id="attendance-step-identity-note">Pilih kader yang akan diabsenkan sebelum lanjut ke kamera.</small>
                                         </div>
                                         <span class="attendance-step-state" id="attendance-step-identity-state">Menunggu</span>
                                     </div>
                                     <div class="attendance-field" id="attendance-member-field" hidden>
-                                        <span>Pilih Nama Anda</span>
-                                        <div class="attendance-search-wrapper">
-                                            <i class="fas fa-search"></i>
-                                            <input type="text" id="attendance-member-search" placeholder="Cari nama kader..." class="attendance-input">
+                                        <span>Pilih Kader</span>
+                                        <div id="attendance-member-directory">
+                                            <div class="attendance-search-wrapper">
+                                                <i class="fas fa-search"></i>
+                                                <input type="text" id="attendance-member-search" placeholder="Cari nama kader..." class="attendance-input">
+                                            </div>
+                                            <select id="attendance-member-select" class="attendance-select">
+                                                <option value="">Pilih kader yang akan diabsenkan</option>
+                                            </select>
                                         </div>
-                                        <select id="attendance-member-select" class="attendance-select">
-                                            <option value="">Pilih nama dari struktur organisasi</option>
-                                        </select>
+                                        <div id="attendance-manual-name-wrap" hidden>
+                                            <input type="text" id="attendance-manual-name" class="attendance-input" placeholder="Tulis nama kader yang diabsenkan">
+                                        </div>
                                         <small id="attendance-member-meta" class="attendance-helper-text"></small>
                                     </div>
                                 </div>
@@ -237,20 +242,20 @@
                         <section class="attendance-panel-card">
                             <div class="attendance-panel-head">
                                 <div>
-                                    <h3>Event Aktif</h3>
+                                    <h3>Rapat Aktif</h3>
                                     <p>Status rapat saat ini.</p>
                                 </div>
                                 <span class="attendance-status-badge" id="attendance-event-badge">Menunggu</span>
                             </div>
                             <div id="attendance-current-event">
-                                <div class="attendance-empty-state">Belum ada event aktif.</div>
+                                <div class="attendance-empty-state">Belum ada rapat aktif.</div>
                             </div>
                         </section>
 
                         <section class="attendance-panel-card">
                             <div class="attendance-panel-head">
                                 <div>
-                                    <h3>Buat Event Baru</h3>
+                                    <h3>Buat Rapat Baru</h3>
                                     <p id="attendance-event-helper">Admin/pengelola room.</p>
                                 </div>
                             </div>
@@ -264,7 +269,7 @@
                                     <textarea id="attendance-event-description" rows="2" placeholder="Agenda..."></textarea>
                                 </label>
                                 <button type="submit" class="attendance-primary-btn" id="attendance-create-btn">
-                                    <i class="fas fa-plus"></i> Buat Event
+                                    <i class="fas fa-plus"></i> Buat Rapat
                                 </button>
                                 <p class="attendance-inline-status" id="attendance-create-status"></p>
                             </form>
