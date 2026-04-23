@@ -1206,11 +1206,64 @@
         return latest ? new Date(latest).toISOString() : '';
     }
 
-    function formatSystemChip(isPositive, positiveLabel = 'Aktif', negativeLabel = 'Belum Aktif') {
-        if (isPositive) {
-            return { label: positiveLabel, tone: 'ok' };
+    function getJakartaDateKey(value = Date.now()) {
+        const source = value ? new Date(value) : new Date();
+        if (Number.isNaN(source.getTime())) return '';
+        try {
+            return new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Jakarta',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(source);
+        } catch {
+            return source.toISOString().slice(0, 10);
         }
-        return { label: negativeLabel, tone: 'muted' };
+    }
+
+    function isJakartaToday(value) {
+        if (!value) return false;
+        return getJakartaDateKey(value) === getJakartaDateKey();
+    }
+
+    function getJakartaMinutesNow() {
+        try {
+            const parts = new Intl.DateTimeFormat('en-GB', {
+                timeZone: 'Asia/Jakarta',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).formatToParts(new Date());
+            const hour = asNumber(parts.find((item) => item.type === 'hour')?.value);
+            const minute = asNumber(parts.find((item) => item.type === 'minute')?.value);
+            return (hour * 60) + minute;
+        } catch {
+            const now = new Date();
+            return (now.getHours() * 60) + now.getMinutes();
+        }
+    }
+
+    function getDailyDigestScheduleMinutes(diagnostics) {
+        const match = String(diagnostics?.cron?.schedule_wib || '').match(/(\d{1,2}):(\d{2})/);
+        if (!match) return 20 * 60;
+        return (asNumber(match[1]) * 60) + asNumber(match[2]);
+    }
+
+    function isDailyDigestOverdue(diagnostics) {
+        return !diagnostics?.daily_reminder?.sent_today && getJakartaMinutesNow() >= getDailyDigestScheduleMinutes(diagnostics);
+    }
+
+    function formatSystemChip(label, tone = 'muted') {
+        return { label, tone };
+    }
+
+    function getSystemCounts(summary, fallbackSent = 0, fallbackFailed = 0) {
+        return {
+            runs: asNumber(summary?.runs),
+            sent: asNumber(summary?.push_sent ?? fallbackSent),
+            failed: asNumber(summary?.push_failed ?? fallbackFailed),
+            latestAt: summary?.latest_at || null
+        };
     }
 
     function summarizeSystemDigest(diagnostics) {
@@ -1227,68 +1280,197 @@
         };
         if (!latestLog && !details.summary) return 'Belum ada digest yang tercatat.';
         const label = summaryMap[String(details.summary || '').toLowerCase()] || 'Ringkasan harian';
-        const pushSent = Number(latestLog?.push_sent || details.push_sent || 0);
-        const pushFailed = Number(latestLog?.push_failed || details.push_failed || 0);
+        const pushSent = asNumber(latestLog?.push_sent || details.push_sent || 0);
+        const pushFailed = asNumber(latestLog?.push_failed || details.push_failed || 0);
         return `${label} - Terkirim ${pushSent}, gagal ${pushFailed}`;
+    }
+
+    function getSystemFilterCounts(cards) {
+        return {
+            all: cards.length,
+            today: cards.filter((item) => item.isToday).length,
+            attention: cards.filter((item) => item.needsAttention).length
+        };
+    }
+
+    function renderSystemNotificationFilters(summary = { all: 0, today: 0, attention: 0 }) {
+        if (!els.systemNotifyFilters) return;
+        const labels = {
+            all: 'Semua',
+            today: 'Aktif Hari Ini',
+            attention: 'Perlu Perhatian'
+        };
+        els.systemNotifyFilters.querySelectorAll('[data-filter]').forEach((btn) => {
+            const filterKey = String(btn.dataset.filter || 'all');
+            btn.classList.toggle('active', filterKey === state.systemNotificationFilter);
+            btn.textContent = `${labels[filterKey] || 'Filter'} (${asNumber(summary[filterKey])})`;
+        });
+    }
+
+    function buildSystemHealthCards(diagnostics) {
+        const push = diagnostics?.push || {};
+        const dailyReminder = diagnostics?.daily_reminder || {};
+        const automation = diagnostics?.automation || {};
+        const today = automation.today || {};
+        const digestOverdue = isDailyDigestOverdue(diagnostics);
+        return [
+            {
+                label: 'VAPID Push',
+                value: push.vapid_configured ? 'Aktif' : 'Off',
+                meta: push.vapid_configured ? `Subject: ${push.vapid_subject || '-'}` : 'Kunci push belum dikonfigurasi',
+                tone: push.vapid_configured ? 'ok' : 'warn'
+            },
+            {
+                label: 'Subscription',
+                value: String(asNumber(push.subscription_total || 0)),
+                meta: `${asNumber(push.subscription_linked_users || 0)} subscription terhubung ke akun user`,
+                tone: asNumber(push.subscription_total || 0) > 0 ? 'ok' : 'warn'
+            },
+            {
+                label: 'Push Hari Ini',
+                value: String(asNumber(today.push_sent || 0)),
+                meta: `${asNumber(today.total_runs || 0)} batch dari ${asNumber(today.active_sources || 0)} sumber otomatis`,
+                tone: asNumber(today.push_sent || 0) > 0 ? 'ok' : 'muted'
+            },
+            {
+                label: 'Gagal Hari Ini',
+                value: String(asNumber(today.push_failed || 0)),
+                meta: asNumber(today.push_failed || 0) > 0 ? 'Ada pengiriman otomatis yang gagal hari ini.' : 'Belum ada kegagalan otomatis yang tercatat hari ini.',
+                tone: asNumber(today.push_failed || 0) > 0 ? 'danger' : 'ok'
+            },
+            {
+                label: 'Digest Hari Ini',
+                value: dailyReminder.sent_today ? 'Sudah' : 'Belum',
+                meta: dailyReminder.latest_log?.title ? `Terakhir: ${dailyReminder.latest_log.title}` : 'Belum ada log digest terbaru',
+                tone: dailyReminder.sent_today ? 'ok' : (digestOverdue ? 'danger' : 'warn')
+            },
+            {
+                label: 'Jadwal Pending',
+                value: String(asNumber(automation.pending_scheduled_notifications || 0)),
+                meta: automation.next_scheduled_notification_at ? `Berikutnya ${formatScheduleDate(automation.next_scheduled_notification_at)}` : 'Tidak ada jadwal notifikasi tertunda',
+                tone: asNumber(automation.pending_scheduled_notifications || 0) > 0 ? 'warn' : 'ok'
+            }
+        ];
     }
 
     function buildSystemNotificationCards(diagnostics) {
         const automation = diagnostics?.automation || {};
+        const sourceMap = automation.sources || {};
         const dailyReminder = diagnostics?.daily_reminder || {};
+        const digestOverdue = isDailyDigestOverdue(diagnostics);
         const articleDetails = parseFeedbackContext(automation.latest_article_notification_activity?.details);
         const quizDetails = parseFeedbackContext(automation.latest_quiz_reminder_activity?.details);
         const programDetails = parseFeedbackContext(automation.latest_org_program_notification_activity?.details);
+        const dailyDetails = parseFeedbackContext(dailyReminder.latest_activity?.details);
 
-        return [
+        const articleCounts = getSystemCounts(sourceMap.article, articleDetails.push_sent, articleDetails.push_failed);
+        const dailyCounts = getSystemCounts(sourceMap.daily_digest, dailyReminder.latest_log?.push_sent, dailyReminder.latest_log?.push_failed);
+        const quizCounts = getSystemCounts(sourceMap.quiz_reminder, quizDetails.sent || quizDetails.recipients, quizDetails.failed);
+        const programCounts = getSystemCounts(sourceMap.org_program, programDetails.push_sent, programDetails.push_failed);
+
+        const cards = [
             {
                 icon: 'fas fa-newspaper',
                 title: 'Artikel Baru',
                 subtitle: 'Dikirim otomatis saat artikel yang sudah publish dibuat atau diperbarui dari editor admin.',
-                chip: formatSystemChip(Boolean(automation.latest_article_notification_activity), 'Aktif Tercatat', 'Belum Ada Log'),
+                latestAt: automation.latest_article_notification_activity?.created_at || articleCounts.latestAt,
+                isToday: isJakartaToday(automation.latest_article_notification_activity?.created_at || articleCounts.latestAt),
+                needsAttention: articleCounts.failed > 0,
+                chip: articleCounts.failed > 0
+                    ? formatSystemChip('Gagal Terdeteksi', 'danger')
+                    : (isJakartaToday(automation.latest_article_notification_activity?.created_at || articleCounts.latestAt)
+                        ? formatSystemChip('Aktif Hari Ini', 'ok')
+                        : (automation.latest_article_notification_activity ? formatSystemChip('Aktif Tercatat', 'warn') : formatSystemChip('Belum Ada Log', 'muted'))),
+                stats: [
+                    { label: 'Run hari ini', value: String(articleCounts.runs) },
+                    { label: 'Terkirim', value: String(articleCounts.sent) },
+                    { label: 'Gagal', value: String(articleCounts.failed), tone: articleCounts.failed > 0 ? 'fail' : '' }
+                ],
                 points: [
                     { label: 'Trigger', value: 'Publish artikel dari kanal konten admin' },
                     { label: 'Target', value: 'Semua user yang sudah subscribe push' },
                     { label: 'Aktivitas', value: automation.latest_article_notification_activity ? formatFeedbackDate(automation.latest_article_notification_activity.created_at) : 'Belum ada aktivitas tercatat' },
-                    { label: 'Batch', value: articleDetails.title ? `${articleDetails.title} - Terkirim ${Number(articleDetails.push_sent || 0)}, gagal ${Number(articleDetails.push_failed || 0)}` : 'Belum ada batch otomatis yang tersimpan' }
+                    { label: 'Batch', value: articleDetails.title ? `${articleDetails.title} - Terkirim ${asNumber(articleDetails.push_sent || 0)}, gagal ${asNumber(articleDetails.push_failed || 0)}` : 'Belum ada batch otomatis yang tersimpan' }
                 ]
             },
             {
                 icon: 'fas fa-moon',
                 title: 'Reminder Harian',
                 subtitle: 'Cron malam menyusun ringkasan dari quiz, form, absensi, artikel, materi, atau diskusi terbaru.',
-                chip: formatSystemChip(Boolean(dailyReminder.sent_today), 'Sudah Kirim Hari Ini', 'Belum Kirim Hari Ini'),
+                latestAt: dailyReminder.latest_log?.created_at || dailyCounts.latestAt,
+                isToday: Boolean(dailyReminder.sent_today),
+                needsAttention: dailyCounts.failed > 0 || digestOverdue,
+                chip: dailyCounts.failed > 0
+                    ? formatSystemChip('Ada Gagal Kirim', 'danger')
+                    : (dailyReminder.sent_today
+                        ? formatSystemChip('Sudah Kirim Hari Ini', 'ok')
+                        : (digestOverdue ? formatSystemChip('Belum Kirim Hari Ini', 'danger') : formatSystemChip('Menunggu Jadwal', 'warn'))),
+                stats: [
+                    { label: 'Run hari ini', value: String(dailyCounts.runs) },
+                    { label: 'Terkirim', value: String(dailyCounts.sent) },
+                    { label: 'Gagal', value: String(dailyCounts.failed), tone: dailyCounts.failed > 0 ? 'fail' : '' }
+                ],
                 points: [
                     { label: 'Trigger', value: 'Cron / engine sistem pada jadwal harian' },
                     { label: 'Jadwal', value: `${diagnostics?.cron?.schedule_wib || '20:00 WIB'} - Route ${diagnostics?.cron?.route || '-'}` },
                     { label: 'Aktivitas', value: dailyReminder.latest_log?.created_at ? formatFeedbackDate(dailyReminder.latest_log.created_at) : 'Belum ada digest tercatat' },
-                    { label: 'Batch', value: summarizeSystemDigest(diagnostics) }
+                    { label: 'Batch', value: dailyDetails.title ? `${dailyDetails.title} - Terkirim ${asNumber(dailyDetails.push_sent || dailyCounts.sent)}, gagal ${asNumber(dailyDetails.push_failed || dailyCounts.failed)}` : summarizeSystemDigest(diagnostics) }
                 ]
             },
             {
                 icon: 'fas fa-stopwatch',
                 title: 'Reminder Quiz Otomatis',
                 subtitle: 'Sistem menarget user yang belum submit saat quiz baru dibuka atau mendekati penutupan.',
-                chip: formatSystemChip(Boolean(automation.latest_quiz_reminder_activity), 'Aktif Tercatat', 'Belum Ada Log'),
+                latestAt: automation.latest_quiz_reminder_activity?.created_at || quizCounts.latestAt,
+                isToday: isJakartaToday(automation.latest_quiz_reminder_activity?.created_at || quizCounts.latestAt),
+                needsAttention: quizCounts.failed > 0,
+                chip: quizCounts.failed > 0
+                    ? formatSystemChip('Ada Gagal Kirim', 'danger')
+                    : (isJakartaToday(automation.latest_quiz_reminder_activity?.created_at || quizCounts.latestAt)
+                        ? formatSystemChip('Aktif Hari Ini', 'ok')
+                        : (automation.latest_quiz_reminder_activity ? formatSystemChip('Aktif Tercatat', 'warn') : formatSystemChip('Belum Ada Log', 'muted'))),
+                stats: [
+                    { label: 'Run hari ini', value: String(quizCounts.runs) },
+                    { label: 'Terkirim', value: String(quizCounts.sent) },
+                    { label: 'Gagal', value: String(quizCounts.failed), tone: quizCounts.failed > 0 ? 'fail' : '' }
+                ],
                 points: [
                     { label: 'Trigger', value: 'Quiz aktif dengan flag notifikasi aktif' },
                     { label: 'Target', value: 'User yang belum punya hasil pada rentang jadwal quiz' },
                     { label: 'Aktivitas', value: automation.latest_quiz_reminder_activity ? formatFeedbackDate(automation.latest_quiz_reminder_activity.created_at) : 'Belum ada batch reminder quiz' },
-                    { label: 'Batch', value: quizDetails.reminder_type ? `Mode ${String(quizDetails.reminder_type).toUpperCase()} - Kandidat penerima ${Number(quizDetails.recipients || 0)}` : 'Belum ada data batch terakhir' }
+                    { label: 'Batch', value: quizDetails.reminder_type ? `Mode ${String(quizDetails.reminder_type).toUpperCase()} - Terkirim ${asNumber(quizDetails.sent || quizDetails.recipients || 0)}, gagal ${asNumber(quizDetails.failed || 0)}` : 'Belum ada data batch terakhir' }
                 ]
             },
             {
                 icon: 'fas fa-diagram-project',
                 title: 'Program Kerja Organisasi',
                 subtitle: 'Notif otomatis dikirim ketika program kerja baru dibuat atau diperbarui dengan perubahan yang bermakna.',
-                chip: formatSystemChip(Boolean(automation.latest_org_program_notification_activity), 'Aktif Tercatat', 'Belum Ada Log'),
+                latestAt: automation.latest_org_program_notification_activity?.created_at || programCounts.latestAt,
+                isToday: isJakartaToday(automation.latest_org_program_notification_activity?.created_at || programCounts.latestAt),
+                needsAttention: programCounts.failed > 0,
+                chip: programCounts.failed > 0
+                    ? formatSystemChip('Ada Gagal Kirim', 'danger')
+                    : (isJakartaToday(automation.latest_org_program_notification_activity?.created_at || programCounts.latestAt)
+                        ? formatSystemChip('Aktif Hari Ini', 'ok')
+                        : (automation.latest_org_program_notification_activity ? formatSystemChip('Aktif Tercatat', 'warn') : formatSystemChip('Belum Ada Log', 'muted'))),
+                stats: [
+                    { label: 'Run hari ini', value: String(programCounts.runs) },
+                    { label: 'Terkirim', value: String(programCounts.sent) },
+                    { label: 'Gagal', value: String(programCounts.failed), tone: programCounts.failed > 0 ? 'fail' : '' }
+                ],
                 points: [
                     { label: 'Trigger', value: 'Create / update program kerja organisasi' },
                     { label: 'Target', value: 'Semua user yang sudah subscribe push' },
                     { label: 'Aktivitas', value: automation.latest_org_program_notification_activity ? formatFeedbackDate(automation.latest_org_program_notification_activity.created_at) : 'Belum ada aktivitas program kerja' },
-                    { label: 'Batch', value: programDetails.event_type ? `Mode ${String(programDetails.event_type).toUpperCase()} - Terkirim ${Number(programDetails.push_sent || 0)}, gagal ${Number(programDetails.push_failed || 0)}` : 'Belum ada batch program kerja yang tercatat' }
+                    { label: 'Batch', value: programDetails.event_type ? `Mode ${String(programDetails.event_type).toUpperCase()} - Terkirim ${asNumber(programDetails.push_sent || 0)}, gagal ${asNumber(programDetails.push_failed || 0)}` : 'Belum ada batch program kerja yang tercatat' }
                 ]
             }
         ];
+
+        const filterKey = String(state.systemNotificationFilter || 'all');
+        if (filterKey === 'today') return cards.filter((item) => item.isToday);
+        if (filterKey === 'attention') return cards.filter((item) => item.needsAttention);
+        return cards;
     }
 
     function renderSystemNotificationDiagnostics() {
@@ -1297,6 +1479,8 @@
         if (!diagnostics) {
             els.systemNotifyHealth.innerHTML = '<div class="system-notify-empty">Data automasi notifikasi belum tersedia.</div>';
             els.systemNotifyList.innerHTML = '<div class="system-notify-empty">Belum ada data sumber notifikasi otomatis untuk ditampilkan.</div>';
+            if (els.systemNotifyMeta) els.systemNotifyMeta.textContent = 'Ringkasan sumber belum tersedia.';
+            renderSystemNotificationFilters();
             if (els.systemNotifyStatus) els.systemNotifyStatus.textContent = 'Status automasi belum dimuat.';
             return;
         }
@@ -1311,34 +1495,28 @@
             dailyReminder.latest_activity?.created_at,
             automation.latest_quiz_reminder_activity?.created_at,
             automation.latest_article_notification_activity?.created_at,
-            automation.latest_org_program_notification_activity?.created_at
+            automation.latest_org_program_notification_activity?.created_at,
+            automation.today?.latest_activity_at
         ]);
 
-        const healthCards = [
-            {
-                label: 'VAPID Push',
-                value: push.vapid_configured ? 'Aktif' : 'Off',
-                meta: push.vapid_configured ? `Subject: ${push.vapid_subject || '-'}` : 'Kunci push belum dikonfigurasi'
-            },
-            {
-                label: 'Subscription',
-                value: String(Number(push.subscription_total || 0)),
-                meta: `${Number(push.subscription_linked_users || 0)} subscription terhubung ke akun user`
-            },
-            {
-                label: 'Digest Hari Ini',
-                value: dailyReminder.sent_today ? 'Sudah' : 'Belum',
-                meta: dailyReminder.latest_log?.title ? `Terakhir: ${dailyReminder.latest_log.title}` : 'Belum ada log digest terbaru'
-            },
-            {
-                label: 'Jadwal Pending',
-                value: String(Number(automation.pending_scheduled_notifications || 0)),
-                meta: automation.next_scheduled_notification_at ? `Berikutnya ${formatScheduleDate(automation.next_scheduled_notification_at)}` : 'Tidak ada jadwal notifikasi tertunda'
-            }
-        ];
+        const allCards = (() => {
+            const currentFilter = state.systemNotificationFilter;
+            state.systemNotificationFilter = 'all';
+            const items = buildSystemNotificationCards(diagnostics);
+            state.systemNotificationFilter = currentFilter;
+            return items;
+        })();
+        const filterCounts = getSystemFilterCounts(allCards);
+        renderSystemNotificationFilters(filterCounts);
 
+        const todaySummary = automation.today || {};
+        if (els.systemNotifyMeta) {
+            els.systemNotifyMeta.textContent = `${filterCounts.all} sumber - ${filterCounts.today} aktif hari ini - ${filterCounts.attention} perlu perhatian - ${asNumber(todaySummary.push_sent || 0)} push otomatis hari ini`;
+        }
+
+        const healthCards = buildSystemHealthCards(diagnostics);
         els.systemNotifyHealth.innerHTML = healthCards.map((item) => `
-            <article class="system-notify-health-card">
+            <article class="system-notify-health-card ${escapeHtml(item.tone || 'muted')}">
                 <div class="system-notify-health-label">${escapeHtml(item.label)}</div>
                 <div class="system-notify-health-value">${escapeHtml(item.value)}</div>
                 <div class="system-notify-health-meta">${escapeHtml(item.meta)}</div>
@@ -1346,30 +1524,46 @@
         `).join('');
 
         const cards = buildSystemNotificationCards(diagnostics);
-        els.systemNotifyList.innerHTML = cards.map((item) => `
-            <article class="system-notify-card">
-                <div class="system-notify-card-top">
-                    <div class="system-notify-card-main">
-                        <div class="system-notify-icon">
-                            <i class="${escapeHtml(item.icon)}"></i>
+        if (!cards.length) {
+            const emptyMap = {
+                all: 'Belum ada data sumber notifikasi otomatis untuk ditampilkan.',
+                today: 'Belum ada sumber notifikasi otomatis yang aktif hari ini.',
+                attention: 'Belum ada sumber notifikasi otomatis yang memerlukan perhatian.'
+            };
+            els.systemNotifyList.innerHTML = `<div class="system-notify-empty">${escapeHtml(emptyMap[String(state.systemNotificationFilter || 'all')] || emptyMap.all)}</div>`;
+        } else {
+            els.systemNotifyList.innerHTML = cards.map((item) => `
+                <article class="system-notify-card ${item.needsAttention ? 'attention' : ''} ${item.isToday ? 'today' : ''}">
+                    <div class="system-notify-card-top">
+                        <div class="system-notify-card-main">
+                            <div class="system-notify-icon">
+                                <i class="${escapeHtml(item.icon)}"></i>
+                            </div>
+                            <div>
+                                <div class="system-notify-title">${escapeHtml(item.title)}</div>
+                                <div class="system-notify-subtitle">${escapeHtml(item.subtitle)}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="system-notify-title">${escapeHtml(item.title)}</div>
-                            <div class="system-notify-subtitle">${escapeHtml(item.subtitle)}</div>
-                        </div>
+                        <span class="system-notify-chip ${escapeHtml(item.chip.tone)}">${escapeHtml(item.chip.label)}</span>
                     </div>
-                    <span class="system-notify-chip ${escapeHtml(item.chip.tone)}">${escapeHtml(item.chip.label)}</span>
-                </div>
-                <div class="system-notify-points">
-                    ${item.points.map((point) => `
-                        <div class="system-notify-point">
-                            <div class="system-notify-point-label">${escapeHtml(point.label)}</div>
-                            <div class="system-notify-point-value">${escapeHtml(point.value)}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </article>
-        `).join('');
+                    <div class="system-notify-stats">
+                        ${item.stats.map((stat) => `
+                            <span class="system-notify-stat ${escapeHtml(stat.tone || '')}">
+                                ${escapeHtml(stat.label)}: ${escapeHtml(stat.value)}
+                            </span>
+                        `).join('')}
+                    </div>
+                    <div class="system-notify-points">
+                        ${item.points.map((point) => `
+                            <div class="system-notify-point">
+                                <div class="system-notify-point-label">${escapeHtml(point.label)}</div>
+                                <div class="system-notify-point-value">${escapeHtml(point.value)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </article>
+            `).join('');
+        }
 
         if (els.systemNotifyStatus) {
             const base = latestUpdatedAt
@@ -1395,6 +1589,8 @@
     async function loadSystemNotificationDiagnostics() {
         if (!els.systemNotifyHealth || !els.systemNotifyList) return;
         if (els.systemNotifyStatus) els.systemNotifyStatus.textContent = 'Memuat status automasi notifikasi sistem...';
+        if (els.systemNotifyMeta) els.systemNotifyMeta.textContent = 'Memuat ringkasan sumber notifikasi...';
+        renderSystemNotificationFilters();
         els.systemNotifyHealth.innerHTML = '<div class="small muted">Memuat ringkasan automasi...</div>';
         els.systemNotifyList.innerHTML = '<div class="small muted">Memuat sumber notifikasi sistem...</div>';
         try {
@@ -1406,6 +1602,8 @@
             console.error('Load system notification diagnostics failed:', e);
             state.notificationDiagnostics = null;
             if (els.systemNotifyStatus) els.systemNotifyStatus.textContent = `Gagal memuat status automasi: ${e.message || 'error'}`;
+            if (els.systemNotifyMeta) els.systemNotifyMeta.textContent = 'Ringkasan sumber notifikasi gagal dimuat.';
+            renderSystemNotificationFilters();
             els.systemNotifyHealth.innerHTML = '<div class="system-notify-empty">Diagnostics notifikasi sistem gagal dimuat.</div>';
             els.systemNotifyList.innerHTML = '<div class="system-notify-empty">Coba refresh lagi untuk mengambil data automasi terbaru.</div>';
         }
@@ -2744,6 +2942,13 @@
         els.systemNotifyRefresh?.addEventListener('click', async (e) => {
             e.preventDefault();
             await loadSystemNotificationDiagnostics();
+        });
+
+        els.systemNotifyFilters?.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-filter]');
+            if (!btn) return;
+            state.systemNotificationFilter = String(btn.dataset.filter || 'all');
+            renderSystemNotificationDiagnostics();
         });
 
         els.systemNotifyRun?.addEventListener('click', async (e) => {
