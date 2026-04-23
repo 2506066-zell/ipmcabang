@@ -1,6 +1,15 @@
 const { query } = require('./_db');
 const { sendToAll } = require('./_push');
 
+const REMINDER_IMAGES = {
+  quiz: '/app/media/notifications/reminder-quiz.png',
+  form: '/app/media/notifications/reminder-forms.png',
+  attendance: '/app/media/notifications/reminder-attendance.png',
+  materials: '/app/media/notifications/reminder-materials.png',
+  discussions: '/app/media/notifications/reminder-discussions.png',
+  general: '/app/media/notifications/reminder-home.png'
+};
+
 function cleanText(value, max = 180) {
   return String(value || '').replace(/\s+/g, ' ').trim().slice(0, max);
 }
@@ -13,6 +22,16 @@ function buildArticlePath(article) {
   const slug = cleanText(article?.slug, 180);
   if (slug) return `/articles/${encodeURIComponent(slug)}`;
   return '/articles';
+}
+
+function buildArticleReminderImage(article) {
+  const raw = String(article?.image || '').trim();
+  if (/^data:image\//i.test(raw)) return raw;
+  if (/^(https?:)?\/\//i.test(raw)) return raw;
+  if (raw.startsWith('/')) return raw;
+  const slug = cleanText(article?.slug, 180);
+  if (slug) return `/api/article-share-image/${encodeURIComponent(slug)}.jpg`;
+  return REMINDER_IMAGES.general;
 }
 
 async function hasDigestBeenSentToday() {
@@ -112,7 +131,7 @@ function pickFreshContentTarget(sources) {
   return candidates[0] || null;
 }
 
-function buildDigestPayload(sources) {
+function buildDailyReminderPayload(sources) {
   const chips = [];
   if (sources.quiz) chips.push('quiz aktif');
   if (sources.form) chips.push('form siap diisi');
@@ -123,29 +142,35 @@ function buildDigestPayload(sources) {
 
   if (sources.quiz) {
     return {
-      title: 'Pengingat hari ini: quiz sedang aktif',
-      body: `Buka aplikasi sekarang. ${chips.slice(0, 3).join(', ')} tersedia hari ini.`.replace(/\s+/g, ' ').trim(),
+      title: 'Reminder IPM malam ini',
+      body: `Quiz sedang aktif. Buka aplikasi malam ini dan cek ${chips.slice(0, 3).join(', ')} yang tersedia.`.replace(/\s+/g, ' ').trim(),
       url: '/quiz-gamified.html?source=daily-digest',
-      summary: 'quiz'
+      summary: 'quiz',
+      image: REMINDER_IMAGES.quiz,
+      context: 'Ringkasan aktivitas malam ini dari fitur quiz IPM'
     };
   }
 
   if (sources.form) {
     const typeLabel = sources.form.type === 'posttest' ? 'posttest' : 'pretest';
     return {
-      title: `Pengingat hari ini: ${typeLabel} siap diisi`,
-      body: `Form "${cleanText(sources.form.title, 64)}" sudah tersedia. ${chips.slice(0, 3).join(', ')} juga bisa kamu cek.`.replace(/\s+/g, ' ').trim(),
+      title: 'Reminder IPM malam ini',
+      body: `${typeLabel.toUpperCase()} "${cleanText(sources.form.title, 64)}" sudah tersedia. Buka aplikasi malam ini untuk mengisinya.`.replace(/\s+/g, ' ').trim(),
       url: `/forms.html?source=daily-digest&slug=${encodeURIComponent(cleanText(sources.form.slug, 180))}`,
-      summary: 'form'
+      summary: 'form',
+      image: REMINDER_IMAGES.form,
+      context: 'Pengingat formulir resmi yang siap diisi malam ini'
     };
   }
 
   if (sources.attendanceCount > 0) {
     return {
-      title: 'Pengingat hari ini: absensi sedang berjalan',
-      body: `${sources.attendanceCount} room absensi aktif hari ini. Buka aplikasi untuk cek agenda dan status kehadiranmu.`,
+      title: 'Reminder IPM malam ini',
+      body: `${sources.attendanceCount} room absensi masih aktif. Cek agenda dan pastikan status kehadiranmu malam ini.`,
       url: '/absen.html?source=daily-digest',
-      summary: 'attendance'
+      summary: 'attendance',
+      image: REMINDER_IMAGES.attendance,
+      context: 'Informasi kehadiran resmi yang masih aktif di aplikasi IPM'
     };
   }
 
@@ -155,56 +180,68 @@ function buildDigestPayload(sources) {
       const fileType = cleanText(freshTarget.data.file_type, 20).toLowerCase();
       const readingLabel = fileType === 'ebook' ? 'E-book terbaru' : 'Materi perpustakaan terbaru';
       return {
-        title: `${readingLabel} siap dibuka`,
-        body: `"${cleanText(freshTarget.data.title, 72)}" tersedia di perpustakaan digital. Luangkan waktu untuk membaca materi hari ini.`,
+        title: 'Reminder IPM malam ini',
+        body: `${readingLabel} "${cleanText(freshTarget.data.title, 72)}" siap dibuka. Luangkan waktu malam ini untuk membaca.`,
         url: '/materi.html?source=daily-digest',
-        summary: 'materials'
+        summary: 'materials',
+        image: REMINDER_IMAGES.materials,
+        context: 'Koleksi perpustakaan digital yang direkomendasikan malam ini'
       };
     }
 
     if (freshTarget?.type === 'discussion') {
       const category = cleanText(freshTarget.data.category, 32);
       return {
-        title: 'Ruang diskusi memiliki topik baru',
-        body: `${category ? `${category} · ` : ''}"${cleanText(freshTarget.data.title, 72)}" sedang dibahas. Buka diskusi untuk membaca atau memberi tanggapan.`,
+        title: 'Reminder IPM malam ini',
+        body: `${category ? `${category} · ` : ''}"${cleanText(freshTarget.data.title, 72)}" sedang dibahas. Masuk ke diskusi malam ini untuk ikut menanggapi.`,
         url: '/discussions.html?source=daily-digest',
-        summary: 'discussions'
+        summary: 'discussions',
+        image: REMINDER_IMAGES.discussions,
+        context: 'Topik diskusi resmi yang sedang ramai dibahas malam ini'
       };
     }
 
     const category = cleanText(sources.article.category, 40);
     const teaser = cleanText(stripHtml(sources.article.content), 84);
     return {
-      title: 'Artikel terbaru sudah terbit',
-      body: `${category ? `${category} · ` : ''}${teaser || `Baca "${cleanText(sources.article.title, 72)}" di aplikasi IPM hari ini.`}`,
+      title: 'Reminder IPM malam ini',
+      body: `${category ? `${category} · ` : ''}${teaser || `Baca "${cleanText(sources.article.title, 72)}" di aplikasi IPM malam ini.`}`,
       url: `${buildArticlePath(sources.article)}?source=daily-digest`,
-      summary: 'article'
+      summary: 'article',
+      image: buildArticleReminderImage(sources.article),
+      context: 'Artikel pilihan resmi yang direkomendasikan malam ini'
     };
   }
 
   if (sources.material) {
     return {
-      title: 'Perpustakaan digital siap dibuka',
-      body: `"${cleanText(sources.material.title, 72)}" tersedia untuk dibaca. Buka perpustakaan dan lanjutkan bacaanmu hari ini.`,
+      title: 'Reminder IPM malam ini',
+      body: `"${cleanText(sources.material.title, 72)}" tersedia untuk dibaca. Buka perpustakaan malam ini dan lanjutkan bacaanmu.`,
       url: '/materi.html?source=daily-digest',
-      summary: 'materials'
+      summary: 'materials',
+      image: REMINDER_IMAGES.materials,
+      context: 'Koleksi perpustakaan digital yang siap dibuka malam ini'
     };
   }
 
   if (sources.discussion) {
     return {
-      title: 'Ruang diskusi menunggu partisipasimu',
-      body: `"${cleanText(sources.discussion.title, 72)}" bisa kamu baca hari ini. Masuk ke diskusi untuk mengikuti percakapan terbaru.`,
+      title: 'Reminder IPM malam ini',
+      body: `"${cleanText(sources.discussion.title, 72)}" bisa kamu baca malam ini. Masuk ke diskusi untuk mengikuti percakapan terbaru.`,
       url: '/discussions.html?source=daily-digest',
-      summary: 'discussions'
+      summary: 'discussions',
+      image: REMINDER_IMAGES.discussions,
+      context: 'Percakapan komunitas IPM yang patut kamu ikuti malam ini'
     };
   }
 
   return {
-    title: 'Cek aplikasi IPM hari ini',
-    body: 'Lihat artikel, quiz, form, dan informasi organisasi terbaru dalam satu aplikasi.',
+    title: 'Reminder IPM malam ini',
+    body: 'Buka aplikasi IPM malam ini untuk cek artikel, quiz, form, dan info organisasi terbaru.',
     url: '/?source=daily-digest',
-    summary: 'general'
+    summary: 'general',
+    image: REMINDER_IMAGES.general,
+    context: 'Ringkasan aktivitas resmi dari aplikasi PC IPM Panawuan'
   };
 }
 
@@ -240,7 +277,7 @@ async function processDailyDigestNotifications() {
   }
 
   const sources = await getDigestSources();
-  const payload = buildDigestPayload(sources);
+  const payload = buildDailyReminderPayload(sources);
   const message = `${payload.title} - ${payload.body}`;
 
   await saveDigestInAppNotification(message);
@@ -248,8 +285,11 @@ async function processDailyDigestNotifications() {
     title: payload.title,
     body: payload.body,
     url: payload.url,
+    image: payload.image,
     tag: `daily-digest-${new Date().toISOString().slice(0, 10)}`,
-    renotify: false
+    renotify: false,
+    context: payload.context || 'Reminder harian resmi dari aplikasi PC IPM Panawuan',
+    trustLabel: 'Disusun otomatis oleh sistem'
   });
 
   await recordDigest(payload, pushResult);
@@ -272,5 +312,6 @@ async function processDailyDigestNotifications() {
 }
 
 module.exports = {
-  processDailyDigestNotifications
+  processDailyDigestNotifications,
+  buildDailyReminderPayload
 };

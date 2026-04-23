@@ -66,6 +66,12 @@ const STATIC_ASSETS = [
   '/scripts/register.js',
   '/manifest.json',
   '/app/media/brand/ipm-logo.png',
+  '/app/media/notifications/reminder-home.png',
+  '/app/media/notifications/reminder-quiz.png',
+  '/app/media/notifications/reminder-forms.png',
+  '/app/media/notifications/reminder-attendance.png',
+  '/app/media/notifications/reminder-materials.png',
+  '/app/media/notifications/reminder-discussions.png',
   '/admin/editor.css',
   '/ipm%20(2).png',
   '/icons/icon-192.png',
@@ -321,18 +327,30 @@ self.addEventListener('push', (event) => {
 
   const targetUrl = normalizeNotificationUrl(data.url || '/');
   const title = data.title || 'Notifikasi IPM';
+  const trustLabel = String(data.trustLabel || 'Sumber resmi PC IPM Panawuan').trim();
+  const context = String(data.context || '').trim();
+  const bodyText = [data.body || 'Ada pembaruan baru.', context ? `\n${context}` : '', trustLabel ? `\n${trustLabel}` : '']
+    .filter(Boolean)
+    .join('');
   const options = {
-    body: data.body || 'Ada pembaruan baru.',
+    body: bodyText,
     icon: data.icon || APP_NOTIFICATION_ICON,
     badge: data.badge || APP_NOTIFICATION_BADGE,
     image: data.image || undefined,
     tag: data.tag || undefined,
     renotify: Boolean(data.renotify),
+    requireInteraction: Boolean(data.requireInteraction),
+    vibrate: Array.isArray(data.vibrate) ? data.vibrate : [180, 60, 180],
+    timestamp: Number(data.timestamp || Date.now()),
+    silent: Boolean(data.silent),
     actions: [
-      { action: 'open', title: 'Buka' }
+      { action: 'open', title: 'Buka aplikasi' },
+      { action: 'later', title: 'Nanti saja' }
     ],
     data: {
-      url: targetUrl
+      url: targetUrl,
+      trustLabel,
+      appName: data.appName || 'PC IPM Panawuan'
     }
   };
 
@@ -341,6 +359,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  if (event.action === 'later') return;
   const destination = normalizeNotificationUrl(event.notification?.data?.url || '/');
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
@@ -370,6 +389,4 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
-
-
 

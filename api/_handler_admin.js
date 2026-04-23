@@ -643,7 +643,7 @@ async function processQuizAutomaticReminders() {
             );
 
             try {
-                await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${null}, 'AUTO_QUIZ_REMINDER', ${{ schedule_id: schedule.id, reminder_type: reminderType, recipients: recipients.length }})`;
+                await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${null}, 'AUTO_QUIZ_REMINDER', ${{ schedule_id: schedule.id, reminder_type: reminderType, recipients: recipients.length, sent: Number(pushSummary?.sent || 0), failed: Number(pushSummary?.failed || 0) }})`;
             } catch {}
 
             sentCount += Number(pushSummary?.sent || 0);
@@ -711,6 +711,206 @@ async function handleRunScheduledNotifications(req, res) {
         articleReminder,
         dailyDigest,
         removedOldNotifications: cleanup?.rowCount || 0
+    });
+}
+
+async function handleNotificationDebug(req, res) {
+    try { await requireAdminAuth(req); } catch (e) { return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' }); }
+
+    const { getVapid } = require('./_push');
+    const vapid = getVapid();
+    const [
+        subscriptionStats,
+        latestDigest,
+        latestDailyActivity,
+        latestReminderActivity,
+        latestArticleActivity,
+        latestOrgProgramActivity,
+        pendingScheduled,
+        articleTodaySummary,
+        dailyTodaySummary,
+        quizTodaySummary,
+        orgTodaySummary
+    ] = await Promise.all([
+        query`
+            SELECT
+                COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE user_id IS NOT NULL)::int AS linked_users,
+                MAX(created_at) AS latest_created_at,
+                MAX(updated_at) AS latest_updated_at
+            FROM push_subscriptions
+        `,
+        query`
+            SELECT digest_date, title_snapshot, body_snapshot, target_url, push_sent, push_failed, created_at
+            FROM daily_digest_logs
+            WHERE digest_type='public_daily'
+            ORDER BY digest_date DESC, created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_DAILY_DIGEST'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_QUIZ_REMINDER'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_ARTICLE_NOTIFICATION'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT created_at, details
+            FROM activity_logs
+            WHERE action='AUTO_ORG_PROGRAM_NOTIFICATION'
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+        query`
+            SELECT COUNT(*)::int AS pending_count, MIN(send_at) AS next_send_at
+            FROM scheduled_notifications
+            WHERE status='pending'
+        `,
+        query`
+            SELECT
+                COUNT(*)::int AS runs,
+                COALESCE(SUM(push_sent), 0)::int AS push_sent,
+                COALESCE(SUM(push_failed), 0)::int AS push_failed,
+                MAX(created_at) AS latest_at
+            FROM article_notification_logs
+            WHERE created_at >= CURRENT_DATE
+        `,
+        query`
+            SELECT
+                COUNT(*)::int AS runs,
+                COALESCE(SUM(push_sent), 0)::int AS push_sent,
+                COALESCE(SUM(push_failed), 0)::int AS push_failed,
+                MAX(created_at) AS latest_at
+            FROM daily_digest_logs
+            WHERE digest_type='public_daily'
+              AND (digest_date = CURRENT_DATE OR created_at >= CURRENT_DATE)
+        `,
+        query`
+            SELECT
+                COUNT(*)::int AS runs,
+                COALESCE(SUM(COALESCE(NULLIF(details->>'sent', '')::int, NULLIF(details->>'recipients', '')::int, 0)), 0)::int AS push_sent,
+                COALESCE(SUM(COALESCE(NULLIF(details->>'failed', '')::int, 0)), 0)::int AS push_failed,
+                MAX(created_at) AS latest_at
+            FROM activity_logs
+            WHERE action='AUTO_QUIZ_REMINDER'
+              AND created_at >= CURRENT_DATE
+        `,
+        query`
+            SELECT
+                COUNT(*)::int AS runs,
+                COALESCE(SUM(push_sent), 0)::int AS push_sent,
+                COALESCE(SUM(push_failed), 0)::int AS push_failed,
+                MAX(created_at) AS latest_at
+            FROM org_program_notification_logs
+            WHERE created_at >= CURRENT_DATE
+        `
+    ]);
+
+    const digestRow = latestDigest.rows[0] || null;
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const latestDigestDate = digestRow?.digest_date
+        ? new Date(digestRow.digest_date).toISOString().slice(0, 10)
+        : '';
+    const sourceSummaries = {
+        article: articleTodaySummary.rows[0] || {},
+        daily_digest: dailyTodaySummary.rows[0] || {},
+        quiz_reminder: quizTodaySummary.rows[0] || {},
+        org_program: orgTodaySummary.rows[0] || {}
+    };
+    const totalRuns = Object.values(sourceSummaries).reduce((sum, item) => sum + Number(item?.runs || 0), 0);
+    const totalSent = Object.values(sourceSummaries).reduce((sum, item) => sum + Number(item?.push_sent || 0), 0);
+    const totalFailed = Object.values(sourceSummaries).reduce((sum, item) => sum + Number(item?.push_failed || 0), 0);
+    const activeSources = Object.values(sourceSummaries).filter((item) => Number(item?.runs || 0) > 0).length;
+    const latestActivityAt = Object.values(sourceSummaries)
+        .map((item) => item?.latest_at)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b) - new Date(a))[0] || null;
+
+    return json(res, 200, {
+        status: 'success',
+        diagnostics: {
+            cron: {
+                route: '/api/cron/notifications',
+                schedule_utc: '0 13 * * *',
+                schedule_wib: '20:00 WIB',
+                cron_secret_configured: Boolean(process.env.CRON_SECRET)
+            },
+            push: {
+                vapid_configured: Boolean(vapid),
+                vapid_subject: vapid?.subject || null,
+                subscription_total: Number(subscriptionStats.rows[0]?.total || 0),
+                subscription_linked_users: Number(subscriptionStats.rows[0]?.linked_users || 0),
+                latest_subscription_created_at: subscriptionStats.rows[0]?.latest_created_at || null,
+                latest_subscription_updated_at: subscriptionStats.rows[0]?.latest_updated_at || null
+            },
+            daily_reminder: {
+                sent_today: latestDigestDate === todayIso,
+                latest_log: digestRow ? {
+                    digest_date: digestRow.digest_date,
+                    title: digestRow.title_snapshot,
+                    body: digestRow.body_snapshot,
+                    url: digestRow.target_url,
+                    push_sent: Number(digestRow.push_sent || 0),
+                    push_failed: Number(digestRow.push_failed || 0),
+                    created_at: digestRow.created_at
+                } : null,
+                latest_activity: latestDailyActivity.rows[0] || null
+            },
+            automation: {
+                latest_quiz_reminder_activity: latestReminderActivity.rows[0] || null,
+                latest_article_notification_activity: latestArticleActivity.rows[0] || null,
+                latest_org_program_notification_activity: latestOrgProgramActivity.rows[0] || null,
+                pending_scheduled_notifications: Number(pendingScheduled.rows[0]?.pending_count || 0),
+                next_scheduled_notification_at: pendingScheduled.rows[0]?.next_send_at || null,
+                today: {
+                    total_runs: totalRuns,
+                    push_sent: totalSent,
+                    push_failed: totalFailed,
+                    active_sources: activeSources,
+                    latest_activity_at: latestActivityAt
+                },
+                sources: {
+                    article: {
+                        runs: Number(sourceSummaries.article?.runs || 0),
+                        push_sent: Number(sourceSummaries.article?.push_sent || 0),
+                        push_failed: Number(sourceSummaries.article?.push_failed || 0),
+                        latest_at: sourceSummaries.article?.latest_at || null
+                    },
+                    daily_digest: {
+                        runs: Number(sourceSummaries.daily_digest?.runs || 0),
+                        push_sent: Number(sourceSummaries.daily_digest?.push_sent || 0),
+                        push_failed: Number(sourceSummaries.daily_digest?.push_failed || 0),
+                        latest_at: sourceSummaries.daily_digest?.latest_at || null
+                    },
+                    quiz_reminder: {
+                        runs: Number(sourceSummaries.quiz_reminder?.runs || 0),
+                        push_sent: Number(sourceSummaries.quiz_reminder?.push_sent || 0),
+                        push_failed: Number(sourceSummaries.quiz_reminder?.push_failed || 0),
+                        latest_at: sourceSummaries.quiz_reminder?.latest_at || null
+                    },
+                    org_program: {
+                        runs: Number(sourceSummaries.org_program?.runs || 0),
+                        push_sent: Number(sourceSummaries.org_program?.push_sent || 0),
+                        push_failed: Number(sourceSummaries.org_program?.push_failed || 0),
+                        latest_at: sourceSummaries.org_program?.latest_at || null
+                    }
+                }
+            }
+        }
     });
 }
 
@@ -941,6 +1141,7 @@ module.exports = async (req, res) => {
             if (req.method === 'GET' && action === 'gamificationGet') return await handleGetGamification(req, res);
             if (req.method === 'GET' && action === 'pimpinanGet') return await handleGetPimpinan(req, res);
             if (req.method === 'GET' && action === 'listScheduledNotifications') return await handleListScheduledNotifications(req, res);
+            if (req.method === 'GET' && action === 'notificationDebug') return await handleNotificationDebug(req, res);
             if (req.method === 'GET' && action === 'runScheduledNotifications') return await handleRunScheduledNotifications(req, res);
             return json(res, 405, { status: 'error', message: 'Method not allowed' });
         }
@@ -966,4 +1167,3 @@ module.exports = async (req, res) => {
         return json(res, 500, { status: 'error', message: String(e.message || e) });
     }
 };
-

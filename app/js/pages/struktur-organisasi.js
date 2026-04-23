@@ -29,7 +29,8 @@
     bidang: [],
     currentBidangCode: '',
     currentSegment: 'anggota',
-    lastFocusedNode: null
+    lastFocusedNode: null,
+    deepLinkHandled: false
   };
 
   const els = {};
@@ -248,6 +249,74 @@
 
   function getCurrentBidang() {
     return state.bidang.find((item) => item.code === state.currentBidangCode) || null;
+  }
+
+  function findBidangByProgramId(programId) {
+    const pid = Number(programId || 0);
+    if (!pid) return null;
+    return state.bidang.find((item) => Array.isArray(item.programs) && item.programs.some((program) => Number(program.id) === pid)) || null;
+  }
+
+  function prefillFeedbackForProgram(bidang, program) {
+    if (!program) return;
+    if (els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = false;
+    if (els.orgFeedbackToggleBtn) els.orgFeedbackToggleBtn.setAttribute('aria-expanded', 'true');
+    if (els.orgFeedbackSubject && !String(els.orgFeedbackSubject.value || '').trim()) {
+      els.orgFeedbackSubject.value = `Evaluasi program kerja: ${program.title}`;
+    }
+    if (els.orgFeedbackMessage && !String(els.orgFeedbackMessage.value || '').trim()) {
+      const bidangName = bidang?.name || 'bidang terkait';
+      els.orgFeedbackMessage.value = `Saya ingin memberi masukan untuk program "${program.title}" di ${bidangName}.\n\nYang perlu dikritisi / diperbaiki:\n- \n\nSaran saya:\n- `;
+    }
+    if (els.orgFeedbackMessage && typeof els.orgFeedbackMessage.focus === 'function') {
+      els.orgFeedbackMessage.focus();
+    }
+  }
+
+  function openProgramEngagement(programId, focusMode) {
+    const pid = Number(programId || 0);
+    if (!pid || !els.programList) return;
+    const btnComment = els.programList.querySelector(`.btn-comment[data-program-id="${pid}"]`);
+    if (btnComment) btnComment.click();
+
+    if (focusMode === 'feedback') {
+      const bidang = getCurrentBidang();
+      const program = bidang?.programs?.find((item) => Number(item.id) === pid) || null;
+      prefillFeedbackForProgram(bidang, program);
+      if (els.orgFeedbackSection) els.orgFeedbackSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    const commentsBox = document.getElementById(`comments-${pid}`);
+    if (commentsBox) {
+      setTimeout(() => {
+        commentsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const input = commentsBox.querySelector('.comment-input');
+        if (input && typeof input.focus === 'function') input.focus();
+      }, 240);
+    }
+  }
+
+  function applyDeepLinkState() {
+    if (state.deepLinkHandled) return;
+    const params = new URLSearchParams(window.location.search || '');
+    const bidangCode = String(params.get('bidang') || '').trim();
+    const focusSegment = String(params.get('segment') || '').trim().toLowerCase();
+    const focusMode = String(params.get('focus') || '').trim().toLowerCase();
+    const programId = Number(params.get('program') || 0);
+
+    let bidang = bidangCode ? state.bidang.find((item) => item.code === bidangCode) : null;
+    if (!bidang && programId) bidang = findBidangByProgramId(programId);
+    if (!bidang) return;
+
+    state.deepLinkHandled = true;
+    showDetail(bidang.code, null);
+    if (focusSegment === 'program' || programId) setDetailSegment('program');
+    if (programId) {
+      setTimeout(() => {
+        openProgramEngagement(programId, focusMode === 'feedback' ? 'feedback' : 'discussion');
+      }, 220);
+    }
   }
 
   function getStoredUsername() {
@@ -1022,6 +1091,7 @@
     renderOrgHeroSummary();
     renderOrgChartTiers();
     toggleFeedbackVisibility();
+    applyDeepLinkState();
     hideLoadingOverlay();
   }
 

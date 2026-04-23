@@ -174,6 +174,98 @@ async function testAttendanceRoomsRequiresSession() {
   assert.strictEqual(r.body.status, 'error');
 }
 
+async function testDailyReminderPayloadAvailable() {
+  const { buildDailyReminderPayload } = require('../api/_daily_digest');
+  const payload = buildDailyReminderPayload({
+    quiz: null,
+    form: null,
+    attendanceCount: 0,
+    article: null,
+    material: null,
+    discussion: null
+  });
+  assert.strictEqual(payload.title, 'Reminder IPM malam ini');
+  assert.strictEqual(payload.summary, 'general');
+  assert.strictEqual(payload.url, '/?source=daily-digest');
+  assert.strictEqual(payload.image, '/app/media/notifications/reminder-home.png');
+}
+
+async function testPushBrandingDefaults() {
+  const { withNotificationBranding } = require('../api/_push');
+  const payload = withNotificationBranding({ body: 'Tes notifikasi' });
+  assert.strictEqual(payload.title, 'PC IPM Panawuan');
+  assert.strictEqual(payload.icon, '/app/media/brand/ipm-logo.png');
+  assert.strictEqual(payload.badge, '/icons/icon-192-maskable.png');
+  assert.strictEqual(payload.trustLabel, 'Sumber resmi PC IPM Panawuan');
+  assert.strictEqual(payload.context, 'Informasi terverifikasi dari aplikasi IPM');
+  assert.ok(Array.isArray(payload.vibrate));
+}
+
+async function testOrganizationProgramNotificationPayload() {
+  const { buildProgramNotificationPayload } = require('../api/_organization_notifications');
+  const payload = buildProgramNotificationPayload({
+    program: {
+      id: 42,
+      title: 'Kajian Rutin Kader',
+      description: 'Forum belajar pekanan untuk kader aktif.',
+      status: 'rencana'
+    },
+    bidang: {
+      id: 7,
+      code: 'perkaderan',
+      name: 'Bidang Perkaderan',
+      image_url: '/images/bidang/pkd.png'
+    },
+    eventType: 'create'
+  });
+  assert.ok(payload.title.includes('Kajian Rutin Kader'));
+  assert.ok(payload.url.includes('program=42'));
+  assert.ok(payload.url.includes('focus=discussion'));
+  assert.strictEqual(payload.image, '/images/bidang/pkd.png');
+  assert.strictEqual(payload.trustLabel, 'Program kerja resmi organisasi');
+}
+
+async function testDailyReminderUsesFeatureImage() {
+  const { buildDailyReminderPayload } = require('../api/_daily_digest');
+  const payload = buildDailyReminderPayload({
+    quiz: { id: 1, title: 'Quiz Kader' },
+    form: null,
+    attendanceCount: 0,
+    article: null,
+    material: null,
+    discussion: null
+  });
+  assert.strictEqual(payload.summary, 'quiz');
+  assert.strictEqual(payload.image, '/app/media/notifications/reminder-quiz.png');
+}
+
+async function testAdminNotificationDebugRequiresAdmin() {
+  const Module = require('module');
+  const orig = Module.prototype.require;
+  Module.prototype.require = function(id) {
+    if (id.endsWith('/_auth') || id.endsWith('\\_auth')) {
+      return { requireAdminAuth: async () => { throw new Error('Unauthorized'); } };
+    }
+    if (id.endsWith('/_bootstrap') || id.endsWith('\\_bootstrap')) {
+      return { ensureSchema: async () => {} };
+    }
+    return orig.apply(this, arguments);
+  };
+
+  try {
+    delete require.cache[require.resolve('../api/_handler_admin')];
+    const handler = require('../api/_handler_admin');
+    const res = fakeRes();
+    await handler({ method: 'GET', query: { action: 'notificationDebug' }, headers: { host: 'localhost' }, body: '{}' }, res);
+    const r = res.result;
+    assert.strictEqual(r.code, 401);
+    assert.strictEqual(r.body.status, 'error');
+  } finally {
+    Module.prototype.require = orig;
+    delete require.cache[require.resolve('../api/_handler_admin')];
+  }
+}
+
 async function main() {
   const tests = [
     ['_util.json sets headers and body', testUtilJson],
@@ -185,6 +277,11 @@ async function main() {
     ['upload requires admin auth', testUploadRequiresAdminAuth],
     ['users endpoint requires session', testUsersListRequiresSession],
     ['attendance rooms require session', testAttendanceRoomsRequiresSession],
+    ['daily reminder payload fallback stays active', testDailyReminderPayloadAvailable],
+    ['daily reminder chooses feature image', testDailyReminderUsesFeatureImage],
+    ['organization program notification payload stays actionable', testOrganizationProgramNotificationPayload],
+    ['push branding defaults stay official', testPushBrandingDefaults],
+    ['notification debug requires admin', testAdminNotificationDebugRequiresAdmin],
   ];
 
   let passed = 0;

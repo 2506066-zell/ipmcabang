@@ -532,6 +532,20 @@ async function ensureSchema() {
     created_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (digest_type, digest_date)
   )`;
+  await query`CREATE TABLE IF NOT EXISTS org_program_notification_logs (
+    id SERIAL PRIMARY KEY,
+    program_id INT NOT NULL REFERENCES org_programs(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    payload_hash TEXT NOT NULL,
+    title_snapshot TEXT,
+    body_snapshot TEXT,
+    target_url TEXT,
+    push_sent INT DEFAULT 0,
+    push_failed INT DEFAULT 0,
+    notified_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (program_id, event_type, payload_hash)
+  )`;
 
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
@@ -711,6 +725,15 @@ async function ensureSchema() {
   await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS push_sent INT DEFAULT 0`;
   await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS push_failed INT DEFAULT 0`;
   await query`ALTER TABLE daily_digest_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS event_type TEXT`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS payload_hash TEXT`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS title_snapshot TEXT`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS body_snapshot TEXT`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS target_url TEXT`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS push_sent INT DEFAULT 0`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS push_failed INT DEFAULT 0`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS notified_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
 
   await seedOrganizationData();
 
@@ -761,6 +784,7 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_quiz_reminder_logs_user_created ON quiz_reminder_logs(user_id, created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_article_notification_logs_notified_at ON article_notification_logs(notified_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_daily_digest_logs_date ON daily_digest_logs(digest_date DESC, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_org_program_notification_logs_program_created ON org_program_notification_logs(program_id, created_at DESC)`;
 }
 
 module.exports = { ensureSchema };
