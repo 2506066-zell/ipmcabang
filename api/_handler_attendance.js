@@ -627,7 +627,7 @@ async function handleCheckIn(req, res) {
 
   const body = parseJsonBody(req);
   const eventId = toNumber(body.event_id);
-  const photoUrl = cleanString(body.photo_url, 500);
+  const photoUrl = cleanString(body.photo_url, 256000);
   const orgMemberId = toNumber(body.org_member_id);
   if (!eventId || !photoUrl) {
     return json(res, 400, { status: 'error', message: 'Event dan foto selfie wajib diisi' });
@@ -1022,7 +1022,7 @@ async function handleManualRecord(req, res) {
   const userId = toNumber(body.user_id);
   const orgMemberId = toNumber(body.org_member_id);
   const attendanceStatus = normalizeAttendanceStatus(body.attendance_status);
-  const photoUrl = cleanString(body.photo_url, 500) || null;
+  const photoUrl = cleanString(body.photo_url, 256000) || null;
   const note = cleanString(body.note, 300) || null;
   if (!eventId || !attendanceStatus) {
     return json(res, 400, { status: 'error', message: 'Event dan status wajib diisi' });
