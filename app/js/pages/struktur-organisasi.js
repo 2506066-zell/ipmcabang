@@ -454,6 +454,11 @@
     const nodeVariant = variant || 'field';
     const normalizedCode = normalizeCode(bidang.code);
     const defaultFocusY = resolveFieldImageFocusY(normalizedCode, false);
+    const variantLabel = nodeVariant === 'leader'
+      ? 'Pimpinan Utama'
+      : nodeVariant === 'core'
+        ? 'Unsur Inti'
+        : 'Bidang Pelaksana';
 
     return `
       <button type="button" class="org-node-card org-node-card-${nodeVariant}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
@@ -462,6 +467,7 @@
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
         </div>
         <div class="org-node-content">
+          <span class="org-node-eyebrow">${escapeHtml(variantLabel)}</span>
           <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
           <p class="org-node-meta">${bidang.members.length} Anggota &bull; ${bidang.programs.length} Program</p>
         </div>
@@ -558,7 +564,7 @@
       : '';
 
     return `
-      <article class="anggota-card" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
+      <article class="anggota-card anggota-card-${variant || 'regular'}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
         <div class="anggota-card-photo${member.photo_url ? ' is-loading' : ' no-image'}">
           ${photoMarkup}
           <div class="anggota-card-avatar">${escapeHtml(initials || '?')}</div>
@@ -672,7 +678,10 @@
 
       card.innerHTML = `
         <div class="program-card-head">
-          <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
+          <div class="program-card-titleblock">
+            <span class="program-card-kicker">Program Kerja</span>
+            <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
+          </div>
           <span class="program-card-status status-${escapeHtml(program.status)}">${statusText}</span>
         </div>
         ${pBar}
@@ -718,7 +727,8 @@
     if (!bidang) return;
     state.currentBidangCode = bidang.code;
     state.lastFocusedNode = triggerEl && typeof triggerEl.focus === 'function' ? triggerEl : document.activeElement;
-    if (els.viewBidangGrid) els.viewBidangGrid.classList.add('hidden');
+    document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
+    if (triggerEl?.classList) triggerEl.classList.add('is-selected');
     if (els.viewDetail) els.viewDetail.classList.add('active');
     if (els.detailBidangTitle) els.detailBidangTitle.textContent = bidang.name;
     if (els.detailMemberCount) els.detailMemberCount.textContent = `${bidang.members.length} anggota`;
@@ -726,17 +736,25 @@
     renderDetailMembers(bidang);
     renderPrograms(bidang);
     setDetailSegment('anggota');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (els.detailBidangTitle) setTimeout(() => els.detailBidangTitle.focus(), 60);
+    if (els.viewDetail) {
+      setTimeout(() => {
+        els.viewDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (els.detailBidangTitle) els.detailBidangTitle.focus();
+      }, 40);
+    }
   }
 
   function backToBidang() {
     if (els.viewDetail) els.viewDetail.classList.remove('active');
-    if (els.viewBidangGrid) els.viewBidangGrid.classList.remove('hidden');
+    document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
     state.currentBidangCode = '';
     state.currentSegment = 'anggota';
     toggleFeedbackVisibility();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (els.viewBidangGrid) {
+      setTimeout(() => {
+        els.viewBidangGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 30);
+    }
     if (state.lastFocusedNode && typeof state.lastFocusedNode.focus === 'function') {
       setTimeout(() => state.lastFocusedNode.focus(), 40);
     }
