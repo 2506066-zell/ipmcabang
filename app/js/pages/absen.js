@@ -673,6 +673,9 @@
 
     async function loadMemberOptions(roomId) {
         if (!roomId) return;
+        state.memberOptions = [];
+        if (els.memberSelect) els.memberSelect.value = '';
+        if (els.memberSearch) els.memberSearch.value = '';
         try {
             const data = await apiFetch(`/api/attendance?action=members&room_id=${encodeURIComponent(roomId)}`, { method: 'GET' }, roomId);
             state.memberOptions = Array.isArray(data.members) ? data.members : [];

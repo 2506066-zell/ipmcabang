@@ -11,10 +11,7 @@ const APP_TIMEZONE = 'Asia/Bangkok';
 const CABANG_ROOM_SYNONYMS = [
   'IPM CABANG PANAWUAN',
   'PC IPM PANAWUAN',
-  'IPM PANAWUAN',
-  'PR IPM PANAWUAN',
-  'PC IPM',
-  'PR IPM'
+  'PIMPINAN CABANG IPM PANAWUAN'
 ];
 
 function nowIso() {
@@ -72,10 +69,7 @@ function normalizeRoomName(value) {
 function getIdentityMode(roomLike) {
   const pimpinan = typeof roomLike === 'string' ? roomLike : roomLike?.pimpinan;
   const normalized = normalizeRoomName(pimpinan);
-  const isBranch = CABANG_ROOM_SYNONYMS.some(syn => normalized.includes(normalizeRoomName(syn))) ||
-                   normalized.includes('PC IPM') || 
-                   normalized.includes('PR IPM') ||
-                   normalized.includes('CABANG');
+  const isBranch = CABANG_ROOM_SYNONYMS.some((syn) => normalized === normalizeRoomName(syn));
   return isBranch ? 'org_member_select' : 'account_identity';
 }
 
