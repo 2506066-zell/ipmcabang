@@ -700,6 +700,25 @@
     });
   }
 
+  function updateDetailSidebar(bidang) {
+    if (!bidang) return;
+    const leadershipCount = (bidang.members || []).filter((member) => isLeadershipRole(member.role_title)).length;
+    const hasPrograms = Array.isArray(bidang.programs) && bidang.programs.length > 0;
+    if (els.detailSidebarTitle) els.detailSidebarTitle.textContent = bidang.name;
+    if (els.detailSidebarDescription) {
+      els.detailSidebarDescription.textContent = hasPrograms
+        ? 'Lihat susunan kader dan arah kerja bidang tanpa kehilangan konteks halaman.'
+        : 'Susunan kader bidang ini sudah tersedia. Program kerja masih bisa ditambahkan dari panel admin.';
+    }
+    if (els.detailSidebarMemberCount) els.detailSidebarMemberCount.textContent = String((bidang.members || []).length);
+    if (els.detailSidebarProgramCount) els.detailSidebarProgramCount.textContent = String((bidang.programs || []).length);
+    if (els.detailSidebarNote) {
+      els.detailSidebarNote.textContent = leadershipCount > 0
+        ? `${leadershipCount} posisi inti terdeteksi. Klik kartu kader untuk membuka detail singkat di panel samping.`
+        : 'Klik kartu kader untuk membuka detail singkat di panel samping tanpa menutup halaman ini.';
+    }
+  }
+
   function setDetailSegment(segment) {
     const onAnggota = segment !== 'program';
     state.currentSegment = onAnggota ? 'anggota' : 'program';
@@ -733,6 +752,7 @@
     if (els.detailBidangTitle) els.detailBidangTitle.textContent = bidang.name;
     if (els.detailMemberCount) els.detailMemberCount.textContent = `${bidang.members.length} anggota`;
     if (els.detailProgramCount) els.detailProgramCount.textContent = `${bidang.programs.length} program`;
+    updateDetailSidebar(bidang);
     renderDetailMembers(bidang);
     renderPrograms(bidang);
     setDetailSegment('anggota');
@@ -857,12 +877,17 @@
       els.anggotaDetailInstagram.style.display = 'none';
     }
     els.anggotaDetailOverlay.classList.add('active');
+    els.anggotaDetailOverlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    if (els.closeAnggotaDetailBtn) {
+      setTimeout(() => els.closeAnggotaDetailBtn.focus(), 30);
+    }
   }
 
   function closeAnggotaDetail() {
     if (!els.anggotaDetailOverlay) return;
     els.anggotaDetailOverlay.classList.remove('active');
+    els.anggotaDetailOverlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
 
@@ -1080,6 +1105,11 @@
     els.detailSegmentProgram = byId('detailSegmentProgram');
     els.detailPanelAnggota = byId('detailPanelAnggota');
     els.detailPanelProgram = byId('detailPanelProgram');
+    els.detailSidebarTitle = byId('detailSidebarTitle');
+    els.detailSidebarDescription = byId('detailSidebarDescription');
+    els.detailSidebarMemberCount = byId('detailSidebarMemberCount');
+    els.detailSidebarProgramCount = byId('detailSidebarProgramCount');
+    els.detailSidebarNote = byId('detailSidebarNote');
     els.leadershipSection = byId('leadershipSection');
     els.membersSection = byId('membersSection');
     els.programList = byId('programList');

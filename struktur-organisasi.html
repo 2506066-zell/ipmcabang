@@ -115,15 +115,39 @@
                     Program Kerja
                 </button>
             </nav>
-            <section class="detail-panel active" id="detailPanelAnggota" role="tabpanel"
-                aria-labelledby="detailSegmentAnggota">
-                <div id="leadershipSection"></div>
-                <div id="membersSection"></div>
-            </section>
-            <section class="detail-panel" id="detailPanelProgram" role="tabpanel" aria-labelledby="detailSegmentProgram"
-                hidden>
-                <div class="program-list" id="programList"></div>
-            </section>
+            <div class="detail-layout">
+                <div class="detail-main">
+                    <section class="detail-panel active" id="detailPanelAnggota" role="tabpanel"
+                        aria-labelledby="detailSegmentAnggota">
+                        <div id="leadershipSection"></div>
+                        <div id="membersSection"></div>
+                    </section>
+                    <section class="detail-panel" id="detailPanelProgram" role="tabpanel" aria-labelledby="detailSegmentProgram"
+                        hidden>
+                        <div class="program-list" id="programList"></div>
+                    </section>
+                </div>
+                <aside class="detail-sidebar" aria-label="Ringkasan bidang">
+                    <div class="detail-sidebar-card">
+                        <span class="detail-sidebar-kicker">Ringkasan Bidang</span>
+                        <h3 class="detail-sidebar-title" id="detailSidebarTitle">Pilih bidang</h3>
+                        <p class="detail-sidebar-copy" id="detailSidebarDescription">Susunan anggota dan program kerja akan tampil lebih rapi di workspace ini.</p>
+                    </div>
+                    <div class="detail-sidebar-stats">
+                        <article class="detail-sidebar-stat">
+                            <span class="detail-sidebar-stat-label">Anggota</span>
+                            <strong class="detail-sidebar-stat-value" id="detailSidebarMemberCount">0</strong>
+                        </article>
+                        <article class="detail-sidebar-stat">
+                            <span class="detail-sidebar-stat-label">Program</span>
+                            <strong class="detail-sidebar-stat-value" id="detailSidebarProgramCount">0</strong>
+                        </article>
+                    </div>
+                    <div class="detail-sidebar-note" id="detailSidebarNote">
+                        Klik kartu anggota untuk membuka detail singkat tanpa keluar dari halaman ini.
+                    </div>
+                </aside>
+            </div>
         </section>
 
         <section class="org-feedback-card" id="orgFeedbackSection" aria-labelledby="orgFeedbackTitle" hidden>
@@ -171,19 +195,16 @@
         </section>
     </main>
 
-    <!-- Detail Anggota Modal -->
-    <div class="anggota-detail-overlay" id="anggotaDetailOverlay">
-        <div class="anggota-detail-card" id="anggotaDetailCard">
+    <!-- Detail Anggota Side Panel -->
+    <div class="anggota-detail-overlay" id="anggotaDetailOverlay" aria-hidden="true">
+        <aside class="anggota-detail-card" id="anggotaDetailCard" aria-modal="true" aria-labelledby="anggotaDetailName">
             <button class="close-btn-modal" id="closeAnggotaDetailBtn" type="button">
                 <i class="fas fa-times"></i>
             </button>
-            <!-- Header dengan Foto -->
             <div class="anggota-detail-header" id="anggotaDetailHeader">
-                <!-- Picture tag will be injected here by JS -->
             </div>
-
-            <!-- Content -->
             <div class="anggota-detail-content" id="anggotaDetailContent">
+                <span class="anggota-detail-kicker">Detail Anggota</span>
                 <div class="anggota-detail-name" id="anggotaDetailName"></div>
                 <div class="anggota-detail-role" id="anggotaDetailRole"></div>
 
@@ -209,7 +230,7 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </aside>
     </div>
 
     <!-- Footer -->
