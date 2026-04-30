@@ -543,8 +543,37 @@
         ` : ''}
       </div>
     `;
+    
+    // Reveal Animation Logic
+    const revealCards = document.querySelectorAll('.org-node-card');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal-active');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    revealCards.forEach(c => observer.observe(c));
+
     setupLazyLoading();
+    setupPathInteractions();
     setTimeout(drawConnections, 300);
+  }
+
+  function setupPathInteractions() {
+    document.querySelectorAll('.org-node-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        const code = card.dataset.bidangCode;
+        if (!code) return;
+        document.querySelectorAll(`.org-connection-path[data-from="${code}"], .org-connection-path[data-to="${code}"]`)
+          .forEach(p => p.classList.add('is-highlighted'));
+      });
+      card.addEventListener('mouseleave', () => {
+        document.querySelectorAll('.org-connection-path.is-highlighted')
+          .forEach(p => p.classList.remove('is-highlighted'));
+      });
+    });
   }
 
   function drawConnections() {
@@ -565,12 +594,14 @@
         return { x: r.left + r.width / 2 - containerRect.left, y: r.top - containerRect.top };
     };
 
-    const drawPath = (start, end) => {
+    const drawPath = (start, end, fromId, toId) => {
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         const midY = (start.y + end.y) / 2;
         const d = `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`;
         path.setAttribute('d', d);
         path.setAttribute('class', 'org-connection-path');
+        if (fromId) path.setAttribute('data-from', fromId);
+        if (toId) path.setAttribute('data-to', toId);
         svg.appendChild(path);
     };
 
@@ -580,14 +611,19 @@
 
     if (leadership && coreCards.length) {
         const start = getBottomCenter(leadership);
-        coreCards.forEach(card => drawPath(start, getTopCenter(card)));
+        const fromId = leadership.dataset.bidangCode;
+        coreCards.forEach(card => {
+            drawPath(start, getTopCenter(card), fromId, card.dataset.bidangCode);
+        });
     }
 
     if (coreCards.length && fieldCards.length) {
         fieldCards.forEach(field => {
             const end = getTopCenter(field);
             const midCore = coreCards[Math.floor(coreCards.length / 2)];
-            if (midCore) drawPath(getBottomCenter(midCore), end);
+            if (midCore) {
+                drawPath(getBottomCenter(midCore), end, midCore.dataset.bidangCode, field.dataset.bidangCode);
+            }
         });
     }
   }
