@@ -395,52 +395,7 @@
     gap: 16px;
 }
 
-.page-struktur .org-node-card-core {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.page-struktur .org-node-card-core:hover {
-    transform: translateY(-6px);
-    box-shadow: none;
-    border-color: transparent;
-}
-
-.page-struktur .org-node-card-core.is-selected {
-    background: rgba(15, 111, 77, 0.05);
-    border-color: transparent;
-    box-shadow: none;
-    border-radius: 34px;
-}
-
-.page-struktur .org-node-card-core .org-node-media {
-    width: clamp(86px, 22vw, 140px);
-    height: clamp(86px, 22vw, 140px);
-    flex: 0 0 auto;
-    aspect-ratio: 1 / 1;
-    border-radius: 50%;
-    margin: 0 auto;
-    border: 4px solid #fff;
-    box-shadow: var(--org-shadow-md);
-}
-
-.page-struktur .org-node-card-core .org-node-media::after {
-    background: linear-gradient(180deg, transparent 60%, rgba(16, 32, 24, 0.15));
-}
-
-.page-struktur .org-node-card-core .org-node-content {
-    align-items: center;
-    padding: 16px 4px;
-}
-
-.page-struktur .org-node-card-core .org-node-meta {
-    justify-content: center;
-}
+/* Core cards are now defined below .org-node-card */
 
 .page-struktur .org-field-grid {
     display: grid;
@@ -613,6 +568,93 @@
 
 .page-struktur .org-node-meta i {
     color: var(--org-green);
+}
+
+/* -------------------------------------
+   Unsur Inti (Core) & Leader - Bubble Design 
+------------------------------------- */
+.page-struktur .org-node-card-core,
+.page-struktur .org-node-card-leader {
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    border: 3px solid #fff !important;
+    background: rgba(15, 111, 77, 0.8) !important;
+    box-shadow: 0 10px 30px rgba(15, 32, 24, 0.1) !important;
+    width: clamp(110px, 25vw, 180px);
+    margin: 0 auto;
+}
+
+.page-struktur .org-node-card-core:hover,
+.page-struktur .org-node-card-leader:hover {
+    transform: translateY(-5px) scale(1.05) !important;
+    box-shadow: 0 15px 40px rgba(15, 32, 24, 0.18) !important;
+    border-color: rgba(15, 111, 77, 0.1) !important;
+}
+
+.page-struktur .org-node-card-core.is-selected,
+.page-struktur .org-node-card-leader.is-selected {
+    box-shadow: 0 0 0 4px rgba(15, 111, 77, 0.3), 0 15px 40px rgba(15, 32, 24, 0.18) !important;
+}
+
+.page-struktur .org-node-card-core .org-node-media,
+.page-struktur .org-node-card-leader .org-node-media {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+    border-radius: 50% !important;
+    z-index: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.page-struktur .org-node-card-core .org-node-media::after,
+.page-struktur .org-node-card-leader .org-node-media::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(180deg, rgba(16, 32, 24, 0.15), rgba(16, 32, 24, 0.75)) !important;
+    border-radius: 50% !important;
+    opacity: 1 !important;
+}
+
+.page-struktur .org-node-card-core .org-node-content,
+.page-struktur .org-node-card-leader .org-node-content {
+    position: relative !important;
+    z-index: 1 !important;
+    padding: 10px !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.page-struktur .org-node-card-core .org-node-name,
+.page-struktur .org-node-card-leader .org-node-name {
+    color: #ffffff !important;
+    font-size: clamp(0.85rem, 2vw, 1.15rem) !important;
+    line-height: 1.2 !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6) !important;
+    margin: 0 !important;
+}
+
+/* Sembunyikan eyebrow dan meta untuk kartu inti (hanya nama dan poto) */
+.page-struktur .org-node-card-core .org-node-eyebrow,
+.page-struktur .org-node-card-core .org-node-meta,
+.page-struktur .org-node-card-leader .org-node-eyebrow,
+.page-struktur .org-node-card-leader .org-node-meta {
+    display: none !important;
 }
 
 .page-struktur .org-connection-path {

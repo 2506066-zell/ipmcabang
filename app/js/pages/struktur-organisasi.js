@@ -887,11 +887,18 @@
   function showDetail(bidangCode, triggerEl) {
     const bidang = state.bidang.find((item) => item.code === bidangCode);
     if (!bidang) return;
+    
+    state.savedScrollY = window.scrollY;
+    
     state.currentBidangCode = bidang.code;
     state.lastFocusedNode = triggerEl && typeof triggerEl.focus === 'function' ? triggerEl : document.activeElement;
     document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
     if (triggerEl?.classList) triggerEl.classList.add('is-selected');
     
+    const heroEl = document.querySelector('.org-hero');
+    if (heroEl) heroEl.style.display = 'none';
+    if (els.viewBidangGrid) els.viewBidangGrid.style.display = 'none';
+
     if (els.viewDetail) {
         els.viewDetail.classList.remove('animate-in');
         // Force reflow
@@ -909,35 +916,34 @@
 
     if (els.viewDetail) {
       setTimeout(() => {
-        els.viewDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.scrollTo({ top: 0, behavior: 'instant' });
         if (els.detailBidangTitle) els.detailBidangTitle.focus();
-      }, 40);
+      }, 10);
     }
   }
 
   function backToBidang() {
     if (els.viewDetail) {
         els.viewDetail.classList.remove('animate-in');
-        setTimeout(() => els.viewDetail.classList.remove('active'), 300);
+        els.viewDetail.classList.remove('active');
     }
     document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
     state.currentBidangCode = '';
     state.currentSegment = 'anggota';
     toggleFeedbackVisibility();
     
+    const heroEl = document.querySelector('.org-hero');
+    if (heroEl) heroEl.style.display = '';
+    if (els.viewBidangGrid) els.viewBidangGrid.style.display = '';
+    
+    if (typeof state.savedScrollY === 'number') {
+        window.scrollTo({ top: state.savedScrollY, behavior: 'instant' });
+    }
+    
     if (state.lastFocusedNode) {
-        // Find the closest stage or container to scroll back to
-        const stage = state.lastFocusedNode.closest('section');
-        if (stage) {
-            stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (els.viewBidangGrid) {
-            els.viewBidangGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
         setTimeout(() => {
             if (typeof state.lastFocusedNode.focus === 'function') state.lastFocusedNode.focus();
-        }, 300);
-    } else if (els.viewBidangGrid) {
-        els.viewBidangGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
     }
   }
 
