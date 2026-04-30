@@ -391,8 +391,55 @@
 
 .page-struktur .org-core-track {
     display: grid;
-    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
+}
+
+.page-struktur .org-node-card-core {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.page-struktur .org-node-card-core:hover {
+    transform: translateY(-6px);
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.page-struktur .org-node-card-core.is-selected {
+    background: rgba(15, 111, 77, 0.05);
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: 34px;
+}
+
+.page-struktur .org-node-card-core .org-node-media {
+    width: clamp(86px, 22vw, 140px);
+    height: clamp(86px, 22vw, 140px);
+    flex: 0 0 auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 4px solid #fff;
+    box-shadow: var(--org-shadow-md);
+}
+
+.page-struktur .org-node-card-core .org-node-media::after {
+    background: linear-gradient(180deg, transparent 60%, rgba(16, 32, 24, 0.15));
+}
+
+.page-struktur .org-node-card-core .org-node-content {
+    align-items: center;
+    padding: 16px 4px;
+}
+
+.page-struktur .org-node-card-core .org-node-meta {
+    justify-content: center;
 }
 
 .page-struktur .org-field-grid {
@@ -1587,13 +1634,20 @@
     }
 
     .page-struktur .org-visual-grid,
-    .page-struktur .org-core-track,
-    .page-struktur .org-field-grid,
     .page-struktur .member-ring-core,
     .page-struktur .member-ring-core-support,
     .page-struktur .member-ring-orbit,
     .page-struktur .org-feedback-row {
         grid-template-columns: 1fr;
+    }
+
+    .page-struktur .org-core-track {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .page-struktur .org-field-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .page-struktur .org-hero-subtitle {
@@ -1693,6 +1747,25 @@
 
     .page-struktur .org-stat-label {
         font-size: 0.58rem;
+    }
+
+    .page-struktur .org-node-content {
+        padding: 12px;
+        gap: 6px;
+    }
+
+    .page-struktur .org-node-name {
+        font-size: 0.95rem;
+    }
+
+    .page-struktur .org-node-meta {
+        font-size: 0.72rem;
+        gap: 6px;
+    }
+
+    .page-struktur .org-node-eyebrow {
+        padding: 4px 8px;
+        font-size: 0.6rem;
     }
 
     .page-struktur .anggota-card {
