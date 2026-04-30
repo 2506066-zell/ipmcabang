@@ -21,17 +21,25 @@
     // --- Helpers ---
     const $ = id => document.getElementById(id);
     function getSessionToken() {
-        const cookies = document.cookie.split(';').reduce((acc, c) => { const [k, v] = c.trim().split('='); acc[k] = v; return acc; }, {});
-        return cookies['session_token'] || sessionStorage.getItem('session_token') || localStorage.getItem('session_token') || '';
+        return (
+            sessionStorage.getItem('ipmquiz_user_session') ||
+            localStorage.getItem('ipmquiz_user_session') ||
+            sessionStorage.getItem('ipmquiz_admin_session') ||
+            localStorage.getItem('ipmquiz_admin_session') ||
+            ''
+        );
     }
     function getAuthHeaders() {
-        const token = getSessionToken();
+        const token = String(getSessionToken() || '').trim();
         const h = { 'Content-Type': 'application/json' };
         if (token) h['Authorization'] = `Bearer ${token}`;
         return h;
     }
     async function fetchApi(url, opts = {}) {
         if (!opts.credentials) opts.credentials = 'include';
+        if (!opts.headers) opts.headers = {};
+        const token = String(getSessionToken() || '').trim();
+        if (token && !opts.headers['Authorization']) opts.headers['Authorization'] = `Bearer ${token}`;
         const res = await fetch(url, opts);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
@@ -52,7 +60,7 @@
 
     async function init() {
         try {
-            const data = await fetchApi('/api/users?action=me', { headers: getAuthHeaders() });
+            const data = await fetchApi('/api/auth?action=me', { headers: getAuthHeaders() });
             if (data.status === 'success' && data.user) {
                 state.user = data.user;
                 const chip = $('pk-auth-chip');
@@ -76,8 +84,8 @@
 
     async function loadPimpinanOptions() {
         try {
-            const data = await fetchApi('/api/admin/questions?action=getSettings', { headers: getAuthHeaders() });
-            const list = data.pimpinan_options || data.pimpinanOptions || [];
+            const data = await fetchApi('/api/auth?action=pimpinanOptions');
+            const list = data.options || [];
             const sel = $('pk-pimpinan');
             if (sel && list.length) list.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); });
             if (state.user?.pimpinan && sel) { sel.value = state.user.pimpinan; state.pimpinan = state.user.pimpinan; }
