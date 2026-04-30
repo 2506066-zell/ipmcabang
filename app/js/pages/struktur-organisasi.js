@@ -605,6 +605,17 @@
     const svg = els.orgChartSvg;
     svg.innerHTML = '';
     
+    // Add dynamic gradient definition
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = `
+        <linearGradient id="flowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="var(--zen-primary)" stop-opacity="0.1" />
+            <stop offset="50%" stop-color="var(--zen-primary)" stop-opacity="1" />
+            <stop offset="100%" stop-color="var(--zen-primary)" stop-opacity="0.1" />
+        </linearGradient>
+    `;
+    svg.appendChild(defs);
+
     const containerRect = els.bidangGrid.getBoundingClientRect();
     svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
 
@@ -624,6 +635,8 @@
         const d = `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`;
         path.setAttribute('d', d);
         path.setAttribute('class', 'org-connection-path');
+        // Let CSS handle the stroke, or override here if we want the gradient on all:
+        // path.style.stroke = 'url(#flowGrad)'; 
         if (fromId) path.setAttribute('data-from', fromId);
         if (toId) path.setAttribute('data-to', toId);
         svg.appendChild(path);
@@ -874,7 +887,14 @@
     state.lastFocusedNode = triggerEl && typeof triggerEl.focus === 'function' ? triggerEl : document.activeElement;
     document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
     if (triggerEl?.classList) triggerEl.classList.add('is-selected');
-    if (els.viewDetail) els.viewDetail.classList.add('active');
+    
+    if (els.viewDetail) {
+        els.viewDetail.classList.remove('animate-in');
+        // Force reflow
+        void els.viewDetail.offsetWidth;
+        els.viewDetail.classList.add('active', 'animate-in');
+    }
+
     if (els.detailBidangTitle) els.detailBidangTitle.textContent = bidang.name;
     if (els.detailMemberCount) els.detailMemberCount.textContent = `${bidang.members.length} anggota`;
     if (els.detailProgramCount) els.detailProgramCount.textContent = `${bidang.programs.length} program`;
@@ -882,6 +902,21 @@
     renderDetailMembers(bidang);
     renderPrograms(bidang);
     setDetailSegment('anggota');
+    
+    // Staggered animation for children
+    const animatableElements = els.viewDetail.querySelectorAll('.detail-header, .detail-segment, .detail-panel, .detail-sidebar');
+    animatableElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+        el.style.transitionDelay = \`\${0.1 + (index * 0.05)}s\`;
+        
+        requestAnimationFrame(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        });
+    });
+
     if (els.viewDetail) {
       setTimeout(() => {
         els.viewDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -891,18 +926,28 @@
   }
 
   function backToBidang() {
-    if (els.viewDetail) els.viewDetail.classList.remove('active');
+    if (els.viewDetail) {
+        els.viewDetail.classList.remove('animate-in');
+        setTimeout(() => els.viewDetail.classList.remove('active'), 300);
+    }
     document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
     state.currentBidangCode = '';
     state.currentSegment = 'anggota';
     toggleFeedbackVisibility();
-    if (els.viewBidangGrid) {
-      setTimeout(() => {
+    
+    if (state.lastFocusedNode) {
+        // Find the closest stage or container to scroll back to
+        const stage = state.lastFocusedNode.closest('section');
+        if (stage) {
+            stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (els.viewBidangGrid) {
+            els.viewBidangGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        setTimeout(() => {
+            if (typeof state.lastFocusedNode.focus === 'function') state.lastFocusedNode.focus();
+        }, 300);
+    } else if (els.viewBidangGrid) {
         els.viewBidangGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 30);
-    }
-    if (state.lastFocusedNode && typeof state.lastFocusedNode.focus === 'function') {
-      setTimeout(() => state.lastFocusedNode.focus(), 40);
     }
   }
 
