@@ -1,0 +1,364 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ============================================
+   PKDTM1 Registration — Premium 2-Phase UI
+   ============================================ */
+
+.page-pkdtm1 {
+    --pk-bg: #f5f7f4;
+    --pk-surface: #ffffff;
+    --pk-surface-soft: #eef3ef;
+    --pk-surface-elevated: #ffffff;
+    --pk-border: #d4e2d7;
+    --pk-border-strong: #a8c4ae;
+    --pk-text: #141f17;
+    --pk-text-secondary: #4a6352;
+    --pk-muted: #7a9484;
+    --pk-accent: #2d7a4f;
+    --pk-accent-strong: #1b5e38;
+    --pk-accent-soft: #e2f0e8;
+    --pk-accent-glow: rgba(45, 122, 79, 0.15);
+    --pk-gold: #c8960c;
+    --pk-gold-soft: #fef8e7;
+    --pk-danger: #b93a4a;
+    --pk-danger-soft: #fdeef0;
+    --pk-success: #1a7a4a;
+    --pk-success-soft: #e4f5ed;
+    --pk-info: #2563eb;
+    --pk-info-soft: #eff6ff;
+    min-height: 100vh;
+    background: var(--pk-bg);
+    color: var(--pk-text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+}
+
+/* === Background === */
+.pk-bg-grid {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+        linear-gradient(to right, rgba(45, 122, 79, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(45, 122, 79, 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,0.35), transparent 65%);
+}
+.pk-bg-glow { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(60px); opacity: 0.4; }
+.pk-bg-glow-a { width: 280px; height: 280px; top: 60px; left: -120px; background: rgba(45,122,79,0.18); }
+.pk-bg-glow-b { width: 220px; height: 220px; bottom: 40px; right: -80px; background: rgba(200,150,12,0.16); }
+
+/* === Layout === */
+.pk-main {
+    position: relative; z-index: 1;
+    width: min(680px, calc(100% - 20px));
+    margin: 0 auto;
+    padding: calc(88px + env(safe-area-inset-top)) 0 calc(80px + env(safe-area-inset-bottom));
+    display: grid; gap: 14px;
+}
+
+/* === Card === */
+.pk-card {
+    background: var(--pk-surface);
+    border: 1px solid var(--pk-border);
+    box-shadow: 0 2px 12px rgba(20,50,30,0.06), 0 12px 36px rgba(20,50,30,0.04);
+    border-radius: 20px;
+    padding: 22px;
+}
+
+/* === Hero === */
+.pk-hero { display: grid; gap: 10px; }
+.pk-kicker {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 999px; padding: 5px 11px;
+    background: var(--pk-accent-soft); color: var(--pk-accent);
+    font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.68rem;
+    width: fit-content;
+}
+.pk-hero h1 {
+    margin: 6px 0 2px; font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.6rem, 4.2vw, 2.2rem); line-height: 1.05; letter-spacing: -0.04em;
+}
+.pk-hero-desc { color: var(--pk-text-secondary); margin: 0; font-size: 0.92rem; line-height: 1.55; }
+.pk-auth-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--pk-success-soft); color: var(--pk-success);
+    font-size: 0.8rem; font-weight: 700; width: fit-content;
+}
+.pk-auth-chip.is-err { background: var(--pk-danger-soft); color: var(--pk-danger); }
+.pk-auth-chip i { font-size: 0.72rem; }
+
+/* ============================================
+   PHASE TIMELINE — Core UX Component
+   ============================================ */
+.pk-timeline {
+    display: flex; align-items: stretch; gap: 0;
+    padding: 6px; border-radius: 16px;
+    background: var(--pk-surface-soft); border: 1px solid var(--pk-border);
+}
+.pk-phase {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; border-radius: 12px;
+    transition: all 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    cursor: default; position: relative;
+}
+.pk-phase-num {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 0.82rem;
+    border: 2px solid var(--pk-border); background: var(--pk-surface);
+    color: var(--pk-muted); transition: all 280ms ease;
+}
+.pk-phase-info { display: grid; gap: 1px; }
+.pk-phase-title { font-weight: 800; font-size: 0.82rem; color: var(--pk-muted); letter-spacing: 0.01em; }
+.pk-phase-sub { font-size: 0.7rem; color: var(--pk-muted); font-weight: 600; }
+
+/* Phase states */
+.pk-phase.active {
+    background: var(--pk-surface); box-shadow: 0 2px 10px rgba(20,50,30,0.08);
+}
+.pk-phase.active .pk-phase-num {
+    background: linear-gradient(135deg, var(--pk-accent), var(--pk-accent-strong));
+    border-color: var(--pk-accent); color: #fff;
+    box-shadow: 0 3px 10px var(--pk-accent-glow);
+}
+.pk-phase.active .pk-phase-title { color: var(--pk-accent-strong); }
+.pk-phase.active .pk-phase-sub { color: var(--pk-text-secondary); }
+
+.pk-phase.done .pk-phase-num {
+    background: var(--pk-success-soft); border-color: var(--pk-success); color: var(--pk-success);
+}
+.pk-phase.done .pk-phase-title { color: var(--pk-success); }
+.pk-phase.done .pk-phase-sub { color: var(--pk-success); }
+
+.pk-phase.locked { opacity: 0.55; }
+.pk-phase.locked .pk-phase-num { background: var(--pk-surface-soft); }
+
+.pk-phase.waiting .pk-phase-num {
+    background: var(--pk-gold-soft); border-color: var(--pk-gold); color: var(--pk-gold);
+}
+.pk-phase.waiting .pk-phase-title { color: var(--pk-gold); }
+
+.pk-phase.rejected .pk-phase-num {
+    background: var(--pk-danger-soft); border-color: var(--pk-danger); color: var(--pk-danger);
+}
+.pk-phase.rejected .pk-phase-title { color: var(--pk-danger); }
+
+/* Connector */
+.pk-phase-connector {
+    width: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pk-phase-connector span {
+    display: block; width: 20px; height: 2px; border-radius: 2px;
+    background: var(--pk-border); transition: background 280ms ease;
+}
+.pk-phase-connector.done span { background: var(--pk-success); }
+
+/* ============================================
+   FORM FIELDS
+   ============================================ */
+.pk-form-section { display: grid; gap: 16px; animation: pkFadeUp 280ms ease; }
+.pk-field { display: grid; gap: 7px; }
+.pk-field label {
+    font-weight: 700; font-size: 0.88rem;
+    display: flex; align-items: center; gap: 6px;
+}
+.pk-badge-required {
+    display: inline-flex; padding: 2px 7px; border-radius: 6px;
+    background: rgba(200,150,12,0.12); color: var(--pk-gold);
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em;
+}
+.pk-badge-optional {
+    display: inline-flex; padding: 2px 7px; border-radius: 6px;
+    background: rgba(122,148,132,0.12); color: var(--pk-muted);
+    font-size: 0.68rem; font-weight: 700;
+}
+.pk-input, .pk-select {
+    width: 100%; border-radius: 12px;
+    border: 1.5px solid var(--pk-border); background: var(--pk-surface);
+    color: var(--pk-text); padding: 12px 14px;
+    font-family: inherit; font-size: 0.92rem;
+    transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pk-input:focus, .pk-select:focus {
+    border-color: var(--pk-accent); box-shadow: 0 0 0 3px var(--pk-accent-glow); outline: none;
+}
+.pk-field-hint { color: var(--pk-muted); font-size: 0.78rem; line-height: 1.4; }
+
+/* ============================================
+   FILE UPLOAD ZONE
+   ============================================ */
+.pk-upload-zone {
+    border-radius: 14px; border: 2px dashed var(--pk-border-strong);
+    background: var(--pk-surface-soft);
+    padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; transition: all 200ms ease;
+    position: relative; overflow: hidden;
+}
+.pk-upload-zone:hover { border-color: var(--pk-accent); background: #eaf4ed; transform: translateY(-1px); }
+.pk-upload-zone.is-dragover { border-color: var(--pk-accent); background: var(--pk-accent-glow); box-shadow: 0 0 0 4px var(--pk-accent-glow); }
+.pk-upload-zone.has-file { border-style: solid; border-color: var(--pk-success); background: var(--pk-success-soft); }
+.pk-upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.pk-upload-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--pk-accent-soft); color: var(--pk-accent);
+    display: grid; place-items: center; font-size: 1.2rem;
+}
+.pk-upload-zone.has-file .pk-upload-icon { background: var(--pk-success-soft); color: var(--pk-success); }
+.pk-upload-text { text-align: center; }
+.pk-upload-text strong { display: block; font-size: 0.88rem; color: var(--pk-text); }
+.pk-upload-text span { font-size: 0.78rem; color: var(--pk-muted); }
+.pk-upload-filename {
+    font-size: 0.82rem; color: var(--pk-success); font-weight: 700;
+    display: flex; align-items: center; gap: 5px;
+}
+.pk-upload-remove {
+    background: none; border: none; color: var(--pk-danger); cursor: pointer;
+    font-size: 0.8rem; padding: 3px 8px; border-radius: 6px; font-weight: 700;
+    transition: background 150ms;
+}
+.pk-upload-remove:hover { background: var(--pk-danger-soft); }
+.pk-upload-preview { max-width: 100px; max-height: 100px; border-radius: 10px; object-fit: cover; border: 1px solid var(--pk-border); }
+
+/* ============================================
+   REVIEW SECTION
+   ============================================ */
+.pk-review-grid { display: grid; gap: 10px; }
+.pk-review-item {
+    border-radius: 12px; border: 1px solid var(--pk-border);
+    background: var(--pk-surface-soft); padding: 10px 13px; display: grid; gap: 3px;
+}
+.pk-review-label {
+    font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--pk-muted);
+}
+.pk-review-value { font-weight: 600; color: var(--pk-text); word-break: break-word; font-size: 0.9rem; }
+.pk-review-value.is-file { color: var(--pk-success); display: flex; align-items: center; gap: 5px; }
+.pk-review-value.is-missing { color: var(--pk-muted); font-style: italic; }
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.pk-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.pk-btn-primary {
+    flex: 1; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--pk-accent), var(--pk-accent-strong));
+    color: #fff; padding: 13px 18px;
+    font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer; font-family: inherit; font-size: 0.92rem;
+    transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 4px 14px var(--pk-accent-glow);
+}
+.pk-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px var(--pk-accent-glow); }
+.pk-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.pk-btn-primary.is-loading::before {
+    content: ""; width: 14px; height: 14px; border-radius: 999px;
+    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+    animation: pkSpin 0.7s linear infinite;
+}
+.pk-btn-secondary {
+    flex: 1; border: 1.5px solid var(--pk-border); border-radius: 12px;
+    padding: 13px 18px; background: var(--pk-surface); color: var(--pk-accent-strong);
+    font-weight: 700; cursor: pointer; font-family: inherit; font-size: 0.92rem;
+    transition: all 200ms ease;
+}
+.pk-btn-secondary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(20,50,30,0.08); }
+
+/* ============================================
+   STATUS CARDS
+   ============================================ */
+.pk-status-card { text-align: center; display: grid; gap: 12px; }
+.pk-status-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    display: grid; place-items: center; margin: 0 auto; font-size: 1.7rem;
+}
+.pk-status-icon.pending { background: var(--pk-gold-soft); color: var(--pk-gold); }
+.pk-status-icon.verified { background: var(--pk-success-soft); color: var(--pk-success); }
+.pk-status-icon.rejected { background: var(--pk-danger-soft); color: var(--pk-danger); }
+.pk-status-icon.complete { background: linear-gradient(135deg, #e4f5ed, #d4ede1); color: var(--pk-success); }
+
+.pk-status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 999px; padding: 6px 13px;
+    font-weight: 800; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 0 auto;
+}
+.pk-status-badge.pending { background: var(--pk-gold-soft); color: var(--pk-gold); border: 1px solid rgba(200,150,12,0.2); }
+.pk-status-badge.verified { background: var(--pk-success-soft); color: var(--pk-success); border: 1px solid rgba(26,122,74,0.2); }
+.pk-status-badge.rejected { background: var(--pk-danger-soft); color: var(--pk-danger); border: 1px solid rgba(185,58,74,0.2); }
+.pk-status-badge.complete { background: linear-gradient(135deg, #d4ede1, #c8e6d6); color: var(--pk-success); border: 1px solid rgba(26,122,74,0.25); }
+
+.pk-status-card h2 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem;
+    letter-spacing: -0.03em; margin: 0;
+}
+.pk-status-card p { color: var(--pk-text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.5; }
+
+.pk-admin-note {
+    border-radius: 10px; border: 1px solid var(--pk-border);
+    background: var(--pk-surface-soft); padding: 11px 13px;
+    font-size: 0.88rem; color: var(--pk-text); text-align: left;
+}
+.pk-admin-note strong {
+    display: block; margin-bottom: 3px; font-size: 0.72rem;
+    color: var(--pk-muted); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+/* ============================================
+   UPLOAD PROGRESS
+   ============================================ */
+.pk-upload-progress {
+    display: none; gap: 7px; padding: 14px; border-radius: 14px;
+    border: 1px solid var(--pk-border); background: var(--pk-surface-soft);
+}
+.pk-upload-progress.active { display: grid; }
+.pk-upload-progress-title { font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 7px; }
+.pk-upload-progress-bar { width: 100%; height: 7px; border-radius: 999px; background: #dde8df; overflow: hidden; }
+.pk-upload-progress-bar span {
+    display: block; height: 100%; border-radius: inherit;
+    background: linear-gradient(90deg, var(--pk-accent), var(--pk-gold));
+    transition: width 300ms ease;
+}
+.pk-upload-progress-meta { font-size: 0.78rem; color: var(--pk-muted); }
+
+/* ============================================
+   CONFETTI / CELEBRATION
+   ============================================ */
+.pk-celebration {
+    display: flex; justify-content: center; font-size: 2.4rem;
+    animation: pkBounce 0.6s ease;
+}
+
+/* ============================================
+   AUTH REQUIRED
+   ============================================ */
+.pk-login-prompt { text-align: center; display: grid; gap: 14px; }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes pkFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pkSpin { to { transform: rotate(360deg); } }
+@keyframes pkBounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pkPulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 480px) {
+    .pk-card { padding: 16px; border-radius: 16px; }
+    .pk-phase { padding: 10px; gap: 8px; }
+    .pk-phase-num { width: 30px; height: 30px; font-size: 0.75rem; }
+    .pk-phase-title { font-size: 0.75rem; }
+    .pk-phase-sub { font-size: 0.64rem; }
+    .pk-phase-connector { width: 16px; }
+    .pk-phase-connector span { width: 14px; }
+}
+
+/* === Hidden === */
+.pk-hidden { display: none !important; }

@@ -51,6 +51,12 @@ module.exports = async (req, res) => {
                 return json(res, 401, { status: 'error', message: 'Unauthorized', error: 'Unauthorized' });
             }
             folderPrefix = `attendance/user-${uploader.id}`;
+        } else if (uploadScope === 'pkdtm1-registration') {
+            uploader = await getSessionUser(req);
+            if (!uploader) {
+                return json(res, 401, { status: 'error', message: 'Unauthorized', error: 'Unauthorized' });
+            }
+            folderPrefix = `pkdtm1/user-${uploader.id}`;
         } else {
             try {
                 uploader = await requireAdminAuth(req);
@@ -70,6 +76,10 @@ module.exports = async (req, res) => {
         const contentType = String(headers['content-type'] || 'application/octet-stream');
         if (uploadScope === 'attendance-selfie' && !contentType.startsWith('image/')) {
             const msg = 'Upload selfie harus berupa file gambar.';
+            return json(res, 400, { status: 'error', message: msg, error: msg });
+        }
+        if (uploadScope === 'pkdtm1-registration' && !contentType.startsWith('image/') && contentType !== 'application/pdf' && contentType !== 'application/msword' && contentType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            const msg = 'File PKDTM1 harus berupa gambar, PDF, atau dokumen Word.';
             return json(res, 400, { status: 'error', message: msg, error: msg });
         }
 

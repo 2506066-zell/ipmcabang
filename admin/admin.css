@@ -4838,3 +4838,263 @@ button.priority-card:hover {
     0%, 100% { border-color: var(--border-color); box-shadow: none; }
     20%, 80% { border-color: var(--accent-primary); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
 }
+
+/* === PKDTM1 Admin Module === */
+.pkdtm1-list {
+    display: grid;
+    gap: 14px;
+    padding-bottom: 20px;
+}
+
+.pkdtm1-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 18px;
+    display: grid;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.pkdtm1-card:hover {
+    border-color: rgba(148, 163, 184, 0.25);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.pkdtm1-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pkdtm1-card-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.pkdtm1-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.pkdtm1-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.pkdtm1-meta-item i {
+    font-size: 0.72rem;
+    opacity: 0.7;
+}
+
+/* Status Badges */
+.pkdtm1-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.pkdtm1-status.pending {
+    background: rgba(245, 158, 11, 0.14);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.pkdtm1-status.verified {
+    background: rgba(16, 185, 129, 0.14);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.pkdtm1-status.rejected {
+    background: rgba(239, 68, 68, 0.14);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* File Buttons */
+.pkdtm1-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pkdtm1-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pkdtm1-file-btn:hover {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--accent-secondary);
+}
+
+.pkdtm1-file-btn.empty {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.pkdtm1-file-btn.empty:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+/* Admin Note */
+.pkdtm1-note {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid var(--accent-primary);
+}
+
+.pkdtm1-note strong {
+    color: var(--accent-primary);
+}
+
+/* Action Buttons */
+.pkdtm1-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.pkdtm1-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+}
+
+.pkdtm1-action-btn:active {
+    transform: scale(0.97);
+}
+
+.pkdtm1-action-btn.verify {
+    background: rgba(16, 185, 129, 0.14);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.pkdtm1-action-btn.verify:hover {
+    background: rgba(16, 185, 129, 0.25);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.pkdtm1-action-btn.reject {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.pkdtm1-action-btn.reject:hover {
+    background: rgba(239, 68, 68, 0.22);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.pkdtm1-action-btn.delete {
+    background: transparent;
+    color: var(--text-muted);
+    margin-left: auto;
+    padding: 8px 10px;
+}
+
+.pkdtm1-action-btn.delete:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.pkdtm1-action-btn.secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.pkdtm1-action-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+/* Empty State */
+.pkdtm1-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.pkdtm1-empty i {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 12px;
+    opacity: 0.4;
+}
+
+/* Stats KPI Strip */
+.pkdtm1-stats-strip {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+}
+
+/* Pager */
+.pkdtm1-pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+@media (max-width: 600px) {
+    .pkdtm1-card-head {
+        flex-direction: column;
+    }
+    .pkdtm1-actions {
+        flex-direction: column;
+    }
+    .pkdtm1-action-btn.delete {
+        margin-left: 0;
+    }
+}
+

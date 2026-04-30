@@ -69,6 +69,9 @@
                 <button class="nav-item" data-tab="attendance">
                     <i class="fas fa-camera"></i> <span>Absensi Room</span>
                 </button>
+                <button class="nav-item" data-tab="pkdtm1">
+                    <i class="fas fa-user-graduate"></i> <span>Registrasi PKDTM1</span>
+                </button>
                 <button class="nav-item" data-tab="logs">
                     <i class="fas fa-history"></i> <span>Riwayat Aktivitas</span>
                 </button>
@@ -876,6 +879,42 @@
                     </section>
                     <div id="attendance-admin-root"></div>
                 </div>
+
+                <!-- PKDTM1 TAB -->
+                <div id="tab-pkdtm1" class="hidden">
+                    <section class="section-intro">
+                        <h3>Registrasi PKDTM1</h3>
+                        <p>Kelola pendaftaran peserta Pelatihan Kader Dasar Taruna Melati 1. Verifikasi berkas, terima atau tolak pendaftar.</p>
+                    </section>
+                    <section class="card section-card">
+                        <div class="toolbar-row toolbar-spread">
+                            <div class="toolbar-row toolbar-grow">
+                                <select id="pkdtm1-status-filter" class="toolbar-select">
+                                    <option value="all">Semua Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="verified">Verified</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                                <input type="text" id="pkdtm1-search" class="toolbar-input" placeholder="Cari nama/pimpinan...">
+                                <button class="btn btn-secondary" id="pkdtm1-refresh-btn">
+                                    <i class="fas fa-rotate"></i> Muat Ulang
+                                </button>
+                                <button class="btn btn-secondary" id="pkdtm1-export-btn">
+                                    <i class="fas fa-file-csv"></i> Export CSV
+                                </button>
+                            </div>
+                            <div class="toolbar-row" id="pkdtm1-stats-strip">
+                                <span class="small muted" id="pkdtm1-stats-text">Memuat...</span>
+                            </div>
+                        </div>
+                    </section>
+                    <div id="pkdtm1-list"></div>
+                    <div class="pkdtm1-pager">
+                        <button class="btn btn-secondary" id="pkdtm1-prev">Prev</button>
+                        <span id="pkdtm1-page-info" class="small">Page 1</span>
+                        <button class="btn btn-secondary" id="pkdtm1-next">Next</button>
+                    </div>
+                </div>
                 <div id="tab-articles" class="hidden">
                     <section class="section-intro">
                         <h3>Content Ops: Artikel</h3>
@@ -1096,6 +1135,10 @@
                 <button class="btn btn-secondary menu-grid-btn"
                     onclick="activateTab('attendance'); closeMenuModal();">
                     <i class="fas fa-camera menu-grid-icon"></i> Absensi Room
+                </button>
+                <button class="btn btn-secondary menu-grid-btn"
+                    onclick="activateTab('pkdtm1'); closeMenuModal();">
+                    <i class="fas fa-user-graduate menu-grid-icon"></i> PKDTM1
                 </button>
                 <button class="btn btn-secondary menu-grid-btn" id="menu-theme-toggle">
                     <i class="fas fa-moon menu-grid-icon"></i> Ganti Tema

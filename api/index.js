@@ -30,6 +30,7 @@ const routes = {
   'push': require('./_handler_push'),
   'attendance': require('./_handler_attendance'),
   'discussions': require('./_handler_discussions'),
+  'pkdtm1': require('./_handler_pkdtm1'),
   'webauthn': lazy('./_handler_webauthn'),
   'upload': require('./upload')
 };

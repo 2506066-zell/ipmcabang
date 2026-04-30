@@ -548,6 +548,12 @@
             title: 'Struktur Organisasi',
             desc: 'Kelola anggota dan program kerja tiap bidang dari satu panel admin.',
             scope: 'Data Organisasi'
+        },
+        pkdtm1: {
+            label: 'Kaderisasi',
+            title: 'Registrasi PKDTM1',
+            desc: 'Kelola pendaftaran peserta PKDTM1. Verifikasi berkas, terima atau tolak pendaftar.',
+            scope: 'Pendaftaran Kader'
         }
     };
 
@@ -736,7 +742,7 @@
         });
 
         // Hide all tabs
-        ['dashboard', 'traffic', 'questions', 'forms', 'results', 'users', 'attendance', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
+        ['dashboard', 'traffic', 'questions', 'forms', 'results', 'users', 'attendance', 'pkdtm1', 'logs', 'schedules', 'articles', 'materials', 'organization'].forEach(t => {
             const el = document.getElementById(`tab-${t}`);
             if (el) el.classList.add('hidden');
         });
@@ -803,6 +809,25 @@
                     window.__adminAttendanceReload();
                 }
             }).catch(err => console.error('[Admin] Failed to load attendance module:', err));
+        }
+        if (tabName === 'pkdtm1') {
+            console.log('[Admin] Loading PKDTM1 module...');
+            import(`./pkdtm1.js?v=${MODULE_VER}`).then(mod => {
+                if (!state.pkdtm1Initialized) {
+                    mod.initPkdtm1(state, els, {
+                        apiAdminVercel,
+                        fetchJsonWithRetry,
+                        escapeHtml,
+                        showLoader,
+                        hideLoader,
+                        setStatus,
+                        debounce
+                    });
+                    state.pkdtm1Initialized = true;
+                } else if (typeof window.__adminPkdtm1Reload === 'function') {
+                    window.__adminPkdtm1Reload();
+                }
+            }).catch(err => console.error('[Admin] Failed to load PKDTM1 module:', err));
         }
         if (tabName === 'logs' && state.logs.length === 0) loadLogs();
         if (tabName === 'schedules') loadSchedules();

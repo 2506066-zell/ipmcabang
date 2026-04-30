@@ -547,6 +547,24 @@ async function ensureSchema() {
     UNIQUE (program_id, event_type, payload_hash)
   )`;
 
+  await query`CREATE TABLE IF NOT EXISTS registrations_pkdtm1 (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    nama TEXT NOT NULL,
+    asal_pimpinan TEXT NOT NULL,
+    sertifikat_url TEXT NOT NULL,
+    foto_url TEXT NOT NULL,
+    motivasi_url TEXT NOT NULL,
+    kta_url TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    admin_note TEXT,
+    reviewed_by INT REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (user_id)
+  )`;
+
   // Alter tables to ensure new columns exist (idempotent)
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
   await query`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_salt TEXT`;
@@ -735,6 +753,22 @@ async function ensureSchema() {
   await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS notified_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE org_program_notification_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
 
+  // PKDTM1 Registrations
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS nama TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS asal_pimpinan TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS sertifikat_url TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS foto_url TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS motivasi_url TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS kta_url TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending'`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS admin_note TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS reviewed_by INT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS essay_url TEXT`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS essay_submitted_at TIMESTAMP`;
+
   await seedOrganizationData();
 
   // Create Indexes for Performance
@@ -785,6 +819,8 @@ async function ensureSchema() {
   await query`CREATE INDEX IF NOT EXISTS idx_article_notification_logs_notified_at ON article_notification_logs(notified_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_daily_digest_logs_date ON daily_digest_logs(digest_date DESC, created_at DESC)`;
   await query`CREATE INDEX IF NOT EXISTS idx_org_program_notification_logs_program_created ON org_program_notification_logs(program_id, created_at DESC)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_pkdtm1_user ON registrations_pkdtm1(user_id)`;
+  await query`CREATE INDEX IF NOT EXISTS idx_pkdtm1_status_created ON registrations_pkdtm1(status, created_at DESC)`;
 }
 
 module.exports = { ensureSchema };

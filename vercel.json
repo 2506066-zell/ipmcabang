@@ -176,6 +176,10 @@
       "destination": "/api/index?segment=admin&action=runScheduledNotifications"
     },
     {
+      "source": "/api/pkdtm1",
+      "destination": "/api/index?segment=pkdtm1"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/index"
     }
