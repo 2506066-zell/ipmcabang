@@ -273,6 +273,7 @@
             notifyTitle: document.getElementById('notify-title'),
             notifyMessage: document.getElementById('notify-message'),
             notifyUrl: document.getElementById('notify-url'),
+            notifyImage: document.getElementById('notify-image'),
             notifyTarget: document.getElementById('notify-target'),
             notifySchedule: document.getElementById('notify-schedule'),
             notifySave: document.getElementById('notify-save'),
@@ -298,6 +299,7 @@
             // Quick Reminders
             btnRemindLibrary: document.getElementById('btn-remind-library'),
             btnRemindQuiz: document.getElementById('btn-remind-quiz'),
+            btnRemindPkdtm1: document.getElementById('btn-remind-pkdtm1'),
 
             // Question Modal
             modal: document.getElementById('question-modal'),
@@ -2858,6 +2860,7 @@
                 const title = String(els.notifyTitle?.value || '').trim();
                 const message = String(els.notifyMessage?.value || '').trim();
                 const rawUrl = String(els.notifyUrl?.value || '').trim();
+                const image = String(els.notifyImage?.value || '').trim();
                 if (/^(javascript|data|vbscript):/i.test(rawUrl)) {
                     if (els.notifyStatus) els.notifyStatus.textContent = 'Format tautan tidak diizinkan.';
                     return;
@@ -2889,7 +2892,7 @@
                 if (els.notifyStatus) els.notifyStatus.textContent = scheduleIso ? 'Menyimpan jadwal notifikasi...' : 'Mengirim notifikasi...';
 
                 try {
-                    const payload = { title, message, url, save, target };
+                    const payload = { title, message, url, image, save, target };
                     if (scheduleIso) {
                         payload.schedule_at = scheduleIso;
                         await apiAdminVercel('POST', '/api/admin/questions?action=scheduleNotification', payload);
@@ -3195,6 +3198,33 @@
             if (els.notifyTitle) els.notifyTitle.value = 'Kuis Sedang Aktif!';
             if (els.notifyMessage) els.notifyMessage.value = 'Ayo asah pengetahuanmu dengan mengerjakan kuis hari ini. Ada XP dan streak menantimu!';
             if (els.notifyUrl) els.notifyUrl.value = '/quiz-gamified.html';
+            const card = document.getElementById('admin-notify-card');
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth' });
+                card.classList.add('highlight-flash');
+                setTimeout(() => card.classList.remove('highlight-flash'), 2000);
+            }
+        });
+
+        els.btnRemindPkdtm1?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (els.notifyTitle) els.notifyTitle.value = 'Pendaftaran PKDTM 1 Telah Dibuka!';
+            if (els.notifyMessage) els.notifyMessage.value = 'Mari bergabung dalam Pelatihan Kader Dasar Taruna Melati 1. Siapkan dirimu menjadi kader pimpinan masa depan. Klik untuk daftar sekarang!';
+            if (els.notifyUrl) els.notifyUrl.value = '/pendaftaran-pkdtm1.html';
+            if (els.notifyImage) {
+                els.notifyImage.value = '/images/pkdtm1-banner.png';
+                // Trigger live preview for mockup
+                const mockImg = document.getElementById('live-notif-image');
+                if (mockImg) {
+                    mockImg.src = '/images/pkdtm1-banner.png';
+                    mockImg.classList.remove('hidden');
+                }
+            }
+
+            // Sync live text mockup
+            if (document.getElementById('live-notif-title')) document.getElementById('live-notif-title').textContent = els.notifyTitle.value;
+            if (document.getElementById('live-notif-message')) document.getElementById('live-notif-message').textContent = els.notifyMessage.value;
+
             const card = document.getElementById('admin-notify-card');
             if (card) {
                 card.scrollIntoView({ behavior: 'smooth' });

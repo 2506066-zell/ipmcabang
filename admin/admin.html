@@ -578,6 +578,9 @@
                             <button class="btn btn-secondary quick-remind-btn" id="btn-remind-quiz">
                                 <i class="fas fa-brain"></i> Pengingat Kuis Aktif
                             </button>
+                            <button class="btn btn-primary quick-remind-btn" id="btn-remind-pkdtm1" style="grid-column: 1 / -1; margin-top: 8px; background: linear-gradient(135deg, #0f6f4d, #112b1f);">
+                                <i class="fas fa-user-graduate"></i> Pengumuman PKDTM1
+                            </button>
                         </div>
                     </section>
 
@@ -608,6 +611,11 @@
                                             <label for="notify-url">Tautan</label>
                                             <input type="text" id="notify-url" placeholder="/articles/slug-judul-anda">
                                             <small class="form-hint">Kosongkan jika tidak ada aksi khusus ketika notifikasi ditekan.</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="notify-image">URL Gambar (Banner)</label>
+                                            <input type="text" id="notify-image" placeholder="/images/pkdtm1-banner.png" oninput="const img = document.getElementById('live-notif-image'); img.src = this.value; img.classList.toggle('hidden', !this.value);">
+                                            <small class="form-hint">Tampilkan gambar besar di bawah pesan (disarankan 2:1).</small>
                                         </div>
                                         <div class="form-group">
                                             <label for="notify-schedule">Jadwal Kirim</label>
@@ -642,6 +650,7 @@
                                             </div>
                                             <h4 class="mockup-notif-title" id="live-notif-title">Judul Notifikasi</h4>
                                             <p class="mockup-notif-msg" id="live-notif-message">Pesan notifikasi akan muncul di sini saat Anda mengetiknya di form.</p>
+                                            <img id="live-notif-image" class="mockup-notif-image hidden" src="" style="width:100%; border-radius:8px; margin-top:8px; object-fit:cover; aspect-ratio:2/1;">
                                         </div>
                                     </div>
                                 </div>
