@@ -658,33 +658,57 @@ document.addEventListener('DOMContentLoaded', () => {
             const list = document.getElementById('notif-panel-list');
             if (!list) return;
             const items = [];
+            
+            // Article Notif (Legacy wrapper)
             if (state.latestArticle && state.articleUnread) {
                 items.push({
-                    title: `Artikel baru: ${state.latestArticle.title}`,
+                    title: `Artikel Baru: ${state.latestArticle.title}`,
+                    message: `Ada informasi menarik dari ${state.latestArticle.author || 'Tim IPM'}. Baca selengkapnya!`,
                     time: state.latestArticle.publish_date || state.latestArticle.created_at,
                     unread: true,
                     link: getArticleHref(state.latestArticle),
-                    image: state.latestArticle.image || ''
+                    image: state.latestArticle.image || '',
+                    type: 'info'
                 });
             }
+
+            // User Notifications (Structured)
             state.notifications.forEach(n => {
                 items.push({
-                    title: n.message || 'Ada pembaruan pada kuis.',
+                    title: n.title || 'Pesan Baru',
+                    message: n.message || 'Ada pembaruan pada akun Anda.',
                     time: n.created_at,
-                    unread: !n.is_read
+                    unread: !n.is_read,
+                    type: n.type || 'info',
+                    link: n.action_url || ''
                 });
             });
+
             if (!items.length) {
-                list.innerHTML = '<div class="notif-empty">Belum ada notifikasi.</div>';
+                list.innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash" style="font-size:2rem; margin-bottom:12px; opacity:0.3;"></i><br>Belum ada notifikasi.</div>';
                 return;
             }
+
+            const getIcon = (type) => {
+                switch(type) {
+                    case 'success': return 'fa-circle-check';
+                    case 'warning': return 'fa-triangle-exclamation';
+                    case 'danger': return 'fa-circle-xmark';
+                    default: return 'fa-circle-info';
+                }
+            };
+
             list.innerHTML = items.map(item => `
-                <div class="notif-item ${item.unread ? 'unread' : ''}">
-                    ${item.image ? `<div class="notif-item-thumb"><img src="${item.image}" alt="${item.title}"></div>` : ''}
+                <div class="notif-item ${item.unread ? 'unread' : ''} notif-type-${item.type || 'info'}">
+                    <div class="notif-item-icon">
+                        <i class="fas ${getIcon(item.type)}"></i>
+                    </div>
+                    ${item.image ? `<div class="notif-item-thumb"><img src="${item.image}" alt=""></div>` : ''}
                     <div class="notif-item-body">
                         <div class="notif-item-title">${item.title}</div>
-                        <div class="notif-item-meta">${item.time ? new Date(item.time).toLocaleString('id-ID') : ''}</div>
-                        ${item.link ? `<a class="notif-item-link" href="${item.link}">Buka Artikel</a>` : ''}
+                        <div class="notif-item-message">${item.message}</div>
+                        <div class="notif-item-meta"><i class="far fa-clock"></i> ${item.time ? new Date(item.time).toLocaleString('id-ID', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : ''}</div>
+                        ${item.link ? `<a class="notif-item-link" href="${item.link}">Lihat Detail <i class="fas fa-chevron-right"></i></a>` : ''}
                     </div>
                 </div>
             `).join('');

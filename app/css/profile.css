@@ -5,19 +5,23 @@ body.page-profile {
  .profile-overlay {
     position: fixed;
     inset: 0;
-    background: transparent;
-    z-index: 1600;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
     display: flex;
     align-items: flex-start;
     justify-content: flex-end;
-    padding: 64px 12px 12px;
-    overflow: auto;
+    padding: 0;
+    overflow: hidden;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-overlay.show {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .profile-shell {
@@ -36,6 +40,7 @@ body.page-profile {
     position: absolute;
     top: var(--profile-trigger-top, 72px);
     right: var(--profile-trigger-right, 16px);
+    z-index: 10001;
 }
 
 .profile-shell.dropdown {
@@ -49,11 +54,13 @@ body.page-profile {
 
 .profile-card {
     background: #ffffff;
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+    border: 1px solid rgba(15, 23, 42, 0.08);
     position: relative;
+    color: #0f172a;
+    font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .profile-card.compact {

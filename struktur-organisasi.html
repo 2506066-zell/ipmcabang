@@ -63,31 +63,45 @@
     <!-- Main Container -->
     <main class="main-container">
         <section class="org-hero" aria-labelledby="orgHeroTitle">
-            <p class="org-kicker">Struktur Resmi Organisasi</p>
-            <h1 class="org-hero-title" id="orgHeroTitle">Struktur Organisasi</h1>
-            <p class="org-hero-subtitle">Susunan bidang, anggota, dan program kerja</p>
-            <div class="org-hero-stats" aria-label="Ringkasan organisasi">
-                <article class="org-stat">
-                    <span class="org-stat-value" id="heroTotalBidang">0</span>
-                    <span class="org-stat-label">Bidang Aktif</span>
-                </article>
-                <article class="org-stat">
-                    <span class="org-stat-value" id="heroTotalAnggota">0</span>
-                    <span class="org-stat-label">Total Anggota</span>
-                </article>
-                <article class="org-stat">
-                    <span class="org-stat-value" id="heroTotalProgram">0</span>
-                    <span class="org-stat-label">Program Kerja</span>
-                </article>
+            <div class="org-hero-bg-blobs"></div>
+            <div class="org-hero-content">
+                <p class="org-kicker">Resmi & Terpadu</p>
+                <h1 class="org-hero-title" id="orgHeroTitle">Struktur <br> Organisasi</h1>
+                <p class="org-hero-subtitle">Membangun sinergi melalui kolaborasi antar bidang dan optimalisasi program kerja yang berdampak nyata.</p>
+                
+                <div class="org-hero-stats" aria-label="Ringkasan organisasi">
+                    <article class="org-stat">
+                        <div class="org-stat-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="org-stat-info">
+                            <span class="org-stat-value" id="heroTotalBidang">0</span>
+                            <span class="org-stat-label">Bidang</span>
+                        </div>
+                    </article>
+                    <article class="org-stat">
+                        <div class="org-stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="org-stat-info">
+                            <span class="org-stat-value" id="heroTotalAnggota">0</span>
+                            <span class="org-stat-label">Kader</span>
+                        </div>
+                    </article>
+                    <article class="org-stat">
+                        <div class="org-stat-icon"><i class="fas fa-briefcase"></i></div>
+                        <div class="org-stat-info">
+                            <span class="org-stat-value" id="heroTotalProgram">0</span>
+                            <span class="org-stat-label">Program</span>
+                        </div>
+                    </article>
+                </div>
             </div>
         </section>
 
         <section id="viewBidangGrid" class="org-chart-view" aria-labelledby="orgChartHeading">
             <div class="org-section-head">
-                <h2 id="orgChartHeading">Susunan Bidang</h2>
-                <p>Pilih kartu bidang untuk melihat susunan anggota dan program kerja secara detail.</p>
+                <h2 id="orgChartHeading">Peta Organisasi</h2>
+                <p>Eksplorasi hirarki dan bidang untuk melihat detail anggota serta program kerja strategis.</p>
             </div>
             <div class="org-chart-canvas" id="orgChartCanvas">
+                <svg class="org-chart-svg" id="orgChartSvg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
                 <div class="org-chart-tiers" id="bidangGrid"></div>
             </div>
         </section>

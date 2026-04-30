@@ -358,6 +358,10 @@
         overlayEl.className = 'profile-overlay';
         overlayEl.innerHTML = '<div id="profile-root" class="profile-root"></div>';
         document.body.appendChild(overlayEl);
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        if (scrollbarWidth > 0) {
+            document.body.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+        }
         document.body.classList.add('body-no-scroll');
         const root = overlayEl.querySelector('#profile-root');
         if (root) {
@@ -400,6 +404,7 @@
         if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
         overlayEl.classList.remove('show');
         document.body.classList.remove('body-no-scroll');
+        document.body.style.removeProperty('--scrollbar-width');
         setTimeout(() => {
             if (overlayEl && overlayEl.parentNode) overlayEl.parentNode.removeChild(overlayEl);
             overlayEl = null;

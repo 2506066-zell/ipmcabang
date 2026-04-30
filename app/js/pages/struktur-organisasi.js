@@ -492,33 +492,49 @@
     }
     const tiers = classifyBidangTiers();
     const topNode = tiers.top[0] || null;
+  }
+
+  function renderStageLabel(title, subtitle) {
+    return `
+      <header class="org-stage-label">
+        <h2>${escapeHtml(title)}</h2>
+        <p>${escapeHtml(subtitle)}</p>
+      </header>
+    `;
+  }
+
+  function renderOrgChartTiers() {
+    if (!els.bidangGrid) return;
+    if (!state.bidang.length) {
+      els.bidangGrid.innerHTML = '<div class="org-empty-state">Data struktur organisasi belum tersedia.</div>';
+      return;
+    }
+    const tiers = classifyBidangTiers();
+    const topNode = tiers.top[0] || null;
     const coreNodes = tiers.core;
     const fieldNodes = tiers.fields;
-    const hasTopAndCore = Boolean(topNode && coreNodes.length);
-    const hasCoreAndFields = Boolean(coreNodes.length && fieldNodes.length);
 
     els.bidangGrid.innerHTML = `
       <div class="org-structure-premium">
+        <svg class="org-chart-svg" id="orgChartSvg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></svg>
         ${topNode ? `
-          <section class="org-leadership-stage">
+          <section class="org-leadership-stage" id="stage-leadership">
             ${renderStageLabel('Pimpinan Utama', 'Pengarah gerak organisasi')}
             <div class="org-leadership-track">
               ${createNodeCard(topNode, 'leader')}
             </div>
           </section>
         ` : ''}
-        ${hasTopAndCore ? '<div class="org-stage-connector is-top-core" aria-hidden="true"></div>' : ''}
         ${coreNodes.length ? `
-          <section class="org-core-stage">
+          <section class="org-core-stage" id="stage-core">
             ${renderStageLabel('Unsur Inti', 'Koordinasi utama organisasi')}
             <div class="org-core-track">
               ${coreNodes.map((item) => createNodeCard(item, 'core')).join('')}
             </div>
           </section>
         ` : ''}
-        ${hasCoreAndFields ? '<div class="org-stage-connector is-core-fields" aria-hidden="true"></div>' : ''}
         ${fieldNodes.length ? `
-          <section class="org-field-stage">
+          <section class="org-field-stage" id="stage-fields">
             ${renderStageLabel('Bidang Pelaksana', 'Eksekusi program dan layanan kader')}
             <div class="org-field-grid">
               ${fieldNodes.map((item) => createNodeCard(item, 'field')).join('')}
@@ -528,7 +544,57 @@
       </div>
     `;
     setupLazyLoading();
+    setTimeout(drawConnections, 300);
   }
+
+  function drawConnections() {
+    if (!els.orgChartSvg || !els.bidangGrid) return;
+    const svg = els.orgChartSvg;
+    svg.innerHTML = '';
+    
+    const containerRect = els.bidangGrid.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
+
+    const getBottomCenter = (el) => {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2 - containerRect.left, y: r.bottom - containerRect.top };
+    };
+
+    const getTopCenter = (el) => {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2 - containerRect.left, y: r.top - containerRect.top };
+    };
+
+    const drawPath = (start, end) => {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const midY = (start.y + end.y) / 2;
+        const d = `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`;
+        path.setAttribute('d', d);
+        path.setAttribute('class', 'org-connection-path');
+        svg.appendChild(path);
+    };
+
+    const leadership = document.getElementById('stage-leadership')?.querySelector('.org-node-card');
+    const coreCards = Array.from(document.getElementById('stage-core')?.querySelectorAll('.org-node-card') || []);
+    const fieldCards = Array.from(document.getElementById('stage-fields')?.querySelectorAll('.org-node-card') || []);
+
+    if (leadership && coreCards.length) {
+        const start = getBottomCenter(leadership);
+        coreCards.forEach(card => drawPath(start, getTopCenter(card)));
+    }
+
+    if (coreCards.length && fieldCards.length) {
+        fieldCards.forEach(field => {
+            const end = getTopCenter(field);
+            const midCore = coreCards[Math.floor(coreCards.length / 2)];
+            if (midCore) drawPath(getBottomCenter(midCore), end);
+        });
+    }
+  }
+
+  window.addEventListener('resize', () => {
+    if (state.bidang.length) drawConnections();
+  });
 
   function splitMembersByHierarchy(members) {
     const sorted = [...members].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
@@ -890,216 +956,6 @@
     els.anggotaDetailOverlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
-
-  function bindEvents() {
-    if (els.backToGridBtn) els.backToGridBtn.addEventListener('click', backToBidang);
-    if (els.detailSegmentAnggota) els.detailSegmentAnggota.addEventListener('click', () => setDetailSegment('anggota'));
-    if (els.detailSegmentProgram) els.detailSegmentProgram.addEventListener('click', () => setDetailSegment('program'));
-    if (els.orgFeedbackToggleBtn) {
-      els.orgFeedbackToggleBtn.addEventListener('click', () => {
-        const isOpen = String(els.orgFeedbackToggleBtn.getAttribute('aria-expanded')) === 'true';
-        if (els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = isOpen;
-        els.orgFeedbackToggleBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-      });
-    }
-    if (els.orgFeedbackForm) els.orgFeedbackForm.addEventListener('submit', submitFeedback);
-    if (els.bidangGrid) {
-      els.bidangGrid.addEventListener('click', (event) => {
-        const card = event.target.closest('.org-node-card[data-bidang]');
-        if (!card) return;
-        showDetail(String(card.getAttribute('data-bidang') || '').trim(), card);
-      });
-      els.bidangGrid.addEventListener('keydown', (event) => {
-        const card = event.target.closest('.org-node-card[data-bidang]');
-        if (!card) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          showDetail(String(card.getAttribute('data-bidang') || '').trim(), card);
-        }
-      });
-    }
-
-    if (els.programList) {
-        els.programList.addEventListener('click', async (e) => {
-            const btnUpvote = e.target.closest('.btn-upvote');
-            if (btnUpvote) {
-                const pid = Number(btnUpvote.dataset.programId);
-                let authHeaders = {};
-                try {
-                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session');
-                    if (token) authHeaders['Authorization'] = 'Bearer ' + token;
-                } catch(e){}
-                
-                btnUpvote.classList.add('loading');
-                try {
-                   const res = await fetch('/api/organization?action=toggleUpvote', {
-                      method: 'POST', body: JSON.stringify({program_id: pid}),
-                      headers: {'Content-Type': 'application/json', ...authHeaders}
-                   });
-                   const data = await res.json();
-                   if (data.status === 'success') {
-                      btnUpvote.querySelector('.upvt-count').textContent = data.upvote_count;
-                      if (data.upvoted) {
-                          btnUpvote.style.color = '#3b82f6';
-                          btnUpvote.style.borderColor = '#3b82f6';
-                          btnUpvote.style.background = '#eff6ff';
-                          btnUpvote.querySelector('.btn-lbl').textContent = 'Didukung';
-                      } else {
-                          btnUpvote.style.color = '';
-                          btnUpvote.style.borderColor = '';
-                          btnUpvote.style.background = '';
-                          btnUpvote.querySelector('.btn-lbl').textContent = 'Dukung';
-                      }
-                   } else {
-                      alert(data.message || 'Gagal update dukungan. Pastikan Anda sudah login.');
-                   }
-                } catch(err){ alert('Silakan login terlebih dahulu untuk mendukung program.') }
-                btnUpvote.classList.remove('loading');
-            }
-
-            const btnComment = e.target.closest('.btn-comment');
-            if (btnComment) {
-                const pid = Number(btnComment.dataset.programId);
-                const cSec = document.getElementById('comments-'+pid);
-                if (cSec.classList.contains('hidden')) {
-                    cSec.classList.remove('hidden');
-                    cSec.innerHTML = '<div class="loading-dots" style="padding:10px; text-align:center;"><i class="fas fa-circle-notch fa-spin"></i> Memuat diskusi...</div>';
-                    try {
-                        const res = await fetch('/api/organization?action=getProgramDetails&program_id='+pid);
-                        const data = await res.json();
-                        
-                        // User Context for Moderation
-                        const currentAdmin = sessionStorage.getItem('ipmquiz_admin_username') || localStorage.getItem('ipmquiz_admin_username');
-
-                        if (data.status === 'success') {
-                            let html = '<div class="comments-list" style="max-height:300px; overflow-y:auto; margin-bottom:16px;">';
-                            if (!data.comments || !data.comments.length) {
-                                html += `<div class="empty-comments" id="no-cmt-${pid}" style="text-align:center; padding:20px 0; color:#94a3b8;">
-                                    <i class="fas fa-comments" style="font-size:24px; display:block; margin-bottom:8px; opacity:0.3;"></i>
-                                    <span style="font-size:13px;">Belum ada diskusi. Yuk, berikan masukan atau pertanyaan!</span>
-                                </div>`;
-                            } else {
-                                data.comments.forEach(c => {
-                                    const isAdminMark = c.role === 'admin' ? '<span style="background:#3b82f6; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:6px;">ADMIN</span>' : '';
-                                    const canDelete = currentAdmin ? `<button class="btn-delete-comment" data-comment-id="${c.id}" style="color:#ef4444; border:none; background:transparent; font-size:11px; cursor:pointer;"><i class="fas fa-trash"></i></button>` : '';
-                                    
-                                    html += `
-                                    <div class="comment-item" style="padding:12px 0; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:flex-start;">
-                                        <div style="flex-grow:1;">
-                                            <div style="display:flex; align-items:center; margin-bottom:4px;">
-                                                <strong style="font-size:13px; color:#1e293b;">${escapeHtml(c.nama_panjang || c.username)}</strong>
-                                                ${isAdminMark}
-                                            </div>
-                                            <div style="font-size:13px; color:#475569; line-height:1.5;">${escapeHtml(c.content)}</div>
-                                        </div>
-                                        ${canDelete}
-                                    </div>`;
-                                });
-                            }
-                            html += '</div>';
-                            html += `
-                              <form class="program-comment-form" style="display:flex; gap:8px;" data-program-id="${pid}">
-                                 <input type="text" class="comment-input" placeholder="Tulis masukan..." required style="flex-grow:1; font-size:13px; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0; outline:none; transition:border 0.2s;">
-                                 <button type="submit" class="btn btn-primary" style="padding:0 16px; border-radius:10px; font-weight:600;"><i class="fas fa-paper-plane"></i></button>
-                              </form>
-                            `;
-                            cSec.innerHTML = html;
-                            
-                            // Bind Moderation Actions
-                            cSec.querySelectorAll('.btn-delete-comment').forEach(delBtn => {
-                                delBtn.addEventListener('click', async () => {
-                                    const cid = delBtn.dataset.commentId;
-                                    if(!confirm('Hapus komentar ini?')) return;
-                                    
-                                    try {
-                                        const adminToken = sessionStorage.getItem('ipmquiz_admin_session') || localStorage.getItem('ipmquiz_admin_session');
-                                        const dr = await fetch('/api/organization?action=deleteProgramComment', {
-                                            method: 'POST', body: JSON.stringify({comment_id: cid}),
-                                            headers: {'Content-Type':'application/json', 'Authorization': 'Bearer ' + adminToken}
-                                        });
-                                        const dd = await dr.json();
-                                        if(dd.status === 'success') {
-                                            delBtn.closest('.comment-item').remove();
-                                        } else alert(dd.message);
-                                    } catch(e) { alert('Gagal menghapus komentar.') }
-                                });
-                            });
-
-                            const form = cSec.querySelector('.program-comment-form');
-                            form.addEventListener('submit', async (ev) => {
-                                ev.preventDefault();
-                                const inp = form.querySelector('.comment-input');
-                                const val = inp.value.trim();
-                                if(!val) return;
-                                const sb = form.querySelector('button');
-                                let authHeaders = {};
-                                try {
-                                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session') || sessionStorage.getItem('ipmquiz_admin_session') || localStorage.getItem('ipmquiz_admin_session');
-                                    if (token) authHeaders['Authorization'] = 'Bearer ' + token;
-                                } catch(e){}
-
-                                sb.disabled = true;
-                                sb.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                                try {
-                                   const pr = await fetch('/api/organization?action=addProgramComment', {
-                                      method:'POST', body: JSON.stringify({program_id: pid, content: val}),
-                                      headers:{'Content-Type':'application/json', ...authHeaders}
-                                   });
-                                   const pd = await pr.json();
-                                   if(pd.status === 'success') {
-                                       const list = cSec.querySelector('.comments-list');
-                                       const noCmt = document.getElementById('no-cmt-'+pid);
-                                       if (noCmt) noCmt.remove();
-                                       
-                                       const nx = document.createElement('div');
-                                       nx.className = 'comment-item';
-                                       nx.setAttribute('style', 'padding:12px 0; border-bottom:1px solid #f1f5f9; animation: slideIn 0.3s ease-out;');
-                                       nx.innerHTML = `
-                                            <div style="display:flex; align-items:center; margin-bottom:4px;">
-                                                <strong style="font-size:13px; color:#1e293b;">${escapeHtml(pd.comment.nama_panjang || pd.comment.username)}</strong>
-                                                ${pd.comment.role === 'admin' ? '<span style="background:#3b82f6; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:6px;">ADMIN</span>' : ''}
-                                            </div>
-                                            <div style="font-size:13px; color:#475569; line-height:1.5;">${escapeHtml(pd.comment.content)}</div>
-                                       `;
-                                       list.appendChild(nx);
-                                       inp.value = '';
-                                       list.scrollTop = list.scrollHeight;
-                                   } else {
-                                       alert(pd.message || 'Gagal mengirim. Pastikan Anda sudah login.');
-                                   }
-                                } catch(err) { alert('Silakan login terlebih dahulu untuk berkomentar.') }
-                                sb.disabled = false;
-                                sb.innerHTML = '<i class="fas fa-paper-plane"></i>';
-                            });
-                        }
-                    } catch(e){ cSec.innerHTML = '<div class="small" style="color:var(--status-danger); text-align:center; padding:10px;">Gagal memuat diskusi.</div>'; }
-                } else {
-                    cSec.classList.add('hidden');
-                }
-            }
-        });
-    }
-
-    if (els.anggotaDetailOverlay) els.anggotaDetailOverlay.addEventListener('click', (event) => { if (event.target === els.anggotaDetailOverlay) closeAnggotaDetail(); });
-    if (els.anggotaDetailCard) els.anggotaDetailCard.addEventListener('click', (event) => event.stopPropagation());
-    if (els.closeAnggotaDetailBtn) els.closeAnggotaDetailBtn.addEventListener('click', closeAnggotaDetail);
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) return closeAnggotaDetail();
-      if (event.key === 'Escape' && els.viewDetail?.classList.contains('active')) return backToBidang();
-    });
-  }
-
-  async function init() {
-    els.loadingOverlay = byId('loading-overlay');
-    els.heroTotalBidang = byId('heroTotalBidang');
-    els.heroTotalAnggota = byId('heroTotalAnggota');
-    els.heroTotalProgram = byId('heroTotalProgram');
-    els.bidangGrid = byId('bidangGrid');
-    els.viewBidangGrid = byId('viewBidangGrid');
-    els.viewDetail = byId('viewDetail');
-    els.backToGridBtn = byId('backToGridBtn');
-    els.detailBidangTitle = byId('detailBidangTitle');
-    els.detailMemberCount = byId('detailMemberCount');
     els.detailProgramCount = byId('detailProgramCount');
     els.detailSegmentAnggota = byId('detailSegmentAnggota');
     els.detailSegmentProgram = byId('detailSegmentProgram');

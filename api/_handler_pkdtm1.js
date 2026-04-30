@@ -242,6 +242,37 @@ async function handleAdminUpdate(req, res) {
     updated_at = NOW()
   WHERE id = ${id}`;
 
+  // Trigger notification for the user
+  try {
+    const regData = (await query`SELECT user_id, nama FROM registrations_pkdtm1 WHERE id = ${id}`).rows[0];
+    if (regData) {
+      let notifTitle = 'Update Pendaftaran PKDTM1';
+      let notifMsg = `Halo ${regData.nama}, pendaftaran Anda sekarang berstatus: ${newStatus.toUpperCase()}.`;
+      let notifType = 'info';
+      
+      if (newStatus === 'verified') {
+        notifTitle = 'Pendaftaran Lolos Verifikasi! 🎉';
+        notifMsg = `Selamat ${regData.nama}! Anda lolos verifikasi tahap 1. Silakan lanjut ke Tahap 2 (Essay) sekarang.`;
+        notifType = 'success';
+      } else if (newStatus === 'rejected') {
+        notifTitle = 'Pendaftaran Perlu Perbaikan ⚠️';
+        notifMsg = `Maaf ${regData.nama}, pendaftaran Anda ditolak. Catatan admin: ${adminNote || 'Periksa kelengkapan berkas'}.`;
+        notifType = 'warning';
+      }
+
+      await query`INSERT INTO notifications (user_id, title, message, type, action_url) 
+                  VALUES (${regData.user_id}, ${notifTitle}, ${notifMsg}, ${notifType}, '/pendaftaran-pkdtm1.html')`;
+      
+      // Push notification (Web Push API)
+      const { sendToUser } = require('./_push');
+      sendToUser(regData.user_id, {
+          title: notifTitle,
+          body: notifMsg,
+          url: '/pendaftaran-pkdtm1.html'
+      }).catch(() => {});
+    }
+  } catch (e) { console.error('[PKDTM1] Notification trigger failed:', e); }
+
   return json(res, 200, { status: 'success', message: `Status berhasil diubah ke ${newStatus}` });
 }
 

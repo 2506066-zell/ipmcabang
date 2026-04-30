@@ -186,20 +186,65 @@ export function initOrganization(state, els, api) {
         return state.adminToken || state.session || '';
     }
 
+    async function compressImage(file, { maxWidth = 1200, quality = 0.8 } = {}) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (!blob) return reject(new Error('Canvas to Blob failed'));
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+                        resolve(compressedFile);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = reject;
+            };
+            reader.onerror = reject;
+        });
+    }
+
     async function uploadMemberPhoto(file) {
         if (!file) return '';
+        
+        let fileToUpload = file;
+        // Compress if it's an image and large
+        if (file.type.startsWith('image/') && file.size > 200 * 1024) {
+            try {
+                fileToUpload = await compressImage(file);
+            } catch (e) {
+                console.warn('Compression failed, using original:', e);
+            }
+        }
+
         const token = getAuthHeaderValue();
         if (!token) throw new Error('Sesi admin tidak ditemukan.');
         const headers = {
-            'Content-Type': file.type || 'application/octet-stream',
-            'x-filename': file.name || `member-${Date.now()}.jpg`,
+            'Content-Type': fileToUpload.type || 'application/octet-stream',
+            'x-filename': fileToUpload.name || `member-${Date.now()}.jpg`,
             'Authorization': `Bearer ${token}`
         };
         const res = await fetch('/api/upload', {
             method: 'POST',
             credentials: 'include',
             headers,
-            body: file
+            body: fileToUpload
         });
         const data = await res.json();
         if (!res.ok || data?.status !== 'success' || !data?.url) {

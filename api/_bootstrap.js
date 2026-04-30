@@ -192,10 +192,20 @@ async function ensureSchema() {
   await query`CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id),
+    title TEXT DEFAULT 'Notifikasi',
     message TEXT NOT NULL,
+    type TEXT DEFAULT 'info', -- success, warning, info, danger
+    action_url TEXT,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
   )`;
+
+  // Migration for existing table
+  try {
+    await query`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS title TEXT DEFAULT 'Notifikasi'`;
+    await query`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'info'`;
+    await query`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_url TEXT`;
+  } catch (e) { console.log('Migration notifications skipped or already done'); }
 
   await query`CREATE TABLE IF NOT EXISTS feedback_messages (
     id SERIAL PRIMARY KEY,
