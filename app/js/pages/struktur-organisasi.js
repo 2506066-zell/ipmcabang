@@ -1061,6 +1061,45 @@
     els.anggotaDetailOverlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
+
+  function bindEvents() {
+    if (els.backToGridBtn) els.backToGridBtn.addEventListener('click', backToBidang);
+    if (els.detailSegmentAnggota) els.detailSegmentAnggota.addEventListener('click', () => setDetailSegment('anggota'));
+    if (els.detailSegmentProgram) els.detailSegmentProgram.addEventListener('click', () => setDetailSegment('program'));
+    if (els.closeAnggotaDetailBtn) els.closeAnggotaDetailBtn.addEventListener('click', closeAnggotaDetail);
+    if (els.orgFeedbackForm) els.orgFeedbackForm.addEventListener('submit', submitFeedback);
+    if (els.orgFeedbackToggleBtn) {
+      els.orgFeedbackToggleBtn.addEventListener('click', () => {
+        const expanded = els.orgFeedbackToggleBtn.getAttribute('aria-expanded') === 'true';
+        els.orgFeedbackToggleBtn.setAttribute('aria-expanded', String(!expanded));
+        if (els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = expanded;
+      });
+    }
+
+    if (els.bidangGrid) {
+      els.bidangGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.org-node-card');
+        if (card) {
+          const code = card.dataset.bidang || card.dataset.bidangCode;
+          if (code) showDetail(code, card);
+        }
+      });
+    }
+  }
+
+  async function init() {
+    els.loadingOverlay = byId('loading-overlay');
+    els.viewBidangGrid = byId('viewBidangGrid');
+    els.viewDetail = byId('viewDetail');
+    els.backToGridBtn = byId('backToGridBtn');
+    els.detailBidangTitle = byId('detailBidangTitle');
+    els.detailMemberCount = byId('detailMemberCount');
+    els.heroTotalBidang = byId('heroTotalBidang');
+    els.heroTotalAnggota = byId('heroTotalAnggota');
+    els.heroTotalProgram = byId('heroTotalProgram');
+    els.orgChartSvg = byId('orgChartSvg');
+    els.bidangGrid = byId('bidangGrid');
+    
     els.detailProgramCount = byId('detailProgramCount');
     els.detailSegmentAnggota = byId('detailSegmentAnggota');
     els.detailSegmentProgram = byId('detailSegmentProgram');
