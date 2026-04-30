@@ -114,10 +114,12 @@
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.8fr);
     gap: 44px;
     align-items: center;
+    min-width: 0;
 }
 
 .page-struktur .org-hero-copy {
     max-width: 640px;
+    min-width: 0;
 }
 
 .page-struktur .org-kicker {
@@ -165,6 +167,7 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
+    min-width: 0;
 }
 
 .page-struktur .org-stat {
@@ -452,7 +455,9 @@
     position: relative;
     aspect-ratio: 16 / 10;
     overflow: hidden;
-    background: linear-gradient(135deg, rgba(15, 111, 77, 0.12), rgba(17, 43, 31, 0.08));
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(15, 111, 77, 0.1)),
+        linear-gradient(135deg, rgba(15, 111, 77, 0.12), rgba(17, 43, 31, 0.08));
 }
 
 .page-struktur .org-node-card-leader .org-node-media {
@@ -474,6 +479,11 @@
     object-fit: cover;
     object-position: center var(--field-focus-y, 50%);
     transition: transform 700ms var(--org-ease);
+}
+
+.page-struktur .org-node-card-field .org-node-media img {
+    object-fit: contain;
+    padding: 8px;
 }
 
 .page-struktur .org-node-card:hover .org-node-media img {
@@ -1408,18 +1418,126 @@
 }
 
 @media (max-width: 1024px) {
+    .page-struktur .main-container {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        padding-top: 16px;
+        gap: 14px;
+    }
+
     .page-struktur .org-hero {
         min-height: auto;
-        padding: 34px;
+        padding: 24px;
+        border-radius: 28px;
+        max-width: 100%;
     }
 
     .page-struktur .org-hero-content {
         min-height: 0;
         grid-template-columns: 1fr;
+        gap: 0;
     }
 
     .page-struktur .org-hero-visual {
-        min-height: 260px;
+        display: none;
+    }
+
+    .page-struktur .org-hero::before {
+        inset: 10px;
+        border-radius: 22px;
+    }
+
+    .page-struktur .org-hero-bg-blobs {
+        width: 260px;
+        height: 260px;
+        right: -90px;
+        bottom: -130px;
+        opacity: 0.72;
+    }
+
+    .page-struktur .org-kicker {
+        margin-bottom: 12px;
+        font-size: 0.66rem;
+        letter-spacing: 0.13em;
+    }
+
+    .page-struktur .org-hero-title {
+        max-width: 100%;
+        font-size: clamp(2.4rem, 8.5vw, 4.1rem);
+        line-height: 0.96;
+    }
+
+    .page-struktur .org-hero-subtitle {
+        max-width: 32rem;
+        margin-top: 14px;
+        font-size: 0.92rem;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+    }
+
+    .page-struktur .org-hero-stats {
+        width: 100%;
+        max-width: 100%;
+        margin-top: 18px;
+        display: flex;
+        gap: 8px;
+        overflow: hidden;
+    }
+
+    .page-struktur .org-stat {
+        flex: 1 1 0;
+        width: 0;
+        min-width: 0;
+        min-height: 78px;
+        padding: 10px;
+        border-radius: 16px;
+        box-shadow: none;
+    }
+
+    .page-struktur .org-stat-info {
+        min-width: 0;
+    }
+
+    .page-struktur .org-stat:hover {
+        transform: none;
+        box-shadow: var(--org-shadow-sm);
+    }
+
+    .page-struktur .org-stat-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        font-size: 0.78rem;
+    }
+
+    .page-struktur .org-stat-value {
+        font-size: 1.35rem;
+    }
+
+    .page-struktur .org-stat-label {
+        margin-top: 4px;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+    }
+
+    .page-struktur .org-chart-view,
+    .page-struktur .org-feedback-card {
+        padding: 20px;
+        border-radius: 26px;
+    }
+
+    .page-struktur .org-section-head {
+        margin-bottom: 18px;
+    }
+
+    .page-struktur .org-section-head h2 {
+        font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+    }
+
+    .page-struktur .org-section-head p {
+        margin-top: 7px;
+        font-size: 0.9rem;
+        line-height: 1.55;
     }
 
     .page-struktur .org-field-grid {
@@ -1444,8 +1562,9 @@
 
 @media (max-width: 760px) {
     .page-struktur .main-container {
-        width: min(100% - 24px, 1180px);
-        padding-top: 18px;
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        padding-top: 12px;
     }
 
     .page-struktur .org-hero,
@@ -1458,16 +1577,15 @@
     .page-struktur .org-hero,
     .page-struktur .org-chart-view,
     .page-struktur .org-feedback-card {
-        padding: 20px;
+        padding: 16px;
     }
 
     .page-struktur .org-hero-title {
         max-width: 100%;
-        font-size: clamp(2.65rem, 13vw, 3.45rem);
-        line-height: 0.94;
+        font-size: clamp(2.18rem, 11vw, 3.1rem);
+        line-height: 0.98;
     }
 
-    .page-struktur .org-hero-stats,
     .page-struktur .org-visual-grid,
     .page-struktur .org-core-track,
     .page-struktur .org-field-grid,
@@ -1476,6 +1594,16 @@
     .page-struktur .member-ring-orbit,
     .page-struktur .org-feedback-row {
         grid-template-columns: 1fr;
+    }
+
+    .page-struktur .org-hero-subtitle {
+        font-size: 0.88rem;
+        max-width: 100%;
+    }
+
+    .page-struktur .org-stat {
+        min-height: 70px;
+        padding: 9px;
     }
 
     .page-struktur .member-ring-core > .anggota-card-core-primary {
@@ -1546,11 +1674,25 @@
 
 @media (max-width: 420px) {
     .page-struktur .org-hero-stats {
-        gap: 10px;
+        gap: 7px;
     }
 
     .page-struktur .org-stat {
-        min-height: 92px;
+        min-height: 72px;
+        padding: 9px 8px;
+    }
+
+    .page-struktur .org-stat-icon {
+        width: 26px;
+        height: 26px;
+    }
+
+    .page-struktur .org-stat-value {
+        font-size: 1.22rem;
+    }
+
+    .page-struktur .org-stat-label {
+        font-size: 0.58rem;
     }
 
     .page-struktur .anggota-card {

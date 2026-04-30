@@ -50,6 +50,20 @@ function parseSortOrder(value, fallback = 1) {
   return Math.floor(n);
 }
 
+function sanitizeBidangCode(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+function sanitizeHexColor(value) {
+  const raw = String(value || '').trim();
+  return /^#[0-9a-f]{6}$/i.test(raw) ? raw : '#0f6f4d';
+}
+
 async function resolveBidangId(inputBidangId, inputBidangCode) {
   const id = Number(inputBidangId || 0);
   if (id > 0) {
@@ -170,6 +184,72 @@ async function handleSnapshot(req, res) {
 
   const bidang = groupByBidang(bidangRows, membersRows, programsRows);
   return json(res, 200, { status: 'success', bidang });
+}
+
+async function handleUpsertBidang(req, res) {
+  let adminId = null;
+  try {
+    const admin = await requireAdminAuth(req);
+    adminId = admin.id;
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const body = parseJsonBody(req);
+  const id = Number(body.id || 0);
+  const name = sanitizeText(body.name, 160);
+  const code = sanitizeBidangCode(body.code || body.slug || name);
+  const color = sanitizeHexColor(body.color);
+  const imageUrl = normalizeMediaPath(body.image_url || body.image);
+  const isCore = body.is_core === true || body.is_core === 'true';
+
+  if (!name) return json(res, 400, { status: 'error', message: 'Nama bidang wajib diisi' });
+  if (!code) return json(res, 400, { status: 'error', message: 'Kode bidang wajib diisi' });
+
+  let sortOrder = parseSortOrder(body.sort_order, 0);
+  if (sortOrder < 1) {
+    const next = (await query`SELECT COALESCE(MAX(sort_order), 0)::int + 1 AS next_sort FROM org_bidang`).rows[0]?.next_sort;
+    sortOrder = parseSortOrder(next, 1);
+  }
+
+  let row = null;
+  if (id > 0) {
+    const duplicate = (await query`
+      SELECT id FROM org_bidang
+      WHERE code=${code} AND id<>${id}
+      LIMIT 1
+    `).rows[0];
+    if (duplicate) return json(res, 409, { status: 'error', message: 'Kode bidang sudah dipakai bidang lain' });
+
+    row = (await query`
+      UPDATE org_bidang
+      SET code=${code},
+          name=${name},
+          color=${color},
+          image_url=${imageUrl},
+          sort_order=${sortOrder},
+          is_core=${isCore},
+          is_active=true,
+          updated_at=NOW()
+      WHERE id=${id}
+      RETURNING *
+    `).rows[0];
+    if (!row) return json(res, 404, { status: 'error', message: 'Bidang tidak ditemukan' });
+    try {
+      await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'UPDATE_ORG_BIDANG', ${{ id, code, name }})`;
+    } catch {}
+  } else {
+    row = (await query`
+      INSERT INTO org_bidang (code, name, color, image_url, sort_order, is_core, is_active)
+      VALUES (${code}, ${name}, ${color}, ${imageUrl}, ${sortOrder}, ${isCore}, ${true})
+      RETURNING *
+    `).rows[0];
+    try {
+      await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'CREATE_ORG_BIDANG', ${{ id: row?.id, code, name }})`;
+    } catch {}
+  }
+
+  return json(res, 200, { status: 'success', bidang: row });
 }
 
 async function handleUpsertMember(req, res) {
@@ -497,6 +577,7 @@ module.exports = async (req, res) => {
     }
 
     if (action === 'upsertMember') return await handleUpsertMember(req, res);
+    if (action === 'upsertBidang') return await handleUpsertBidang(req, res);
     if (action === 'deleteMember') return await handleDeleteMember(req, res);
     if (action === 'upsertProgram') return await handleUpsertProgram(req, res);
     if (action === 'deleteProgram') return await handleDeleteProgram(req, res);

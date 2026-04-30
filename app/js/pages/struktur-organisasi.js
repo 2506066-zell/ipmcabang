@@ -47,15 +47,13 @@
     '/images/bidang/apresiasiBudaya.jpg',
     '/images/bidang/advokasi.jpeg'
   ]);
-  const TRANSPARENT_GIF = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-
   function normalizePath(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
     const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\.?\//, '')}`;
     
-    if (MISSING_IMAGES.has(normalized)) return TRANSPARENT_GIF;
+    if (MISSING_IMAGES.has(normalized)) return '';
     
     if (!normalized.startsWith('/images/')) return normalized;
 

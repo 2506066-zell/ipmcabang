@@ -3,6 +3,17 @@ export function initOrganization(state, els, api) {
     const refreshBtn = document.getElementById('org-refresh-btn');
     const statusEl = document.getElementById('org-status');
 
+    const bidangForm = document.getElementById('org-bidang-form');
+    const bidangId = document.getElementById('org-bidang-id');
+    const bidangName = document.getElementById('org-bidang-name');
+    const bidangCode = document.getElementById('org-bidang-code');
+    const bidangColor = document.getElementById('org-bidang-color');
+    const bidangImageUrl = document.getElementById('org-bidang-image-url');
+    const bidangImageFile = document.getElementById('org-bidang-image-file');
+    const bidangSort = document.getElementById('org-bidang-sort');
+    const bidangCancelBtn = document.getElementById('org-bidang-cancel-btn');
+    const bidangPreview = document.getElementById('org-bidang-preview');
+
     const memberForm = document.getElementById('org-member-form');
     const memberId = document.getElementById('org-member-id');
     const memberName = document.getElementById('org-member-name');
@@ -46,6 +57,7 @@ export function initOrganization(state, els, api) {
         if (!localState.bidang.length) {
             bidangFilter.innerHTML = '<option value="" disabled selected>Belum ada data bidang</option>';
             localState.selectedBidangCode = '';
+            syncBidangForm();
             return;
         }
         const current = localState.selectedBidangCode;
@@ -59,6 +71,43 @@ export function initOrganization(state, els, api) {
             bidangFilter.value = String(localState.bidang[0].code || '');
         }
         localState.selectedBidangCode = bidangFilter.value || '';
+        syncBidangForm();
+    }
+
+    function renderBidangPreview(url, name = '') {
+        if (!bidangPreview) return;
+        const imageUrl = String(url || '').trim();
+        if (!imageUrl) {
+            bidangPreview.innerHTML = '<span>Preview foto bidang</span>';
+            bidangPreview.classList.remove('has-image');
+            return;
+        }
+        bidangPreview.classList.add('has-image');
+        bidangPreview.innerHTML = `<img src="${api.escapeHtml(imageUrl)}" alt="${api.escapeHtml(name || 'Foto bidang')}">`;
+    }
+
+    function syncBidangForm() {
+        if (!bidangForm) return;
+        const bidang = getSelectedBidang();
+        if (!bidang) {
+            bidangId.value = '';
+            bidangName.value = '';
+            bidangCode.value = '';
+            bidangColor.value = '#0f6f4d';
+            bidangImageUrl.value = '';
+            bidangSort.value = '';
+            if (bidangImageFile) bidangImageFile.value = '';
+            renderBidangPreview('');
+            return;
+        }
+        bidangId.value = String(bidang.id || '');
+        bidangName.value = String(bidang.name || '');
+        bidangCode.value = String(bidang.code || '');
+        bidangColor.value = /^#[0-9a-f]{6}$/i.test(String(bidang.color || '')) ? String(bidang.color) : '#0f6f4d';
+        bidangImageUrl.value = String(bidang.image_url || '');
+        bidangSort.value = String(bidang.sort_order || '');
+        if (bidangImageFile) bidangImageFile.value = '';
+        renderBidangPreview(bidang.image_url, bidang.name);
     }
 
     function normalizeStatusLabel(value) {
@@ -220,7 +269,7 @@ export function initOrganization(state, els, api) {
         });
     }
 
-    async function uploadMemberPhoto(file) {
+    async function uploadOrganizationImage(file, fallbackPrefix = 'org') {
         if (!file) return '';
         
         let fileToUpload = file;
@@ -237,7 +286,7 @@ export function initOrganization(state, els, api) {
         if (!token) throw new Error('Sesi admin tidak ditemukan.');
         const headers = {
             'Content-Type': fileToUpload.type || 'application/octet-stream',
-            'x-filename': fileToUpload.name || `member-${Date.now()}.jpg`,
+            'x-filename': fileToUpload.name || `${fallbackPrefix}-${Date.now()}.jpg`,
             'Authorization': `Bearer ${token}`
         };
         const res = await fetch('/api/upload', {
@@ -251,6 +300,14 @@ export function initOrganization(state, els, api) {
             throw new Error(data?.message || `Upload gagal (HTTP ${res.status})`);
         }
         return String(data.url);
+    }
+
+    async function uploadMemberPhoto(file) {
+        return uploadOrganizationImage(file, 'member');
+    }
+
+    async function uploadBidangPhoto(file) {
+        return uploadOrganizationImage(file, 'bidang');
     }
 
     async function loadSnapshot() {
@@ -313,6 +370,37 @@ export function initOrganization(state, els, api) {
         } catch (e) {
             console.error('[Organization] save member failed:', e);
             setLocalStatus(`Gagal simpan anggota: ${e.message || 'error'}`, 'error');
+        } finally {
+            api.hideLoader();
+        }
+    }
+
+    async function submitBidangForm(event) {
+        event.preventDefault();
+        if (!bidangForm) return;
+        api.showLoader('Menyimpan profil bidang...');
+        try {
+            let imageUrl = String(bidangImageUrl.value || '').trim();
+            if (bidangImageFile && bidangImageFile.files && bidangImageFile.files[0]) {
+                imageUrl = await uploadBidangPhoto(bidangImageFile.files[0]);
+            }
+            const previousCode = localState.selectedBidangCode;
+            const payload = {
+                id: Number(bidangId.value || 0) || undefined,
+                name: String(bidangName.value || '').trim(),
+                code: String(bidangCode.value || '').trim(),
+                color: String(bidangColor.value || '#0f6f4d').trim(),
+                image_url: imageUrl,
+                sort_order: Number(bidangSort.value || 0) || undefined
+            };
+            const data = await api.apiAdminVercel('POST', '/api/admin/organization?action=upsertBidang', payload);
+            if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan bidang');
+            localState.selectedBidangCode = String(data.bidang?.code || payload.code || previousCode || '');
+            await loadSnapshot();
+            setLocalStatus('Profil bidang berhasil disimpan.');
+        } catch (e) {
+            console.error('[Organization] save bidang failed:', e);
+            setLocalStatus(`Gagal simpan bidang: ${e.message || 'error'}`, 'error');
         } finally {
             api.hideLoader();
         }
@@ -449,10 +537,25 @@ export function initOrganization(state, els, api) {
         });
         bidangFilter?.addEventListener('change', () => {
             localState.selectedBidangCode = String(bidangFilter.value || '');
+            syncBidangForm();
             resetMemberForm();
             resetProgramForm();
             renderMembers();
             renderPrograms();
+        });
+        bidangForm?.addEventListener('submit', submitBidangForm);
+        bidangCancelBtn?.addEventListener('click', syncBidangForm);
+        bidangImageUrl?.addEventListener('input', () => {
+            renderBidangPreview(bidangImageUrl.value, bidangName?.value || '');
+        });
+        bidangImageFile?.addEventListener('change', () => {
+            const file = bidangImageFile.files && bidangImageFile.files[0];
+            if (!file) {
+                renderBidangPreview(bidangImageUrl?.value || '', bidangName?.value || '');
+                return;
+            }
+            const previewUrl = URL.createObjectURL(file);
+            renderBidangPreview(previewUrl, bidangName?.value || file.name);
         });
         memberForm?.addEventListener('submit', submitMemberForm);
         programForm?.addEventListener('submit', submitProgramForm);

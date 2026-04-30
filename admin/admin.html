@@ -972,6 +972,52 @@
                     </section>
                     <div class="organization-grid mt-20">
                         <section class="card section-card">
+                            <h3 class="section-card-title">Profil Bidang</h3>
+                            <p class="small muted mb-12">Atur nama, warna, urutan, dan foto yang tampil di grid struktur organisasi publik.</p>
+                            <form id="org-bidang-form" class="org-form-grid">
+                                <input type="hidden" id="org-bidang-id">
+                                <div class="field">
+                                    <label for="org-bidang-name">Nama Bidang</label>
+                                    <input type="text" id="org-bidang-name" placeholder="Nama bidang" required>
+                                </div>
+                                <div class="field">
+                                    <label for="org-bidang-code">Kode Bidang</label>
+                                    <input type="text" id="org-bidang-code" placeholder="contoh: perkaderan" required>
+                                </div>
+                                <div class="field">
+                                    <label for="org-bidang-color">Warna Aksen</label>
+                                    <input type="color" id="org-bidang-color" value="#0f6f4d">
+                                </div>
+                                <div class="field">
+                                    <label for="org-bidang-sort">Urutan</label>
+                                    <input type="number" id="org-bidang-sort" min="1" placeholder="1">
+                                </div>
+                                <div class="field">
+                                    <label for="org-bidang-image-url">Foto Bidang URL</label>
+                                    <input type="url" id="org-bidang-image-url" placeholder="https://... atau /images/...">
+                                </div>
+                                <div class="field">
+                                    <label for="org-bidang-image-file">Upload Foto Bidang</label>
+                                    <input type="file" id="org-bidang-image-file" accept="image/*">
+                                </div>
+                                <div class="field-full org-bidang-preview-shell" id="org-bidang-preview-shell">
+                                    <div class="org-bidang-preview" id="org-bidang-preview">
+                                        <span>Preview foto bidang</span>
+                                    </div>
+                                    <p class="small muted">Gunakan foto landscape/grup agar tampil maksimal di kartu bidang.</p>
+                                </div>
+                                <div class="toolbar-row">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-floppy-disk"></i> Simpan Profil Bidang
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="org-bidang-cancel-btn">
+                                        Reset
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+
+                        <section class="card section-card">
                             <h3 class="section-card-title">Anggota Bidang</h3>
                             <form id="org-member-form" class="org-form-grid">
                                 <input type="hidden" id="org-member-id">
