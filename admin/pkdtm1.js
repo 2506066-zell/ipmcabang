@@ -324,8 +324,13 @@ function showFilePreview(url, label) {
         if (meta) meta.textContent = 'Format Gambar';
     } else if (isPdf) {
         const iframe = document.createElement('iframe');
-        iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
-        // Fallback if google viewer fails or for direct view
+        if (url.startsWith('data:')) {
+            // Direct Base64 PDF (Modern browsers support this)
+            iframe.src = url;
+        } else {
+            // Remote URL -> Use Google Docs Viewer
+            iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+        }
         iframe.onload = () => { if (loading) loading.style.display = 'none'; };
         iframe.style.width = '100%';
         iframe.style.height = '100%';
@@ -337,13 +342,26 @@ function showFilePreview(url, label) {
         // Fallback for DOC/DOCX or unknown
         const isDoc = /\.(doc|docx)($|\?)/i.test(url);
         if (isDoc) {
-            const iframe = document.createElement('iframe');
-            iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
-            iframe.onload = () => { if (loading) loading.style.display = 'none'; };
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            container.appendChild(iframe);
+            if (url.startsWith('data:')) {
+                // Base64 Word docs cannot be previewed in external viewers
+                if (loading) loading.style.display = 'none';
+                container.innerHTML = `
+                    <div style="color:#fff; text-align:center; padding:20px;">
+                        <i class="fas fa-file-word fa-3x mb-16" style="color:#2b579a;"></i>
+                        <p>Preview langsung untuk dokumen Word (Base64) tidak didukung.</p>
+                        <p style="font-size:0.8rem; margin-top:8px; opacity:0.7;">Silakan unduh file untuk melihat isi.</p>
+                        <a href="${url}" download="${(label||'dokumen').toLowerCase().replace(/\s+/g,'_')}.docx" class="btn btn-primary mt-16">Unduh Dokumen</a>
+                    </div>
+                `;
+            } else {
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+                iframe.onload = () => { if (loading) loading.style.display = 'none'; };
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                container.appendChild(iframe);
+            }
             if (meta) meta.textContent = 'Dokumen Word';
         } else {
             if (loading) loading.style.display = 'none';
