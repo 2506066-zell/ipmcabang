@@ -394,7 +394,17 @@
                 if (fill) fill.style.width = `${Math.round((i/total)*100)}%`;
                 if (title) title.textContent = `Mengupload ${item.label}...`;
                 if (meta) meta.textContent = `${i+1} dari ${total} berkas`;
-                state.uploadedUrls[item.urlKey] = await uploadFile(item.file);
+                
+                let fileToUpload = item.file;
+                // Compress images to avoid 413 Payload Too Large if fallback to base64 occurs
+                if (['foto', 'sertifikat'].includes(item.key) && item.file.type.startsWith('image/')) {
+                    try {
+                        fileToUpload = await compressImage(item.file, 1200, 0.7);
+                        console.log(`[PKDTM1] Compressed ${item.label}: ${item.file.size} -> ${fileToUpload.size}`);
+                    } catch (e) { console.warn(`[PKDTM1] Compression failed for ${item.label}:`, e); }
+                }
+
+                state.uploadedUrls[item.urlKey] = await uploadFile(fileToUpload);
             }
 
             if (fill) fill.style.width = '100%';
@@ -414,7 +424,12 @@
             toast('Pendaftaran berhasil dikirim!', 'success');
             setTimeout(() => window.location.reload(), 800);
         } catch (err) {
-            toast(err.message || 'Gagal mengirim pendaftaran', 'error');
+            console.error('[PKDTM1] Submit Error:', err);
+            let errMsg = err.message || 'Gagal mengirim pendaftaran';
+            if (errMsg.includes('413') || (err.status === 413)) {
+                errMsg = 'Ukuran file terlalu besar untuk diproses server tanpa Blob Storage. Silakan hubungi admin untuk konfigurasi BLOB_READ_WRITE_TOKEN.';
+            }
+            toast(errMsg, 'error');
             if (submitBtn) { submitBtn.disabled = false; submitBtn.classList.remove('is-loading'); }
             if (prevBtn) prevBtn.disabled = false;
             if (progress) progress.classList.remove('active');
@@ -512,5 +527,30 @@
         const data = await res.json();
         if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Upload gagal');
         return data.url;
+    }
+
+    async function compressImage(file, maxWidth, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height;
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(blob => {
+                        if (blob) resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                        else reject(new Error('Canvas toBlob failed'));
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = reject;
+            };
+            reader.onerror = reject;
+        });
     }
 })();

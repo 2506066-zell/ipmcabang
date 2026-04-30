@@ -87,6 +87,13 @@ module.exports = async (req, res) => {
         if (!put || !process.env.BLOB_READ_WRITE_TOKEN) {
             // FALLBACK: Store as Base64 in database (works because we compressed the image to ~24KB)
             const buffer = await getBuffer(req);
+            if (buffer.length > 512 * 1024) {
+                return json(res, 413, { 
+                    status: 'error', 
+                    message: 'Blob storage tidak terkonfigurasi. File terlalu besar untuk dikirim sebagai teks (maks 512KB tanpa blob storage).', 
+                    error: 'Payload too large (no blob storage)' 
+                });
+            }
             if (buffer.length > maxBytes) {
                 return json(res, 413, { status: 'error', message: 'File terlalu besar untuk database.', error: 'Payload too large' });
             }
