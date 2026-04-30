@@ -39,11 +39,24 @@
     return document.getElementById(id);
   }
 
+  const MISSING_IMAGES = new Set([
+    '/images/bidang/umum.jpeg',
+    '/images/bidang/sekretaris.jpg',
+    '/images/bidang/bendahara.jpg',
+    '/images/bidang/kajianDakwah.jpg',
+    '/images/bidang/apresiasiBudaya.jpg',
+    '/images/bidang/advokasi.jpeg'
+  ]);
+  const TRANSPARENT_GIF = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+
   function normalizePath(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
     const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\.?\//, '')}`;
+    
+    if (MISSING_IMAGES.has(normalized)) return TRANSPARENT_GIF;
+    
     if (!normalized.startsWith('/images/')) return normalized;
 
     const hashIndex = normalized.indexOf('#');
@@ -461,7 +474,7 @@
         : 'Bidang Pelaksana';
 
     return `
-      <button type="button" class="org-node-card org-node-card-${nodeVariant}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
+      <button type="button" class="org-node-card org-node-card-${nodeVariant}" data-bidang="${escapeHtml(bidang.code)}" data-bidang-code="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
         <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}" data-bidang-code="${escapeHtml(normalizedCode)}" style="--field-focus-y: ${escapeHtml(defaultFocusY)};">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
@@ -469,29 +482,13 @@
         <div class="org-node-content">
           <span class="org-node-eyebrow">${escapeHtml(variantLabel)}</span>
           <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
-          <p class="org-node-meta">${bidang.members.length} Anggota &bull; ${bidang.programs.length} Program</p>
+          <p class="org-node-meta">
+            <span><i class="fas fa-user-group" aria-hidden="true"></i>${bidang.members.length} Anggota</span>
+            <span><i class="fas fa-briefcase" aria-hidden="true"></i>${bidang.programs.length} Program</span>
+          </p>
         </div>
       </button>
     `;
-  }
-
-  function renderStageLabel(title, subtitle) {
-    return `
-      <header class="org-stage-label">
-        <h2>${escapeHtml(title)}</h2>
-        <p>${escapeHtml(subtitle)}</p>
-      </header>
-    `;
-  }
-
-  function renderOrgChartTiers() {
-    if (!els.bidangGrid) return;
-    if (!state.bidang.length) {
-      els.bidangGrid.innerHTML = '<div class="org-empty-state">Data struktur organisasi belum tersedia.</div>';
-      return;
-    }
-    const tiers = classifyBidangTiers();
-    const topNode = tiers.top[0] || null;
   }
 
   function renderStageLabel(title, subtitle) {
@@ -516,7 +513,6 @@
 
     els.bidangGrid.innerHTML = `
       <div class="org-structure-premium">
-        <svg class="org-chart-svg" id="orgChartSvg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></svg>
         ${topNode ? `
           <section class="org-leadership-stage" id="stage-leadership">
             ${renderStageLabel('Pimpinan Utama', 'Pengarah gerak organisasi')}
@@ -544,17 +540,26 @@
       </div>
     `;
     
-    // Reveal Animation Logic
     const revealCards = document.querySelectorAll('.org-node-card');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('reveal-active');
-          observer.unobserve(entry.target);
-        }
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('reveal-active');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+      revealCards.forEach(c => observer.observe(c));
+    } else {
+      revealCards.forEach((card) => card.classList.add('reveal-active'));
+    }
+
+    requestAnimationFrame(() => {
+      revealCards.forEach((card, index) => {
+        card.style.transitionDelay = `${Math.min(index * 55, 440)}ms`;
       });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    revealCards.forEach(c => observer.observe(c));
+    });
 
     setupLazyLoading();
     setupPathInteractions();
@@ -588,7 +593,7 @@
   function setupPathInteractions() {
     document.querySelectorAll('.org-node-card').forEach(card => {
       card.addEventListener('mouseenter', () => {
-        const code = card.dataset.bidangCode;
+        const code = card.dataset.bidangCode || card.dataset.bidang;
         if (!code) return;
         document.querySelectorAll(`.org-connection-path[data-from="${code}"], .org-connection-path[data-to="${code}"]`)
           .forEach(p => p.classList.add('is-highlighted'));
@@ -648,9 +653,9 @@
 
     if (leadership && coreCards.length) {
         const start = getBottomCenter(leadership);
-        const fromId = leadership.dataset.bidangCode;
+        const fromId = leadership.dataset.bidangCode || leadership.dataset.bidang;
         coreCards.forEach(card => {
-            drawPath(start, getTopCenter(card), fromId, card.dataset.bidangCode);
+            drawPath(start, getTopCenter(card), fromId, card.dataset.bidangCode || card.dataset.bidang);
         });
     }
 
@@ -659,7 +664,7 @@
             const end = getTopCenter(field);
             const midCore = coreCards[Math.floor(coreCards.length / 2)];
             if (midCore) {
-                drawPath(getBottomCenter(midCore), end, midCore.dataset.bidangCode, field.dataset.bidangCode);
+                drawPath(getBottomCenter(midCore), end, midCore.dataset.bidangCode || midCore.dataset.bidang, field.dataset.bidangCode || field.dataset.bidang);
             }
         });
     }
@@ -801,16 +806,17 @@
     bidang.programs.forEach((program) => {
       const card = document.createElement('article');
       const statusText = program.status === 'terlaksana' ? 'Terlaksana' : (program.status === 'rencana' ? 'Rencana' : 'Draft');
+      const progress = Math.min(100, Math.max(0, Number(program.progress_percent || 0)));
       card.className = 'program-card';
       
       const pBar = `
         <div class="program-progress-wrapper">
           <div class="program-progress-header">
-            <span class="progress-label">${program.progress_percent}% Kemajuan</span>
+            <span class="progress-label">${progress}% Kemajuan</span>
             <span class="progress-target">Target: ${statusText}</span>
           </div>
           <div class="program-progress-track">
-            <div class="program-progress-fill" style="width: ${program.progress_percent}%;"></div>
+            <div class="program-progress-fill" style="width: ${progress}%;"></div>
           </div>
         </div>
       `;
@@ -902,20 +908,6 @@
     renderDetailMembers(bidang);
     renderPrograms(bidang);
     setDetailSegment('anggota');
-    
-    // Staggered animation for children
-    const animatableElements = els.viewDetail.querySelectorAll('.detail-header, .detail-segment, .detail-panel, .detail-sidebar');
-    animatableElements.forEach((el, index) => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(20px)';
-        el.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        el.style.transitionDelay = `${0.1 + (index * 0.05)}s`;
-        
-        requestAnimationFrame(() => {
-            el.style.opacity = '1';
-            el.style.transform = 'translateY(0)';
-        });
-    });
 
     if (els.viewDetail) {
       setTimeout(() => {
@@ -956,7 +948,10 @@
     const detailOpen = els.viewDetail.classList.contains('active');
     const show = detailOpen && state.currentSegment === 'program';
     els.orgFeedbackSection.hidden = !show;
-    if (!show && els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = true;
+    if (!show && els.orgFeedbackPanel) {
+      els.orgFeedbackPanel.hidden = true;
+      if (els.orgFeedbackToggleBtn) els.orgFeedbackToggleBtn.setAttribute('aria-expanded', 'false');
+    }
   }
 
   async function submitFeedback(event) {
@@ -1067,6 +1062,16 @@
     if (els.detailSegmentAnggota) els.detailSegmentAnggota.addEventListener('click', () => setDetailSegment('anggota'));
     if (els.detailSegmentProgram) els.detailSegmentProgram.addEventListener('click', () => setDetailSegment('program'));
     if (els.closeAnggotaDetailBtn) els.closeAnggotaDetailBtn.addEventListener('click', closeAnggotaDetail);
+    if (els.anggotaDetailOverlay) {
+      els.anggotaDetailOverlay.addEventListener('click', (event) => {
+        if (event.target === els.anggotaDetailOverlay) closeAnggotaDetail();
+      });
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) {
+        closeAnggotaDetail();
+      }
+    });
     if (els.orgFeedbackForm) els.orgFeedbackForm.addEventListener('submit', submitFeedback);
     if (els.orgFeedbackToggleBtn) {
       els.orgFeedbackToggleBtn.addEventListener('click', () => {
