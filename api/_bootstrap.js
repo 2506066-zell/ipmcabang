@@ -768,6 +768,7 @@ async function ensureSchema() {
   await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`;
   await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS essay_url TEXT`;
   await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS essay_submitted_at TIMESTAMP`;
+  await query`ALTER TABLE registrations_pkdtm1 ADD COLUMN IF NOT EXISTS surat_mandat_url TEXT`;
 
   await seedOrganizationData();
 

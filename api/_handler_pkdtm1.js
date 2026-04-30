@@ -78,6 +78,7 @@ async function handleSubmit(req, res) {
   const foto_url = String(body.foto_url || '').trim();
   const motivasi_url = String(body.motivasi_url || '').trim();
   const kta_url = String(body.kta_url || '').trim() || null;
+  const surat_mandat_url = String(body.surat_mandat_url || '').trim();
 
   // Validation
   if (!nama) return json(res, 400, { status: 'error', message: 'Nama wajib diisi' });
@@ -86,11 +87,13 @@ async function handleSubmit(req, res) {
   if (!sertifikat_url) return json(res, 400, { status: 'error', message: 'Sertifikat wajib diupload' });
   if (!foto_url) return json(res, 400, { status: 'error', message: 'Foto wajib diupload' });
   if (!motivasi_url) return json(res, 400, { status: 'error', message: 'Motivasi (PDF) wajib diupload' });
+  if (!surat_mandat_url) return json(res, 400, { status: 'error', message: 'Surat Mandat wajib diupload' });
 
   // Validate URL format
   if (!isValidFileUrl(sertifikat_url)) return json(res, 400, { status: 'error', message: 'URL sertifikat tidak valid' });
   if (!isValidFileUrl(foto_url)) return json(res, 400, { status: 'error', message: 'URL foto tidak valid' });
   if (!isValidFileUrl(motivasi_url)) return json(res, 400, { status: 'error', message: 'URL motivasi tidak valid' });
+  if (!isValidFileUrl(surat_mandat_url)) return json(res, 400, { status: 'error', message: 'URL surat mandat tidak valid' });
   if (kta_url && !isValidFileUrl(kta_url)) return json(res, 400, { status: 'error', message: 'URL KTA tidak valid' });
 
   // Check if already registered
@@ -105,6 +108,7 @@ async function handleSubmit(req, res) {
         foto_url = ${foto_url},
         motivasi_url = ${motivasi_url},
         kta_url = ${kta_url},
+        surat_mandat_url = ${surat_mandat_url},
         status = 'pending',
         admin_note = NULL,
         reviewed_by = NULL,
@@ -116,8 +120,8 @@ async function handleSubmit(req, res) {
     return json(res, 409, { status: 'error', message: 'Anda sudah terdaftar pada PKDTM1' });
   }
 
-  await query`INSERT INTO registrations_pkdtm1 (user_id, nama, asal_pimpinan, sertifikat_url, foto_url, motivasi_url, kta_url)
-    VALUES (${user.id}, ${nama}, ${asal_pimpinan}, ${sertifikat_url}, ${foto_url}, ${motivasi_url}, ${kta_url})`;
+  await query`INSERT INTO registrations_pkdtm1 (user_id, nama, asal_pimpinan, sertifikat_url, foto_url, motivasi_url, kta_url, surat_mandat_url)
+    VALUES (${user.id}, ${nama}, ${asal_pimpinan}, ${sertifikat_url}, ${foto_url}, ${motivasi_url}, ${kta_url}, ${surat_mandat_url})`;
 
   return json(res, 201, { status: 'success', message: 'Pendaftaran PKDTM1 berhasil dikirim!' });
 }
@@ -127,7 +131,7 @@ async function handleMyStatus(req, res) {
   const user = await getSessionUser(req);
   if (!user) return json(res, 401, { status: 'error', message: 'Unauthorized' });
 
-  const row = (await query`SELECT id, nama, asal_pimpinan, sertifikat_url, foto_url, motivasi_url, kta_url, essay_url, essay_submitted_at, status, admin_note, created_at, updated_at
+  const row = (await query`SELECT id, nama, asal_pimpinan, sertifikat_url, foto_url, motivasi_url, kta_url, surat_mandat_url, essay_url, essay_submitted_at, status, admin_note, created_at, updated_at
     FROM registrations_pkdtm1 WHERE user_id = ${user.id}`).rows[0];
 
   return json(res, 200, { status: 'success', registration: row || null });

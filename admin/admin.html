@@ -1676,6 +1676,38 @@
             }
         })();
     </script>
+    <!-- PKDTM1 FILE PREVIEW MODAL -->
+    <div class="modal" id="pkdtm1-preview-modal" style="z-index: 2000;">
+        <div class="modal-content" style="max-width:1000px; width:95%; height:90vh; display:flex; flex-direction:column; border-radius:16px; overflow:hidden;">
+            <div class="modal-header">
+                <h2 style="font-size:1.1rem; margin:0;"><i class="fas fa-eye"></i> Preview Dokumen</h2>
+                <button class="btn btn-ghost" id="pkdtm1-preview-close" style="padding:8px;"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="pkdtm1-preview-body" style="flex:1; padding:0; background:#000; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                <div id="pkdtm1-preview-loading" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; z-index:10;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                </div>
+                <div id="pkdtm1-preview-container" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                    <!-- Content injected by JS -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:12px 24px; background:var(--card-bg); display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color);">
+                <div style="display:flex; flex-direction:column; gap:2px; max-width:60%;">
+                    <span id="pkdtm1-preview-title" style="font-weight:600; font-size:0.9rem; color:var(--text-primary);">File Name</span>
+                    <span id="pkdtm1-preview-meta" style="font-size:0.75rem; color:var(--text-secondary);">Mime Type</span>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <a href="#" id="pkdtm1-preview-open" class="btn btn-secondary" target="_blank" style="padding: 8px 16px; font-size: 0.85rem;">
+                        <i class="fas fa-external-link-alt"></i> Tab Baru
+                    </a>
+                    <a href="#" id="pkdtm1-preview-download" class="btn btn-primary" download style="padding: 8px 16px; font-size: 0.85rem;">
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../scripts/toast.js"></script>
     <script src="admin.js?v=21" defer></script>
 </body>

@@ -59,20 +59,17 @@ function bindEvents() {
                 if (confirm('Hapus registrasi ini secara permanen?')) deleteRegistration(id);
             } else if (viewLink) {
                 const url = viewLink.dataset.url;
-                if (url && !url.startsWith('data:')) {
-                    window.open(url, '_blank');
-                } else if (url) {
-                    // Data URL - open in new tab
-                    const w = window.open();
-                    if (w) {
-                        w.document.write(`<html><body style="margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#111;">
-                            ${url.startsWith('data:image') ? `<img src="${url}" style="max-width:100%;max-height:100vh;">` : `<iframe src="${url}" style="width:100%;height:100vh;border:none;"></iframe>`}
-                        </body></html>`);
-                    }
-                }
+                const label = viewLink.textContent.trim();
+                if (url) showFilePreview(url, label);
             }
         });
     }
+
+    // Modal close
+    document.getElementById('pkdtm1-preview-close')?.addEventListener('click', closePreview);
+    document.getElementById('pkdtm1-preview-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'pkdtm1-preview-modal') closePreview();
+    });
 }
 
 async function loadRegistrations() {
@@ -132,9 +129,10 @@ function renderRegistrationCard(r) {
     const fileLinks = [
         { label: 'Sertifikat', url: r.sertifikat_url, icon: 'fa-file-certificate' },
         { label: 'Foto', url: r.foto_url, icon: 'fa-camera' },
+        { label: 'Mandat', url: r.surat_mandat_url, icon: 'fa-file-signature' },
         { label: 'Motivasi', url: r.motivasi_url, icon: 'fa-file-pdf' },
         { label: 'KTA', url: r.kta_url, icon: 'fa-id-card' },
-        { label: 'Essay', url: r.essay_url, icon: 'fa-pen-fancy' }
+        { label: 'Tahap 2', url: r.essay_url, icon: 'fa-pen-fancy' }
     ];
 
     const fileLinksHtml = fileLinks.map(f => {
@@ -280,5 +278,93 @@ async function exportCsv() {
         _utils.setStatus(`${rows.length} data berhasil di-export`, 'ok');
     } catch (err) {
         _utils.setStatus('Gagal export: ' + err.message, 'error');
+    }
+}
+
+function showFilePreview(url, label) {
+    const modal = document.getElementById('pkdtm1-preview-modal');
+    const container = document.getElementById('pkdtm1-preview-container');
+    const loading = document.getElementById('pkdtm1-preview-loading');
+    const title = document.getElementById('pkdtm1-preview-title');
+    const meta = document.getElementById('pkdtm1-preview-meta');
+    const openBtn = document.getElementById('pkdtm1-preview-open');
+    const downloadBtn = document.getElementById('pkdtm1-preview-download');
+
+    if (!modal || !container) return;
+
+    // Reset
+    container.innerHTML = '';
+    if (loading) loading.style.display = 'block';
+    if (title) title.textContent = label || 'Dokumen';
+    if (openBtn) openBtn.href = url;
+    if (downloadBtn) {
+        downloadBtn.href = url;
+        downloadBtn.download = (label || 'dokumen').toLowerCase().replace(/\s+/g, '_');
+    }
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Determine type
+    const isImage = /\.(jpg|jpeg|png|gif|webp|avif)($|\?)/i.test(url) || url.startsWith('data:image');
+    const isPdf = /\.pdf($|\?)/i.test(url) || url.startsWith('data:application/pdf');
+
+    if (isImage) {
+        const img = new Image();
+        img.onload = () => { if (loading) loading.style.display = 'none'; };
+        img.onerror = () => { 
+            if (loading) loading.style.display = 'none';
+            container.innerHTML = '<div style="color:#fff; text-align:center;"><i class="fas fa-exclamation-triangle fa-2x mb-10"></i><br>Gagal memuat gambar</div>';
+        };
+        img.src = url;
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '100%';
+        img.style.objectFit = 'contain';
+        container.appendChild(img);
+        if (meta) meta.textContent = 'Format Gambar';
+    } else if (isPdf) {
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+        // Fallback if google viewer fails or for direct view
+        iframe.onload = () => { if (loading) loading.style.display = 'none'; };
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.background = '#fff';
+        container.appendChild(iframe);
+        if (meta) meta.textContent = 'Format PDF';
+    } else {
+        // Fallback for DOC/DOCX or unknown
+        const isDoc = /\.(doc|docx)($|\?)/i.test(url);
+        if (isDoc) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+            iframe.onload = () => { if (loading) loading.style.display = 'none'; };
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            container.appendChild(iframe);
+            if (meta) meta.textContent = 'Dokumen Word';
+        } else {
+            if (loading) loading.style.display = 'none';
+            container.innerHTML = `
+                <div style="color:#fff; text-align:center; padding:20px;">
+                    <i class="fas fa-file fa-3x mb-16" style="opacity:0.5;"></i>
+                    <p>Preview tidak tersedia untuk tipe file ini.</p>
+                    <a href="${url}" target="_blank" class="btn btn-primary mt-16">Buka di Tab Baru</a>
+                </div>
+            `;
+            if (meta) meta.textContent = 'Format Tidak Diketahui';
+        }
+    }
+}
+
+function closePreview() {
+    const modal = document.getElementById('pkdtm1-preview-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        const container = document.getElementById('pkdtm1-preview-container');
+        if (container) container.innerHTML = ''; // Stop iframe audio/video if any
     }
 }

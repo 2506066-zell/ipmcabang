@@ -10,9 +10,9 @@
         formStep: 1,       // Sub-step within Phase 1 (1=data, 2=upload, 3=review)
         nama: '',
         pimpinan: '',
-        files: { sertifikat: null, foto: null, motivasi: null, kta: null },
+        files: { sertifikat: null, foto: null, mandat: null, motivasi: null, kta: null },
         essayFile: null,
-        uploadedUrls: { sertifikat_url: '', foto_url: '', motivasi_url: '', kta_url: '' },
+        uploadedUrls: { sertifikat_url: '', foto_url: '', surat_mandat_url: '', motivasi_url: '', kta_url: '' },
         isSubmitting: false,
         user: null,
         registration: null  // Server data
@@ -87,8 +87,26 @@
             const data = await fetchApi('/api/auth?action=pimpinanOptions');
             const list = data.options || [];
             const sel = $('pk-pimpinan');
-            if (sel && list.length) list.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); });
-            if (state.user?.pimpinan && sel) { sel.value = state.user.pimpinan; state.pimpinan = state.user.pimpinan; }
+            if (sel && list.length) {
+                list.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); });
+            }
+            if (state.user?.pimpinan && sel) {
+                // Check if user pimpinan is in the list
+                const exists = Array.from(sel.options).some(o => o.value === state.user.pimpinan);
+                if (exists) {
+                    sel.value = state.user.pimpinan;
+                    state.pimpinan = state.user.pimpinan;
+                } else if (state.user.pimpinan) {
+                    // If not in list, it might be a custom one
+                    sel.value = 'Lainnya';
+                    const manualInput = $('pk-pimpinan-lainnya');
+                    if (manualInput) {
+                        manualInput.value = state.user.pimpinan;
+                        showEl('pk-pimpinan-lainnya');
+                    }
+                    state.pimpinan = state.user.pimpinan;
+                }
+            }
         } catch (e) { console.warn('[PKDTM1] Pimpinan load failed:', e); }
     }
 
@@ -223,15 +241,36 @@
         // Phase 1 navigation
         $('pk-next-1')?.addEventListener('click', () => {
             const nama = $('pk-nama')?.value.trim();
-            const pimpinan = $('pk-pimpinan')?.value;
+            const selPimpinan = $('pk-pimpinan')?.value;
+            const manualPimpinan = $('pk-pimpinan-lainnya')?.value.trim();
+
             if (!nama) { toast('Nama wajib diisi', 'error'); $('pk-nama')?.focus(); return; }
-            if (!pimpinan) { toast('Pilih asal pimpinan', 'error'); $('pk-pimpinan')?.focus(); return; }
-            state.nama = nama; state.pimpinan = pimpinan;
+            if (!selPimpinan) { toast('Pilih asal pimpinan', 'error'); $('pk-pimpinan')?.focus(); return; }
+
+            let pimpinanValue = selPimpinan;
+            if (selPimpinan === 'Lainnya') {
+                if (!manualPimpinan) { toast('Tulis nama pimpinan Anda', 'error'); $('pk-pimpinan-lainnya')?.focus(); return; }
+                pimpinanValue = manualPimpinan;
+            }
+
+            state.nama = nama;
+            state.pimpinan = pimpinanValue;
             goToStep(2);
+        });
+
+        // Pimpinan "Lainnya" toggle
+        $('pk-pimpinan')?.addEventListener('change', (e) => {
+            if (e.target.value === 'Lainnya') {
+                showEl('pk-pimpinan-lainnya');
+                $('pk-pimpinan-lainnya')?.focus();
+            } else {
+                hideEl('pk-pimpinan-lainnya');
+            }
         });
         $('pk-next-2')?.addEventListener('click', () => {
             if (!state.files.sertifikat) { toast('Sertifikat wajib diupload', 'error'); return; }
             if (!state.files.foto) { toast('Foto wajib diupload', 'error'); return; }
+            if (!state.files.mandat) { toast('Surat Mandat wajib diupload', 'error'); return; }
             if (!state.files.motivasi) { toast('Surat Motivasi wajib diupload', 'error'); return; }
             goToStep(3);
         });
@@ -240,7 +279,7 @@
         $('pk-submit')?.addEventListener('click', handleSubmitPhase1);
 
         // Upload zones Phase 1
-        ['sertifikat', 'foto', 'motivasi', 'kta'].forEach(setupUploadZone);
+        ['sertifikat', 'foto', 'mandat', 'motivasi', 'kta'].forEach(setupUploadZone);
 
         // Re-register
         $('pk-re-register')?.addEventListener('click', () => {
@@ -318,6 +357,7 @@
             { l: 'Asal Pimpinan', v: state.pimpinan },
             { l: 'Sertifikat', v: state.files.sertifikat?.name, f: true },
             { l: 'Foto', v: state.files.foto?.name, f: true },
+            { l: 'Surat Mandat', v: state.files.mandat?.name, f: true },
             { l: 'Surat Motivasi', v: state.files.motivasi?.name, f: true },
             { l: 'KTA', v: state.files.kta?.name, f: true, opt: true },
         ];
@@ -343,6 +383,7 @@
             const toUpload = [
                 { key: 'sertifikat', urlKey: 'sertifikat_url', file: state.files.sertifikat, label: 'Sertifikat' },
                 { key: 'foto', urlKey: 'foto_url', file: state.files.foto, label: 'Foto' },
+                { key: 'mandat', urlKey: 'surat_mandat_url', file: state.files.mandat, label: 'Surat Mandat' },
                 { key: 'motivasi', urlKey: 'motivasi_url', file: state.files.motivasi, label: 'Motivasi' },
             ];
             if (state.files.kta) toUpload.push({ key: 'kta', urlKey: 'kta_url', file: state.files.kta, label: 'KTA' });
@@ -365,6 +406,7 @@
                     nama: state.nama, asal_pimpinan: state.pimpinan,
                     sertifikat_url: state.uploadedUrls.sertifikat_url,
                     foto_url: state.uploadedUrls.foto_url,
+                    surat_mandat_url: state.uploadedUrls.surat_mandat_url,
                     motivasi_url: state.uploadedUrls.motivasi_url,
                     kta_url: state.uploadedUrls.kta_url || ''
                 })

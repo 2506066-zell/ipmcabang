@@ -79,7 +79,7 @@
                 <div class="pk-phase locked" id="pk-phase-2" data-phase="2">
                     <div class="pk-phase-num"><i class="fas fa-lock" style="font-size:0.7rem"></i></div>
                     <div class="pk-phase-info">
-                        <span class="pk-phase-title">Essay</span>
+                        <span class="pk-phase-title">Tahap 2</span>
                         <span class="pk-phase-sub">Upload file essay</span>
                     </div>
                 </div>
@@ -98,7 +98,9 @@
                     <label for="pk-pimpinan">Asal Pimpinan <span class="pk-badge-required">Wajib</span></label>
                     <select id="pk-pimpinan" class="pk-select" required>
                         <option value="">— Pilih asal pimpinan —</option>
+                        <option value="Lainnya">Pimpinan Lainnya...</option>
                     </select>
+                    <input type="text" id="pk-pimpinan-lainnya" class="pk-input pk-hidden" style="margin-top: 10px;" placeholder="Tulis nama pimpinan Anda...">
                     <span class="pk-field-hint">Pilih pimpinan tempat Anda berorganisasi.</span>
                 </div>
                 <div class="pk-actions">
@@ -124,6 +126,15 @@
                         <input type="file" id="pk-file-foto" accept="image/*">
                         <div class="pk-upload-icon"><i class="fas fa-camera"></i></div>
                         <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG atau PNG — maks 5MB</span></div>
+                    </div>
+                </div>
+                <div class="pk-field">
+                    <label>Surat Mandat <span class="pk-badge-required">Wajib</span></label>
+                    <span class="pk-field-hint">Surat Mandat dari Pimpinan — JPG, PNG, atau PDF, maks 5MB</span>
+                    <div class="pk-upload-zone" id="pk-zone-mandat">
+                        <input type="file" id="pk-file-mandat" accept="image/*,.pdf">
+                        <div class="pk-upload-icon"><i class="fas fa-file-signature"></i></div>
+                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG, PNG, atau PDF — maks 5MB</span></div>
                     </div>
                 </div>
                 <div class="pk-field">
@@ -172,7 +183,7 @@
             <div class="pk-status-icon pending"><i class="fas fa-hourglass-half"></i></div>
             <h2>Menunggu Verifikasi</h2>
             <div class="pk-status-badge pending"><i class="fas fa-clock"></i> SEDANG DITINJAU</div>
-            <p>Berkas pendaftaran Anda sedang ditinjau oleh admin. Anda akan bisa melanjutkan ke tahap essay setelah dinyatakan lolos.</p>
+            <p>Berkas pendaftaran Anda sedang ditinjau oleh admin. Anda akan bisa melanjutkan ke tahap 2 (essay) setelah dinyatakan lolos.</p>
         </section>
 
         <!-- ========== STATUS: Rejected ========== -->
@@ -197,10 +208,10 @@
             <div style="text-align:center;margin-bottom:4px;">
                 <div class="pk-status-icon verified" style="margin:0 auto;"><i class="fas fa-check-circle"></i></div>
                 <h2 style="font-family:'Space Grotesk',sans-serif;margin:10px 0 4px;font-size:1.2rem;">Selamat, Anda Lolos!</h2>
-                <p style="color:var(--pk-text-secondary);margin:0;font-size:0.88rem;">Langkah terakhir: upload file essay untuk menyelesaikan pendaftaran PKDTM1.</p>
+                <p style="color:var(--pk-text-secondary);margin:0;font-size:0.88rem;">Langkah terakhir: upload file essay untuk menyelesaikan pendaftaran Tahap 2.</p>
             </div>
             <div class="pk-field">
-                <label>File Essay <span class="pk-badge-required">Wajib</span></label>
+                <label>File Essay (Tahap 2) <span class="pk-badge-required">Wajib</span></label>
                 <span class="pk-field-hint">Upload essay dalam format PDF, DOC, atau DOCX — maks 5MB</span>
                 <div class="pk-upload-zone" id="pk-zone-essay">
                     <input type="file" id="pk-file-essay" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
@@ -214,7 +225,7 @@
             </div>
             <div class="pk-actions">
                 <button type="button" class="pk-btn-primary" id="pk-submit-essay" disabled>
-                    <i class="fas fa-paper-plane"></i> Kirim Essay
+                    <i class="fas fa-paper-plane"></i> Kirim Essay (Tahap 2)
                 </button>
             </div>
         </section>

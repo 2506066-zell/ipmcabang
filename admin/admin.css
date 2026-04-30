@@ -1672,6 +1672,25 @@ select optgroup {
     .modal.active .modal-content {
         transform: translateX(0);
     }
+
+    /* Preview Modal Override (Centered) */
+    #pkdtm1-preview-modal {
+        align-items: center;
+        justify-content: center;
+    }
+    #pkdtm1-preview-modal .modal-content {
+        width: 95%;
+        max-width: 1100px;
+        height: 90vh;
+        border-radius: 16px;
+        transform: scale(0.9);
+        opacity: 0;
+        transition: transform 0.3s var(--ease-out), opacity 0.3s;
+    }
+    #pkdtm1-preview-modal.active .modal-content {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* === MISSING STYLES (Fixed) === */
