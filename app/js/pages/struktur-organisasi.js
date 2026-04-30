@@ -909,7 +909,7 @@
         el.style.opacity = '0';
         el.style.transform = 'translateY(20px)';
         el.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        el.style.transitionDelay = \`\${0.1 + (index * 0.05)}s\`;
+        el.style.transitionDelay = `${0.1 + (index * 0.05)}s`;
         
         requestAnimationFrame(() => {
             el.style.opacity = '1';
