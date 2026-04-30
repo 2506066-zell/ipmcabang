@@ -559,6 +559,30 @@
     setupLazyLoading();
     setupPathInteractions();
     setTimeout(drawConnections, 300);
+    setupHeroStats();
+  }
+
+  function setupHeroStats() {
+    const sections = {
+      heroTotalBidang: 'stage-fields',
+      heroTotalAnggota: 'stage-leadership',
+      heroTotalProgram: 'stage-fields'
+    };
+    Object.entries(sections).forEach(([id, targetId]) => {
+      const el = byId(id)?.closest('.org-stat');
+      if (el) {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', () => {
+          const target = byId(targetId);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Add a temporary highlight
+            target.classList.add('section-highlight');
+            setTimeout(() => target.classList.remove('section-highlight'), 2000);
+          }
+        });
+      }
+    });
   }
 
   function setupPathInteractions() {

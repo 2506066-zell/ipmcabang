@@ -211,6 +211,8 @@
     display: flex;
     flex-direction: column;
     gap: 40px;
+    position: relative;
+    z-index: 1;
 }
 
 .page-struktur .org-stage-label {
@@ -264,6 +266,7 @@
     width: 100%;
     overflow: hidden;
     position: relative;
+    z-index: 2;
 }
 
 .page-struktur .org-node-card::after {
@@ -422,7 +425,7 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 1;
+    z-index: 0;
 }
 
 .org-connection-path {
