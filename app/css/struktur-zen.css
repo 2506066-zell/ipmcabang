@@ -76,8 +76,8 @@
 }
 
 .page-struktur .org-hero {
-    min-height: 520px;
-    padding: 42px;
+    min-height: auto;
+    padding: 34px;
     isolation: isolate;
     background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(246, 251, 248, 0.88)),
@@ -95,21 +95,11 @@
 }
 
 .page-struktur .org-hero-bg-blobs {
-    position: absolute;
-    inset: auto -120px -220px auto;
-    width: 520px;
-    height: 520px;
-    z-index: -1;
-    border-radius: 50%;
-    background:
-        radial-gradient(circle, rgba(15, 111, 77, 0.2), transparent 56%),
-        radial-gradient(circle at 30% 30%, rgba(184, 135, 45, 0.2), transparent 42%);
-    filter: blur(8px);
-    animation: orgFloat 16s var(--org-ease) infinite alternate;
+    display: none;
 }
 
 .page-struktur .org-hero-content {
-    min-height: 436px;
+    min-height: 316px;
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.8fr);
     gap: 44px;
@@ -146,7 +136,7 @@
     margin: 0;
     color: var(--org-ink);
     font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
-    font-size: clamp(3.15rem, 8vw, 6.65rem);
+    font-size: clamp(2.9rem, 6.4vw, 5.35rem);
     font-weight: 700;
     line-height: 0.88;
     letter-spacing: 0;
@@ -154,7 +144,7 @@
 
 .page-struktur .org-hero-subtitle {
     max-width: 34rem;
-    margin: 24px 0 0;
+    margin: 18px 0 0;
     color: var(--org-muted);
     font-size: clamp(1rem, 2vw, 1.12rem);
     font-weight: 500;
@@ -163,7 +153,7 @@
 
 .page-struktur .org-hero-stats {
     width: min(100%, 560px);
-    margin-top: 34px;
+    margin-top: 24px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
@@ -172,8 +162,8 @@
 
 .page-struktur .org-stat {
     min-width: 0;
-    min-height: 104px;
-    padding: 16px;
+    min-height: 88px;
+    padding: 14px;
     display: grid;
     align-content: space-between;
     gap: 12px;
@@ -222,8 +212,8 @@
 
 .page-struktur .org-hero-visual {
     position: relative;
-    min-height: 360px;
-    padding: 28px;
+    min-height: 286px;
+    padding: 24px;
     display: grid;
     align-content: center;
     gap: 18px;
@@ -249,8 +239,8 @@
 
 .page-struktur .org-visual-card {
     position: relative;
-    min-height: 94px;
-    padding: 18px;
+    min-height: 76px;
+    padding: 16px;
     display: grid;
     align-content: end;
     gap: 8px;
@@ -261,7 +251,7 @@
 }
 
 .page-struktur .org-visual-card-primary {
-    min-height: 132px;
+    min-height: 104px;
     color: #fff;
     background: linear-gradient(135deg, #0d513a, #11875c);
 }
@@ -284,7 +274,7 @@
 
 .page-struktur .org-visual-line {
     width: 2px;
-    height: 36px;
+    height: 28px;
     margin: 0 auto;
     border-radius: 999px;
     background: linear-gradient(180deg, rgba(15, 111, 77, 0.15), rgba(15, 111, 77, 0.58));
@@ -327,6 +317,7 @@
     color: var(--org-muted);
     font-size: 0.98rem;
     line-height: 1.65;
+    overflow-wrap: anywhere;
 }
 
 .page-struktur .org-chart-canvas {
@@ -570,91 +561,90 @@
     color: var(--org-green);
 }
 
-/* -------------------------------------
-   Unsur Inti (Core) & Leader - Bubble Design 
-------------------------------------- */
+/* Premium hierarchy cards: compact, not bubble/circle based. */
 .page-struktur .org-node-card-core,
 .page-struktur .org-node-card-leader {
-    border-radius: 50% !important;
-    aspect-ratio: 1 / 1 !important;
-    padding: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    overflow: hidden !important;
-    border: 3px solid #fff !important;
-    background: rgba(15, 111, 77, 0.8) !important;
-    box-shadow: 0 10px 30px rgba(15, 32, 24, 0.1) !important;
-    width: clamp(110px, 25vw, 180px);
-    margin: 0 auto;
+    aspect-ratio: auto;
+    display: grid;
+    grid-template-columns: minmax(92px, 0.34fr) minmax(0, 1fr);
+    align-items: stretch;
+    text-align: left;
+    overflow: hidden;
+    border: 1px solid rgba(17, 43, 31, 0.12);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: var(--org-shadow-sm);
+}
+
+.page-struktur .org-node-card-leader {
+    grid-template-columns: minmax(132px, 0.42fr) minmax(0, 1fr);
+    min-height: 164px;
+    background:
+        linear-gradient(135deg, rgba(15, 111, 77, 0.08), rgba(255, 255, 255, 0.94) 42%),
+        rgba(255, 255, 255, 0.94);
 }
 
 .page-struktur .org-node-card-core:hover,
 .page-struktur .org-node-card-leader:hover {
-    transform: translateY(-5px) scale(1.05) !important;
-    box-shadow: 0 15px 40px rgba(15, 32, 24, 0.18) !important;
-    border-color: rgba(15, 111, 77, 0.1) !important;
+    transform: translateY(-5px);
+    border-color: rgba(15, 111, 77, 0.24);
+    box-shadow: var(--org-shadow-md);
 }
 
 .page-struktur .org-node-card-core.is-selected,
 .page-struktur .org-node-card-leader.is-selected {
-    box-shadow: 0 0 0 4px rgba(15, 111, 77, 0.3), 0 15px 40px rgba(15, 32, 24, 0.18) !important;
+    border-color: rgba(15, 111, 77, 0.38);
+    box-shadow: 0 0 0 4px rgba(15, 111, 77, 0.1), var(--org-shadow-md);
 }
 
 .page-struktur .org-node-card-core .org-node-media,
 .page-struktur .org-node-card-leader .org-node-media {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    aspect-ratio: auto !important;
-    border-radius: 50% !important;
-    z-index: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 100%;
+    min-height: 128px;
+    aspect-ratio: auto;
+    border-radius: 0;
+    z-index: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
 }
 
 .page-struktur .org-node-card-core .org-node-media::after,
 .page-struktur .org-node-card-leader .org-node-media::after {
-    content: "" !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background: linear-gradient(180deg, rgba(16, 32, 24, 0.15), rgba(16, 32, 24, 0.75)) !important;
-    border-radius: 50% !important;
-    opacity: 1 !important;
+    border-radius: 0;
+    background: linear-gradient(180deg, rgba(16, 32, 24, 0.02), rgba(16, 32, 24, 0.18));
+    opacity: 1;
 }
 
 .page-struktur .org-node-card-core .org-node-content,
 .page-struktur .org-node-card-leader .org-node-content {
-    position: relative !important;
-    z-index: 1 !important;
-    padding: 10px !important;
-    width: 100% !important;
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    padding: 18px;
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 10px;
 }
 
 .page-struktur .org-node-card-core .org-node-name,
 .page-struktur .org-node-card-leader .org-node-name {
-    color: #ffffff !important;
-    font-size: clamp(0.85rem, 2vw, 1.15rem) !important;
-    line-height: 1.2 !important;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6) !important;
-    margin: 0 !important;
+    color: var(--org-ink);
+    text-shadow: none;
+    margin: 0;
 }
 
-/* Sembunyikan eyebrow dan meta untuk kartu inti (hanya nama dan poto) */
 .page-struktur .org-node-card-core .org-node-eyebrow,
 .page-struktur .org-node-card-core .org-node-meta,
 .page-struktur .org-node-card-leader .org-node-eyebrow,
 .page-struktur .org-node-card-leader .org-node-meta {
-    display: none !important;
+    display: inline-flex;
 }
 
 .page-struktur .org-connection-path {
@@ -1568,14 +1558,14 @@
         width: 100%;
         max-width: 100%;
         margin-top: 18px;
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
         overflow: hidden;
     }
 
     .page-struktur .org-stat {
-        flex: 1 1 0;
-        width: 0;
+        width: auto;
         min-width: 0;
         min-height: 78px;
         padding: 10px;
@@ -1627,10 +1617,12 @@
         margin-top: 7px;
         font-size: 0.9rem;
         line-height: 1.55;
+        max-width: 100%;
     }
 
     .page-struktur .org-field-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
     }
 
     .page-struktur .detail-layout {
@@ -1666,44 +1658,143 @@
     .page-struktur .org-hero,
     .page-struktur .org-chart-view,
     .page-struktur .org-feedback-card {
-        padding: 16px;
+        padding: 14px;
+    }
+
+    .page-struktur .org-chart-svg {
+        display: none;
     }
 
     .page-struktur .org-hero-title {
         max-width: 100%;
-        font-size: clamp(2.18rem, 11vw, 3.1rem);
-        line-height: 0.98;
+        overflow-wrap: anywhere;
+        font-size: clamp(1.9rem, 8.6vw, 2.35rem);
+        line-height: 0.96;
     }
 
     .page-struktur .org-visual-grid,
-    .page-struktur .member-ring-core,
-    .page-struktur .member-ring-core-support,
-    .page-struktur .member-ring-orbit,
     .page-struktur .org-feedback-row {
         grid-template-columns: 1fr;
     }
 
     .page-struktur .org-core-track {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
     }
 
     .page-struktur .org-field-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
     }
 
     .page-struktur .org-hero-subtitle {
         font-size: 0.88rem;
         max-width: 100%;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
 
     .page-struktur .org-stat {
-        min-height: 70px;
+        min-height: 64px;
         padding: 9px;
     }
 
     .page-struktur .member-ring-core > .anggota-card-core-primary {
         grid-column: auto;
+    }
+
+    .page-struktur .org-leadership-track {
+        grid-template-columns: 1fr;
+    }
+
+    .page-struktur .org-node-card-leader {
+        grid-template-columns: minmax(84px, 0.42fr) minmax(0, 1fr);
+        min-height: 126px;
+    }
+
+    .page-struktur .org-node-card-core {
+        grid-template-columns: 1fr;
+    }
+
+    .page-struktur .org-node-card-core .org-node-media {
+        min-height: 82px;
+        aspect-ratio: 16 / 9;
+    }
+
+    .page-struktur .org-node-card-core .org-node-content,
+    .page-struktur .org-node-card-leader .org-node-content {
+        padding: 12px;
+        gap: 7px;
+    }
+
+    .page-struktur .org-node-card-core .org-node-eyebrow,
+    .page-struktur .org-node-card-leader .org-node-eyebrow {
+        padding: 4px 7px;
+        font-size: 0.56rem;
+        letter-spacing: 0.09em;
+    }
+
+    .page-struktur .org-node-card-core .org-node-meta,
+    .page-struktur .org-node-card-leader .org-node-meta {
+        gap: 5px;
+        font-size: 0.68rem;
+    }
+
+    .page-struktur .org-node-card-core .org-node-name,
+    .page-struktur .org-node-card-leader .org-node-name {
+        overflow-wrap: anywhere;
+    }
+
+    .page-struktur .org-node-card-core .org-node-meta span,
+    .page-struktur .org-node-card-leader .org-node-meta span {
+        gap: 4px;
+    }
+
+    .page-struktur .member-ring-core,
+    .page-struktur .member-ring-core-support,
+    .page-struktur .member-ring-orbit {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .page-struktur .anggota-card {
+        min-height: 72px;
+        padding: 9px;
+        gap: 8px;
+        border-radius: 16px;
+    }
+
+    .page-struktur .anggota-card-photo,
+    .page-struktur .anggota-card-core-primary .anggota-card-photo,
+    .page-struktur .anggota-card-core-support .anggota-card-photo {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+    }
+
+    .page-struktur .anggota-card-name {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        font-size: 0.82rem;
+        line-height: 1.2;
+    }
+
+    .page-struktur .anggota-card-role {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--org-muted);
+        font-size: 0.66rem;
+        line-height: 1.25;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
 
     .page-struktur .org-hero-visual {
@@ -1763,28 +1854,82 @@
         transform: translateY(28px);
     }
 
+    .page-struktur .anggota-detail-card::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        z-index: 3;
+        width: 46px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(17, 43, 31, 0.18);
+        transform: translateX(-50%);
+    }
+
+    .page-struktur .anggota-detail-header {
+        min-height: 190px;
+    }
+
+    .page-struktur .anggota-detail-content {
+        padding: 18px 18px calc(22px + env(safe-area-inset-bottom));
+    }
+
     .page-struktur .anggota-detail-overlay.active .anggota-detail-card {
         transform: translateY(0);
     }
 }
 
 @media (max-width: 420px) {
+    .page-struktur .main-container {
+        width: calc(100vw - 18px);
+        max-width: calc(100vw - 18px);
+        gap: 12px;
+    }
+
+    .page-struktur .org-hero,
+    .page-struktur .org-chart-view,
+    .page-struktur #viewDetail,
+    .page-struktur .org-feedback-card {
+        border-radius: 22px;
+    }
+
+    .page-struktur .org-kicker {
+        margin-bottom: 8px;
+        font-size: 0.6rem;
+    }
+
+    .page-struktur .org-hero-title {
+        max-width: 9ch;
+        font-size: clamp(1.72rem, 8.4vw, 2.05rem);
+    }
+
+    .page-struktur .org-hero-subtitle {
+        margin-top: 8px;
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+
     .page-struktur .org-hero-stats {
+        margin-top: 12px;
         gap: 7px;
     }
 
     .page-struktur .org-stat {
-        min-height: 72px;
-        padding: 9px 8px;
+        min-height: 58px;
+        padding: 8px 7px;
+        gap: 7px;
     }
 
     .page-struktur .org-stat-icon {
-        width: 26px;
-        height: 26px;
+        width: 22px;
+        height: 22px;
+        border-radius: 8px;
+        font-size: 0.68rem;
     }
 
     .page-struktur .org-stat-value {
-        font-size: 1.22rem;
+        font-size: 1.05rem;
     }
 
     .page-struktur .org-stat-label {
@@ -1792,12 +1937,12 @@
     }
 
     .page-struktur .org-node-content {
-        padding: 12px;
+        padding: 10px;
         gap: 6px;
     }
 
     .page-struktur .org-node-name {
-        font-size: 0.95rem;
+        font-size: 0.88rem;
     }
 
     .page-struktur .org-node-meta {
@@ -1815,9 +1960,9 @@
     }
 
     .page-struktur .anggota-card-photo {
-        width: 60px;
-        height: 60px;
-        border-radius: 18px;
+        width: 42px;
+        height: 42px;
+        border-radius: 13px;
     }
 }
 

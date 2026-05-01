@@ -607,6 +607,7 @@
     if (!els.orgChartSvg || !els.bidangGrid) return;
     const svg = els.orgChartSvg;
     svg.innerHTML = '';
+    if (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) return;
     
     // Add dynamic gradient definition
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
