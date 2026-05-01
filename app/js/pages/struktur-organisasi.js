@@ -383,33 +383,21 @@
     const initials = bidang.name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
     const cardAria = `Buka detail ${bidang.name}, ${bidang.members.length} anggota, ${bidang.programs.length} program`;
     const nodeVariant = variant || 'field';
-    if (nodeVariant === 'leader' || nodeVariant === 'core') {
-      return `
-        <button type="button" class="org-node-card org-node-card-circle ${nodeVariant === 'leader' ? 'is-leader' : 'is-core'}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
-          <div class="org-node-circle-media">
-            <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}">
-              <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
-              ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
-            </div>
-          </div>
-          <div class="org-node-content">
-            <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
-            <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
-          </div>
-        </button>
-      `;
-    }
     const normalizedCode = normalizeCode(bidang.code);
     const defaultFocusY = resolveFieldImageFocusY(normalizedCode, false);
+    
     return `
-      <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
+      <button type="button" class="org-node-card org-node-card-${nodeVariant}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
         <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}" data-bidang-code="${escapeHtml(normalizedCode)}" style="--field-focus-y: ${escapeHtml(defaultFocusY)};">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
         </div>
         <div class="org-node-content">
           <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
-          <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
+          <p class="org-node-meta">
+            <span><i class="fas fa-users"></i> ${bidang.members.length}</span>
+            <span><i class="fas fa-briefcase"></i> ${bidang.programs.length}</span>
+          </p>
         </div>
       </button>
     `;
