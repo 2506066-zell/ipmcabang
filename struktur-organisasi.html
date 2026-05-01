@@ -7,17 +7,16 @@
         content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#006400">
     <link rel="manifest" href="/manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="description" content="Struktur Organisasi & Program Kerja - Ikatan Pelajar Muhammadiyah PC Panawuan">
     <title>Struktur Organisasi - IPM Panawuan</title>
     <link rel="icon" href="/ipm%20(2).png">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap">
     <link rel="stylesheet" href="/app/css/style.css?v=12">
-    <link rel="stylesheet" href="/app/css/profile.css">
-    <link rel="stylesheet" href="/app/css/struktur-zen.css?v=20260501-grid-premium">
+    <link rel="stylesheet" href="/app/css/struktur-premium.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
+    <!-- styles moved to styles/style.css -->
+    <link rel="stylesheet" href="/app/css/profile.css"></head>
 
 <body class="page-struktur">
     <div class="loading-overlay" id="loading-overlay">
@@ -64,68 +63,31 @@
     <!-- Main Container -->
     <main class="main-container">
         <section class="org-hero" aria-labelledby="orgHeroTitle">
-            <div class="org-hero-bg-blobs" aria-hidden="true"></div>
-            <div class="org-hero-content">
-                <div class="org-hero-copy">
-                    <p class="org-kicker">PC IPM Panawuan</p>
-                    <h1 class="org-hero-title" id="orgHeroTitle">Struktur Organisasi</h1>
-                    <p class="org-hero-subtitle">Peta kepemimpinan, bidang, anggota, dan program kerja dalam satu ruang yang jelas.</p>
-
-                    <div class="org-hero-stats" aria-label="Ringkasan organisasi">
-                        <article class="org-stat">
-                            <div class="org-stat-icon"><i class="fas fa-layer-group"></i></div>
-                            <div class="org-stat-info">
-                                <span class="org-stat-value" id="heroTotalBidang">0</span>
-                                <span class="org-stat-label">Bidang</span>
-                            </div>
-                        </article>
-                        <article class="org-stat">
-                            <div class="org-stat-icon"><i class="fas fa-users"></i></div>
-                            <div class="org-stat-info">
-                                <span class="org-stat-value" id="heroTotalAnggota">0</span>
-                                <span class="org-stat-label">Kader</span>
-                            </div>
-                        </article>
-                        <article class="org-stat">
-                            <div class="org-stat-icon"><i class="fas fa-briefcase"></i></div>
-                            <div class="org-stat-info">
-                                <span class="org-stat-value" id="heroTotalProgram">0</span>
-                                <span class="org-stat-label">Program</span>
-                            </div>
-                        </article>
-                    </div>
-                </div>
-                <div class="org-hero-visual" aria-hidden="true">
-                    <div class="org-visual-card org-visual-card-primary">
-                        <span class="org-visual-label">Pimpinan</span>
-                        <strong>Koordinasi Utama</strong>
-                    </div>
-                    <div class="org-visual-line"></div>
-                    <div class="org-visual-grid">
-                        <div class="org-visual-card">
-                            <span class="org-visual-dot"></span>
-                            <strong>Bidang</strong>
-                        </div>
-                        <div class="org-visual-card">
-                            <span class="org-visual-dot"></span>
-                            <strong>Program</strong>
-                        </div>
-                        <div class="org-visual-card">
-                            <span class="org-visual-dot"></span>
-                            <strong>Kader</strong>
-                        </div>
-                    </div>
-                </div>
+            <p class="org-kicker">Struktur Resmi Organisasi</p>
+            <h1 class="org-hero-title" id="orgHeroTitle">Struktur Organisasi</h1>
+            <p class="org-hero-subtitle">Susunan bidang, anggota, dan program kerja</p>
+            <div class="org-hero-stats" aria-label="Ringkasan organisasi">
+                <article class="org-stat">
+                    <span class="org-stat-value" id="heroTotalBidang">0</span>
+                    <span class="org-stat-label">Bidang Aktif</span>
+                </article>
+                <article class="org-stat">
+                    <span class="org-stat-value" id="heroTotalAnggota">0</span>
+                    <span class="org-stat-label">Total Anggota</span>
+                </article>
+                <article class="org-stat">
+                    <span class="org-stat-value" id="heroTotalProgram">0</span>
+                    <span class="org-stat-label">Program Kerja</span>
+                </article>
             </div>
         </section>
 
         <section id="viewBidangGrid" class="org-chart-view" aria-labelledby="orgChartHeading">
             <div class="org-section-head">
-                <h2 id="orgChartHeading">Peta Organisasi</h2>
-                <p>Pilih bidang untuk melihat susunan kader dan program kerja.</p>
+                <h2 id="orgChartHeading">Susunan Bidang</h2>
+                <p>Pilih kartu bidang untuk melihat susunan anggota dan program kerja secara detail.</p>
             </div>
             <div class="org-chart-canvas" id="orgChartCanvas">
-                <svg class="org-chart-svg" id="orgChartSvg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
                 <div class="org-chart-tiers" id="bidangGrid"></div>
             </div>
         </section>
@@ -153,39 +115,15 @@
                     Program Kerja
                 </button>
             </nav>
-            <div class="detail-layout">
-                <div class="detail-main">
-                    <section class="detail-panel active" id="detailPanelAnggota" role="tabpanel"
-                        aria-labelledby="detailSegmentAnggota">
-                        <div id="leadershipSection"></div>
-                        <div id="membersSection"></div>
-                    </section>
-                    <section class="detail-panel" id="detailPanelProgram" role="tabpanel" aria-labelledby="detailSegmentProgram"
-                        hidden>
-                        <div class="program-list" id="programList"></div>
-                    </section>
-                </div>
-                <aside class="detail-sidebar" aria-label="Ringkasan bidang">
-                    <div class="detail-sidebar-card">
-                        <span class="detail-sidebar-kicker">Ringkasan Bidang</span>
-                        <h3 class="detail-sidebar-title" id="detailSidebarTitle">Pilih bidang</h3>
-                        <p class="detail-sidebar-copy" id="detailSidebarDescription">Susunan anggota dan program kerja akan tampil lebih rapi di workspace ini.</p>
-                    </div>
-                    <div class="detail-sidebar-stats">
-                        <article class="detail-sidebar-stat">
-                            <span class="detail-sidebar-stat-label">Anggota</span>
-                            <strong class="detail-sidebar-stat-value" id="detailSidebarMemberCount">0</strong>
-                        </article>
-                        <article class="detail-sidebar-stat">
-                            <span class="detail-sidebar-stat-label">Program</span>
-                            <strong class="detail-sidebar-stat-value" id="detailSidebarProgramCount">0</strong>
-                        </article>
-                    </div>
-                    <div class="detail-sidebar-note" id="detailSidebarNote">
-                        Klik kartu anggota untuk membuka detail singkat tanpa keluar dari halaman ini.
-                    </div>
-                </aside>
-            </div>
+            <section class="detail-panel active" id="detailPanelAnggota" role="tabpanel"
+                aria-labelledby="detailSegmentAnggota">
+                <div id="leadershipSection"></div>
+                <div id="membersSection"></div>
+            </section>
+            <section class="detail-panel" id="detailPanelProgram" role="tabpanel" aria-labelledby="detailSegmentProgram"
+                hidden>
+                <div class="program-list" id="programList"></div>
+            </section>
         </section>
 
         <section class="org-feedback-card" id="orgFeedbackSection" aria-labelledby="orgFeedbackTitle" hidden>
@@ -233,16 +171,19 @@
         </section>
     </main>
 
-    <!-- Detail Anggota Side Panel -->
-    <div class="anggota-detail-overlay" id="anggotaDetailOverlay" aria-hidden="true">
-        <aside class="anggota-detail-card" id="anggotaDetailCard" aria-modal="true" aria-labelledby="anggotaDetailName">
+    <!-- Detail Anggota Modal -->
+    <div class="anggota-detail-overlay" id="anggotaDetailOverlay">
+        <div class="anggota-detail-card" id="anggotaDetailCard">
             <button class="close-btn-modal" id="closeAnggotaDetailBtn" type="button">
                 <i class="fas fa-times"></i>
             </button>
+            <!-- Header dengan Foto -->
             <div class="anggota-detail-header" id="anggotaDetailHeader">
+                <!-- Picture tag will be injected here by JS -->
             </div>
+
+            <!-- Content -->
             <div class="anggota-detail-content" id="anggotaDetailContent">
-                <span class="anggota-detail-kicker">Detail Anggota</span>
                 <div class="anggota-detail-name" id="anggotaDetailName"></div>
                 <div class="anggota-detail-role" id="anggotaDetailRole"></div>
 
@@ -268,7 +209,7 @@
                     </a>
                 </div>
             </div>
-        </aside>
+        </div>
     </div>
 
     <!-- Footer -->
@@ -289,7 +230,7 @@
         </div>
     </footer>
 
-    <script src="/app/js/pages/struktur-organisasi.js?v=8" defer></script>
+    <script src="/app/js/pages/struktur-organisasi.js?v=7" defer></script>
     <script src="/app/js/core/main.js?v=16" defer></script>
     <script src="/app/js/core/install-header.js" defer></script>
     <script src="/app/js/core/profile.js" defer></script>

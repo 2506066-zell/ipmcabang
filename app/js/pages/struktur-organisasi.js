@@ -29,8 +29,7 @@
     bidang: [],
     currentBidangCode: '',
     currentSegment: 'anggota',
-    lastFocusedNode: null,
-    deepLinkHandled: false
+    lastFocusedNode: null
   };
 
   const els = {};
@@ -39,22 +38,11 @@
     return document.getElementById(id);
   }
 
-  const MISSING_IMAGES = new Set([
-    '/images/bidang/umum.jpeg',
-    '/images/bidang/sekretaris.jpg',
-    '/images/bidang/bendahara.jpg',
-    '/images/bidang/kajianDakwah.jpg',
-    '/images/bidang/apresiasiBudaya.jpg',
-    '/images/bidang/advokasi.jpeg'
-  ]);
   function normalizePath(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
     const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\.?\//, '')}`;
-    
-    if (MISSING_IMAGES.has(normalized)) return '';
-    
     if (!normalized.startsWith('/images/')) return normalized;
 
     const hashIndex = normalized.indexOf('#');
@@ -262,74 +250,6 @@
     return state.bidang.find((item) => item.code === state.currentBidangCode) || null;
   }
 
-  function findBidangByProgramId(programId) {
-    const pid = Number(programId || 0);
-    if (!pid) return null;
-    return state.bidang.find((item) => Array.isArray(item.programs) && item.programs.some((program) => Number(program.id) === pid)) || null;
-  }
-
-  function prefillFeedbackForProgram(bidang, program) {
-    if (!program) return;
-    if (els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = false;
-    if (els.orgFeedbackToggleBtn) els.orgFeedbackToggleBtn.setAttribute('aria-expanded', 'true');
-    if (els.orgFeedbackSubject && !String(els.orgFeedbackSubject.value || '').trim()) {
-      els.orgFeedbackSubject.value = `Evaluasi program kerja: ${program.title}`;
-    }
-    if (els.orgFeedbackMessage && !String(els.orgFeedbackMessage.value || '').trim()) {
-      const bidangName = bidang?.name || 'bidang terkait';
-      els.orgFeedbackMessage.value = `Saya ingin memberi masukan untuk program "${program.title}" di ${bidangName}.\n\nYang perlu dikritisi / diperbaiki:\n- \n\nSaran saya:\n- `;
-    }
-    if (els.orgFeedbackMessage && typeof els.orgFeedbackMessage.focus === 'function') {
-      els.orgFeedbackMessage.focus();
-    }
-  }
-
-  function openProgramEngagement(programId, focusMode) {
-    const pid = Number(programId || 0);
-    if (!pid || !els.programList) return;
-    const btnComment = els.programList.querySelector(`.btn-comment[data-program-id="${pid}"]`);
-    if (btnComment) btnComment.click();
-
-    if (focusMode === 'feedback') {
-      const bidang = getCurrentBidang();
-      const program = bidang?.programs?.find((item) => Number(item.id) === pid) || null;
-      prefillFeedbackForProgram(bidang, program);
-      if (els.orgFeedbackSection) els.orgFeedbackSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
-
-    const commentsBox = document.getElementById(`comments-${pid}`);
-    if (commentsBox) {
-      setTimeout(() => {
-        commentsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const input = commentsBox.querySelector('.comment-input');
-        if (input && typeof input.focus === 'function') input.focus();
-      }, 240);
-    }
-  }
-
-  function applyDeepLinkState() {
-    if (state.deepLinkHandled) return;
-    const params = new URLSearchParams(window.location.search || '');
-    const bidangCode = String(params.get('bidang') || '').trim();
-    const focusSegment = String(params.get('segment') || '').trim().toLowerCase();
-    const focusMode = String(params.get('focus') || '').trim().toLowerCase();
-    const programId = Number(params.get('program') || 0);
-
-    let bidang = bidangCode ? state.bidang.find((item) => item.code === bidangCode) : null;
-    if (!bidang && programId) bidang = findBidangByProgramId(programId);
-    if (!bidang) return;
-
-    state.deepLinkHandled = true;
-    showDetail(bidang.code, null);
-    if (focusSegment === 'program' || programId) setDetailSegment('program');
-    if (programId) {
-      setTimeout(() => {
-        openProgramEngagement(programId, focusMode === 'feedback' ? 'feedback' : 'discussion');
-      }, 220);
-    }
-  }
-
   function getStoredUsername() {
     const keys = ['ipmquiz_user_username', 'ipmquiz_admin_username'];
     for (let i = 0; i < keys.length; i += 1) {
@@ -463,27 +383,33 @@
     const initials = bidang.name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
     const cardAria = `Buka detail ${bidang.name}, ${bidang.members.length} anggota, ${bidang.programs.length} program`;
     const nodeVariant = variant || 'field';
+    if (nodeVariant === 'leader' || nodeVariant === 'core') {
+      return `
+        <button type="button" class="org-node-card org-node-card-circle ${nodeVariant === 'leader' ? 'is-leader' : 'is-core'}" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
+          <div class="org-node-circle-media">
+            <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}">
+              <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
+              ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
+            </div>
+          </div>
+          <div class="org-node-content">
+            <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
+            <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
+          </div>
+        </button>
+      `;
+    }
     const normalizedCode = normalizeCode(bidang.code);
     const defaultFocusY = resolveFieldImageFocusY(normalizedCode, false);
-    const variantLabel = nodeVariant === 'leader'
-      ? 'Pimpinan Utama'
-      : nodeVariant === 'core'
-        ? 'Unsur Inti'
-        : 'Bidang Pelaksana';
-
     return `
-      <button type="button" class="org-node-card org-node-card-${nodeVariant}" data-bidang="${escapeHtml(bidang.code)}" data-bidang-code="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
+      <button type="button" class="org-node-card org-node-card-field" data-bidang="${escapeHtml(bidang.code)}" aria-label="${escapeHtml(cardAria)}">
         <div class="org-node-media${bidang.image_url ? ' is-loading' : ' no-image'}" data-bidang-code="${escapeHtml(normalizedCode)}" style="--field-focus-y: ${escapeHtml(defaultFocusY)};">
           <div class="org-node-fallback">${escapeHtml(initials || 'IPM')}</div>
           ${bidang.image_url ? `<img data-src="${escapeHtml(bidang.image_url)}" alt="${escapeHtml(bidang.name)}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">` : ''}
         </div>
         <div class="org-node-content">
-          <span class="org-node-eyebrow">${escapeHtml(variantLabel)}</span>
           <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
-          <p class="org-node-meta">
-            <span><i class="fas fa-user-group" aria-hidden="true"></i>${bidang.members.length} Anggota</span>
-            <span><i class="fas fa-briefcase" aria-hidden="true"></i>${bidang.programs.length} Program</span>
-          </p>
+          <p class="org-node-meta">${bidang.members.length} anggota &#8226; ${bidang.programs.length} program</p>
         </div>
       </button>
     `;
@@ -508,27 +434,31 @@
     const topNode = tiers.top[0] || null;
     const coreNodes = tiers.core;
     const fieldNodes = tiers.fields;
+    const hasTopAndCore = Boolean(topNode && coreNodes.length);
+    const hasCoreAndFields = Boolean(coreNodes.length && fieldNodes.length);
 
     els.bidangGrid.innerHTML = `
       <div class="org-structure-premium">
         ${topNode ? `
-          <section class="org-leadership-stage" id="stage-leadership">
+          <section class="org-leadership-stage">
             ${renderStageLabel('Pimpinan Utama', 'Pengarah gerak organisasi')}
             <div class="org-leadership-track">
               ${createNodeCard(topNode, 'leader')}
             </div>
           </section>
         ` : ''}
+        ${hasTopAndCore ? '<div class="org-stage-connector is-top-core" aria-hidden="true"></div>' : ''}
         ${coreNodes.length ? `
-          <section class="org-core-stage" id="stage-core">
+          <section class="org-core-stage">
             ${renderStageLabel('Unsur Inti', 'Koordinasi utama organisasi')}
             <div class="org-core-track">
               ${coreNodes.map((item) => createNodeCard(item, 'core')).join('')}
             </div>
           </section>
         ` : ''}
+        ${hasCoreAndFields ? '<div class="org-stage-connector is-core-fields" aria-hidden="true"></div>' : ''}
         ${fieldNodes.length ? `
-          <section class="org-field-stage" id="stage-fields">
+          <section class="org-field-stage">
             ${renderStageLabel('Bidang Pelaksana', 'Eksekusi program dan layanan kader')}
             <div class="org-field-grid">
               ${fieldNodes.map((item) => createNodeCard(item, 'field')).join('')}
@@ -537,141 +467,8 @@
         ` : ''}
       </div>
     `;
-    
-    const revealCards = document.querySelectorAll('.org-node-card');
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('reveal-active');
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-      revealCards.forEach(c => observer.observe(c));
-    } else {
-      revealCards.forEach((card) => card.classList.add('reveal-active'));
-    }
-
-    requestAnimationFrame(() => {
-      revealCards.forEach((card, index) => {
-        card.style.transitionDelay = `${Math.min(index * 55, 440)}ms`;
-      });
-    });
-
     setupLazyLoading();
-    setupPathInteractions();
-    setTimeout(drawConnections, 300);
-    setupHeroStats();
   }
-
-  function setupHeroStats() {
-    const sections = {
-      heroTotalBidang: 'stage-fields',
-      heroTotalAnggota: 'stage-leadership',
-      heroTotalProgram: 'stage-fields'
-    };
-    Object.entries(sections).forEach(([id, targetId]) => {
-      const el = byId(id)?.closest('.org-stat');
-      if (el) {
-        el.style.cursor = 'pointer';
-        el.addEventListener('click', () => {
-          const target = byId(targetId);
-          if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Add a temporary highlight
-            target.classList.add('section-highlight');
-            setTimeout(() => target.classList.remove('section-highlight'), 2000);
-          }
-        });
-      }
-    });
-  }
-
-  function setupPathInteractions() {
-    document.querySelectorAll('.org-node-card').forEach(card => {
-      card.addEventListener('mouseenter', () => {
-        const code = card.dataset.bidangCode || card.dataset.bidang;
-        if (!code) return;
-        document.querySelectorAll(`.org-connection-path[data-from="${code}"], .org-connection-path[data-to="${code}"]`)
-          .forEach(p => p.classList.add('is-highlighted'));
-      });
-      card.addEventListener('mouseleave', () => {
-        document.querySelectorAll('.org-connection-path.is-highlighted')
-          .forEach(p => p.classList.remove('is-highlighted'));
-      });
-    });
-  }
-
-  function drawConnections() {
-    if (!els.orgChartSvg || !els.bidangGrid) return;
-    const svg = els.orgChartSvg;
-    svg.innerHTML = '';
-    if (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) return;
-    
-    // Add dynamic gradient definition
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    defs.innerHTML = `
-        <linearGradient id="flowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="var(--zen-primary)" stop-opacity="0.1" />
-            <stop offset="50%" stop-color="var(--zen-primary)" stop-opacity="1" />
-            <stop offset="100%" stop-color="var(--zen-primary)" stop-opacity="0.1" />
-        </linearGradient>
-    `;
-    svg.appendChild(defs);
-
-    const containerRect = els.bidangGrid.getBoundingClientRect();
-    svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
-
-    const getBottomCenter = (el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - containerRect.left, y: r.bottom - containerRect.top };
-    };
-
-    const getTopCenter = (el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - containerRect.left, y: r.top - containerRect.top };
-    };
-
-    const drawPath = (start, end, fromId, toId) => {
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const midY = (start.y + end.y) / 2;
-        const d = `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`;
-        path.setAttribute('d', d);
-        path.setAttribute('class', 'org-connection-path');
-        // Let CSS handle the stroke, or override here if we want the gradient on all:
-        // path.style.stroke = 'url(#flowGrad)'; 
-        if (fromId) path.setAttribute('data-from', fromId);
-        if (toId) path.setAttribute('data-to', toId);
-        svg.appendChild(path);
-    };
-
-    const leadership = document.getElementById('stage-leadership')?.querySelector('.org-node-card');
-    const coreCards = Array.from(document.getElementById('stage-core')?.querySelectorAll('.org-node-card') || []);
-    const fieldCards = Array.from(document.getElementById('stage-fields')?.querySelectorAll('.org-node-card') || []);
-
-    if (leadership && coreCards.length) {
-        const start = getBottomCenter(leadership);
-        const fromId = leadership.dataset.bidangCode || leadership.dataset.bidang;
-        coreCards.forEach(card => {
-            drawPath(start, getTopCenter(card), fromId, card.dataset.bidangCode || card.dataset.bidang);
-        });
-    }
-
-    if (coreCards.length && fieldCards.length) {
-        fieldCards.forEach(field => {
-            const end = getTopCenter(field);
-            const midCore = coreCards[Math.floor(coreCards.length / 2)];
-            if (midCore) {
-                drawPath(getBottomCenter(midCore), end, midCore.dataset.bidangCode || midCore.dataset.bidang, field.dataset.bidangCode || field.dataset.bidang);
-            }
-        });
-    }
-  }
-
-  window.addEventListener('resize', () => {
-    if (state.bidang.length) drawConnections();
-  });
 
   function splitMembersByHierarchy(members) {
     const sorted = [...members].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
@@ -701,20 +498,22 @@
   function renderMemberNode(member, variant) {
     const safeName = escapeHtml(member.full_name || 'Anggota');
     const safeRole = escapeHtml(member.role_title || 'Anggota');
+    const safeQuote = escapeHtml(member.quote || 'Siap berkontribusi untuk bidang ini.');
     const initials = member.full_name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').toUpperCase().slice(0, 3);
     const photoMarkup = member.photo_url
       ? `<img data-src="${escapeHtml(member.photo_url)}" alt="${safeName}" class="lazy-load" loading="lazy" decoding="async" fetchpriority="low">`
       : '';
-
     return `
-      <article class="anggota-card anggota-card-${variant || 'regular'}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
+      <article class="anggota-card member-ring-node member-ring-node-${escapeHtml(variant)}${variant.startsWith('core') || variant === 'leadership-orbit' ? ' is-leadership' : ''}" data-member-id="${member.id}" tabindex="0" role="button" aria-label="Lihat detail ${safeName}">
         <div class="anggota-card-photo${member.photo_url ? ' is-loading' : ' no-image'}">
           ${photoMarkup}
           <div class="anggota-card-avatar">${escapeHtml(initials || '?')}</div>
         </div>
-        <div class="anggota-card-content">
+        <div class="anggota-card-info">
           <div class="anggota-card-name">${safeName}</div>
           <div class="anggota-card-role">${safeRole}</div>
+          <div class="anggota-card-quote">${safeQuote}</div>
+          <div class="anggota-card-indicator"><i class="fas fa-chevron-right"></i></div>
         </div>
       </article>
     `;
@@ -805,62 +604,42 @@
     bidang.programs.forEach((program) => {
       const card = document.createElement('article');
       const statusText = program.status === 'terlaksana' ? 'Terlaksana' : (program.status === 'rencana' ? 'Rencana' : 'Draft');
-      const progress = Math.min(100, Math.max(0, Number(program.progress_percent || 0)));
       card.className = 'program-card';
+      card.style.setProperty('--color-bidang', bidang.color || '#4A7C5D');
       
       const pBar = `
-        <div class="program-progress-wrapper">
-          <div class="program-progress-header">
-            <span class="progress-label">${progress}% Kemajuan</span>
-            <span class="progress-target">Target: ${statusText}</span>
+        <div class="program-progress-wrapper" style="margin-top: 16px;">
+          <div class="program-progress-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:12px; font-weight:600; color:var(--color-bidang, #4A7C5D);">${program.progress_percent}% Kemajuan</span>
+            <span style="font-size:11px; color:#64748b; font-weight:500;">Target: ${statusText}</span>
           </div>
-          <div class="program-progress-track">
-            <div class="program-progress-fill" style="width: ${progress}%;"></div>
+          <div class="program-progress-track" style="background:#e2e8f0; height:8px; border-radius:10px; overflow:hidden; position:relative;">
+            <div class="program-progress-fill" style="background:var(--color-bidang, #4A7C5D); height:100%; width: ${program.progress_percent}%; transition:width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+                <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 2s infinite;"></div>
+            </div>
           </div>
         </div>
       `;
 
       card.innerHTML = `
         <div class="program-card-head">
-          <div class="program-card-titleblock">
-            <span class="program-card-kicker">Program Kerja</span>
-            <div class="program-card-name">${escapeHtml(program.title || 'Program')}</div>
-          </div>
-          <span class="program-card-status status-${escapeHtml(program.status)}">${statusText}</span>
+          <div class="program-card-name" style="font-weight:700; font-size:16px; line-height:1.4;">${escapeHtml(program.title || 'Program')}</div>
+          <span class="program-card-status status-${escapeHtml(program.status)}" style="padding: 4px 10px; border-radius: 20px; font-size:11px; font-weight:600; letter-spacing:0.02em;">${statusText}</span>
         </div>
         ${pBar}
-        <div class="program-card-desc">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
-        <div class="program-card-actions">
-           <button type="button" class="btn btn-secondary btn-sm btn-upvote" data-program-id="${program.id}">
-              <i class="fas fa-thumbs-up"></i> <span class="upvt-count">${program.upvote_count}</span> <span class="btn-lbl">Dukung</span>
+        <div class="program-card-desc" style="margin-top:12px; font-size:14px; color:#475569; line-height:1.6;">${escapeHtml(program.description || 'Deskripsi program akan ditambahkan oleh admin.')}</div>
+        <div class="program-card-actions" style="display:flex; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid #f1f5f9;">
+           <button type="button" class="btn btn-secondary btn-sm btn-upvote" data-program-id="${program.id}" style="border-radius:12px; background: #fff; border: 1px solid #e2e8f0; font-weight:600;">
+              <i class="fas fa-thumbs-up" style="margin-right:6px;"></i> <span class="upvt-count">${program.upvote_count}</span> <span class="btn-lbl">Dukung</span>
            </button>
-           <button type="button" class="btn btn-secondary btn-sm btn-comment" data-program-id="${program.id}">
-              <i class="fas fa-comments"></i> Ruang Diskusi
+           <button type="button" class="btn btn-secondary btn-sm btn-comment" data-program-id="${program.id}" style="border-radius:12px; background: #fff; border: 1px solid #e2e8f0; font-weight:600;">
+              <i class="fas fa-comments" style="margin-right:6px;"></i> Ruang Diskusi
            </button>
         </div>
-        <div class="program-comment-section hidden" id="comments-${program.id}"></div>
+        <div class="program-comment-section hidden" id="comments-${program.id}" style="background:#f8fafc; border-radius:12px; padding:16px; margin-top:16px; border: 1px solid #f1f5f9;"></div>
       `;
       els.programList.appendChild(card);
     });
-  }
-
-  function updateDetailSidebar(bidang) {
-    if (!bidang) return;
-    const leadershipCount = (bidang.members || []).filter((member) => isLeadershipRole(member.role_title)).length;
-    const hasPrograms = Array.isArray(bidang.programs) && bidang.programs.length > 0;
-    if (els.detailSidebarTitle) els.detailSidebarTitle.textContent = bidang.name;
-    if (els.detailSidebarDescription) {
-      els.detailSidebarDescription.textContent = hasPrograms
-        ? 'Lihat susunan kader dan arah kerja bidang tanpa kehilangan konteks halaman.'
-        : 'Susunan kader bidang ini sudah tersedia. Program kerja masih bisa ditambahkan dari panel admin.';
-    }
-    if (els.detailSidebarMemberCount) els.detailSidebarMemberCount.textContent = String((bidang.members || []).length);
-    if (els.detailSidebarProgramCount) els.detailSidebarProgramCount.textContent = String((bidang.programs || []).length);
-    if (els.detailSidebarNote) {
-      els.detailSidebarNote.textContent = leadershipCount > 0
-        ? `${leadershipCount} posisi inti terdeteksi. Klik kartu kader untuk membuka detail singkat di panel samping.`
-        : 'Klik kartu kader untuk membuka detail singkat di panel samping tanpa menutup halaman ini.';
-    }
   }
 
   function setDetailSegment(segment) {
@@ -888,63 +667,29 @@
   function showDetail(bidangCode, triggerEl) {
     const bidang = state.bidang.find((item) => item.code === bidangCode);
     if (!bidang) return;
-    
-    state.savedScrollY = window.scrollY;
-    
     state.currentBidangCode = bidang.code;
     state.lastFocusedNode = triggerEl && typeof triggerEl.focus === 'function' ? triggerEl : document.activeElement;
-    document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
-    if (triggerEl?.classList) triggerEl.classList.add('is-selected');
-    
-    const heroEl = document.querySelector('.org-hero');
-    if (heroEl) heroEl.style.display = 'none';
-    if (els.viewBidangGrid) els.viewBidangGrid.style.display = 'none';
-
-    if (els.viewDetail) {
-        els.viewDetail.classList.remove('animate-in');
-        // Force reflow
-        void els.viewDetail.offsetWidth;
-        els.viewDetail.classList.add('active', 'animate-in');
-    }
-
+    if (els.viewBidangGrid) els.viewBidangGrid.classList.add('hidden');
+    if (els.viewDetail) els.viewDetail.classList.add('active');
     if (els.detailBidangTitle) els.detailBidangTitle.textContent = bidang.name;
     if (els.detailMemberCount) els.detailMemberCount.textContent = `${bidang.members.length} anggota`;
     if (els.detailProgramCount) els.detailProgramCount.textContent = `${bidang.programs.length} program`;
-    updateDetailSidebar(bidang);
     renderDetailMembers(bidang);
     renderPrograms(bidang);
     setDetailSegment('anggota');
-
-    if (els.viewDetail) {
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-        if (els.detailBidangTitle) els.detailBidangTitle.focus();
-      }, 10);
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (els.detailBidangTitle) setTimeout(() => els.detailBidangTitle.focus(), 60);
   }
 
   function backToBidang() {
-    if (els.viewDetail) {
-        els.viewDetail.classList.remove('animate-in');
-        els.viewDetail.classList.remove('active');
-    }
-    document.querySelectorAll('.org-node-card.is-selected').forEach((card) => card.classList.remove('is-selected'));
+    if (els.viewDetail) els.viewDetail.classList.remove('active');
+    if (els.viewBidangGrid) els.viewBidangGrid.classList.remove('hidden');
     state.currentBidangCode = '';
     state.currentSegment = 'anggota';
     toggleFeedbackVisibility();
-    
-    const heroEl = document.querySelector('.org-hero');
-    if (heroEl) heroEl.style.display = '';
-    if (els.viewBidangGrid) els.viewBidangGrid.style.display = '';
-    
-    if (typeof state.savedScrollY === 'number') {
-        window.scrollTo({ top: state.savedScrollY, behavior: 'instant' });
-    }
-    
-    if (state.lastFocusedNode) {
-        setTimeout(() => {
-            if (typeof state.lastFocusedNode.focus === 'function') state.lastFocusedNode.focus();
-        }, 50);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (state.lastFocusedNode && typeof state.lastFocusedNode.focus === 'function') {
+      setTimeout(() => state.lastFocusedNode.focus(), 40);
     }
   }
 
@@ -953,10 +698,7 @@
     const detailOpen = els.viewDetail.classList.contains('active');
     const show = detailOpen && state.currentSegment === 'program';
     els.orgFeedbackSection.hidden = !show;
-    if (!show && els.orgFeedbackPanel) {
-      els.orgFeedbackPanel.hidden = true;
-      if (els.orgFeedbackToggleBtn) els.orgFeedbackToggleBtn.setAttribute('aria-expanded', 'false');
-    }
+    if (!show && els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = true;
   }
 
   async function submitFeedback(event) {
@@ -1048,17 +790,12 @@
       els.anggotaDetailInstagram.style.display = 'none';
     }
     els.anggotaDetailOverlay.classList.add('active');
-    els.anggotaDetailOverlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    if (els.closeAnggotaDetailBtn) {
-      setTimeout(() => els.closeAnggotaDetailBtn.focus(), 30);
-    }
   }
 
   function closeAnggotaDetail() {
     if (!els.anggotaDetailOverlay) return;
     els.anggotaDetailOverlay.classList.remove('active');
-    els.anggotaDetailOverlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
 
@@ -1066,60 +803,216 @@
     if (els.backToGridBtn) els.backToGridBtn.addEventListener('click', backToBidang);
     if (els.detailSegmentAnggota) els.detailSegmentAnggota.addEventListener('click', () => setDetailSegment('anggota'));
     if (els.detailSegmentProgram) els.detailSegmentProgram.addEventListener('click', () => setDetailSegment('program'));
-    if (els.closeAnggotaDetailBtn) els.closeAnggotaDetailBtn.addEventListener('click', closeAnggotaDetail);
-    if (els.anggotaDetailOverlay) {
-      els.anggotaDetailOverlay.addEventListener('click', (event) => {
-        if (event.target === els.anggotaDetailOverlay) closeAnggotaDetail();
-      });
-    }
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) {
-        closeAnggotaDetail();
-      }
-    });
-    if (els.orgFeedbackForm) els.orgFeedbackForm.addEventListener('submit', submitFeedback);
     if (els.orgFeedbackToggleBtn) {
       els.orgFeedbackToggleBtn.addEventListener('click', () => {
-        const expanded = els.orgFeedbackToggleBtn.getAttribute('aria-expanded') === 'true';
-        els.orgFeedbackToggleBtn.setAttribute('aria-expanded', String(!expanded));
-        if (els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = expanded;
+        const isOpen = String(els.orgFeedbackToggleBtn.getAttribute('aria-expanded')) === 'true';
+        if (els.orgFeedbackPanel) els.orgFeedbackPanel.hidden = isOpen;
+        els.orgFeedbackToggleBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
       });
     }
-
+    if (els.orgFeedbackForm) els.orgFeedbackForm.addEventListener('submit', submitFeedback);
     if (els.bidangGrid) {
-      els.bidangGrid.addEventListener('click', (e) => {
-        const card = e.target.closest('.org-node-card');
-        if (card) {
-          const code = card.dataset.bidang || card.dataset.bidangCode;
-          if (code) showDetail(code, card);
+      els.bidangGrid.addEventListener('click', (event) => {
+        const card = event.target.closest('.org-node-card[data-bidang]');
+        if (!card) return;
+        showDetail(String(card.getAttribute('data-bidang') || '').trim(), card);
+      });
+      els.bidangGrid.addEventListener('keydown', (event) => {
+        const card = event.target.closest('.org-node-card[data-bidang]');
+        if (!card) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          showDetail(String(card.getAttribute('data-bidang') || '').trim(), card);
         }
       });
     }
+
+    if (els.programList) {
+        els.programList.addEventListener('click', async (e) => {
+            const btnUpvote = e.target.closest('.btn-upvote');
+            if (btnUpvote) {
+                const pid = Number(btnUpvote.dataset.programId);
+                let authHeaders = {};
+                try {
+                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session');
+                    if (token) authHeaders['Authorization'] = 'Bearer ' + token;
+                } catch(e){}
+                
+                btnUpvote.classList.add('loading');
+                try {
+                   const res = await fetch('/api/organization?action=toggleUpvote', {
+                      method: 'POST', body: JSON.stringify({program_id: pid}),
+                      headers: {'Content-Type': 'application/json', ...authHeaders}
+                   });
+                   const data = await res.json();
+                   if (data.status === 'success') {
+                      btnUpvote.querySelector('.upvt-count').textContent = data.upvote_count;
+                      if (data.upvoted) {
+                          btnUpvote.style.color = '#3b82f6';
+                          btnUpvote.style.borderColor = '#3b82f6';
+                          btnUpvote.style.background = '#eff6ff';
+                          btnUpvote.querySelector('.btn-lbl').textContent = 'Didukung';
+                      } else {
+                          btnUpvote.style.color = '';
+                          btnUpvote.style.borderColor = '';
+                          btnUpvote.style.background = '';
+                          btnUpvote.querySelector('.btn-lbl').textContent = 'Dukung';
+                      }
+                   } else {
+                      alert(data.message || 'Gagal update dukungan. Pastikan Anda sudah login.');
+                   }
+                } catch(err){ alert('Silakan login terlebih dahulu untuk mendukung program.') }
+                btnUpvote.classList.remove('loading');
+            }
+
+            const btnComment = e.target.closest('.btn-comment');
+            if (btnComment) {
+                const pid = Number(btnComment.dataset.programId);
+                const cSec = document.getElementById('comments-'+pid);
+                if (cSec.classList.contains('hidden')) {
+                    cSec.classList.remove('hidden');
+                    cSec.innerHTML = '<div class="loading-dots" style="padding:10px; text-align:center;"><i class="fas fa-circle-notch fa-spin"></i> Memuat diskusi...</div>';
+                    try {
+                        const res = await fetch('/api/organization?action=getProgramDetails&program_id='+pid);
+                        const data = await res.json();
+                        
+                        // User Context for Moderation
+                        const currentAdmin = sessionStorage.getItem('ipmquiz_admin_username') || localStorage.getItem('ipmquiz_admin_username');
+
+                        if (data.status === 'success') {
+                            let html = '<div class="comments-list" style="max-height:300px; overflow-y:auto; margin-bottom:16px;">';
+                            if (!data.comments || !data.comments.length) {
+                                html += `<div class="empty-comments" id="no-cmt-${pid}" style="text-align:center; padding:20px 0; color:#94a3b8;">
+                                    <i class="fas fa-comments" style="font-size:24px; display:block; margin-bottom:8px; opacity:0.3;"></i>
+                                    <span style="font-size:13px;">Belum ada diskusi. Yuk, berikan masukan atau pertanyaan!</span>
+                                </div>`;
+                            } else {
+                                data.comments.forEach(c => {
+                                    const isAdminMark = c.role === 'admin' ? '<span style="background:#3b82f6; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:6px;">ADMIN</span>' : '';
+                                    const canDelete = currentAdmin ? `<button class="btn-delete-comment" data-comment-id="${c.id}" style="color:#ef4444; border:none; background:transparent; font-size:11px; cursor:pointer;"><i class="fas fa-trash"></i></button>` : '';
+                                    
+                                    html += `
+                                    <div class="comment-item" style="padding:12px 0; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <div style="flex-grow:1;">
+                                            <div style="display:flex; align-items:center; margin-bottom:4px;">
+                                                <strong style="font-size:13px; color:#1e293b;">${escapeHtml(c.nama_panjang || c.username)}</strong>
+                                                ${isAdminMark}
+                                            </div>
+                                            <div style="font-size:13px; color:#475569; line-height:1.5;">${escapeHtml(c.content)}</div>
+                                        </div>
+                                        ${canDelete}
+                                    </div>`;
+                                });
+                            }
+                            html += '</div>';
+                            html += `
+                              <form class="program-comment-form" style="display:flex; gap:8px;" data-program-id="${pid}">
+                                 <input type="text" class="comment-input" placeholder="Tulis masukan..." required style="flex-grow:1; font-size:13px; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0; outline:none; transition:border 0.2s;">
+                                 <button type="submit" class="btn btn-primary" style="padding:0 16px; border-radius:10px; font-weight:600;"><i class="fas fa-paper-plane"></i></button>
+                              </form>
+                            `;
+                            cSec.innerHTML = html;
+                            
+                            // Bind Moderation Actions
+                            cSec.querySelectorAll('.btn-delete-comment').forEach(delBtn => {
+                                delBtn.addEventListener('click', async () => {
+                                    const cid = delBtn.dataset.commentId;
+                                    if(!confirm('Hapus komentar ini?')) return;
+                                    
+                                    try {
+                                        const adminToken = sessionStorage.getItem('ipmquiz_admin_session') || localStorage.getItem('ipmquiz_admin_session');
+                                        const dr = await fetch('/api/organization?action=deleteProgramComment', {
+                                            method: 'POST', body: JSON.stringify({comment_id: cid}),
+                                            headers: {'Content-Type':'application/json', 'Authorization': 'Bearer ' + adminToken}
+                                        });
+                                        const dd = await dr.json();
+                                        if(dd.status === 'success') {
+                                            delBtn.closest('.comment-item').remove();
+                                        } else alert(dd.message);
+                                    } catch(e) { alert('Gagal menghapus komentar.') }
+                                });
+                            });
+
+                            const form = cSec.querySelector('.program-comment-form');
+                            form.addEventListener('submit', async (ev) => {
+                                ev.preventDefault();
+                                const inp = form.querySelector('.comment-input');
+                                const val = inp.value.trim();
+                                if(!val) return;
+                                const sb = form.querySelector('button');
+                                let authHeaders = {};
+                                try {
+                                    const token = sessionStorage.getItem('ipmquiz_user_session') || localStorage.getItem('ipmquiz_user_session') || sessionStorage.getItem('ipmquiz_admin_session') || localStorage.getItem('ipmquiz_admin_session');
+                                    if (token) authHeaders['Authorization'] = 'Bearer ' + token;
+                                } catch(e){}
+
+                                sb.disabled = true;
+                                sb.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                                try {
+                                   const pr = await fetch('/api/organization?action=addProgramComment', {
+                                      method:'POST', body: JSON.stringify({program_id: pid, content: val}),
+                                      headers:{'Content-Type':'application/json', ...authHeaders}
+                                   });
+                                   const pd = await pr.json();
+                                   if(pd.status === 'success') {
+                                       const list = cSec.querySelector('.comments-list');
+                                       const noCmt = document.getElementById('no-cmt-'+pid);
+                                       if (noCmt) noCmt.remove();
+                                       
+                                       const nx = document.createElement('div');
+                                       nx.className = 'comment-item';
+                                       nx.setAttribute('style', 'padding:12px 0; border-bottom:1px solid #f1f5f9; animation: slideIn 0.3s ease-out;');
+                                       nx.innerHTML = `
+                                            <div style="display:flex; align-items:center; margin-bottom:4px;">
+                                                <strong style="font-size:13px; color:#1e293b;">${escapeHtml(pd.comment.nama_panjang || pd.comment.username)}</strong>
+                                                ${pd.comment.role === 'admin' ? '<span style="background:#3b82f6; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:6px;">ADMIN</span>' : ''}
+                                            </div>
+                                            <div style="font-size:13px; color:#475569; line-height:1.5;">${escapeHtml(pd.comment.content)}</div>
+                                       `;
+                                       list.appendChild(nx);
+                                       inp.value = '';
+                                       list.scrollTop = list.scrollHeight;
+                                   } else {
+                                       alert(pd.message || 'Gagal mengirim. Pastikan Anda sudah login.');
+                                   }
+                                } catch(err) { alert('Silakan login terlebih dahulu untuk berkomentar.') }
+                                sb.disabled = false;
+                                sb.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                            });
+                        }
+                    } catch(e){ cSec.innerHTML = '<div class="small" style="color:var(--status-danger); text-align:center; padding:10px;">Gagal memuat diskusi.</div>'; }
+                } else {
+                    cSec.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    if (els.anggotaDetailOverlay) els.anggotaDetailOverlay.addEventListener('click', (event) => { if (event.target === els.anggotaDetailOverlay) closeAnggotaDetail(); });
+    if (els.anggotaDetailCard) els.anggotaDetailCard.addEventListener('click', (event) => event.stopPropagation());
+    if (els.closeAnggotaDetailBtn) els.closeAnggotaDetailBtn.addEventListener('click', closeAnggotaDetail);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && els.anggotaDetailOverlay?.classList.contains('active')) return closeAnggotaDetail();
+      if (event.key === 'Escape' && els.viewDetail?.classList.contains('active')) return backToBidang();
+    });
   }
 
   async function init() {
     els.loadingOverlay = byId('loading-overlay');
+    els.heroTotalBidang = byId('heroTotalBidang');
+    els.heroTotalAnggota = byId('heroTotalAnggota');
+    els.heroTotalProgram = byId('heroTotalProgram');
+    els.bidangGrid = byId('bidangGrid');
     els.viewBidangGrid = byId('viewBidangGrid');
     els.viewDetail = byId('viewDetail');
     els.backToGridBtn = byId('backToGridBtn');
     els.detailBidangTitle = byId('detailBidangTitle');
     els.detailMemberCount = byId('detailMemberCount');
-    els.heroTotalBidang = byId('heroTotalBidang');
-    els.heroTotalAnggota = byId('heroTotalAnggota');
-    els.heroTotalProgram = byId('heroTotalProgram');
-    els.orgChartSvg = byId('orgChartSvg');
-    els.bidangGrid = byId('bidangGrid');
-    
     els.detailProgramCount = byId('detailProgramCount');
     els.detailSegmentAnggota = byId('detailSegmentAnggota');
     els.detailSegmentProgram = byId('detailSegmentProgram');
     els.detailPanelAnggota = byId('detailPanelAnggota');
     els.detailPanelProgram = byId('detailPanelProgram');
-    els.detailSidebarTitle = byId('detailSidebarTitle');
-    els.detailSidebarDescription = byId('detailSidebarDescription');
-    els.detailSidebarMemberCount = byId('detailSidebarMemberCount');
-    els.detailSidebarProgramCount = byId('detailSidebarProgramCount');
-    els.detailSidebarNote = byId('detailSidebarNote');
     els.leadershipSection = byId('leadershipSection');
     els.membersSection = byId('membersSection');
     els.programList = byId('programList');
@@ -1149,7 +1042,6 @@
     renderOrgHeroSummary();
     renderOrgChartTiers();
     toggleFeedbackVisibility();
-    applyDeepLinkState();
     hideLoadingOverlay();
   }
 
