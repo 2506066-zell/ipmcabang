@@ -94,6 +94,19 @@
 }
 
 /* Layouts for Tracks */
+.page-struktur .org-chart-canvas {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 24px; /* Space for scrollbar */
+}
+
+.page-struktur .org-structure-premium {
+    min-width: 900px;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+
 .page-struktur .org-leadership-track,
 .page-struktur .org-core-track {
     display: flex !important;
@@ -500,10 +513,7 @@
     box-shadow: var(--zen-shadow-lg);
 }
 
-/* Desktop enhancements only - layout stays the same on all sizes */
-.page-struktur .main-container {
-    min-width: 900px;
-}
+/* The minimum width is now applied to .org-structure-premium in the canvas instead of .main-container */
 
 .page-struktur .org-hero {
     padding: 60px 40px;
