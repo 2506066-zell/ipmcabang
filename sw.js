@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-v41';
+const STATIC_CACHE = 'static-v42';
 const RUNTIME_CACHE = 'runtime-v3';
 const CDN_CACHE = 'cdn-v2';
 const APP_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
