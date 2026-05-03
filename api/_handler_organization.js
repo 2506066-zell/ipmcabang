@@ -15,6 +15,21 @@ function normalizeMediaPath(value) {
   const raw = String(value || '').trim();
   if (!raw) return '';
   if (raw.endsWith('/')) return '';
+  
+  // Filter out known broken placeholders from old seeds
+  const brokenPlaceholders = [
+    'images/bidang/sekretaris.jpg',
+    'images/bidang/bendahara.jpg',
+    'images/bidang/kajianDakwah.jpg',
+    'images/bidang/apresiasiBudaya.jpg',
+    'images/bidang/umum.jpeg',
+    'images/bidang/pengkajianIlmu.jpeg',
+    'images/bidang/pkd.png',
+    'images/bidang/advokasi.jpeg',
+    'images/bidang/ipmawati.jpeg'
+  ];
+  if (brokenPlaceholders.some(p => raw.includes(p))) return '';
+
   if (/^https?:\/\//i.test(raw)) return raw;
   if (/^data:image\//i.test(raw)) return raw;
   if (raw.startsWith('/data:image')) return raw.substring(1);

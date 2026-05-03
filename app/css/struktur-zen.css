@@ -107,15 +107,110 @@
 }
 
 .page-struktur .org-leadership-track,
+.page-struktur .org-leadership-track,
 .page-struktur .org-core-track {
     display: flex !important;
-    flex-wrap: wrap !important;
-    flex-direction: row !important;
     justify-content: center;
-    gap: 16px;
-    width: 100%;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 40px;
 }
 
+/* Premium Circle Design */
+.page-struktur .org-node-card-circle {
+    background: transparent;
+    border: none;
+    padding: 0;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.page-struktur .org-node-card-circle:hover {
+    transform: translateY(-8px);
+}
+
+.page-struktur .org-node-circle-media {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    padding: 6px;
+    background: #fff;
+    border: 2px solid rgba(28, 84, 56, 0.15);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.page-struktur .org-node-card-circle.is-leader .org-node-circle-media {
+    width: 190px;
+    height: 190px;
+    border-color: var(--zen-primary);
+    box-shadow: 0 15px 35px rgba(28, 84, 56, 0.15);
+}
+
+.page-struktur .org-node-circle-media img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.page-struktur .org-node-circle-media.no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--zen-primary) 0%, var(--zen-primary-dark) 100%);
+    color: #fff;
+    font-size: 44px;
+    font-weight: 800;
+}
+
+.page-struktur .org-node-card-circle.is-leader .org-node-circle-media.no-image {
+    font-size: 60px;
+}
+
+.page-struktur .org-node-card-circle .org-node-name {
+    font-size: 18px;
+    font-weight: 750;
+    color: var(--zen-slate-900);
+    text-align: center;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.page-struktur .org-node-card-circle .org-node-meta {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--zen-slate-500);
+    display: flex;
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .page-struktur .org-node-circle-media {
+        width: 120px;
+        height: 120px;
+    }
+    .page-struktur .org-node-card-circle.is-leader .org-node-circle-media {
+        width: 160px;
+        height: 160px;
+    }
+    .page-struktur .org-node-card-circle .org-node-name {
+        font-size: 15px;
+    }
+    .page-struktur .org-leadership-track,
+    .page-struktur .org-core-track {
+        gap: 16px;
+    }
+}
+
+
+/* Grid Layouts */
 .page-struktur .org-field-grid {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
@@ -130,24 +225,9 @@
 }
 
 @media (max-width: 640px) {
-    .page-struktur .main-container {
-        padding: 16px 8px 80px !important;
-    }
-
-    .page-struktur .org-structure-premium {
-        padding: 0 !important;
-    }
-
-    .page-struktur .org-leadership-track {
-        flex-direction: column !important;
-        align-items: center;
-    }
-
-    .page-struktur .org-core-track,
     .page-struktur .org-field-grid {
-        display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 8px !important; /* Smaller gap for more space */
+        gap: 12px !important;
     }
     
     .page-struktur .org-node-card {
@@ -160,15 +240,11 @@
         height: auto !important;
     }
 
-    .page-struktur .org-node-name {
-        font-size: 13px;
-        margin-bottom: 2px;
-    }
-
     .page-struktur .org-node-meta {
         font-size: 10px;
         gap: 8px;
     }
+
 
     .page-struktur .member-ring-core,
     .page-struktur .member-ring-core-support,

@@ -355,21 +355,33 @@
     const sorted = [...state.bidang];
     if (!sorted.length) return { top: [], core: [], fields: [] };
 
-    let top = sorted.find((item) => isTopBidang(item)) || sorted[0];
+    // Find the real top node (Ketua Umum)
+    const top = sorted.find((item) => isTopBidang(item)) || sorted[0];
+    const topId = top.id;
 
-    const remain = sorted.filter((item) => item !== top);
-    let core = remain
+    // Remaining items excluding top
+    const remainAfterTop = sorted.filter((item) => item.id !== topId);
+
+    // Identify core (Sekretaris, Bendahara)
+    let core = remainAfterTop
       .filter((item) => isCoreBidang(item))
-      .sort((a, b) => coreBidangPriority(a) - coreBidangPriority(b) || bidangSortPriority(a, b));
-    const fields = remain
-      .filter((item) => !core.includes(item))
+      .sort((a, b) => coreBidangPriority(a) - coreBidangPriority(b));
+    
+    const coreIds = new Set(core.map(c => c.id));
+
+    // Identify fields (The rest)
+    let fields = remainAfterTop
+      .filter((item) => !coreIds.has(item.id))
       .sort((a, b) => bidangSortPriority(a, b));
+
+    // If core is empty, pull from fields to keep the hierarchy visual
     if (!core.length && fields.length >= 2) {
       core = [fields.shift(), fields.shift()];
     } else if (core.length === 1 && fields.length >= 1) {
       core.push(fields.shift());
     }
-    return { top: top ? [top] : [], core, fields };
+    
+    return { top: [top], core, fields };
   }
 
   function renderOrgHeroSummary() {
@@ -379,6 +391,30 @@
     if (els.heroTotalBidang) els.heroTotalBidang.textContent = String(totalBidang);
     if (els.heroTotalAnggota) els.heroTotalAnggota.textContent = String(totalAnggota);
     if (els.heroTotalProgram) els.heroTotalProgram.textContent = String(totalProgram);
+  }
+
+  function createCircleNodeCard(bidang, variant) {
+    const isLeader = variant === 'leader';
+    const photoUrl = normalizePath(bidang.image_url || bidang.image);
+    const initials = (bidang.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 3);
+    const hasImage = !!photoUrl;
+
+    return `
+      <div class="org-node-card-circle ${isLeader ? 'is-leader' : ''}" 
+           onclick="window.viewBidangDetail('${bidang.id}')"
+           style="cursor: pointer;">
+        <div class="org-node-circle-media ${!hasImage ? 'no-image' : ''}">
+          ${hasImage ? `<img src="${photoUrl}" alt="${bidang.name}">` : initials}
+        </div>
+        <div class="org-node-content-mini">
+          <h3 class="org-node-name">${bidang.name}</h3>
+          <div class="org-node-meta">
+            <span><i class="fas fa-users"></i> ${bidang.member_count || 0}</span>
+            <span><i class="fas fa-briefcase"></i> ${bidang.program_count || 0}</span>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function createNodeCard(bidang, variant) {
@@ -433,30 +469,27 @@
           <section class="org-leadership-stage">
             ${renderStageLabel('Pimpinan Utama', 'Pengarah gerak organisasi')}
             <div class="org-leadership-track">
-              ${createNodeCard(topNode, 'leader')}
+              ${createCircleNodeCard(topNode, 'leader')}
             </div>
           </section>
         ` : ''}
-        ${hasTopAndCore ? '<div class="org-stage-connector is-top-core" aria-hidden="true"></div>' : ''}
-        ${coreNodes.length ? `
-          <section class="org-core-stage">
-            ${renderStageLabel('Unsur Inti', 'Koordinasi utama organisasi')}
-            <div class="org-core-track">
-              ${coreNodes.map((item) => createNodeCard(item, 'core')).join('')}
-            </div>
-          </section>
-        ` : ''}
-        ${hasCoreAndFields ? '<div class="org-stage-connector is-core-fields" aria-hidden="true"></div>' : ''}
-        ${fieldNodes.length ? `
-          <section class="org-field-stage">
-            ${renderStageLabel('Bidang Pelaksana', 'Eksekusi program dan layanan kader')}
-            <div class="org-field-grid">
-              ${fieldNodes.map((item) => createNodeCard(item, 'field')).join('')}
-            </div>
-          </section>
-        ` : ''}
+
+        <section class="org-core-stage">
+          ${renderStageLabel('Pimpinan Inti', 'Pelaksana manajemen harian')}
+          <div class="org-core-track">
+            ${coreNodes.map((item) => createCircleNodeCard(item, 'core')).join('')}
+          </div>
+        </section>
+
+        <section class="org-field-stage">
+          ${renderStageLabel('Bidang Pelaksana', 'Pengembang program kerja')}
+          <div class="org-field-grid">
+            ${fieldNodes.map((item) => createNodeCard(item, 'field')).join('')}
+          </div>
+        </section>
       </div>
     `;
+
     setupLazyLoading();
   }
 
