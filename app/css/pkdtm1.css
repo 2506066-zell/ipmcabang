@@ -451,61 +451,54 @@
 }
 
 /* ============================================
-   HELP TOGGLE BUTTON
+   HERO & HELP MINIMALIST
    ============================================ */
-.pk-help-trigger-wrapper {
-    margin: 0 0 16px;
+.pk-hero-top {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
-.pk-btn-help {
-    background: #fff;
+.pk-btn-help-minimal {
+    background: var(--pk-surface-soft);
     border: 1px solid var(--pk-border);
-    padding: 8px 16px;
-    border-radius: 999px;
+    padding: 4px 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--pk-text-primary);
-    cursor: pointer;
-    box-shadow: var(--pk-shadow-sm);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.pk-btn-help i:first-child {
-    color: var(--pk-accent);
-    font-size: 1.1rem;
-}
-.pk-btn-help .toggle-icon {
+    gap: 6px;
     font-size: 0.75rem;
-    color: var(--pk-muted);
-    transition: transform 0.3s;
+    font-weight: 700;
+    color: var(--pk-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
-.pk-btn-help:hover {
-    transform: translateY(-2px);
+.pk-btn-help-minimal i {
+    color: var(--pk-accent);
+    font-size: 0.85rem;
+}
+.pk-btn-help-minimal:hover {
+    background: #fff;
     border-color: var(--pk-accent);
-    box-shadow: 0 8px 20px rgba(45, 122, 79, 0.12);
+    color: var(--pk-accent-strong);
+    transform: translateY(-1px);
 }
-.pk-btn-help.is-active {
-    background: var(--pk-accent-soft);
-    border-color: var(--pk-accent);
+.pk-btn-help-minimal.is-active {
+    background: var(--pk-accent);
+    color: #fff;
+    border-color: var(--pk-accent-strong);
 }
-.pk-btn-help.is-active .toggle-icon {
-    transform: rotate(180deg);
-}
+.pk-btn-help-minimal.is-active i { color: #fff; }
 
 .pk-help-section {
-    margin-top: 0;
+    margin-top: 10px;
     margin-bottom: 20px;
-    border-top: none;
-    border-left: 4px solid var(--pk-accent);
+    border-left: 3px solid var(--pk-accent);
     animation: pk-slide-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes pk-slide-down {
-    from { opacity: 0; transform: translateY(-10px); }
+    from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
