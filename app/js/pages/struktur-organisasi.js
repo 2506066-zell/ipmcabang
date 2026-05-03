@@ -363,33 +363,36 @@
     const sorted = [...state.bidang];
     if (!sorted.length) return { top: [], core: [], fields: [] };
 
-    // Find the real top node (Ketua Umum)
-    const top = sorted.find((item) => isTopBidang(item)) || sorted[0];
-    const topId = top.id;
+    // 1. Identify Top (Ketua Umum)
+    const topNode = sorted.find((item) => isTopBidang(item)) || sorted[0];
+    const topId = topNode.id;
 
-    // Remaining items excluding top
-    const remainAfterTop = sorted.filter((item) => item.id !== topId);
-
-    // Identify core (Sekretaris, Bendahara)
-    let core = remainAfterTop
-      .filter((item) => isCoreBidang(item))
+    // 2. Identify Core (Sekretaris, Bendahara)
+    // We exclude the topId to ensure no duplication
+    let core = sorted
+      .filter((item) => item.id !== topId && isCoreBidang(item))
       .sort((a, b) => coreBidangPriority(a) - coreBidangPriority(b));
     
     const coreIds = new Set(core.map(c => c.id));
 
-    // Identify fields (The rest)
-    let fields = remainAfterTop
-      .filter((item) => !coreIds.has(item.id))
+    // 3. Identify Fields (Everything else)
+    // We must exclude both top and core
+    let fields = sorted
+      .filter((item) => item.id !== topId && !coreIds.has(item.id))
       .sort((a, b) => bidangSortPriority(a, b));
 
-    // If core is empty, pull from fields to keep the hierarchy visual
+    // Special case: If there are redundant "Ketua Umum" or "Sekretaris" entries 
+    // in the fields (due to data inconsistency), filter them out by name/code too.
+    fields = fields.filter(item => !isTopBidang(item) && !isCoreBidang(item));
+
+    // Visual fallback: If core is empty, pull from fields to maintain hierarchy look
     if (!core.length && fields.length >= 2) {
       core = [fields.shift(), fields.shift()];
     } else if (core.length === 1 && fields.length >= 1) {
       core.push(fields.shift());
     }
     
-    return { top: [top], core, fields };
+    return { top: [topNode], core, fields };
   }
 
   function renderOrgHeroSummary() {
