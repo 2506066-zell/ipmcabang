@@ -130,24 +130,36 @@
 }
 
 @media (max-width: 640px) {
-    .page-struktur .org-leadership-track,
-    .page-struktur .org-core-track {
+    .page-struktur .org-leadership-track {
         flex-direction: column !important;
         align-items: center;
     }
-    
+
+    .page-struktur .org-core-track,
     .page-struktur .org-field-grid {
-        grid-template-columns: 1fr !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
     }
     
     .page-struktur .org-node-card {
         width: 100%;
-        max-width: 400px;
+        max-width: none;
     }
 
     .page-struktur .org-node-media {
-        aspect-ratio: 16 / 10;
+        aspect-ratio: 1 / 1;
         height: auto !important;
+    }
+
+    .page-struktur .org-node-name {
+        font-size: 13px;
+        margin-bottom: 2px;
+    }
+
+    .page-struktur .org-node-meta {
+        font-size: 10px;
+        gap: 8px;
     }
 
     .page-struktur .member-ring-core,

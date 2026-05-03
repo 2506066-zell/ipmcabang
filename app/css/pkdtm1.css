@@ -360,5 +360,95 @@
     .pk-phase-connector span { width: 14px; }
 }
 
+/* ============================================
+   HELP & FAQ SECTION
+   ============================================ */
+.pk-help-section {
+    margin-top: 10px;
+    border-top: 4px solid var(--pk-accent);
+}
+.pk-help-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.pk-help-header i {
+    font-size: 1.8rem;
+    color: var(--pk-accent);
+}
+.pk-help-header h3 {
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+}
+.pk-help-header p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--pk-muted);
+}
+.pk-help-alert {
+    background: var(--pk-accent-soft);
+    border: 1px solid rgba(45, 122, 79, 0.1);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+.pk-help-alert i {
+    margin-top: 3px;
+    color: var(--pk-accent);
+    font-size: 1rem;
+}
+.pk-help-alert p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--pk-accent-strong);
+}
+.pk-faq-list {
+    display: grid;
+    gap: 8px;
+}
+.pk-faq-item {
+    border: 1px solid var(--pk-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 200ms ease;
+}
+.pk-faq-item[open] {
+    border-color: var(--pk-accent-strong);
+    background: #fff;
+}
+.pk-faq-item summary {
+    padding: 12px 14px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pk-faq-item summary::after {
+    content: '\f078';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.75rem;
+    transition: transform 200ms;
+}
+.pk-faq-item[open] summary::after {
+    transform: rotate(180deg);
+}
+.pk-faq-answer {
+    padding: 0 14px 14px;
+    font-size: 0.85rem;
+    color: var(--pk-text-secondary);
+    line-height: 1.5;
+}
+
 /* === Hidden === */
 .pk-hidden { display: none !important; }
