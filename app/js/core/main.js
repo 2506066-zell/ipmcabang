@@ -1388,7 +1388,7 @@ document.addEventListener('DOMContentLoaded', () => {
 (() => {
     const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
     const isProd = !isLocalhost && location.protocol === 'https:';
-    const SW_VERSION = '42';
+    const SW_VERSION = '43';
     const SW_URL = `/sw.js?v=${SW_VERSION}`;
 
     if (isProd && 'serviceWorker' in navigator) {

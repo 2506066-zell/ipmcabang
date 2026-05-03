@@ -1054,10 +1054,24 @@
 }
 
 .page-struktur .member-ring-core,
-.page-struktur .member-ring-core-support {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+.page-struktur .member-ring-core-support,
+.page-struktur .member-ring-orbit {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
+}
+
+.page-struktur .anggota-card {
+    width: 100%;
+}
+
+@media (min-width: 769px) {
+    .page-struktur .member-ring-core,
+    .page-struktur .member-ring-core-support,
+    .page-struktur .member-ring-orbit {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .page-struktur .member-ring-core > .anggota-card-core-primary {
