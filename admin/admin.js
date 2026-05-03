@@ -2900,9 +2900,10 @@
                         if (window.Toast) Toast.show('Notifikasi dijadwalkan', 'success');
                         loadNotifySchedules();
                     } else {
-                        await apiAdminVercel('POST', '/api/admin/questions?action=broadcastNotification', payload);
-                        if (els.notifyStatus) els.notifyStatus.textContent = 'Notifikasi berhasil dikirim.';
-                        if (window.Toast) Toast.show('Notifikasi terkirim', 'success');
+                        const data = await apiAdminVercel('POST', '/api/admin/questions?action=broadcastNotification', payload);
+                        const msg = data.message || 'Notifikasi berhasil dikirim.';
+                        if (els.notifyStatus) els.notifyStatus.textContent = msg;
+                        if (window.Toast) Toast.show(msg, (data.result?.sent > 0 ? 'success' : 'info'));
                     }
                     if (els.notifyTitle) els.notifyTitle.value = '';
                     if (els.notifyMessage) els.notifyMessage.value = '';
@@ -2936,19 +2937,38 @@
             const title = String(els.notifyTitle?.value || '').trim() || 'Notifikasi IPM';
             const message = String(els.notifyMessage?.value || '').trim() || 'Contoh isi notifikasi akan tampil di sini.';
             const url = normalizeNotificationUrlInput(String(els.notifyUrl?.value || '').trim() || '/');
+            const image = String(els.notifyImage?.value || '').trim();
             const targetLabel = els.notifyTarget?.value?.startsWith('pimpinan:') ? 'Grup Pimpinan' : 'Semua User';
+            
             const now = new Date();
             const timeLabel = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            
             els.notifyPreviewBox.innerHTML = `
-                <div class="lockscreen-preview">
+                <div class="lockscreen-preview premium-mockup">
                     <div class="lockscreen-meta">
-                        <span class="lockscreen-app">PC IPM Panawuan</span>
+                        <div class="lockscreen-meta-left">
+                             <img src="/app/media/brand/ipm-logo.png" class="lockscreen-app-icon" onerror="this.src='/icons/icon-192-maskable.png'">
+                             <span class="lockscreen-app">PC IPM Panawuan</span>
+                        </div>
                         <span class="lockscreen-time">${timeLabel}</span>
                     </div>
                     <div class="lockscreen-card">
-                        <div class="lockscreen-title">${escapeHtml(title)}</div>
-                        <div class="lockscreen-body">${escapeHtml(message)}</div>
-                        <div class="lockscreen-footer">${escapeHtml(targetLabel)} • ${escapeHtml(url)}</div>
+                        <div class="lockscreen-card-content">
+                            <div class="lockscreen-title">${escapeHtml(title)}</div>
+                            <div class="lockscreen-body">${escapeHtml(message)}</div>
+                        </div>
+                        ${image ? `
+                        <div class="lockscreen-image">
+                            <img src="${image}" onerror="this.style.display='none'">
+                        </div>
+                        ` : ''}
+                        <div class="lockscreen-footer">
+                            <i class="fas fa-link"></i> ${escapeHtml(url)} • ${escapeHtml(targetLabel)}
+                        </div>
+                    </div>
+                    <div class="lockscreen-actions">
+                        <div class="lockscreen-btn">Buka aplikasi</div>
+                        <div class="lockscreen-btn secondary">Nanti saja</div>
                     </div>
                 </div>
             `;
@@ -3212,11 +3232,11 @@
             if (els.notifyMessage) els.notifyMessage.value = 'Mari bergabung dalam Pelatihan Kader Dasar Taruna Melati 1. Siapkan dirimu menjadi kader pimpinan masa depan. Klik untuk daftar sekarang!';
             if (els.notifyUrl) els.notifyUrl.value = '/pendaftaran-pkdtm1.html';
             if (els.notifyImage) {
-                els.notifyImage.value = '/images/pkdtm1-banner.png';
+                els.notifyImage.value = '/pkdtm1_premium_banner_1777807477418.png';
                 // Trigger live preview for mockup
                 const mockImg = document.getElementById('live-notif-image');
                 if (mockImg) {
-                    mockImg.src = '/images/pkdtm1-banner.png';
+                    mockImg.src = '/pkdtm1_premium_banner_1777807477418.png';
                     mockImg.classList.remove('hidden');
                 }
             }

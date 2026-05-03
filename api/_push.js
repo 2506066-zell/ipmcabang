@@ -62,7 +62,10 @@ function withNotificationBranding(payload) {
 
 async function sendToSubscriptions(subs, payload) {
   const vapid = initWebPush();
-  if (!vapid) return { sent: 0, failed: 0, error: 'VAPID missing' };
+  if (!vapid) {
+    console.error('Push Notification Error: VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY is missing in environment variables.');
+    return { sent: 0, failed: 0, error: 'Konfigurasi VAPID Keys di Server (Vercel) belum lengkap.' };
+  }
   const body = JSON.stringify(withNotificationBranding(payload));
   let sent = 0;
   let failed = 0;

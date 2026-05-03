@@ -163,12 +163,15 @@ async function sendNotificationToTarget({ title, message, url, save, target }) {
     if (save !== false) {
         await saveInAppNotifications(msg, target, userIds);
     }
-    await sendPushToTarget({
+    const pushResult = await sendPushToTarget({
         title: title || 'Notifikasi IPM',
         body: message || title || 'Ada pembaruan baru.',
         url: safeUrl
     }, target, userIds);
-    return { userCount: Array.isArray(userIds) ? userIds.length : null };
+    return { 
+        userCount: Array.isArray(userIds) ? userIds.length : (userIds === null ? 'all' : 0),
+        ...pushResult
+    };
 }
 
 async function sendNotificationToUserIds({ title, message, url, save, userIds }) {
@@ -470,13 +473,25 @@ async function handleBroadcastNotification(req, res) {
         return json(res, 400, { status: 'error', message: 'Judul atau pesan wajib diisi' });
     }
 
-    await sendNotificationToTarget({ title, message, url, save, target });
+    const result = await sendNotificationToTarget({ title, message, url, save, target });
+
+    if (result.error) {
+        return json(res, 500, { status: 'error', message: `Gagal Push: ${result.error}`, result });
+    }
+
+    if (result.sent === 0 && result.failed === 0) {
+        return json(res, 200, { 
+            status: 'success', 
+            message: 'Tersimpan di in-app, tapi tidak ada perangkat yang terdaftar untuk push.',
+            result 
+        });
+    }
 
     try {
-        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'BROADCAST_NOTIFICATION', ${{ title, message, url, save, target }})`;
+        await query`INSERT INTO activity_logs (admin_id, action, details) VALUES (${adminId}, 'BROADCAST_NOTIFICATION', ${{ title, message, url, save, target, pushResult: result }})`;
     } catch (e) { }
 
-    return json(res, 200, { status: 'success' });
+    return json(res, 200, { status: 'success', result });
 }
 
 async function handleScheduleNotification(req, res) {
