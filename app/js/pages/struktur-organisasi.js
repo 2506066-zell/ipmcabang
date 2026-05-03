@@ -42,6 +42,14 @@
     const raw = String(value || '').trim();
     if (!raw) return '';
     if (/^data:image\//i.test(raw)) return raw;
+    
+    // Additional frontend filter for known broken placeholders
+    if (raw.includes('sekretaris.jpg') || raw.includes('bendahara.jpg') || 
+        raw.includes('umum.jpeg') || raw.includes('kajianDakwah.jpg') || 
+        raw.includes('apresiasiBudaya.jpg') || raw.includes('advokasi.jpeg')) {
+        return '';
+    }
+
     const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\.?\//, '')}`;
     if (!normalized.startsWith('/images/') && !normalized.startsWith('/data:image')) return normalized;
     
@@ -400,14 +408,15 @@
     const hasImage = !!photoUrl;
 
     return `
-      <div class="org-node-card-circle ${isLeader ? 'is-leader' : ''}" 
-           onclick="window.viewBidangDetail('${bidang.id}')"
-           style="cursor: pointer;">
+      <div class="org-node-card org-node-card-circle ${isLeader ? 'is-leader' : ''}" 
+           data-bidang="${escapeHtml(bidang.code)}"
+           role="button"
+           aria-label="Buka detail ${escapeHtml(bidang.name)}">
         <div class="org-node-circle-media ${!hasImage ? 'no-image' : ''}">
-          ${hasImage ? `<img src="${photoUrl}" alt="${bidang.name}">` : initials}
+          ${hasImage ? `<img src="${photoUrl}" alt="${escapeHtml(bidang.name)}">` : initials}
         </div>
         <div class="org-node-content-mini">
-          <h3 class="org-node-name">${bidang.name}</h3>
+          <h3 class="org-node-name">${escapeHtml(bidang.name)}</h3>
           <div class="org-node-meta">
             <span><i class="fas fa-users"></i> ${bidang.member_count || 0}</span>
             <span><i class="fas fa-briefcase"></i> ${bidang.program_count || 0}</span>
