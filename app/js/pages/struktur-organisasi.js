@@ -1,15 +1,15 @@
 (function () {
   const ORG_MEDIA_VERSION = '20260228-1';
   const FALLBACK_BIDANG = [
-    { code: 'ketuaUmum', name: 'Ketua Umum', image_url: '/images/bidang/anwar.jpeg', color: '#2C5F4F' },
-    { code: 'sekretaris', name: 'Sekretaris', image_url: '/images/bidang/sekretaris.jpg', color: '#4A7C5D' },
-    { code: 'bendahara', name: 'Bendahara', image_url: '/images/bidang/bendahara.jpg', color: '#F39C12' },
-    { code: 'perkaderan', name: 'Bidang Perkaderan', image_url: '/images/bidang/pkd.png', color: '#E74C3C' },
-    { code: 'pengkajianIlmu', name: 'Bidang Pengkajian Ilmu Pengetahuan', image_url: '/images/bidang/pengkajianIlmu.jpeg', color: '#3498DB' },
-    { code: 'kajianDakwah', name: 'Bidang Kajian Dakwah Islam', image_url: '/images/bidang/kajianDakwah.jpg', color: '#9B59B6' },
-    { code: 'apresiasiBudaya', name: 'Bidang Apresiasi Budaya & Olahraga', image_url: '/images/bidang/apresiasiBudaya.jpg', color: '#1ABC9C' },
-    { code: 'advokasi', name: 'Bidang Advokasi', image_url: '/images/bidang/adv0.png', color: '#E67E22' },
-    { code: 'ipmawati', name: 'Ipmawati', image_url: '/images/bidang/ipmawati.jpeg', color: '#D946A6' }
+    { code: 'ketuaUmum', name: 'Ketua Umum', image_url: '', color: '#2C5F4F' },
+    { code: 'sekretaris', name: 'Sekretaris', image_url: '', color: '#4A7C5D' },
+    { code: 'bendahara', name: 'Bendahara', image_url: '', color: '#F39C12' },
+    { code: 'perkaderan', name: 'Bidang Perkaderan', image_url: '', color: '#E74C3C' },
+    { code: 'pengkajianIlmu', name: 'Bidang Pengkajian Ilmu Pengetahuan', image_url: '', color: '#3498DB' },
+    { code: 'kajianDakwah', name: 'Bidang Kajian Dakwah Islam', image_url: '', color: '#9B59B6' },
+    { code: 'apresiasiBudaya', name: 'Bidang Apresiasi Budaya & Olahraga', image_url: '', color: '#1ABC9C' },
+    { code: 'advokasi', name: 'Bidang Advokasi', image_url: '', color: '#E67E22' },
+    { code: 'ipmawati', name: 'Ipmawati', image_url: '', color: '#D946A6' }
   ];
 
   const TOP_CODES = new Set(['ketuaumum', 'ketuautama']);
@@ -41,9 +41,11 @@
   function normalizePath(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
-    if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^data:image\//i.test(raw)) return raw;
     const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\.?\//, '')}`;
-    if (!normalized.startsWith('/images/')) return normalized;
+    if (!normalized.startsWith('/images/') && !normalized.startsWith('/data:image')) return normalized;
+    
+    if (normalized.startsWith('/data:image')) return normalized.substring(1);
 
     const hashIndex = normalized.indexOf('#');
     const pathWithQuery = hashIndex >= 0 ? normalized.slice(0, hashIndex) : normalized;
