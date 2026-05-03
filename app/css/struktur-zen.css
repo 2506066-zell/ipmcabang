@@ -205,7 +205,15 @@
     }
     .page-struktur .org-leadership-track,
     .page-struktur .org-core-track {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        justify-items: center;
         gap: 16px;
+    }
+    
+    /* Ensure the single top leader stays centered */
+    .page-struktur .org-leadership-track {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -225,9 +233,17 @@
 }
 
 @media (max-width: 640px) {
+    .page-struktur .main-container {
+        padding: 16px 12px 80px !important;
+    }
+    
     .page-struktur .org-field-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
+        gap: 14px !important;
+    }
+    
+    .page-struktur .org-structure-premium {
+        padding: 0 12px !important;
     }
     
     .page-struktur .org-node-card {
@@ -250,7 +266,7 @@
     .page-struktur .member-ring-core-support,
     .page-struktur .member-ring-orbit {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 8px !important;
+        gap: 12px !important;
     }
 }
 
