@@ -293,6 +293,23 @@
         // Phase 2: Essay
         setupEssayUpload();
         $('pk-submit-essay')?.addEventListener('click', handleSubmitEssay);
+
+        // Help Toggle
+        const helpBtn = $('pk-toggle-help');
+        const helpSec = $('pk-help-section');
+        if (helpBtn && helpSec) {
+            helpBtn.addEventListener('click', () => {
+                const isHidden = helpSec.classList.contains('pk-hidden');
+                if (isHidden) {
+                    helpSec.classList.remove('pk-hidden');
+                    helpBtn.classList.add('is-active');
+                    setTimeout(() => helpSec.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+                } else {
+                    helpSec.classList.add('pk-hidden');
+                    helpBtn.classList.remove('is-active');
+                }
+            });
+        }
     }
 
     // --- Upload Zone Setup ---

@@ -130,6 +130,14 @@
 }
 
 @media (max-width: 640px) {
+    .page-struktur .main-container {
+        padding: 16px 8px 80px !important;
+    }
+
+    .page-struktur .org-structure-premium {
+        padding: 0 !important;
+    }
+
     .page-struktur .org-leadership-track {
         flex-direction: column !important;
         align-items: center;
@@ -139,7 +147,7 @@
     .page-struktur .org-field-grid {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
+        gap: 8px !important; /* Smaller gap for more space */
     }
     
     .page-struktur .org-node-card {
@@ -277,7 +285,7 @@
     position: fixed;
     inset: 0;
     background: #fff;
-    z-index: 2000;
+    z-index: 1000;
     padding: 0;
     overflow-y: auto;
     display: none;
@@ -626,7 +634,7 @@
 .page-struktur .anggota-detail-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2200;
+    z-index: 6000;
     display: flex;
     justify-content: center;
     align-items: center;

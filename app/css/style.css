@@ -246,8 +246,8 @@ body.body-no-scroll {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1100;
-    /* Increased z-index */
+    z-index: 5000;
+    /* Highest priority below overlays */
     box-shadow: 0 10px 26px rgba(16, 35, 24, 0.1);
     border-bottom: 1px solid rgba(74, 124, 93, 0.2);
 }
@@ -6800,7 +6800,9 @@ body.quiz-active .premium-fab-container {
     }
 
     .page-struktur .org-field-stage {
-        padding: 12px;
+        padding: 8px 6px;
+        margin-left: -4px;
+        margin-right: -4px;
         border-radius: 16px;
         background: linear-gradient(175deg, rgba(244, 248, 245, 0.95) 0%, rgba(235, 242, 237, 0.94) 100%);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 8px 18px rgba(18, 43, 30, 0.12);
