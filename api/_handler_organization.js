@@ -16,16 +16,32 @@ function normalizeMediaPath(value) {
   if (!raw) return '';
   if (raw.endsWith('/')) return '';
   if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^data:image\//i.test(raw)) return raw;
+  if (raw.startsWith('/data:image')) return raw.substring(1);
   if (raw.startsWith('/')) return raw;
   return `/${raw.replace(/^\.?\//, '')}`;
 }
 
+function fixCorruptedPath(p) {
+  const s = String(p || '').trim();
+  if (s.startsWith('/data:image')) return s.substring(1);
+  return s;
+}
+
 function sanitizeInstagramUrl(value) {
-  const raw = String(value || '').trim();
+  let raw = String(value || '').trim();
   if (!raw) return '';
-  if (!/^https?:\/\/.+/i.test(raw)) {
-    throw new Error('URL Instagram harus diawali http:// atau https://');
+  
+  // Auto-prefix if only username/handle is provided
+  if (!raw.includes('/') && !raw.startsWith('http')) {
+    raw = `https://www.instagram.com/${raw.replace(/^@/, '')}`;
   }
+  
+  // Auto-prefix protocol if missing
+  if (!/^https?:\/\//i.test(raw)) {
+    raw = `https://${raw}`;
+  }
+
   let parsed;
   try {
     parsed = new URL(raw);
@@ -87,7 +103,7 @@ function groupByBidang(bidangRows, membersRows, programsRows) {
       full_name: m.full_name || '',
       role_title: m.role_title || '',
       quote: m.quote || '',
-      photo_url: m.photo_url || '',
+      photo_url: fixCorruptedPath(m.photo_url),
       instagram_url: m.instagram_url || '',
       sort_order: Number(m.sort_order || 1),
       is_active: m.is_active !== false
@@ -118,7 +134,7 @@ function groupByBidang(bidangRows, membersRows, programsRows) {
       code: b.code || '',
       name: b.name || '',
       color: b.color || '#4A7C5D',
-      image_url: b.image_url || '',
+      image_url: fixCorruptedPath(b.image_url),
       sort_order: Number(b.sort_order || 1),
       is_core: b.is_core === true,
       is_active: b.is_active !== false,

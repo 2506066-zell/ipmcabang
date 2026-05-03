@@ -365,7 +365,9 @@
    ============================================ */
 .pk-help-section {
     margin-top: 10px;
-    border-top: 4px solid var(--pk-accent);
+    border-radius: 16px;
+    border: 1px solid var(--pk-border);
+    background: #fff;
 }
 .pk-help-header {
     display: flex;
@@ -491,9 +493,9 @@
 .pk-btn-help-minimal.is-active i { color: #fff; }
 
 .pk-help-section {
-    margin-top: 10px;
+    margin-top: 6px;
     margin-bottom: 20px;
-    border-left: 3px solid var(--pk-accent);
+    border-left: 4px solid var(--pk-accent);
     animation: pk-slide-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 

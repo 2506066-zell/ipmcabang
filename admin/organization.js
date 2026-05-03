@@ -287,6 +287,7 @@ export function initOrganization(state, els, api) {
         const headers = {
             'Content-Type': fileToUpload.type || 'application/octet-stream',
             'x-filename': fileToUpload.name || `${fallbackPrefix}-${Date.now()}.jpg`,
+            'x-upload-scope': 'admin-organization',
             'Authorization': `Bearer ${token}`
         };
         const res = await fetch('/api/upload', {
@@ -366,10 +367,10 @@ export function initOrganization(state, els, api) {
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan anggota');
             resetMemberForm();
             await loadSnapshot();
-            setLocalStatus('Anggota berhasil disimpan.');
+            api.setStatus('Anggota berhasil disimpan.', 'ok');
         } catch (e) {
             console.error('[Organization] save member failed:', e);
-            setLocalStatus(`Gagal simpan anggota: ${e.message || 'error'}`, 'error');
+            api.setStatus(`Gagal simpan anggota: ${e.message || 'error'}`, 'error');
         } finally {
             api.hideLoader();
         }
@@ -397,10 +398,10 @@ export function initOrganization(state, els, api) {
             if (!data || data.status !== 'success') throw new Error(data?.message || 'Gagal menyimpan bidang');
             localState.selectedBidangCode = String(data.bidang?.code || payload.code || previousCode || '');
             await loadSnapshot();
-            setLocalStatus('Profil bidang berhasil disimpan.');
+            api.setStatus('Profil bidang berhasil disimpan.', 'ok');
         } catch (e) {
             console.error('[Organization] save bidang failed:', e);
-            setLocalStatus(`Gagal simpan bidang: ${e.message || 'error'}`, 'error');
+            api.setStatus(`Gagal simpan bidang: ${e.message || 'error'}`, 'error');
         } finally {
             api.hideLoader();
         }

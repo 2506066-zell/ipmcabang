@@ -246,10 +246,16 @@ body.body-no-scroll {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 5000;
+    z-index: 6000;
     /* Highest priority below overlays */
     box-shadow: 0 10px 26px rgba(16, 35, 24, 0.1);
     border-bottom: 1px solid rgba(74, 124, 93, 0.2);
+    transition: all 0.3s ease;
+}
+
+.mobile-header.is-scrolled {
+    background: #fff;
+    box-shadow: 0 14px 30px rgba(16, 35, 24, 0.14);
 }
 
 .mobile-header::after {

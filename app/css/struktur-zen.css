@@ -22,7 +22,7 @@
 }
 
 .page-struktur .main-container {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 24px 20px 100px;
 }
@@ -171,8 +171,10 @@
     }
 
     .page-struktur .member-ring-core,
-    .page-struktur .member-ring-core-support {
-        grid-template-columns: 1fr !important;
+    .page-struktur .member-ring-core-support,
+    .page-struktur .member-ring-orbit {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
     }
 }
 
@@ -400,8 +402,8 @@
 
 .page-struktur .member-ring-orbit {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr); /* Default 3 columns on desktop */
+    gap: 16px;
 }
 
 .page-struktur .anggota-card {
@@ -428,7 +430,8 @@
 .page-struktur .anggota-card-photo img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* Memastikan foto anggota tidak terpotong */
+    background: var(--zen-slate-50);
 }
 
 .page-struktur .anggota-card-avatar {
@@ -603,7 +606,7 @@
 
 
 .page-struktur .member-ring-orbit {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
 }
 
