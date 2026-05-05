@@ -157,11 +157,14 @@
       window.location.href = nextRedirect;
     })
     .catch((e) => {
-      const msg = (e && e.message && /username|password|salah|unauthorized/i.test(e.message))
+      const rawMessage = String((e && e.message) || '');
+      const isCredentialError = /username|password|salah|unauthorized/i.test(rawMessage);
+      const isInfraError = /layanan login belum siap|konfigurasi database|database/i.test(rawMessage);
+      const msg = isCredentialError
         ? 'Username atau password salah.'
-        : 'Gagal masuk. Periksa koneksi lalu coba lagi.';
+        : (isInfraError ? rawMessage : 'Gagal masuk. Periksa koneksi lalu coba lagi.');
       showError(msg);
-      if (/username|password|salah|unauthorized/i.test(String(e && e.message || ''))) {
+      if (isCredentialError) {
         setFieldError('password', 'Periksa lagi username atau password.');
         focusField('password');
       }

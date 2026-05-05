@@ -364,6 +364,10 @@
 
     }
 
+    function findRoomById(roomId) {
+        return state.rooms.find((item) => Number(item.id) === Number(roomId)) || null;
+    }
+
     function renderSummary(summary) {
         setText('attendance-summary-total', String(summary?.total_events || 0));
         setText('attendance-summary-hadir', String(summary?.hadir_count || 0));
@@ -724,9 +728,17 @@
             updateUserChip();
             renderRooms();
 
-            const targetRoomId = Number(preferredRoomId || state.currentRoomId || state.rooms.find((room) => room.has_access)?.id || 0);
-            if (targetRoomId) {
-                await loadRoomDetail(targetRoomId, false);
+            const preferredRoom = findRoomById(preferredRoomId);
+            const currentRoom = findRoomById(state.currentRoomId);
+            const accessibleRoom = state.rooms.find((room) => room.has_access) || null;
+            const targetRoom = preferredRoom?.has_access
+                ? preferredRoom
+                : (currentRoom?.has_access ? currentRoom : accessibleRoom);
+
+            if (targetRoom?.id) {
+                await loadRoomDetail(targetRoom.id, false);
+            } else if (preferredRoom?.id) {
+                openCodeModal(preferredRoom.id, preferredRoom.pimpinan);
             } else {
                 setFlowStatus('pending', 'Pilih room', 'Pilih room lalu masukkan kode akses.');
             }
@@ -1421,8 +1433,8 @@
             if (!card) return;
             const roomId = Number(card.dataset.roomId || 0);
             const roomName = String(card.dataset.roomName || '');
-            const room = state.rooms.find((item) => Number(item.id) === roomId);
-            if (room?.has_access || state.accessMap[String(roomId)]) {
+            const room = findRoomById(roomId);
+            if (room?.has_access) {
                 loadRoomDetail(roomId, true);
                 return;
             }

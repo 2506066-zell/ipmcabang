@@ -7,6 +7,11 @@ function getConnString() {
     process.env.IPM_DB_URL, // Custom override
     process.env.DATABASE_URL,
     process.env.POSTGRES_URL,
+    process.env.POSTGRES_URL_NON_POOLING,
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.POSTGRES_URL_NO_SSL,
+    process.env.NEON_DATABASE_URL,
+    process.env.NEON_POSTGRES_URL,
     process.env.SUPABASE_DB_URL,
     process.env.SUPABASE_POSTGRES_URL,
     process.env.SUPABASE_PGBOUNCER_URL,
@@ -25,7 +30,9 @@ function getConnString() {
 
 function requireEnv() {
   const url = getConnString();
-  if (!url) throw new Error('Postgres connection string not configured. Please check DATABASE_URL or POSTGRES_URL env vars.');
+  if (!url) {
+    throw new Error('Postgres connection string not configured. Please set one of: IPM_DB_URL, DATABASE_URL, POSTGRES_URL, POSTGRES_URL_NON_POOLING, POSTGRES_PRISMA_URL, NEON_DATABASE_URL, or SUPABASE_DB_URL.');
+  }
   const u = String(url).trim().toLowerCase();
   if (!/^postgres(ql)?:\/\//.test(u)) throw new Error('Invalid POSTGRES_URL format.');
 }

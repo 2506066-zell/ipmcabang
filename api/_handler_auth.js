@@ -5,6 +5,25 @@ const { hashPassword, verifyPassword } = require('./_password');
 const { getSessionUser } = require('./_auth');
 const { getClientIp, checkRateLimit, setRateLimitHeaders } = require('./_rate_limit');
 
+function mapAuthInfraError(error) {
+    const message = String(error?.message || error || '');
+    const lowered = message.toLowerCase();
+
+    if (
+        lowered.includes('postgres connection string not configured') ||
+        lowered.includes('invalid postgres_url format') ||
+        lowered.includes('database error:') ||
+        lowered.includes('database schema error:')
+    ) {
+        return {
+            status: 503,
+            message: 'Layanan login belum siap. Konfigurasi database production belum lengkap atau database sedang tidak dapat diakses.'
+        };
+    }
+
+    return null;
+}
+
 async function tooManyFailures(username, ip) {
     const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const row = (await query`SELECT COUNT(*)::int AS c FROM login_attempts WHERE success=false AND attempted_at > ${since} AND (LOWER(username)=${String(username || '').toLowerCase()} OR ip=${ip})`).rows[0];
@@ -208,6 +227,10 @@ module.exports = async (req, res) => {
             default: return json(res, 404, { status: 'error', message: `Unknown action: ${action}` });
         }
     } catch (e) {
+        const mapped = mapAuthInfraError(e);
+        if (mapped) {
+            return json(res, mapped.status, { status: 'error', message: mapped.message });
+        }
         return json(res, 500, { status: 'error', message: String(e.message || e) });
     }
 };
