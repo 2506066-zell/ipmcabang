@@ -54,6 +54,31 @@
     }
     function showEl(id) { $(id)?.classList.remove('pk-hidden'); }
     function hideEl(id) { $(id)?.classList.add('pk-hidden'); }
+    function setSubmitError(message) {
+        const el = $('pk-submit-error');
+        if (!el) return;
+        if (!message) {
+            el.textContent = '';
+            hideEl('pk-submit-error');
+            return;
+        }
+        el.textContent = message;
+        showEl('pk-submit-error');
+    }
+    function getFriendlyUploadError(err) {
+        const rawMessage = String(err?.message || '').trim();
+        const lowerMessage = rawMessage.toLowerCase();
+        if (
+            err?.status === 413 ||
+            lowerMessage.includes('413') ||
+            lowerMessage.includes('blob storage') ||
+            lowerMessage.includes('512kb') ||
+            lowerMessage.includes('file terlalu besar untuk dikirim sebagai teks')
+        ) {
+            return 'Total ukuran dokumen melebihi batas sistem. Silakan perkecil dokumen yang diunggah lalu coba lagi.';
+        }
+        return rawMessage || 'Gagal mengirim pendaftaran';
+    }
 
     // --- Init ---
     document.addEventListener('DOMContentLoaded', init);
@@ -229,6 +254,7 @@
     // ==========================================
     function goToStep(step) {
         state.formStep = step;
+        setSubmitError('');
         [1, 2, 3].forEach(s => {
             const el = $(`pk-step-${s}`);
             if (el) el.classList.toggle('pk-hidden', s !== step);
@@ -390,6 +416,7 @@
     async function handleSubmitPhase1() {
         if (state.isSubmitting) return;
         state.isSubmitting = true;
+        setSubmitError('');
         const submitBtn = $('pk-submit'), prevBtn = $('pk-prev-3');
         if (submitBtn) { submitBtn.disabled = true; submitBtn.classList.add('is-loading'); }
         if (prevBtn) prevBtn.disabled = true;
@@ -442,10 +469,8 @@
             setTimeout(() => window.location.reload(), 800);
         } catch (err) {
             console.error('[PKDTM1] Submit Error:', err);
-            let errMsg = err.message || 'Gagal mengirim pendaftaran';
-            if (errMsg.includes('413') || (err.status === 413)) {
-                errMsg = 'Ukuran file terlalu besar untuk diproses server tanpa Blob Storage. Silakan hubungi admin untuk konfigurasi BLOB_READ_WRITE_TOKEN.';
-            }
+            const errMsg = getFriendlyUploadError(err);
+            setSubmitError(errMsg);
             toast(errMsg, 'error');
             if (submitBtn) { submitBtn.disabled = false; submitBtn.classList.remove('is-loading'); }
             if (prevBtn) prevBtn.disabled = false;
@@ -541,8 +566,17 @@
         };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         const res = await fetch('/api/upload', { method: 'POST', headers, body: file, credentials: 'include' });
-        const data = await res.json();
-        if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Upload gagal');
+        let data = null;
+        try {
+            data = await res.json();
+        } catch {
+            data = null;
+        }
+        if (!res.ok || data?.status !== 'success') {
+            const error = new Error(data?.message || `HTTP ${res.status}`);
+            error.status = res.status;
+            throw error;
+        }
         return data.url;
     }
 

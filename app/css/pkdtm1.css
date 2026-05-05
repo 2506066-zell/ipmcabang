@@ -234,6 +234,18 @@
 .pk-review-value { font-weight: 600; color: var(--pk-text); word-break: break-word; font-size: 0.9rem; }
 .pk-review-value.is-file { color: var(--pk-success); display: flex; align-items: center; gap: 5px; }
 .pk-review-value.is-missing { color: var(--pk-muted); font-style: italic; }
+.pk-inline-alert {
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    font-weight: 600;
+}
+.pk-inline-alert-error {
+    background: var(--pk-danger-soft);
+    border: 1px solid rgba(185, 58, 74, 0.18);
+    color: var(--pk-danger);
+}
 
 /* ============================================
    BUTTONS

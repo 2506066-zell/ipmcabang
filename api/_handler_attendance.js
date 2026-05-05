@@ -66,11 +66,25 @@ function normalizeRoomName(value) {
   return cleanString(value, 120).toUpperCase();
 }
 
+function isCabangRoomName(value) {
+  const normalized = normalizeRoomName(value);
+  if (!normalized) return false;
+  if (CABANG_ROOM_SYNONYMS.some((syn) => normalized === normalizeRoomName(syn))) {
+    return true;
+  }
+
+  const compact = normalized.replace(/[^A-Z0-9]/g, '');
+  const hasCabang = compact.includes('CABANG');
+  const hasIpm = compact.includes('IPM');
+  const hasPanawuan = compact.includes('PANAWUAN');
+  const hasPcPrefix = compact.includes('PCIPM');
+
+  return hasCabang && (hasPanawuan || hasIpm || hasPcPrefix);
+}
+
 function getIdentityMode(roomLike) {
   const pimpinan = typeof roomLike === 'string' ? roomLike : roomLike?.pimpinan;
-  const normalized = normalizeRoomName(pimpinan);
-  const isBranch = CABANG_ROOM_SYNONYMS.some((syn) => normalized === normalizeRoomName(syn));
-  return isBranch ? 'org_member_select' : 'account_identity';
+  return isCabangRoomName(pimpinan) ? 'org_member_select' : 'account_identity';
 }
 
 function canUserSelfCheckIn(user, roomLike) {
