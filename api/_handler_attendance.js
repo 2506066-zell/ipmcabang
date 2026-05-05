@@ -78,8 +78,9 @@ function isCabangRoomName(value) {
   const hasIpm = compact.includes('IPM');
   const hasPanawuan = compact.includes('PANAWUAN');
   const hasPcPrefix = compact.includes('PCIPM');
+  const hasPimpinanCabang = compact.includes('PIMPINANCABANG');
 
-  return hasCabang && (hasPanawuan || hasIpm || hasPcPrefix);
+  return hasCabang || hasPimpinanCabang || hasPanawuan || hasPcPrefix || (hasIpm && compact.includes('PC'));
 }
 
 function getIdentityMode(roomLike) {
