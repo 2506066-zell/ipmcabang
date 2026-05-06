@@ -153,9 +153,9 @@
             return;
         }
         els.list.innerHTML = items.map((item) => `
-            <button type="button" class="forms-list-card ${item.slug === state.activeSlug ? 'active' : ''}" data-slug="${escapeHtml(item.slug)}">
+            <button type="button" class="forms-list-card is-${item.type} ${item.slug === state.activeSlug ? 'active' : ''}" data-slug="${escapeHtml(item.slug)}">
                 <div class="forms-card-meta">
-                    <span class="forms-form-type">${escapeHtml(item.type)}</span>
+                    <span class="forms-form-type">${item.type === 'pretest' ? 'Pre-Test' : 'Post-Test'}</span>
                     <span class="forms-meta-pill">${getCardStatusLabel(item)}</span>
                 </div>
                 <h3>${escapeHtml(item.title)}</h3>
@@ -352,7 +352,7 @@
                         <div class="forms-field-help">Nama ini dipakai sebagai identitas utama pengisian form.</div>
                     </div>
                     ${form.fields.map((field, index) => `
-                        <div class="forms-question-card" data-question-id="${field.id}">
+                        <div class="forms-question-card" data-question-id="${field.id}" style="animation-delay: ${index * 80}ms">
                             <div class="forms-question-label">
                                 <span>${index + 1}. ${escapeHtml(field.label)}</span>
                                 <span class="forms-question-state ${field.required ? 'is-required' : ''}" id="forms-question-state-${field.id}">${field.required ? 'Wajib' : 'Opsional'}</span>
@@ -388,13 +388,17 @@
         if (!formEl) return;
 
         // Auto-expand textareas
-        formEl.querySelectorAll('.forms-textarea').forEach(textarea => {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-            textarea.addEventListener('input', () => {
-                textarea.style.height = 'auto';
-                textarea.style.height = textarea.scrollHeight + 'px';
-            });
+        const textareas = formEl.querySelectorAll('.forms-textarea');
+        const adjustHeight = (el) => {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        };
+
+        textareas.forEach(textarea => {
+            // Initial adjustment
+            setTimeout(() => adjustHeight(textarea), 10);
+            
+            textarea.addEventListener('input', () => adjustHeight(textarea));
         });
 
         // Auto-scroll to next question on single choice
@@ -680,6 +684,9 @@
         const answers = collectAnswers(formEl, form);
         const submitterName = getSubmitterName(formEl);
 
+        // Haptic Feedback
+        if (window.navigator?.vibrate) window.navigator.vibrate(15);
+
         clearValidation(formEl);
         if (!submitterName) {
             showSubmitterNameError(formEl, 'Nama pengisi wajib diisi.');
@@ -753,7 +760,15 @@
         state.activeSlug = slug;
         setMode('filling');
         renderFormsList();
-        els.stage.innerHTML = '<div class="forms-stage-loading">Memuat form...</div>';
+        
+        // Show Skeleton Loader
+        els.stage.innerHTML = `
+            <div class="forms-stage-loading">
+                <div class="forms-skeleton-card"></div>
+                <div class="forms-skeleton-card"></div>
+                <div class="forms-skeleton-card"></div>
+            </div>
+        `;
 
         try {
             const data = await fetchJson(`/api/forms?action=detail&slug=${encodeURIComponent(slug)}`);

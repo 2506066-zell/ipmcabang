@@ -752,12 +752,18 @@ export function initFormsAdmin(state, els, deps) {
     function renderReviewToolbar(view) {
         const review = view === 'inbox' ? local.review.inbox : local.review.submissions;
         const refreshAction = view === 'inbox' ? 'reload-inbox' : 'reload-submissions';
-        const activeList = view === 'inbox' ? getSortedInbox() : getSortedSubmissions();
-        const selectedId = Number(review.selectedId || 0);
-        const selectedItem = activeList.find((item) => Number(item.id) === selectedId) || activeList[0] || null;
-        const selectedLabel = selectedItem ? escapeHtml(selectedItem.nama_panjang || selectedItem.username || '-') : 'Belum ada item dipilih';
-        const refreshBusy = isActionBusy(refreshAction);
+        const activeItem = local.items.find(i => Number(i.id) === local.activeId);
+        const typeIcon = activeItem?.type === 'pretest' ? 'fa-clipboard-list' : 'fa-clipboard-check';
+        const typeLabel = activeItem?.type === 'pretest' ? 'PRE-TEST MODE' : 'POST-TEST MODE';
+
         return `
+            <div class="forms-admin-workspace-header">
+                <div class="forms-type-indicator">
+                    <i class="fas ${typeIcon}"></i>
+                    <span>${typeLabel}</span>
+                    <strong class="muted">• ${escapeHtml(activeItem?.display_name || activeItem?.title || 'Form Baru')}</strong>
+                </div>
+            </div>
             <div class="forms-admin-toolbar">
                 <div class="forms-admin-view-switch">
                     <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder" title="Kelola struktur dan pengaturan test"><i class="fas fa-layer-group"></i> Form Builder</button>
@@ -844,19 +850,47 @@ export function initFormsAdmin(state, els, deps) {
                     <span class="forms-review-badge is-focus">Skor: ${Number(item.score_obtained || 0)} / ${Number(item.score_max || 0)}</span>
                     <span class="small muted">Dinilai otomatis untuk soal pilihan yang punya kunci jawaban.</span>
                 </div>
-                <div class="forms-admin-answer-list forms-admin-answer-list-strong">
-                    ${(item.answers || []).map((answer) => `
-                        <div class="forms-admin-answer-item ${answer.focus_inbox ? 'focus' : ''}">
-                            <div class="forms-admin-answer-label">
-                                ${escapeHtml(answer.label)}
-                                <span class="forms-review-badge ${answer.answer_status === 'benar' ? 'is-read' : (answer.answer_status === 'salah' ? 'is-new' : 'is-time')}">
-                                    ${answer.answer_status === 'benar' ? 'Benar' : (answer.answer_status === 'salah' ? 'Salah' : 'Perlu Review')}
-                                </span>
+                <div class="forms-admin-answer-list">
+                    ${(item.answers || []).map((answer, index) => {
+                        const isCorrect = answer.answer_status === 'benar';
+                        const isWrong = answer.answer_status === 'salah';
+                        const statusClass = isCorrect ? 'is-success' : (isWrong ? 'is-danger' : 'is-warning');
+                        const statusIcon = isCorrect ? 'fa-circle-check' : (isWrong ? 'fa-circle-xmark' : 'fa-circle-dot');
+                        const statusText = isCorrect ? 'Benar' : (isWrong ? 'Salah' : 'Perlu Review');
+                        
+                        // Detect if answer is long text or list
+                        const rawAnswer = Array.isArray(answer.answer_json) ? answer.answer_json : (answer.answer_text || '-');
+                        const isList = Array.isArray(rawAnswer);
+                        const isLongText = !isList && String(rawAnswer).length > 60;
+
+                        return `
+                            <div class="forms-answer-detail-card ${answer.focus_inbox ? 'is-focus' : ''}">
+                                <div class="forms-answer-header">
+                                    <div class="forms-answer-q-number">${index + 1}</div>
+                                    <div class="forms-answer-q-label">${escapeHtml(answer.label)}</div>
+                                    <div class="forms-answer-status ${statusClass}">
+                                        <i class="fas ${statusIcon}"></i>
+                                        <span>${statusText}</span>
+                                    </div>
+                                </div>
+                                <div class="forms-answer-body ${isLongText ? 'is-paragraph' : ''}">
+                                    ${isList ? `
+                                        <div class="forms-answer-pills">
+                                            ${rawAnswer.map(v => `<span class="answer-pill">${escapeHtml(v)}</span>`).join('')}
+                                        </div>
+                                    ` : `
+                                        <div class="forms-answer-text">${escapeHtml(rawAnswer)}</div>
+                                    `}
+                                </div>
+                                ${answer.answer_key_text ? `
+                                    <div class="forms-answer-key">
+                                        <i class="fas fa-key"></i>
+                                        <strong>Kunci Jawaban:</strong> ${escapeHtml(answer.answer_key_text)}
+                                    </div>
+                                ` : ''}
                             </div>
-                            <div class="forms-admin-answer-value strong">${escapeHtml(Array.isArray(answer.answer_json) ? answer.answer_json.join(', ') : (answer.answer_text || '-'))}</div>
-                            ${answer.answer_key_text ? `<div class="small muted mt-12">Kunci: ${escapeHtml(answer.answer_key_text)}</div>` : ''}
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
                 ${canArchiveRead ? `
                     <div class="forms-admin-card-head mt-12">
