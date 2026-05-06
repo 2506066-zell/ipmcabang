@@ -11,6 +11,7 @@ export function initFormsAdmin(state, els, deps) {
         submissions: [],
         archiveSummary: null,
         inbox: [],
+        analysis: null,
         editor: null,
         readState: {},
         review: {
@@ -263,37 +264,72 @@ export function initFormsAdmin(state, els, deps) {
         }
     }
 
+    async function loadAnalysis() {
+        if (!local.activeId) {
+            local.analysis = null;
+            return;
+        }
+        const data = await apiAdminVercel('GET', `/api/admin/forms?action=analysis&id=${local.activeId}`);
+        local.analysis = data.stats || null;
+    }
+
     function renderList() {
-        const items = local.items;
+        const queryText = String(local.listQuery || '').trim().toLowerCase();
+        const items = local.items.filter(item => {
+            if (!queryText) return true;
+            return (item.display_name || item.title || '').toLowerCase().includes(queryText) ||
+                   (item.description || '').toLowerCase().includes(queryText);
+        });
+
         return `
             <div class="forms-admin-sidebar">
                 <div class="forms-admin-side-head">
                     <div>
-                        <h3>Builder Form</h3>
-                        <p>Kelola template pretest dan posttest terpisah dari bank soal lama.</p>
+                        <h3>Forms Dashboard</h3>
+                        <p>Kelola pre-test & post-test PKDTM1.</p>
                     </div>
-                    <button type="button" class="btn btn-primary forms-admin-new" data-action="new-form">
-                        <i class="fas fa-plus"></i> Baru
+                    <button type="button" class="btn btn-primary forms-admin-new" data-action="new-form" title="Buat form baru">
+                        <i class="fas fa-plus"></i>
                     </button>
                 </div>
+
+                <div class="forms-sidebar-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Cari template form..." value="${escapeHtml(local.listQuery || '')}" data-action="filter-list">
+                </div>
+
                 <div class="forms-admin-list">
-                    ${items.length ? items.map((item) => `
-                        <button type="button" class="forms-admin-list-card ${Number(item.id) === local.activeId ? 'active' : ''}" data-action="pick-form" data-id="${item.id}">
-                            <div class="forms-admin-card-top">
-                                <span class="status-badge status-muted">${escapeHtml(item.type)}</span>
-                                <span class="forms-admin-mini-status ${escapeHtml(item.status)}">${escapeHtml(lifecycleBadge(item.lifecycle_status).text)}</span>
-                            </div>
-                            <strong>${escapeHtml(item.display_name || item.title)}</strong>
-                            <p>${escapeHtml(item.description || 'Belum ada deskripsi form.')}</p>
-                            <div class="forms-admin-inline-stats">
-                                <span>${Number(item.submission_count || 0)} submission</span>
-                                <span>${Number(item.submission_progress_percent || 0)}% progres</span>
-                                <span>${Number(item.reviewed_count || 0)} direview</span>
-                                <span>${Number(item.inbox_count || 0)} inbox</span>
-                            </div>
-                            <div class="small muted">Diupdate: ${formatDateTime(item.updated_at)}</div>
-                        </button>
-                    `).join('') : '<div class="small muted">Belum ada form. Buat form pertama dari tombol Baru.</div>'}
+                    ${items.length ? items.map((item) => {
+                        const typeIcon = item.type === 'pretest' ? 'fa-clipboard-list' : 'fa-clipboard-check';
+                        const typeLabel = item.type === 'pretest' ? 'Pre-Test' : 'Post-Test';
+                        const lifecycle = lifecycleBadge(item.lifecycle_status);
+                        
+                        return `
+                            <button type="button" class="forms-admin-list-card ${Number(item.id) === local.activeId ? 'active' : ''}" data-action="pick-form" data-id="${item.id}">
+                                <div class="forms-admin-card-top">
+                                    <div class="form-type-pill">
+                                        <i class="fas ${typeIcon}"></i>
+                                        <span>${typeLabel}</span>
+                                    </div>
+                                    <span class="forms-admin-mini-status ${lifecycle.className}">${lifecycle.text}</span>
+                                </div>
+                                <div class="form-card-title">${escapeHtml(item.display_name || item.title)}</div>
+                                <p>${escapeHtml(item.description || 'Tanpa deskripsi.')}</p>
+                                
+                                <div class="forms-admin-inline-stats">
+                                    <div class="mini-stat" title="Total Submission">
+                                        <i class="fas fa-users"></i> ${Number(item.submission_count || 0)}
+                                    </div>
+                                    <div class="mini-stat" title="Progres Review">
+                                        <i class="fas fa-check-circle"></i> ${Number(item.submission_progress_percent || 0)}%
+                                    </div>
+                                    <div class="mini-stat" title="Inbox Baru">
+                                        <i class="fas fa-envelope"></i> ${Number(item.inbox_count || 0)}
+                                    </div>
+                                </div>
+                            </button>
+                        `;
+                    }).join('') : `<div class="small muted align-center mt-24">Tidak ada form yang cocok.</div>`}
                 </div>
             </div>
         `;
@@ -514,6 +550,7 @@ export function initFormsAdmin(state, els, deps) {
                     <div class="forms-admin-view-switch">
                         <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder">Form Builder</button>
                         <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions">Submissions</button>
+                        <button type="button" class="forms-view-btn ${local.activeView === 'analysis' ? 'active' : ''}" data-view="analysis">Analysis</button>
                         <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox">Inbox</button>
                     </div>
                     <button type="button" class="btn btn-secondary" data-action="reload-inbox"><i class="fas fa-rotate"></i> Refresh</button>
@@ -539,6 +576,88 @@ export function initFormsAdmin(state, els, deps) {
                         `).join('') : '<div class="small muted">Inbox masih kosong. Tandai field teks sebagai fokus inbox untuk mulai mengumpulkan jawaban penting.</div>'}
                     </div>
                 </section>
+            </div>
+        `;
+    }
+
+    function renderAnalysisView() {
+        const stats = local.analysis;
+        if (!stats || stats.total_submissions === 0) {
+            return `
+                <div class="forms-admin-workspace">
+                    ${renderReviewToolbar('analysis')}
+                    <section class="forms-admin-card forms-review-detail-empty">
+                        Belum ada data untuk dianalisis. Tunggu peserta mengisi form ini.
+                    </section>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="forms-admin-workspace">
+                ${renderReviewToolbar('analysis')}
+                <div class="forms-analysis-grid">
+                    <section class="forms-admin-card">
+                        <div class="forms-admin-card-head">
+                            <h3>Rangkuman Skor</h3>
+                        </div>
+                        <div class="forms-stats-summary">
+                            <div class="stat-box">
+                                <span class="label">Rata-rata</span>
+                                <span class="value">${stats.average_score}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="label">Tertinggi</span>
+                                <span class="value">${stats.highest_score}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="label">Terendah</span>
+                                <span class="value">${stats.lowest_score}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="forms-admin-card">
+                        <div class="forms-admin-card-head">
+                            <h3>Analisis Butir Soal</h3>
+                            <p>Persentase jawaban benar per pertanyaan (Difficulty Index).</p>
+                        </div>
+                        <div class="forms-analysis-list">
+                            ${stats.field_analysis.filter(f => f.is_scorable).map(f => `
+                                <div class="analysis-item">
+                                    <div class="analysis-meta">
+                                        <strong>${escapeHtml(f.label)}</strong>
+                                        <span class="forms-review-badge ${f.correct_percent > 70 ? 'is-read' : (f.correct_percent > 40 ? 'is-follow-up' : 'is-new')}">${f.correct_percent}% Benar</span>
+                                    </div>
+                                    <div class="analysis-progress-bg">
+                                        <div class="analysis-progress-bar" style="width: ${f.correct_percent}%"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+
+                    ${stats.field_analysis.filter(f => f.distribution && f.distribution.length > 0).map(f => `
+                        <section class="forms-admin-card">
+                            <div class="forms-admin-card-head">
+                                <h3>Distribusi: ${escapeHtml(f.label)}</h3>
+                            </div>
+                            <div class="forms-distribution-list">
+                                ${f.distribution.sort((a,b) => b.value - a.value).map(d => `
+                                    <div class="dist-item">
+                                        <div class="dist-info">
+                                            <span>${escapeHtml(d.key)}</span>
+                                            <strong>${d.value} (${d.percent}%)</strong>
+                                        </div>
+                                        <div class="dist-bar-bg">
+                                            <div class="dist-bar" style="width: ${d.percent}%"></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+                    `).join('')}
+                </div>
             </div>
         `;
     }
@@ -643,16 +762,17 @@ export function initFormsAdmin(state, els, deps) {
                 <div class="forms-admin-view-switch">
                     <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder" title="Kelola struktur dan pengaturan test"><i class="fas fa-layer-group"></i> Form Builder</button>
                     <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions" title="Lihat daftar peserta dan hasil jawaban"><i class="fas fa-list-check"></i> Submissions</button>
+                    <button type="button" class="forms-view-btn ${local.activeView === 'analysis' ? 'active' : ''}" data-view="analysis" title="Lihat analisis statistik dan data agregat"><i class="fas fa-chart-line"></i> Analysis</button>
                     <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox" title="Lihat jawaban fokus yang perlu ditindaklanjuti"><i class="fas fa-inbox"></i> Inbox</button>
                 </div>
                 <div class="forms-review-controls">
-                    <div class="toolbar-select-wrapper" title="Urutkan daftar peserta/jawaban">
-                        <i class="fas fa-sort-amount-down-alt"></i>
-                        <select class="toolbar-select" data-action="${view}-sort">
-                            <option value="newest" ${review.sort === 'newest' ? 'selected' : ''}>Terbaru</option>
-                            <option value="oldest" ${review.sort === 'oldest' ? 'selected' : ''}>Terlama</option>
-                            <option value="name_asc" ${review.sort === 'name_asc' ? 'selected' : ''}>Nama A-Z</option>
-                        </select>
+                    <div class="forms-review-filter-group" title="Urutkan daftar">
+                        <button type="button" class="forms-review-filter ${review.sort === 'newest' ? 'active' : ''}" data-action="${view}-sort" data-value="newest">Terbaru</button>
+                        <button type="button" class="forms-review-filter ${review.sort === 'oldest' ? 'active' : ''}" data-action="${view}-sort" data-value="oldest">Terlama</button>
+                        ${view === 'submissions' ? `
+                            <button type="button" class="forms-review-filter ${review.sort === 'score_high' ? 'active' : ''}" data-action="${view}-sort" data-value="score_high">Skor ↑</button>
+                            <button type="button" class="forms-review-filter ${review.sort === 'score_low' ? 'active' : ''}" data-action="${view}-sort" data-value="score_low">Skor ↓</button>
+                        ` : ''}
                     </div>
                     <div class="toolbar-select-wrapper" title="Cari data lebih cepat">
                         <i class="fas fa-search"></i>
@@ -813,19 +933,35 @@ export function initFormsAdmin(state, els, deps) {
                                 const status = workflowBadge(getWorkflowStatus('submission', item.id));
                                 const archive = archiveStatusBadge(item.archive_status);
                                 const confidentiality = confidentialityBadge(item.confidentiality_level);
+                                
+                                const scoreObtained = Number(item.score_obtained || 0);
+                                const scoreMax = Number(item.score_max || 1); // Avoid div by zero
+                                const scorePercent = Math.min(100, Math.round((scoreObtained / scoreMax) * 100));
+                                const scoreColor = scorePercent >= 80 ? '#10b981' : (scorePercent >= 60 ? '#f59e0b' : '#ef4444');
+
                                 return `
                                     <button type="button" class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}" data-action="pick-submission" data-id="${item.id}">
                                         <div class="forms-review-list-head">
                                             <strong>${escapeHtml(item.nama_panjang || item.username)}</strong>
                                             <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
                                         </div>
-                                        <div class="small muted">@${escapeHtml(item.username || '-')} • ${escapeHtml(item.pimpinan || '-')}</div>
-                                        <div class="small muted">Skor: ${Number(item.score_obtained || 0)} / ${Number(item.score_max || 0)}</div>
+                                        <div class="forms-list-item-meta">
+                                            <div class="small muted">@${escapeHtml(item.username || '-')} • ${escapeHtml(item.pimpinan || '-')}</div>
+                                            <div class="forms-list-score-wrapper">
+                                                <div class="forms-list-score-bar-bg">
+                                                    <div class="forms-list-score-bar-fill" style="width: ${scorePercent}%; background: ${scoreColor};"></div>
+                                                </div>
+                                                <span class="forms-list-score-text" style="color: ${scoreColor}">${scoreObtained}/${scoreMax}</span>
+                                            </div>
+                                        </div>
                                         <div class="forms-review-badge-row">
                                             <span class="forms-review-badge ${status.className}">${status.text}</span>
                                             ${hasFocus ? '<span class="forms-review-badge is-focus">Focus Inbox</span>' : ''}
                                             <span class="forms-review-badge ${archive.className}">${archive.text}</span>
-                                            <span class="forms-review-badge ${confidentiality.className}">${confidentiality.text}</span>
+                                        </div>
+                                        <div class="forms-list-quick-actions">
+                                            <button type="button" class="quick-action-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up" title="Set Follow Up"><i class="fas fa-clock"></i></button>
+                                            <button type="button" class="quick-action-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done" title="Set Selesai"><i class="fas fa-check"></i></button>
                                         </div>
                                     </button>
                                 `;
@@ -1012,6 +1148,14 @@ export function initFormsAdmin(state, els, deps) {
         render();
     }
 
+    root.addEventListener('input', (event) => {
+        const actionEl = event.target.closest('[data-action="filter-list"]');
+        if (actionEl) {
+            local.listQuery = event.target.value;
+            render();
+        }
+    });
+
     root.addEventListener('click', async (event) => {
         const actionEl = event.target.closest('[data-action], [data-view]');
         if (!actionEl) return;
@@ -1040,9 +1184,14 @@ export function initFormsAdmin(state, els, deps) {
 
             if (view) {
                 local.activeView = view;
-                if (view === 'submissions') await loadSubmissions();
-                if (view === 'submissions') await loadArchiveSummary();
-                if (view === 'inbox') await loadInbox();
+                if (local.activeView === 'submissions') {
+                    await loadSubmissions();
+                    await loadArchiveSummary();
+                } else if (local.activeView === 'inbox') {
+                    await loadInbox();
+                } else if (local.activeView === 'analysis') {
+                    await loadAnalysis();
+                }
                 render();
                 return;
             }
@@ -1097,6 +1246,13 @@ export function initFormsAdmin(state, els, deps) {
                 render();
                 return;
             }
+            if (action === 'submissions-sort' || action === 'inbox-sort') {
+                const view = action === 'submissions-sort' ? 'submissions' : 'inbox';
+                local.review[view].sort = actionEl.dataset.value || 'newest';
+                local.review[view].page = 1;
+                render();
+                return;
+            }
             if (action === 'toggle-status') {
                 if (isActionBusy(action)) return;
                 setActionBusy(action, true);
@@ -1120,6 +1276,15 @@ export function initFormsAdmin(state, els, deps) {
                 setActionBusy(action, true);
                 render();
                 await loadInbox();
+                setActionBusy(action, false);
+                render();
+                return;
+            }
+            if (action === 'reload-analysis') {
+                if (isActionBusy(action)) return;
+                setActionBusy(action, true);
+                render();
+                await loadAnalysis();
                 setActionBusy(action, false);
                 render();
                 return;

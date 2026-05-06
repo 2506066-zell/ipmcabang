@@ -599,6 +599,96 @@ async function handleAdminDetail(req, res) {
   });
 }
 
+async function handleAdminAnalysis(req, res) {
+  try {
+    await requireAdminAuth(req);
+  } catch (e) {
+    return json(res, 401, { status: 'error', message: e.message || 'Unauthorized' });
+  }
+
+  const formId = Number(req.query?.id || 0);
+  if (!formId) return json(res, 400, { status: 'error', message: 'ID form tidak valid.' });
+
+  const form = (await query`SELECT id, title, type, target_participants FROM form_templates WHERE id=${formId}`).rows[0];
+  if (!form) return json(res, 404, { status: 'error', message: 'Form tidak ditemukan.' });
+
+  const fields = await getFormFields(formId);
+  const submissions = (await query`SELECT id FROM form_submissions WHERE form_id=${formId}`).rows;
+  const submissionIds = submissions.map(s => s.id);
+
+  if (!submissionIds.length) {
+    return json(res, 200, { status: 'success', stats: { total_submissions: 0, average_score: 0, field_analysis: [] } });
+  }
+
+  const answers = (await query`
+    SELECT a.submission_id, a.field_id, a.answer_text, a.answer_json,
+           ff.field_type, ff.answer_key_text, ff.score_weight
+    FROM form_answers a
+    JOIN form_fields ff ON ff.id = a.field_id
+    WHERE a.submission_id = ANY(${submissionIds})
+  `).rows;
+
+  const fieldAnalysis = fields.map(field => {
+    const fieldAnswers = answers.filter(a => a.field_id === field.id);
+    const totalAnswers = fieldAnswers.length;
+    let correctCount = 0;
+    const distribution = {};
+
+    fieldAnswers.forEach(ans => {
+      const evaluation = evaluateAnswer(ans);
+      if (evaluation.status === 'benar') correctCount++;
+
+      if (['single_choice', 'dropdown'].includes(field.field_type)) {
+        const val = ans.answer_text || 'Kosong';
+        distribution[val] = (distribution[val] || 0) + 1;
+      } else if (field.field_type === 'multiple_choice') {
+        const vals = Array.isArray(ans.answer_json) ? ans.answer_json : [];
+        vals.forEach(v => {
+          distribution[v] = (distribution[v] || 0) + 1;
+        });
+      }
+    });
+
+    return {
+      field_id: field.id,
+      label: field.label,
+      field_type: field.field_type,
+      total_answers: totalAnswers,
+      correct_count: correctCount,
+      correct_percent: totalAnswers > 0 ? Math.round((correctCount / totalAnswers) * 100) : 0,
+      distribution: Object.entries(distribution).map(([key, value]) => ({ 
+        key, 
+        value, 
+        percent: Math.round((value / totalAnswers) * 100) 
+      })),
+      is_scorable: ['single_choice', 'dropdown', 'multiple_choice'].includes(field.field_type) && !!field.answer_key_text
+    };
+  });
+
+  const submissionScores = submissionIds.map(sid => {
+    const subAnswers = answers.filter(a => a.submission_id === sid);
+    let totalScore = 0;
+    subAnswers.forEach(ans => {
+      totalScore += evaluateAnswer(ans).score;
+    });
+    return totalScore;
+  });
+
+  const totalSubmissions = submissionIds.length;
+  const avgScore = totalSubmissions > 0 ? (submissionScores.reduce((a, b) => a + b, 0) / totalSubmissions).toFixed(1) : 0;
+
+  return json(res, 200, {
+    status: 'success',
+    stats: {
+      total_submissions: totalSubmissions,
+      average_score: Number(avgScore),
+      highest_score: Math.max(...submissionScores, 0),
+      lowest_score: Math.min(...submissionScores, 0),
+      field_analysis: fieldAnalysis
+    }
+  });
+}
+
 async function writeActivity(adminId, action, details) {
   try {
     await query`
@@ -1155,6 +1245,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET' && action === 'list') return await handleAdminList(req, res);
     if (req.method === 'GET' && action === 'detail') return await handleAdminDetail(req, res);
     if (req.method === 'GET' && action === 'submissions') return await handleAdminSubmissions(req, res);
+    if (req.method === 'GET' && action === 'analysis') return await handleAdminAnalysis(req, res);
     if (req.method === 'GET' && action === 'inbox') return await handleAdminInbox(req, res);
     if (req.method === 'GET' && action === 'archiveSummary') return await handleArchiveSummary(req, res);
     if (req.method === 'POST' && action === 'saveTemplate') return await handleSaveTemplate(req, res);
