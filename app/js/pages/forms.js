@@ -379,8 +379,43 @@
         bindProgressObserver(formEl, form);
         bindDraftAutosave(formEl, form);
         updateRuntimeUI(formEl, form);
+        initUIEnhancements(formEl, form);
         formEl?.addEventListener('submit', (event) => handleSubmit(event, form));
         $('forms-login-btn')?.addEventListener('click', redirectToLogin);
+    }
+
+    function initUIEnhancements(formEl, form) {
+        if (!formEl) return;
+
+        // Auto-expand textareas
+        formEl.querySelectorAll('.forms-textarea').forEach(textarea => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+            textarea.addEventListener('input', () => {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            });
+        });
+
+        // Auto-scroll to next question on single choice
+        formEl.addEventListener('change', (e) => {
+            const radio = e.target.closest('input[type="radio"]');
+            if (!radio) return;
+
+            const currentCard = radio.closest('.forms-question-card');
+            if (!currentCard) return;
+
+            const nextCard = currentCard.nextElementSibling;
+            if (nextCard && nextCard.classList.contains('forms-question-card')) {
+                setTimeout(() => {
+                    nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Visual feedback
+                    nextCard.style.transition = 'box-shadow 0.4s';
+                    nextCard.style.boxShadow = '0 0 0 2px var(--forms-accent)';
+                    setTimeout(() => nextCard.style.boxShadow = '', 600);
+                }, 150);
+            }
+        });
     }
 
     function collectAnswers(formEl, form) {
@@ -723,6 +758,12 @@
         try {
             const data = await fetchJson(`/api/forms?action=detail&slug=${encodeURIComponent(slug)}`);
             state.activeForm = data.form;
+
+            // Apply theme classes
+            document.body.classList.remove('is-pretest', 'is-posttest');
+            if (state.activeForm.type === 'pretest') document.body.classList.add('is-pretest');
+            else if (state.activeForm.type === 'posttest') document.body.classList.add('is-posttest');
+
             if (options.syncHistory !== false) {
                 const url = new URL(window.location.href);
                 url.searchParams.set('slug', slug);
@@ -740,6 +781,7 @@
 
     function backToPicker() {
         setMode('picker');
+        document.body.classList.remove('is-pretest', 'is-posttest');
         state.activeForm = null;
         state.activeSlug = '';
         const url = new URL(window.location.href);

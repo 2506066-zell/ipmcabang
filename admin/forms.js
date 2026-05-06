@@ -1052,11 +1052,14 @@ export function initFormsAdmin(state, els, deps) {
     }
 
     function render() {
+        const activeItem = local.items.find(i => Number(i.id) === local.activeId);
+        const themeClass = activeItem ? `is-${activeItem.type}` : '';
         const workspace = local.activeView === 'submissions'
             ? renderSubmissionsViewV2()
             : (local.activeView === 'inbox' ? renderInboxViewV2() : renderBuilderView());
+        
         root.innerHTML = `
-            <div class="forms-admin-layout">
+            <div class="forms-admin-layout ${themeClass}">
                 ${renderList()}
                 ${workspace}
             </div>

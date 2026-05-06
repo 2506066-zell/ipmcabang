@@ -1,24 +1,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 .page-forms {
-    --forms-bg: #f8faf8;
-    --forms-surface: #ffffff;
-    --forms-surface-soft: #f1f6f2;
-    --forms-border: #dce8df;
-    --forms-border-strong: #b9d1be;
-    --forms-text: #1a2a1d;
-    --forms-muted: #587162;
-    --forms-accent: #4a7c5d;
-    --forms-accent-strong: #2f6546;
-    --forms-accent-soft: #e7f1eb;
-    --forms-focus: #f4d03f;
-    --forms-danger: #c23d4f;
-    --forms-danger-soft: #ffecee;
+    --forms-bg: #0b1120;
+    --forms-surface: rgba(30, 41, 59, 0.75);
+    --forms-surface-soft: rgba(51, 65, 85, 0.4);
+    --forms-border: rgba(255, 255, 255, 0.08);
+    --forms-border-strong: rgba(59, 130, 246, 0.4);
+    --forms-text: #f8fafc;
+    --forms-muted: #94a3b8;
+    --forms-accent: #3b82f6;
+    --forms-accent-strong: #2563eb;
+    --forms-accent-soft: rgba(59, 130, 246, 0.15);
+    --forms-focus: #f59e0b;
+    --forms-danger: #ef4444;
+    --forms-danger-soft: rgba(239, 68, 68, 0.12);
+    --forms-glow-a: rgba(59, 130, 246, 0.35);
+    --forms-glow-b: rgba(139, 92, 246, 0.25);
     min-height: 100vh;
     background: var(--forms-bg);
     color: var(--forms-text);
     font-family: 'Plus Jakarta Sans', sans-serif;
     overflow-x: hidden;
+}
+
+/* Post-Test Theme Override - Success Emerald */
+.page-forms.is-posttest {
+    --forms-accent: #10b981;
+    --forms-accent-strong: #059669;
+    --forms-accent-soft: rgba(16, 185, 129, 0.15);
+    --forms-border-strong: rgba(16, 185, 129, 0.4);
+    --forms-glow-a: rgba(16, 185, 129, 0.3);
+    --forms-glow-b: rgba(5, 150, 105, 0.2);
+}
+
+/* Pre-Test Theme Override - Calm Blue (Optional if default is blue) */
+.page-forms.is-pretest {
+    --forms-accent: #3b82f6;
+    --forms-accent-strong: #2563eb;
+    --forms-glow-a: rgba(59, 130, 246, 0.35);
 }
 
 .forms-bg-grid {
@@ -27,10 +46,10 @@
     pointer-events: none;
     z-index: 0;
     background-image:
-        linear-gradient(to right, rgba(74, 124, 93, 0.08) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(74, 124, 93, 0.08) 1px, transparent 1px);
-    background-size: 44px 44px;
-    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.42), transparent 72%);
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
 }
 
 .forms-bg-glow {
@@ -38,24 +57,25 @@
     border-radius: 50%;
     pointer-events: none;
     z-index: 0;
-    filter: blur(54px);
-    opacity: 0.45;
+    filter: blur(100px);
+    opacity: 0.25;
+    transition: background 0.6s ease;
 }
 
 .forms-bg-glow-a {
-    width: 250px;
-    height: 250px;
-    top: 94px;
-    left: -100px;
-    background: rgba(74, 124, 93, 0.22);
+    width: 500px;
+    height: 500px;
+    top: -150px;
+    left: -150px;
+    background: var(--forms-glow-a);
 }
 
 .forms-bg-glow-b {
-    width: 240px;
-    height: 240px;
-    bottom: 64px;
-    right: -80px;
-    background: rgba(244, 208, 63, 0.22);
+    width: 450px;
+    height: 450px;
+    bottom: -100px;
+    right: -100px;
+    background: var(--forms-glow-b);
 }
 
 .forms-main {
@@ -98,8 +118,9 @@
 .forms-stage-loading {
     background: var(--forms-surface);
     border: 1px solid var(--forms-border);
-    box-shadow: 0 16px 34px rgba(27, 59, 38, 0.08);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
     border-radius: 22px;
+    backdrop-filter: blur(16px);
 }
 
 .page-forms.mode-filling .forms-main {
@@ -120,13 +141,14 @@
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    padding: 6px 10px;
+    padding: 6px 12px;
     background: var(--forms-accent-soft);
     color: var(--forms-accent);
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    font-weight: 800;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     font-size: 0.72rem;
+    border: 1px solid var(--forms-border-strong);
 }
 
 .forms-topbar h1 {
@@ -237,20 +259,21 @@
 .forms-list-card {
     width: 100%;
     text-align: left;
-    border-radius: 16px;
+    border-radius: 20px;
     border: 1px solid var(--forms-border);
-    background: #fff;
-    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 18px;
     cursor: pointer;
     display: grid;
-    gap: 10px;
+    gap: 12px;
 }
 
 .forms-list-card:hover,
 .forms-list-card.active {
+    background: rgba(59, 130, 246, 0.08);
     border-color: var(--forms-border-strong);
-    box-shadow: 0 12px 22px rgba(31, 67, 45, 0.1);
-    transform: translateY(-1px);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
 }
 
 .forms-list-card h3 {
@@ -408,19 +431,22 @@
 
 .forms-progress-bar {
     width: 100%;
-    height: 10px;
+    height: 8px;
     border-radius: 999px;
-    background: #e8efe9;
-    margin: 10px 0 14px;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 12px 0 16px;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .forms-progress-bar span,
-#forms-progress-bar-fill {
+#forms-progress-fill {
     display: block;
     height: 100%;
     border-radius: inherit;
     background: linear-gradient(90deg, var(--forms-accent), var(--forms-focus));
+    box-shadow: 0 0 12px var(--forms-accent);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .forms-runtime-status {
@@ -529,17 +555,13 @@
 
 .forms-question-card {
     position: relative;
-    border-radius: 18px;
+    border-radius: 20px;
     border: 1px solid var(--forms-border);
-    padding: 16px;
-    background: #fff;
-    box-shadow: 0 10px 22px rgba(27, 59, 38, 0.04);
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     overflow: hidden;
-    transition:
-        border-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-        transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all 0.3s var(--ease-out);
 }
 
 .forms-question-card::after {
@@ -638,23 +660,26 @@
 .forms-textarea,
 .forms-select {
     width: 100%;
-    border-radius: 12px;
+    border-radius: 14px;
     border: 1px solid var(--forms-border);
-    background: #fff;
+    background: rgba(15, 23, 42, 0.6);
     color: var(--forms-text);
-    padding: 12px 13px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    line-height: 1.6;
 }
 
 .forms-textarea {
-    min-height: 120px;
+    min-height: 140px;
     resize: vertical;
 }
 
 .forms-text-input:focus,
 .forms-textarea:focus,
 .forms-select:focus {
-    border-color: var(--forms-accent);
-    box-shadow: 0 0 0 3px rgba(74, 124, 93, 0.14);
+    border-color: var(--forms-focus);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+    background: rgba(15, 23, 42, 0.8);
     outline: none;
 }
 
@@ -665,18 +690,14 @@
 
 .forms-choice-label {
     display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    border-radius: 12px;
+    gap: 12px;
+    align-items: center;
+    border-radius: 14px;
     border: 1px solid var(--forms-border);
-    background: var(--forms-surface-soft);
-    padding: 11px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 14px 16px;
     cursor: pointer;
-    transition:
-        border-color 180ms ease,
-        background-color 180ms ease,
-        transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 180ms ease;
+    transition: all 0.2s var(--ease-out);
 }
 
 .forms-choice-label:hover {
@@ -733,17 +754,18 @@
 
 .forms-submit-btn {
     width: 100%;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(90deg, var(--forms-accent), var(--forms-accent-strong));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--forms-accent), var(--forms-accent-strong));
     color: #fff;
-    padding: 13px 16px;
+    padding: 14px 20px;
     font-weight: 800;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
 }
 
 .forms-submit-btn:disabled {
