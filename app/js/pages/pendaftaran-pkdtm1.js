@@ -77,6 +77,9 @@
         ) {
             return 'Total ukuran dokumen melebihi batas sistem. Silakan perkecil dokumen yang diunggah lalu coba lagi.';
         }
+        if (lowerMessage.includes('fetch') || lowerMessage.includes('network error') || lowerMessage.includes('failed to fetch')) {
+            return 'Koneksi terputus atau file terlalu besar. Silakan coba lagi dengan koneksi internet yang stabil atau perkecil ukuran dokumen Anda (maks 500KB).';
+        }
         return rawMessage || 'Gagal mengirim pendaftaran';
     }
 
@@ -336,6 +339,33 @@
                 }
             });
         }
+
+        // Share functionality
+        const shareBtn = $('pk-btn-share');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', async () => {
+                const shareData = {
+                    title: 'Pendaftaran PKDTM 1 - IPM Panawuan',
+                    text: 'Ayo bergabung dalam Pelatihan Kader Dasar Taruna Melati 1 (PKDTM1). Jadilah kader dasar yang militan! Daftar sekarang di sini:',
+                    url: window.location.href
+                };
+
+                try {
+                    if (navigator.share) {
+                        await navigator.share(shareData);
+                    } else {
+                        // Fallback: Copy to clipboard
+                        await navigator.clipboard.writeText(`${shareData.text}\n\n${shareData.url}`);
+                        toast('Link pendaftaran berhasil disalin!', 'success');
+                    }
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Share failed:', err);
+                        toast('Gagal membagikan link', 'error');
+                    }
+                }
+            });
+        }
     }
 
     // --- Upload Zone Setup ---
@@ -350,7 +380,7 @@
     }
 
     function handleFileSelect(fieldName, file, zone) {
-        if (file.size > 5 * 1024 * 1024) { toast('File terlalu besar (maks 5MB)', 'error'); return; }
+        if (file.size > 500 * 1024) { toast('File terlalu besar (maks 500KB)', 'error'); return; }
         const allowedTypes = {
             sertifikat: ['image/jpeg','image/png','image/webp','application/pdf'],
             foto: ['image/jpeg','image/png','image/webp'],
@@ -384,9 +414,9 @@
         const input = $(`pk-file-${fieldName}`);
         if (input) input.value = '';
         const icons = { sertifikat:'fa-file-certificate', foto:'fa-camera', motivasi:'fa-file-pdf', kta:'fa-id-card' };
-        const hints = { sertifikat:'JPG, PNG, atau PDF — maks 5MB', foto:'JPG atau PNG — maks 5MB', motivasi:'PDF — maks 5MB', kta:'JPG, PNG, atau PDF — maks 5MB' };
+        const hints = { sertifikat:'JPG, PNG, atau PDF — maks 500KB', foto:'JPG atau PNG — maks 500KB', motivasi:'PDF — maks 500KB', kta:'JPG, PNG, atau PDF — maks 500KB' };
         const textEl = zone.querySelector('.pk-upload-text');
-        if (textEl) textEl.innerHTML = `<strong>Klik atau seret file ke sini</strong><span>${hints[fieldName]||'maks 5MB'}</span>`;
+        if (textEl) textEl.innerHTML = `<strong>Klik atau seret file ke sini</strong><span>${hints[fieldName]||'maks 500KB'}</span>`;
         const iconEl = zone.querySelector('.pk-upload-icon i');
         if (iconEl) iconEl.className = `fas ${icons[fieldName]||'fa-upload'}`;
     }
@@ -498,7 +528,7 @@
     }
 
     function handleEssaySelect(file, zone) {
-        if (file.size > 5 * 1024 * 1024) { toast('File terlalu besar (maks 5MB)', 'error'); return; }
+        if (file.size > 500 * 1024) { toast('File terlalu besar (maks 500KB)', 'error'); return; }
         const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         if (!allowed.includes(file.type)) { toast('File essay harus berupa PDF, DOC, atau DOCX', 'error'); return; }
 
@@ -513,7 +543,7 @@
                 state.essayFile = null;
                 zone.classList.remove('has-file');
                 $('pk-file-essay').value = '';
-                textEl.innerHTML = '<strong>Klik atau seret file essay ke sini</strong><span>PDF, DOC, atau DOCX — maks 5MB</span>';
+                textEl.innerHTML = '<strong>Klik atau seret file essay ke sini</strong><span>PDF, DOC, atau DOCX — maks 500KB</span>';
                 if (iconEl) iconEl.className = 'fas fa-pen-fancy';
                 $('pk-submit-essay').disabled = true;
             });

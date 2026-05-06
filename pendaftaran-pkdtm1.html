@@ -8,6 +8,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description" content="Pendaftaran Pelatihan Kader Dasar Taruna Melati 1 - IPM Panawuan">
     <title>Pendaftaran PKDTM1 - IPM Panawuan</title>
+    <meta property="og:title" content="Daftar PKDTM 1 - IPM Panawuan">
+    <meta property="og:description" content="Ayo bergabung dalam Pelatihan Kader Dasar Taruna Melati 1. Selesaikan pendaftaranmu sekarang!">
+    <meta property="og:image" content="/images/pkdtm1-banner-v3.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" href="/ipm%20(2).png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,9 +65,14 @@
         <section class="pk-card pk-hero" id="pk-hero">
             <div class="pk-hero-top">
                 <span class="pk-kicker"><i class="fas fa-graduation-cap"></i> Pendaftaran</span>
-                <button type="button" class="pk-btn-help-minimal" id="pk-toggle-help" title="Butuh Bantuan?">
-                    <i class="fas fa-circle-question"></i> <span>Bantuan</span>
-                </button>
+                <div class="pk-hero-actions">
+                    <button type="button" class="pk-btn-share-minimal" id="pk-btn-share" title="Bagikan">
+                        <i class="fas fa-share-nodes"></i> <span>Bagikan</span>
+                    </button>
+                    <button type="button" class="pk-btn-help-minimal" id="pk-toggle-help" title="Butuh Bantuan?">
+                        <i class="fas fa-circle-question"></i> <span>Bantuan</span>
+                    </button>
+                </div>
             </div>
             <h1>PKDTM 1</h1>
             <p class="pk-hero-desc">Pelatihan Kader Dasar Taruna Melati 1 — Selesaikan dua tahap pendaftaran untuk menjadi peserta resmi.</p>
@@ -117,38 +127,38 @@
             <section class="pk-card pk-form-section pk-hidden" id="pk-step-2">
                 <div class="pk-field">
                     <label>Sertifikat <span class="pk-badge-required">Wajib</span></label>
-                    <span class="pk-field-hint">MABICA / FORTASI / Surat Keterangan — JPG, PNG, atau PDF, maks 5MB</span>
+                    <span class="pk-field-hint">MABICA / FORTASI / Surat Keterangan — JPG, PNG, atau PDF, maks 500KB</span>
                     <div class="pk-upload-zone" id="pk-zone-sertifikat">
                         <input type="file" id="pk-file-sertifikat" accept="image/*,.pdf">
                         <div class="pk-upload-icon"><i class="fas fa-file-certificate"></i></div>
-                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG, PNG, atau PDF — maks 5MB</span></div>
+                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG, PNG, atau PDF — maks 500KB</span></div>
                     </div>
                 </div>
                 <div class="pk-field">
                     <label>Foto <span class="pk-badge-required">Wajib</span></label>
-                    <span class="pk-field-hint">Pas foto formal — JPG atau PNG, maks 5MB</span>
+                    <span class="pk-field-hint">Pas foto formal — JPG atau PNG, maks 500KB</span>
                     <div class="pk-upload-zone" id="pk-zone-foto">
                         <input type="file" id="pk-file-foto" accept="image/*">
                         <div class="pk-upload-icon"><i class="fas fa-camera"></i></div>
-                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG atau PNG — maks 5MB</span></div>
+                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG atau PNG — maks 500KB</span></div>
                     </div>
                 </div>
                 <div class="pk-field">
                     <label>Surat Mandat <span class="pk-badge-required">Wajib</span></label>
-                    <span class="pk-field-hint">Surat Mandat dari Pimpinan — JPG, PNG, atau PDF, maks 5MB</span>
+                    <span class="pk-field-hint">Surat Mandat dari Pimpinan — JPG, PNG, atau PDF, maks 500KB</span>
                     <div class="pk-upload-zone" id="pk-zone-mandat">
                         <input type="file" id="pk-file-mandat" accept="image/*,.pdf">
                         <div class="pk-upload-icon"><i class="fas fa-file-signature"></i></div>
-                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG, PNG, atau PDF — maks 5MB</span></div>
+                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG, PNG, atau PDF — maks 500KB</span></div>
                     </div>
                 </div>
                 <div class="pk-field">
                     <label>Surat Motivasi <span class="pk-badge-required">Wajib</span></label>
-                    <span class="pk-field-hint">Format PDF, maks 5MB</span>
+                    <span class="pk-field-hint">Format PDF, maks 500KB</span>
                     <div class="pk-upload-zone" id="pk-zone-motivasi">
                         <input type="file" id="pk-file-motivasi" accept=".pdf">
                         <div class="pk-upload-icon"><i class="fas fa-file-pdf"></i></div>
-                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>PDF — maks 5MB</span></div>
+                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>PDF — maks 500KB</span></div>
                     </div>
                 </div>
                 <div class="pk-field">
@@ -157,7 +167,7 @@
                     <div class="pk-upload-zone" id="pk-zone-kta">
                         <input type="file" id="pk-file-kta" accept="image/*,.pdf">
                         <div class="pk-upload-icon"><i class="fas fa-id-card"></i></div>
-                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG, PNG, atau PDF — maks 5MB</span></div>
+                        <div class="pk-upload-text"><strong>Klik atau seret file ke sini</strong><span>JPG, PNG, atau PDF — maks 500KB</span></div>
                     </div>
                 </div>
                 <div class="pk-actions">
@@ -222,11 +232,11 @@
             </div>
             <div class="pk-field">
                 <label>File Essay (Tahap 2) <span class="pk-badge-required">Wajib</span></label>
-                <span class="pk-field-hint">Upload essay dalam format PDF, DOC, atau DOCX — maks 5MB</span>
+                <span class="pk-field-hint">Upload essay dalam format PDF, DOC, atau DOCX — maks 500KB</span>
                 <div class="pk-upload-zone" id="pk-zone-essay">
                     <input type="file" id="pk-file-essay" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
                     <div class="pk-upload-icon"><i class="fas fa-pen-fancy"></i></div>
-                    <div class="pk-upload-text"><strong>Klik atau seret file essay ke sini</strong><span>PDF, DOC, atau DOCX — maks 5MB</span></div>
+                    <div class="pk-upload-text"><strong>Klik atau seret file essay ke sini</strong><span>PDF, DOC, atau DOCX — maks 500KB</span></div>
                 </div>
             </div>
             <div class="pk-upload-progress" id="pk-essay-progress">
