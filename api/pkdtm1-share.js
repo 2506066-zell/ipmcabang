@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
   const origin = getOrigin(req);
   const title = 'Daftar PKDTM 1 — Membumikan Identitas, Melahirkan Peradaban';
   const description = 'Ayo bergabung dalam Pelatihan Kader Dasar Taruna Melati 1 (PKDTM1) - PC IPM Panawuan. Jadilah kader dasar yang militan! Daftar sekarang!';
-  const imageUrl = `${origin}/api/pkdtm1-share-image`;
+  const imageUrl = `${origin}/pkdtm1-banner-16-9.png`;
   const canonicalUrl = `${origin}/pendaftaran-pkdtm1.html`;
   const clientUrl = '/pendaftaran-pkdtm1.html';
 
@@ -54,8 +54,8 @@ module.exports = async (req, res) => {
   <meta property="og:image:url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="720">
   <meta property="og:image:alt" content="PKDTM 1 - Membumikan Identitas, Melahirkan Peradaban">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
   <meta name="twitter:card" content="summary_large_image">

@@ -242,6 +242,10 @@ async function handleAdminUpdate(req, res) {
     updated_at = NOW()
   WHERE id = ${id}`;
 
+  // Log the activity for audit trail
+  await query`INSERT INTO activity_logs (admin_id, action, details) 
+              VALUES (${admin.id}, ${'PKDTM1_STATUS_UPDATE'}, ${JSON.stringify({ registration_id: id, new_status: newStatus, note: adminNote })})`;
+
   // Trigger notification for the user
   try {
     const regData = (await query`SELECT user_id, nama FROM registrations_pkdtm1 WHERE id = ${id}`).rows[0];
