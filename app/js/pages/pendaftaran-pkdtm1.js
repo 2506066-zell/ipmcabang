@@ -347,7 +347,7 @@
                 const shareData = {
                     title: 'Pendaftaran PKDTM 1 - IPM Panawuan',
                     text: 'Ayo bergabung dalam Pelatihan Kader Dasar Taruna Melati 1 (PKDTM1). Jadilah kader dasar yang militan! Daftar sekarang di sini:',
-                    url: window.location.href
+                    url: window.location.origin + '/daftar-pkdtm1'
                 };
 
                 try {

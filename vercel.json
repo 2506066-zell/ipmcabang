@@ -176,6 +176,18 @@
       "destination": "/api/index?segment=admin&action=runScheduledNotifications"
     },
     {
+      "source": "/daftar-pkdtm1",
+      "destination": "/api/pkdtm1-share"
+    },
+    {
+      "source": "/api/pkdtm1-share",
+      "destination": "/api/pkdtm1-share"
+    },
+    {
+      "source": "/api/pkdtm1-share-image",
+      "destination": "/api/pkdtm1-share-image"
+    },
+    {
       "source": "/api/pkdtm1",
       "destination": "/api/index?segment=pkdtm1"
     },
