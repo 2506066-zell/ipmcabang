@@ -1371,6 +1371,12 @@
     gap: 6px;
     margin-top: 16px;
     width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.forms-timeline::-webkit-scrollbar {
+    display: none;
 }
 
 .forms-timeline-segment {
@@ -1844,5 +1850,14 @@
         min-width: 100px;
         padding: 12px 20px;
         font-size: 0.9rem;
+    }
+
+    .forms-form-card {
+        padding: 8px 0;
+        gap: 12px;
+    }
+
+    .forms-steps-wrapper {
+        min-height: auto;
     }
 }
