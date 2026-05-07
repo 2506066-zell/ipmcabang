@@ -354,7 +354,10 @@
 
         els.stage.innerHTML = `
             <article class="forms-stage-card forms-stage-card-focus">
-                <div class="forms-focus-hero">
+                <div class="forms-focus-hero ${form.type === 'pretest' ? 'theme-pretest' : 'theme-posttest'}">
+                    <div class="forms-progress-bar">
+                        <span id="forms-progress-fill" style="width:0%"></span>
+                    </div>
                     <div class="forms-form-head">
                         <span class="forms-form-type"><i class="fas ${form.type === 'pretest' ? 'fa-clipboard-list' : 'fa-clipboard-check'}"></i> ${form.type === 'pretest' ? 'Pre-Test' : 'Post-Test'}</span>
                         <h2>${escapeHtml(form.title)}</h2>
@@ -374,18 +377,14 @@
                             <strong id="forms-meta-progress">0/${form.fields.length} terisi</strong>
                         </div>
                     </div>
+                    <div class="forms-runtime-status" id="forms-runtime-status" data-status="not_started" aria-live="polite">
+                        <div class="forms-runtime-main">
+                            <div class="forms-runtime-badge" id="forms-runtime-badge"><i class="fas fa-circle"></i> Belum mulai</div>
+                            <div class="forms-runtime-note" id="forms-runtime-note">Mulai isi jawaban untuk menyimpan draft otomatis.</div>
+                        </div>
+                    </div>
                 </div>
                 ${loginWarning}
-                <div class="forms-runtime-status" id="forms-runtime-status" data-status="not_started" aria-live="polite">
-                    <div class="forms-runtime-main">
-                        <div class="forms-runtime-badge" id="forms-runtime-badge"><i class="fas fa-circle"></i> Belum mulai</div>
-                        <div class="forms-runtime-note" id="forms-runtime-note">Mulai isi jawaban untuk menyimpan draft otomatis.</div>
-                    </div>
-                    <div class="forms-runtime-side" id="forms-runtime-side">Status kerja akan diperbarui otomatis.</div>
-                </div>
-                <div class="forms-progress-bar">
-                    <span id="forms-progress-fill" style="width:0%"></span>
-                </div>
                 <form id="forms-submit-form" class="forms-form-card">
                     <div class="forms-question-card forms-identity-card">
                         <div class="forms-q-header">
@@ -638,15 +637,11 @@
         const runtime = $('forms-runtime-status');
         const badge = $('forms-runtime-badge');
         const note = $('forms-runtime-note');
-        const side = $('forms-runtime-side');
         const metaStatus = $('forms-meta-status');
         const footerNote = $('forms-footer-note');
         if (runtime) runtime.dataset.status = statusView.code;
         if (badge) badge.innerHTML = `<i class="fas fa-circle"></i> ${escapeHtml(statusView.badge)}`;
         if (note) note.textContent = statusView.note;
-        if (side) side.textContent = analysis.readyToSubmit
-            ? 'Semua syarat kirim sudah terpenuhi.'
-            : `${analysis.filled}/${analysis.total} pertanyaan sudah terisi.`;
         if (metaStatus) metaStatus.textContent = statusView.badge;
         if (footerNote) {
             footerNote.textContent = form.already_submitted
