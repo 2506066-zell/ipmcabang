@@ -752,6 +752,19 @@ export function initFormsAdmin(state, els, deps) {
     function renderReviewToolbar(view) {
         const review = view === 'inbox' ? local.review.inbox : local.review.submissions;
         const refreshAction = view === 'inbox' ? 'reload-inbox' : 'reload-submissions';
+        const refreshBusy = isActionBusy(refreshAction);
+
+        let selectedLabel = 'Belum dipilih';
+        if (view === 'inbox') {
+            const list = getSortedInbox();
+            const selected = list.find((item) => Number(item.id) === Number(local.review.inbox.selectedId)) || list[0] || null;
+            if (selected) selectedLabel = selected.nama_panjang || selected.username || 'User';
+        } else {
+            const list = getSortedSubmissions();
+            const selected = list.find((item) => Number(item.id) === Number(local.review.submissions.selectedId)) || list[0] || null;
+            if (selected) selectedLabel = selected.nama_panjang || selected.username || 'User';
+        }
+
         const activeItem = local.items.find(i => Number(i.id) === local.activeId);
         const typeIcon = activeItem?.type === 'pretest' ? 'fa-clipboard-list' : 'fa-clipboard-check';
         const typeLabel = activeItem?.type === 'pretest' ? 'PRE-TEST MODE' : 'POST-TEST MODE';

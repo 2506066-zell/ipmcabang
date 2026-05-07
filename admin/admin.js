@@ -3232,11 +3232,11 @@
             if (els.notifyMessage) els.notifyMessage.value = 'Mari bergabung dalam Pelatihan Kader Dasar Taruna Melati 1. Siapkan dirimu menjadi kader pimpinan masa depan. Klik untuk daftar sekarang!';
             if (els.notifyUrl) els.notifyUrl.value = '/pendaftaran-pkdtm1.html';
             if (els.notifyImage) {
-                els.notifyImage.value = '/pkdtm1_premium_banner_1777807477418.png';
+                els.notifyImage.value = '/pkdtm1-banner-16-9.png';
                 // Trigger live preview for mockup
                 const mockImg = document.getElementById('live-notif-image');
                 if (mockImg) {
-                    mockImg.src = '/pkdtm1_premium_banner_1777807477418.png';
+                    mockImg.src = '/pkdtm1-banner-16-9.png';
                     mockImg.classList.remove('hidden');
                 }
             }
