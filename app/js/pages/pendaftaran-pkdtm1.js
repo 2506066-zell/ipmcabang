@@ -54,6 +54,7 @@
     }
     function showEl(id) { $(id)?.classList.remove('pk-hidden'); }
     function hideEl(id) { $(id)?.classList.add('pk-hidden'); }
+    const MAX_UPLOAD_BYTES = 500 * 1024;
     function setSubmitError(message) {
         const el = $('pk-submit-error');
         if (!el) return;
@@ -81,6 +82,24 @@
             return 'Koneksi terputus atau file terlalu besar. Silakan coba lagi dengan koneksi internet yang stabil atau perkecil ukuran dokumen Anda (maks 500KB).';
         }
         return rawMessage || 'Gagal mengirim pendaftaran';
+    }
+    function getUploadErrorEl(zone) {
+        if (!zone) return null;
+        let errorEl = zone.parentElement?.querySelector('.pk-upload-error');
+        if (errorEl) return errorEl;
+        errorEl = document.createElement('div');
+        errorEl.className = 'pk-upload-error pk-hidden';
+        zone.insertAdjacentElement('afterend', errorEl);
+        return errorEl;
+    }
+    function setUploadError(fieldName, zone, message) {
+        const input = $(`pk-file-${fieldName}`);
+        const errorEl = getUploadErrorEl(zone);
+        zone?.classList.toggle('is-error', !!message);
+        input?.setAttribute('aria-invalid', message ? 'true' : 'false');
+        if (!errorEl) return;
+        errorEl.textContent = message || '';
+        errorEl.classList.toggle('pk-hidden', !message);
     }
 
     // --- Init ---
@@ -380,7 +399,14 @@
     }
 
     function handleFileSelect(fieldName, file, zone) {
-        if (file.size > 500 * 1024) { toast('File terlalu besar (maks 500KB)', 'error'); return; }
+        setUploadError(fieldName, zone, '');
+        if (file.size > MAX_UPLOAD_BYTES) {
+            const message = `Ukuran file melebihi 500KB. Silakan unggah file yang lebih kecil.`;
+            removeFile(fieldName, zone);
+            setUploadError(fieldName, zone, message);
+            toast(message, 'error');
+            return;
+        }
         const allowedTypes = {
             sertifikat: ['image/jpeg','image/png','image/webp','application/pdf'],
             foto: ['image/jpeg','image/png','image/webp'],
@@ -388,6 +414,7 @@
             kta: ['image/jpeg','image/png','image/webp','application/pdf']
         };
         if (allowedTypes[fieldName] && !allowedTypes[fieldName].includes(file.type)) {
+            setUploadError(fieldName, zone, 'Format file tidak didukung untuk kolom ini.');
             toast('Format file tidak didukung', 'error'); return;
         }
         state.files[fieldName] = file;

@@ -197,6 +197,7 @@
 .pk-upload-zone:hover { border-color: var(--pk-accent); background: #eaf4ed; transform: translateY(-1px); }
 .pk-upload-zone.is-dragover { border-color: var(--pk-accent); background: var(--pk-accent-glow); box-shadow: 0 0 0 4px var(--pk-accent-glow); }
 .pk-upload-zone.has-file { border-style: solid; border-color: var(--pk-success); background: var(--pk-success-soft); }
+.pk-upload-zone.is-error { border-style: solid; border-color: var(--pk-danger); background: var(--pk-danger-soft); box-shadow: 0 0 0 3px rgba(185, 58, 74, 0.08); }
 .pk-upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .pk-upload-icon {
     width: 44px; height: 44px; border-radius: 12px;
@@ -218,6 +219,13 @@
 }
 .pk-upload-remove:hover { background: var(--pk-danger-soft); }
 .pk-upload-preview { max-width: 100px; max-height: 100px; border-radius: 10px; object-fit: cover; border: 1px solid var(--pk-border); }
+.pk-upload-error {
+    margin-top: 8px;
+    color: var(--pk-danger);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    font-weight: 600;
+}
 
 /* ============================================
    REVIEW SECTION
