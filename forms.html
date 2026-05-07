@@ -64,30 +64,40 @@
         <section id="forms-picker-shell" class="forms-picker-shell">
             <header class="forms-topbar">
                 <div class="forms-topbar-main">
-                    <span class="forms-kicker">Pre/Post Test</span>
-                    <h1>Pilih Form</h1>
-                    <p id="forms-panel-copy">Pilih form yang tersedia, lalu isi dengan alur yang jelas dan fokus.</p>
+                    <h1><i class="fas fa-clipboard-list"></i> Evaluasi Kegiatan</h1>
+                    <p id="forms-panel-copy">Isi <strong>Pre-Test</strong> sebelum kegiatan dimulai, dan <strong>Post-Test</strong> setelah kegiatan selesai.</p>
                 </div>
                 <div class="forms-topbar-side">
                     <span id="forms-auth-state" class="forms-auth-state">Memeriksa sesi...</span>
-                    <div class="forms-stats">
-                        <span><strong id="forms-stat-active">0</strong> aktif</span>
-                        <span><strong id="forms-stat-submitted">0</strong> terkirim</span>
-                    </div>
                 </div>
             </header>
 
             <section class="forms-picker-card">
                 <div class="forms-picker-head">
                     <div class="forms-filter-row">
-                        <button type="button" class="forms-filter active" data-filter="all">Semua</button>
-                        <button type="button" class="forms-filter" data-filter="pretest">Pretest</button>
-                        <button type="button" class="forms-filter" data-filter="posttest">Posttest</button>
+                        <button type="button" class="forms-filter active" data-filter="all">
+                            <i class="fas fa-layer-group"></i> Semua <span id="forms-stat-active" class="forms-filter-count">0</span>
+                        </button>
+                        <button type="button" class="forms-filter is-pretest" data-filter="pretest">
+                            <i class="fas fa-clipboard-list"></i> Pre-Test
+                        </button>
+                        <button type="button" class="forms-filter is-posttest" data-filter="posttest">
+                            <i class="fas fa-clipboard-check"></i> Post-Test
+                        </button>
                     </div>
-                    <button type="button" class="forms-refresh-btn" id="forms-refresh-btn" aria-label="Refresh form">
-                        <i class="fas fa-rotate"></i>
-                    </button>
+                    <div class="forms-picker-actions">
+                        <span class="forms-submitted-count"><i class="fas fa-check-circle"></i> <strong id="forms-stat-submitted">0</strong> terkirim</span>
+                        <button type="button" class="forms-refresh-btn" id="forms-refresh-btn" aria-label="Refresh form">
+                            <i class="fas fa-rotate"></i>
+                        </button>
+                    </div>
                 </div>
+
+                <div class="forms-picker-legend">
+                    <div class="forms-legend-item is-pretest"><span class="forms-legend-dot"></span> Pre-Test: diisi sebelum materi</div>
+                    <div class="forms-legend-item is-posttest"><span class="forms-legend-dot"></span> Post-Test: diisi sesudah materi</div>
+                </div>
+
                 <div id="forms-list" class="forms-list">
                     <div class="forms-empty-state">Memuat form...</div>
                 </div>
