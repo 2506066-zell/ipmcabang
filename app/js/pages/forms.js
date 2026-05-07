@@ -354,39 +354,6 @@
         const draftSubmitterName = getDraftSubmitterName(form);
         const loginWarning = !state.auth ? '<div class="forms-auth-warning">Belum login. Login dulu untuk kirim jawaban.</div>' : '';
 
-        els.stage.innerHTML = `
-            <article class="forms-stage-card forms-stage-card-focus">
-                <div class="forms-focus-hero ${form.type === 'pretest' ? 'theme-pretest' : 'theme-posttest'}">
-                    <div class="forms-progress-bar">
-                        <span id="forms-progress-fill" style="width:0%"></span>
-                    </div>
-                    <div class="forms-form-head">
-                        <span class="forms-form-type"><i class="fas ${form.type === 'pretest' ? 'fa-clipboard-list' : 'fa-clipboard-check'}"></i> ${form.type === 'pretest' ? 'Pre-Test' : 'Post-Test'}</span>
-                        <h2>${escapeHtml(form.title)}</h2>
-                        <p>${escapeHtml(form.description || 'Jawab semua pertanyaan di bawah ini, lalu kirim saat semua sudah lengkap.')}</p>
-                    </div>
-                    <div class="forms-overview-strip">
-                        <div class="forms-overview-card">
-                            <span class="forms-overview-label">Status</span>
-                            <strong id="forms-meta-status">Belum mulai</strong>
-                        </div>
-                        <div class="forms-overview-card">
-                            <span class="forms-overview-label">Pertanyaan</span>
-                            <strong id="forms-meta-total">${form.fields.length}</strong>
-                        </div>
-                        <div class="forms-overview-card">
-                            <span class="forms-overview-label">Progres</span>
-                            <strong id="forms-meta-progress">0/${form.fields.length} terisi</strong>
-                        </div>
-                    </div>
-                    <div class="forms-runtime-status" id="forms-runtime-status" data-status="not_started" aria-live="polite">
-                        <div class="forms-runtime-main">
-                            <div class="forms-runtime-badge" id="forms-runtime-badge"><i class="fas fa-circle"></i> Belum mulai</div>
-                            <div class="forms-runtime-note" id="forms-runtime-note">Mulai isi jawaban untuk menyimpan draft otomatis.</div>
-                        </div>
-                    </div>
-                </div>
-                ${loginWarning}
         const steps = [];
         const timelineSegments = [];
         
