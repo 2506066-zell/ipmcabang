@@ -590,6 +590,14 @@
             });
         });
 
+        // Auto-expand textareas
+        formEl.querySelectorAll('.forms-textarea').forEach(textarea => {
+            textarea.addEventListener('input', () => {
+                textarea.style.height = 'auto';
+                textarea.style.height = (textarea.scrollHeight) + 'px';
+            });
+        });
+
         // Auto-scroll to next question on single choice
         formEl.addEventListener('change', (e) => {
             const radio = e.target.closest('input[type="radio"]');
