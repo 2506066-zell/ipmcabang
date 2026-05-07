@@ -272,7 +272,8 @@ async function handleAdminUpdate(req, res) {
       sendToUser(regData.user_id, {
           title: notifTitle,
           body: notifMsg,
-          url: '/pendaftaran-pkdtm1.html'
+          url: '/pendaftaran-pkdtm1.html',
+          image: '/app/media/notifications/reminder-forms.png'
       }).catch(() => {});
     }
   } catch (e) { console.error('[PKDTM1] Notification trigger failed:', e); }

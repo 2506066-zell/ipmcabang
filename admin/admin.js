@@ -3264,6 +3264,7 @@
             if (els.notifyTitle) els.notifyTitle.value = `Materi Baru: ${material.title}`;
             if (els.notifyMessage) els.notifyMessage.value = `Baca materi "${material.title}" di perpustakaan digital sekarang. Luangkan waktu untuk belajar hari ini!`;
             if (els.notifyUrl) els.notifyUrl.value = '/materi.html';
+            if (els.notifyImage) els.notifyImage.value = material.thumbnail || '';
         } else {
             // Generic library reminder
             if (els.notifyTitle) els.notifyTitle.value = 'Update Perpustakaan Digital';

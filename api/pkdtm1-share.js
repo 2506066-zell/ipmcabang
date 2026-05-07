@@ -54,11 +54,11 @@ module.exports = async (req, res) => {
   <meta property="og:image:url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:width" content="1280">
-  <meta property="og:image:height" content="720">
+  <meta property="og:image:width" content="300">
+  <meta property="og:image:height" content="300">
   <meta property="og:image:alt" content="PKDTM 1 - Membumikan Identitas, Melahirkan Peradaban">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(imageUrl)}">

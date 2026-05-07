@@ -142,6 +142,17 @@ async function saveInAppNotificationsForUserIds(message, userIds) {
     return userIds.length;
 }
 
+function resolveNotificationImage(url) {
+    const { REMINDER_IMAGES } = require('./_push');
+    const path = String(url || '').toLowerCase();
+    if (path.includes('quiz')) return REMINDER_IMAGES.quiz;
+    if (path.includes('form')) return REMINDER_IMAGES.form;
+    if (path.includes('absen')) return REMINDER_IMAGES.attendance;
+    if (path.includes('materi')) return REMINDER_IMAGES.materials;
+    if (path.includes('discussion')) return REMINDER_IMAGES.discussions;
+    return REMINDER_IMAGES.general;
+}
+
 async function sendPushToTarget(payload, target, userIds) {
     try {
         const { sendToAll, sendToUsers } = require('./_push');
@@ -166,7 +177,8 @@ async function sendNotificationToTarget({ title, message, url, save, target }) {
     const pushResult = await sendPushToTarget({
         title: title || 'Notifikasi IPM',
         body: message || title || 'Ada pembaruan baru.',
-        url: safeUrl
+        url: safeUrl,
+        image: resolveNotificationImage(safeUrl)
     }, target, userIds);
     return { 
         userCount: Array.isArray(userIds) ? userIds.length : (userIds === null ? 'all' : 0),
@@ -185,7 +197,8 @@ async function sendNotificationToUserIds({ title, message, url, save, userIds })
     const pushResult = await sendPushToTarget({
         title: title || 'Notifikasi IPM',
         body: message || title || 'Ada pembaruan baru.',
-        url: safeUrl
+        url: safeUrl,
+        image: resolveNotificationImage(safeUrl)
     }, { type: 'users', value: 'direct' }, cleanedUserIds);
     return {
         userCount: cleanedUserIds.length,
@@ -636,10 +649,12 @@ async function processQuizAutomaticReminders() {
             : 'Quiz sudah aktif. Buka sekarang dan kerjakan sebelum terlewat.';
 
         try {
+            const { REMINDER_IMAGES } = require('./_push');
             const pushSummary = await sendNotificationToUserIds({
                 title,
                 message,
                 url: `/quiz-gamified.html?source=auto-quiz-reminder&schedule=${Number(schedule.id)}`,
+                image: REMINDER_IMAGES.quiz,
                 save: true,
                 userIds: recipients
             });

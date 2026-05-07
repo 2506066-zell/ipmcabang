@@ -2,8 +2,8 @@ const ArticleModel = require('../models/ArticleModel');
 const { applySecurityHeaders } = require('./_util');
 
 const FALLBACK_IMAGE = '/ipm%20(2).png';
-const DEFAULT_OG_WIDTH = '1200';
-const DEFAULT_OG_HEIGHT = '630';
+const DEFAULT_OG_WIDTH = '300';
+const DEFAULT_OG_HEIGHT = '300';
 const HOOK_SUMMARY_TOKEN_REGEX = /<!--\s*HOOK_SUMMARY:([\s\S]*?)-->/gi;
 
 function escapeHtml(value) {
@@ -135,7 +135,7 @@ module.exports = async (req, res) => {
   <meta property="og:image:width" content="${DEFAULT_OG_WIDTH}">
   <meta property="og:image:height" content="${DEFAULT_OG_HEIGHT}">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
@@ -182,7 +182,7 @@ module.exports = async (req, res) => {
   <meta property="og:image:alt" content="${escapeHtml(article.title || 'Thumbnail artikel PC IPM Panawuan')}">
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
   <meta property="article:published_time" content="${escapeHtml(publishedIso)}">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(imageUrl)}">

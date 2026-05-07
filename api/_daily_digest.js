@@ -1,14 +1,7 @@
 const { query } = require('./_db');
 const { sendToAll } = require('./_push');
 
-const REMINDER_IMAGES = {
-  quiz: '/app/media/notifications/reminder-quiz.png',
-  form: '/app/media/notifications/reminder-forms.png',
-  attendance: '/app/media/notifications/reminder-attendance.png',
-  materials: '/app/media/notifications/reminder-materials.png',
-  discussions: '/app/media/notifications/reminder-discussions.png',
-  general: '/app/media/notifications/reminder-home.png'
-};
+const { REMINDER_IMAGES } = require('./_push');
 
 function cleanText(value, max = 180) {
   return String(value || '').replace(/\s+/g, ' ').trim().slice(0, max);

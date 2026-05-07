@@ -6,7 +6,15 @@ const PUSH_TIMEOUT_MS = Math.max(3000, Number(process.env.PUSH_TIMEOUT_MS || 100
 const APP_NAME = 'PC IPM Panawuan';
 const DEFAULT_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
 const DEFAULT_NOTIFICATION_BADGE = '/icons/icon-192-maskable.png';
-const DEFAULT_NOTIFICATION_IMAGE = '/app/media/icons/icon-512.png';
+const REMINDER_IMAGES = {
+  quiz: '/app/media/notifications/reminder-quiz.png',
+  form: '/app/media/notifications/reminder-forms.png',
+  attendance: '/app/media/notifications/reminder-attendance.png',
+  materials: '/app/media/notifications/reminder-materials.png',
+  discussions: '/app/media/notifications/reminder-discussions.png',
+  general: '/app/media/notifications/reminder-home.png'
+};
+const DEFAULT_NOTIFICATION_IMAGE = REMINDER_IMAGES.general;
 
 function getVapid() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
@@ -137,5 +145,6 @@ module.exports = {
   removeSubscription,
   sendToUser,
   sendToUsers,
-  sendToAll
+  sendToAll,
+  REMINDER_IMAGES
 };
