@@ -152,20 +152,34 @@
             renderPickerEmpty('Belum ada form pada filter ini.');
             return;
         }
-        els.list.innerHTML = items.map((item) => `
-            <button type="button" class="forms-list-card is-${item.type} ${item.slug === state.activeSlug ? 'active' : ''}" data-slug="${escapeHtml(item.slug)}">
-                <div class="forms-card-meta">
-                    <span class="forms-form-type">${item.type === 'pretest' ? 'Pre-Test' : 'Post-Test'}</span>
-                    <span class="forms-meta-pill">${getCardStatusLabel(item)}</span>
-                </div>
-                <h3>${escapeHtml(item.title)}</h3>
-                <p>${escapeHtml(item.description || 'Form evaluasi.')}</p>
-                <div class="forms-inline-meta">
-                    <span class="forms-meta-pill">${item.my_submission?.submitted_at ? `Dikirim ${formatDate(item.my_submission.submitted_at)}` : `${Number(item.submission_count || 0)} pengisi`}</span>
-                    <span class="forms-meta-pill">${item.already_submitted ? 'Lihat form' : 'Mulai isi'}</span>
-                </div>
-            </button>
-        `).join('');
+        els.list.innerHTML = items.map((item) => {
+            const isPretest = item.type === 'pretest';
+            const typeClass = isPretest ? 'is-pretest' : 'is-posttest';
+            const typeLabel = isPretest ? 'Pre-Test' : 'Post-Test';
+            const typeIcon = isPretest ? 'fa-clipboard-list' : 'fa-clipboard-check';
+
+            const status = getCardStatusLabel(item);
+            const statusIcon = item.already_submitted ? 'fa-circle-check' : (hasDraftStarted(readDraft(item.slug)) ? 'fa-pen' : 'fa-circle');
+            const statusClass = item.already_submitted ? 'is-submitted' : (hasDraftStarted(readDraft(item.slug)) ? 'is-draft' : 'is-new');
+
+            const ctaText = item.already_submitted ? 'Lihat Hasil' : (hasDraftStarted(readDraft(item.slug)) ? 'Lanjutkan' : 'Mulai Isi');
+            const ctaIcon = item.already_submitted ? 'fa-eye' : 'fa-arrow-right';
+
+            return `
+                <button type="button" class="forms-list-card ${typeClass} ${item.slug === state.activeSlug ? 'active' : ''}" data-slug="${escapeHtml(item.slug)}">
+                    <div class="forms-card-header">
+                        <span class="forms-form-type"><i class="fas ${typeIcon}"></i> ${typeLabel}</span>
+                        <span class="forms-card-status ${statusClass}"><i class="fas ${statusIcon}"></i> ${status}</span>
+                    </div>
+                    <h3>${escapeHtml(item.title)}</h3>
+                    <p>${escapeHtml(item.description || 'Form evaluasi kegiatan.')}</p>
+                    <div class="forms-card-footer">
+                        <span class="forms-meta-pill"><i class="fas fa-users"></i> ${Number(item.submission_count || 0)} pengisi</span>
+                        <span class="forms-card-cta"><i class="fas ${ctaIcon}"></i> ${ctaText}</span>
+                    </div>
+                </button>
+            `;
+        }).join('');
     }
 
     function getCardStatusLabel(item) {
@@ -222,7 +236,10 @@
 
         if (field.field_type === 'paragraph') {
             return `
-                <textarea class="forms-textarea" data-field-id="${field.id}" aria-describedby="${errorId}" placeholder="${escapeHtml(field.placeholder || 'Tulis jawaban')}">${escapeHtml(value)}</textarea>
+                <div class="forms-textarea-wrapper">
+                    <textarea class="forms-textarea" data-field-id="${field.id}" aria-describedby="${errorId}" placeholder="${escapeHtml(field.placeholder || 'Tulis jawaban Anda di sini...')}">${escapeHtml(value)}</textarea>
+                    <div class="forms-char-counter" id="forms-char-count-${field.id}">${value.length} karakter</div>
+                </div>
                 <div id="${errorId}" class="forms-inline-error" hidden></div>
             `;
         }
@@ -246,6 +263,7 @@
 
         const currentValues = Array.isArray(value) ? value : [value].filter(Boolean);
         const type = field.field_type === 'multiple_choice' ? 'checkbox' : 'radio';
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         return `
             <div class="forms-options">
                 ${(field.options_json || []).map((option, idx) => {
@@ -253,6 +271,7 @@
                     const checked = currentValues.includes(option);
                     return `
                         <label class="forms-choice-label" for="${inputId}">
+                            <span class="forms-choice-letter">${letters[idx] || idx + 1}</span>
                             <input id="${inputId}" type="${type}" name="field-${field.id}" data-field-id="${field.id}" value="${escapeHtml(option)}" ${checked ? 'checked' : ''}>
                             <span>${escapeHtml(option)}</span>
                         </label>
@@ -273,19 +292,45 @@
 
     function renderSuccess(form) {
         const latest = state.mySubmissions.find((item) => item.form_id === form.id) || form.my_submission;
+        const isPretest = form.type === 'pretest';
+        const typeLabel = isPretest ? 'Pre-Test' : 'Post-Test';
+        const typeIcon = isPretest ? 'fa-clipboard-list' : 'fa-clipboard-check';
+
         els.stage.innerHTML = `
             <article class="forms-success-card">
-                <div class="forms-success-icon"><i class="fas fa-check"></i></div>
-                <span class="forms-form-type">${escapeHtml(form.type)}</span>
-                <h2>Jawaban terkirim</h2>
-                <p>Jawaban sudah masuk ke sistem dan form ini tidak perlu diisi ulang.</p>
-                <div class="forms-success-meta">
-                    <span>${escapeHtml(form.title)}</span>
-                    <span>${latest?.submitted_at ? formatDate(latest.submitted_at) : 'Baru saja'}</span>
-                    <span>${latest?.submitter_name ? `Nama pengisi: ${escapeHtml(latest.submitter_name)}` : ''}</span>
+                <div class="forms-success-header">
+                    <div class="forms-success-icon"><i class="fas fa-check"></i></div>
+                    <span class="forms-form-type"><i class="fas ${typeIcon}"></i> ${typeLabel}</span>
+                    <h2>Jawaban Anda Berhasil Terkirim!</h2>
+                    <p>Terima kasih telah mengisi ${typeLabel}. Jawaban Anda sudah tercatat dan tidak perlu diisi ulang.</p>
                 </div>
-                <div class="forms-result-meta">
-                    <button type="button" class="forms-secondary-btn" id="forms-back-to-picker">Kembali ke daftar</button>
+                <div class="forms-success-details">
+                    <div class="forms-success-detail-row">
+                        <i class="fas fa-file-lines"></i>
+                        <div>
+                            <strong>Form</strong>
+                            <span>${escapeHtml(form.title)}</span>
+                        </div>
+                    </div>
+                    <div class="forms-success-detail-row">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>Waktu Pengiriman</strong>
+                            <span>${latest?.submitted_at ? formatDate(latest.submitted_at) : 'Baru saja'}</span>
+                        </div>
+                    </div>
+                    <div class="forms-success-detail-row">
+                        <i class="fas fa-user"></i>
+                        <div>
+                            <strong>Nama Pengisi</strong>
+                            <span>${latest?.submitter_name ? escapeHtml(latest.submitter_name) : '-'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="forms-success-actions">
+                    <button type="button" class="forms-submit-btn" id="forms-back-to-picker">
+                        <i class="fas fa-arrow-left"></i> Kembali ke Daftar Evaluasi
+                    </button>
                 </div>
             </article>
         `;
@@ -311,9 +356,9 @@
             <article class="forms-stage-card forms-stage-card-focus">
                 <div class="forms-focus-hero">
                     <div class="forms-form-head">
-                        <span class="forms-form-type">${escapeHtml(form.type)}</span>
+                        <span class="forms-form-type"><i class="fas ${form.type === 'pretest' ? 'fa-clipboard-list' : 'fa-clipboard-check'}"></i> ${form.type === 'pretest' ? 'Pre-Test' : 'Post-Test'}</span>
                         <h2>${escapeHtml(form.title)}</h2>
-                        <p>${escapeHtml(form.description || 'Isi semua bagian yang diperlukan, lalu kirim saat status sudah siap.')}</p>
+                        <p>${escapeHtml(form.description || 'Jawab semua pertanyaan di bawah ini, lalu kirim saat semua sudah lengkap.')}</p>
                     </div>
                     <div class="forms-overview-strip">
                         <div class="forms-overview-card">
@@ -343,22 +388,31 @@
                 </div>
                 <form id="forms-submit-form" class="forms-form-card">
                     <div class="forms-question-card forms-identity-card">
-                        <div class="forms-question-label">
-                            <span>Identitas Pengisi</span>
-                            <span class="forms-question-state is-required" id="forms-identity-state">Wajib</span>
+                        <div class="forms-q-header">
+                            <div class="forms-q-icon"><i class="fas fa-user"></i></div>
+                            <div class="forms-q-title">
+                                <span class="forms-q-text">Nama Lengkap Pengisi</span>
+                                <span class="forms-question-state is-required" id="forms-identity-state">Wajib</span>
+                            </div>
                         </div>
-                        <input id="forms-submitter-name" class="forms-text-input" maxlength="120" value="${escapeHtml(draftSubmitterName)}" placeholder="Tulis nama lengkap Anda">
-                        <div id="forms-submitter-name-error" class="forms-inline-error" hidden></div>
-                        <div class="forms-field-help">Nama ini dipakai sebagai identitas utama pengisian form.</div>
+                        <div class="forms-q-body">
+                            <input id="forms-submitter-name" class="forms-text-input" maxlength="120" value="${escapeHtml(draftSubmitterName)}" placeholder="Contoh: Ahmad Zaky Maulana">
+                            <div id="forms-submitter-name-error" class="forms-inline-error" hidden></div>
+                        </div>
+                        <div class="forms-field-help"><i class="fas fa-info-circle"></i> Nama ini akan dicantumkan sebagai identitas jawaban Anda.</div>
                     </div>
                     ${form.fields.map((field, index) => `
                         <div class="forms-question-card" data-question-id="${field.id}" style="animation-delay: ${index * 80}ms">
-                            <div class="forms-question-label">
-                                <span>${index + 1}. ${escapeHtml(field.label)}</span>
-                                <span class="forms-question-state ${field.required ? 'is-required' : ''}" id="forms-question-state-${field.id}">${field.required ? 'Wajib' : 'Opsional'}</span>
+                            <div class="forms-q-header">
+                                <div class="forms-q-number">${index + 1}</div>
+                                <div class="forms-q-title">
+                                    <span class="forms-q-text">${escapeHtml(field.label)}</span>
+                                    <span class="forms-question-state ${field.required ? 'is-required' : ''}" id="forms-question-state-${field.id}">${field.required ? 'Wajib diisi' : 'Opsional'}</span>
+                                </div>
                             </div>
-                            ${buildFieldInput(field, draftAnswers[field.id])}
-                            <div class="forms-field-help">${field.focus_inbox ? 'Masuk inbox admin.' : ''}</div>
+                            <div class="forms-q-body">
+                                ${buildFieldInput(field, draftAnswers[field.id])}
+                            </div>
                         </div>
                     `).join('')}
                     <div class="forms-footer-bar">
@@ -398,7 +452,15 @@
             // Initial adjustment
             setTimeout(() => adjustHeight(textarea), 10);
             
-            textarea.addEventListener('input', () => adjustHeight(textarea));
+            textarea.addEventListener('input', () => {
+                adjustHeight(textarea);
+                const counter = formEl.querySelector(`#forms-char-count-${textarea.dataset.fieldId}`);
+                if (counter) {
+                    const len = textarea.value.length;
+                    counter.textContent = `${len} karakter`;
+                    counter.style.color = len > 0 ? 'var(--forms-accent)' : 'var(--forms-muted)';
+                }
+            });
         });
 
         // Auto-scroll to next question on single choice
@@ -678,11 +740,24 @@
         formEl.addEventListener('change', save);
     }
 
+    function scrollToFirstError(formEl) {
+        const firstError = formEl.querySelector('.forms-inline-error:not([hidden])');
+        if (firstError) {
+            const card = firstError.closest('.forms-question-card') || firstError.closest('.forms-identity-card');
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.style.animation = 'none';
+                card.offsetHeight; // trigger reflow
+                card.style.animation = 'formsErrorShake 0.4s ease';
+            }
+        }
+    }
+
     async function handleSubmit(event, form) {
         event.preventDefault();
-        const formEl = event.currentTarget;
-        const answers = collectAnswers(formEl, form);
+        const formEl = event.target;
         const submitterName = getSubmitterName(formEl);
+        const answers = collectAnswers(formEl, form);
 
         // Haptic Feedback
         if (window.navigator?.vibrate) window.navigator.vibrate(15);
@@ -690,20 +765,17 @@
         clearValidation(formEl);
         if (!submitterName) {
             showSubmitterNameError(formEl, 'Nama pengisi wajib diisi.');
-            state.submitState = 'idle';
-            state.submitError = '';
-            updateRuntimeUI(formEl, form);
-            focusFirstInvalidField(formEl);
+            scrollToFirstError(formEl);
             window.Toast?.show('Nama pengisi wajib diisi.', 'warning');
             return;
         }
 
         if (!validateAnswers(formEl, form, answers)) {
+            scrollToFirstError(formEl);
             state.submitState = 'idle';
             state.submitError = '';
             updateRuntimeUI(formEl, form);
-            focusFirstInvalidField(formEl);
-            window.Toast?.show('Masih ada pertanyaan wajib yang belum diisi.', 'warning');
+            window.Toast?.show('Mohon lengkapi semua pertanyaan wajib.', 'warning');
             return;
         }
         if (!state.auth) {
