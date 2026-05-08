@@ -273,7 +273,9 @@ async function handleAdminUpdate(req, res) {
           title: notifTitle,
           body: notifMsg,
           url: '/pendaftaran-pkdtm1.html',
-          image: '/pkdtm1-banner-16-9.png'
+          image: '/images/pkdtm1-banner-v3.png',
+          tag: 'pkdtm1-notification',
+          useLargeImage: true
       }).catch(() => {});
     }
   } catch (e) { console.error('[PKDTM1] Notification trigger failed:', e); }

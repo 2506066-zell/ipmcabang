@@ -56,6 +56,7 @@ function withNotificationBranding(payload) {
   if (!next.title) next.title = APP_NAME;
   if (!next.icon) next.icon = DEFAULT_NOTIFICATION_ICON;
   if (!next.badge) next.badge = DEFAULT_NOTIFICATION_BADGE;
+  // Hanya set default image jika tidak ada image custom dan useLargeImage bukan false
   if (!next.image && next.useLargeImage !== false) next.image = DEFAULT_NOTIFICATION_IMAGE;
   if (!next.tag) next.tag = 'ipm-general';
   if (next.renotify === undefined) next.renotify = false;
