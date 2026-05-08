@@ -337,56 +337,74 @@ export function initFormsAdmin(state, els, deps) {
 
     function renderEditorFields() {
         const fields = Array.isArray(local.editor?.fields) ? local.editor.fields : [];
-        return fields.map((field, index) => `
-            <article class="forms-builder-field" data-index="${index}">
-                <div class="forms-builder-field-head">
-                    <span class="forms-builder-counter">Pertanyaan ${index + 1}</span>
-                    <div class="forms-builder-actions">
-                        <button type="button" class="btn btn-ghost forms-inline-btn" data-action="move-up" data-index="${index}" ${index === 0 ? 'disabled' : ''}><i class="fas fa-arrow-up"></i></button>
-                        <button type="button" class="btn btn-ghost forms-inline-btn" data-action="move-down" data-index="${index}" ${index === fields.length - 1 ? 'disabled' : ''}><i class="fas fa-arrow-down"></i></button>
-                        <button type="button" class="btn btn-ghost forms-inline-btn" data-action="remove-field" data-index="${index}" ${fields.length === 1 ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
+        return fields.map((field, index) => {
+            const typeMeta = FIELD_TYPES.find((item) => item.value === field.field_type) || FIELD_TYPES[0];
+            const isChoice = ['single_choice', 'multiple_choice', 'dropdown'].includes(field.field_type);
+            const optionCount = Array.isArray(field.options_json) ? field.options_json.length : 0;
+            return `
+                <article class="forms-builder-field forms-builder-question-card" data-index="${index}">
+                    <div class="forms-builder-field-head">
+                        <div class="forms-builder-question-title">
+                            <span class="forms-builder-counter">${index + 1}</span>
+                            <div>
+                                <strong>${escapeHtml(field.label || 'Pertanyaan belum diberi judul')}</strong>
+                                <div class="forms-builder-question-meta">
+                                    <span>${escapeHtml(typeMeta.label)}</span>
+                                    <span>${field.required !== false ? 'Wajib' : 'Opsional'}</span>
+                                    ${field.focus_inbox === true ? '<span>Focus inbox</span>' : ''}
+                                    ${isChoice ? `<span>${optionCount} opsi</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="forms-builder-actions">
+                            <button type="button" class="btn btn-ghost forms-inline-btn" data-action="move-up" data-index="${index}" ${index === 0 ? 'disabled' : ''} title="Naikkan pertanyaan"><i class="fas fa-arrow-up"></i></button>
+                            <button type="button" class="btn btn-ghost forms-inline-btn" data-action="move-down" data-index="${index}" ${index === fields.length - 1 ? 'disabled' : ''} title="Turunkan pertanyaan"><i class="fas fa-arrow-down"></i></button>
+                            <button type="button" class="btn btn-ghost forms-inline-btn is-danger" data-action="remove-field" data-index="${index}" ${fields.length === 1 ? 'disabled' : ''} title="Hapus pertanyaan"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
-                </div>
-                <div class="forms-builder-grid">
-                    <label class="forms-builder-label">
-                        <span>Label pertanyaan</span>
-                        <input type="text" data-action="field-label" data-index="${index}" value="${escapeHtml(field.label || '')}" placeholder="Contoh: Apa motivasi utama kamu ikut kegiatan ini?">
-                    </label>
-                    <label class="forms-builder-label">
-                        <span>Tipe field</span>
-                        <select data-action="field-type" data-index="${index}">
-                            ${FIELD_TYPES.map((item) => `<option value="${item.value}" ${item.value === field.field_type ? 'selected' : ''}>${item.label}</option>`).join('')}
-                        </select>
-                    </label>
-                    <label class="forms-builder-label forms-builder-span-2">
-                        <span>Placeholder / helper</span>
-                        <input type="text" data-action="field-placeholder" data-index="${index}" value="${escapeHtml(field.placeholder || '')}" placeholder="Teks bantuan opsional">
-                    </label>
-                    ${['single_choice', 'multiple_choice', 'dropdown'].includes(field.field_type) ? `
+                    <div class="forms-builder-grid forms-builder-question-grid">
                         <label class="forms-builder-label forms-builder-span-2">
-                            <span>Opsi pilihan (satu baris satu opsi)</span>
-                            <textarea rows="4" data-action="field-options" data-index="${index}" placeholder="Opsi A&#10;Opsi B&#10;Opsi C">${escapeHtml((field.options_json || []).join('\n'))}</textarea>
+                            <span>Isi pertanyaan</span>
+                            <textarea rows="2" data-action="field-label" data-index="${index}" placeholder="Tulis pertanyaan yang akan dijawab peserta...">${escapeHtml(field.label || '')}</textarea>
                         </label>
                         <label class="forms-builder-label">
-                            <span>Kunci jawaban ${field.field_type === 'multiple_choice' ? '(pisahkan dengan |)' : ''}</span>
-                            <input type="text" data-action="field-answer-key" data-index="${index}" value="${escapeHtml(field.answer_key_text || '')}" placeholder="${field.field_type === 'multiple_choice' ? 'Contoh: Opsi A|Opsi C' : 'Contoh: Opsi B'}">
+                            <span>Tipe jawaban</span>
+                            <select data-action="field-type" data-index="${index}">
+                                ${FIELD_TYPES.map((item) => `<option value="${item.value}" ${item.value === field.field_type ? 'selected' : ''}>${item.label}</option>`).join('')}
+                            </select>
                         </label>
                         <label class="forms-builder-label">
-                            <span>Bobot skor</span>
-                            <input type="number" min="0" max="100" step="1" data-action="field-score-weight" data-index="${index}" value="${Number(field.score_weight || 1)}">
+                            <span>Placeholder / bantuan singkat</span>
+                            <input type="text" data-action="field-placeholder" data-index="${index}" value="${escapeHtml(field.placeholder || '')}" placeholder="Contoh: Tulis jawaban dengan jelas">
                         </label>
-                    ` : ''}
-                    <label class="forms-builder-check">
-                        <input type="checkbox" data-action="field-required" data-index="${index}" ${field.required !== false ? 'checked' : ''}>
-                        <span>Wajib diisi</span>
-                    </label>
-                    <label class="forms-builder-check">
-                        <input type="checkbox" data-action="field-focus" data-index="${index}" ${field.focus_inbox === true ? 'checked' : ''}>
-                        <span>Masuk inbox admin</span>
-                    </label>
-                </div>
-            </article>
-        `).join('');
+                        ${isChoice ? `
+                            <label class="forms-builder-label forms-builder-span-2">
+                                <span>Opsi jawaban</span>
+                                <textarea rows="4" data-action="field-options" data-index="${index}" placeholder="Satu opsi per baris&#10;Contoh: Sangat setuju&#10;Setuju&#10;Tidak setuju">${escapeHtml((field.options_json || []).join('\n'))}</textarea>
+                            </label>
+                            <label class="forms-builder-label">
+                                <span>Kunci jawaban ${field.field_type === 'multiple_choice' ? '(pisahkan dengan |)' : ''}</span>
+                                <input type="text" data-action="field-answer-key" data-index="${index}" value="${escapeHtml(field.answer_key_text || '')}" placeholder="${field.field_type === 'multiple_choice' ? 'Opsi A|Opsi C' : 'Opsi benar'}">
+                            </label>
+                            <label class="forms-builder-label">
+                                <span>Bobot skor</span>
+                                <input type="number" min="0" max="100" step="1" data-action="field-score-weight" data-index="${index}" value="${Number(field.score_weight || 1)}">
+                            </label>
+                        ` : ''}
+                        <div class="forms-builder-toggle-row forms-builder-span-2">
+                            <label class="forms-builder-check">
+                                <input type="checkbox" data-action="field-required" data-index="${index}" ${field.required !== false ? 'checked' : ''}>
+                                <span>Wajib dijawab</span>
+                            </label>
+                            <label class="forms-builder-check">
+                                <input type="checkbox" data-action="field-focus" data-index="${index}" ${field.focus_inbox === true ? 'checked' : ''}>
+                                <span>Tampilkan di inbox admin</span>
+                            </label>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
     }
 
     function renderBuilderView() {
@@ -396,9 +414,10 @@ export function initFormsAdmin(state, els, deps) {
             <div class="forms-admin-workspace">
                 <div class="forms-admin-toolbar">
                     <div class="forms-admin-view-switch">
-                        <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder">Form Builder</button>
-                        <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions" ${!editor.id ? 'disabled' : ''}>Submissions</button>
-                        <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox" ${!editor.id ? 'disabled' : ''}>Inbox</button>
+                        <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder"><i class="fas fa-layer-group"></i> Form Builder</button>
+                        <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions" ${!editor.id ? 'disabled' : ''}><i class="fas fa-list-check"></i> Submissions</button>
+                        <button type="button" class="forms-view-btn ${local.activeView === 'analysis' ? 'active' : ''}" data-view="analysis" ${!editor.id ? 'disabled' : ''}><i class="fas fa-chart-line"></i> Analysis</button>
+                        <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox" ${!editor.id ? 'disabled' : ''}><i class="fas fa-inbox"></i> Inbox</button>
                     </div>
                     <div class="forms-admin-inline-stats">
                         <span>${Number(stats.submission_count || 0)} submission</span>
@@ -408,11 +427,12 @@ export function initFormsAdmin(state, els, deps) {
                     </div>
                 </div>
 
-                <section class="forms-admin-card">
-                    <div class="forms-admin-card-head">
+                <section class="forms-admin-card forms-builder-section forms-builder-hero-section">
+                    <div class="forms-builder-section-head">
                         <div>
+                            <span class="forms-builder-section-kicker">Info Test</span>
                             <h3>${editor.id ? 'Editor Template' : 'Template Baru'}</h3>
-                            <p>Kelola pretest/posttest dengan nama jelas, jadwal, versi, dan target peserta agar tidak ambigu.</p>
+                            <p>Identitas utama test yang akan dilihat peserta di halaman publik.</p>
                         </div>
                         <div class="forms-admin-header-actions">
                             ${editor.id ? `
@@ -427,7 +447,7 @@ export function initFormsAdmin(state, els, deps) {
                         </div>
                     </div>
                     <div class="forms-builder-grid forms-builder-meta-grid">
-                        <label class="forms-builder-label">
+                        <label class="forms-builder-label forms-builder-span-2">
                             <span>Judul</span>
                             <input type="text" data-action="meta-title" value="${escapeHtml(editor.title || '')}" placeholder="Contoh: Pretest Musyran 2026">
                         </label>
@@ -442,6 +462,10 @@ export function initFormsAdmin(state, els, deps) {
                                 <option value="posttest" ${editor.type === 'posttest' ? 'selected' : ''}>Posttest</option>
                             </select>
                         </label>
+                        <div class="forms-builder-subsection forms-builder-span-2">
+                            <span class="forms-builder-section-kicker">Pengaturan Publikasi</span>
+                            <strong>Jadwal, status, dan target peserta</strong>
+                        </div>
                         <label class="forms-builder-label">
                             <span>Status</span>
                             <select data-action="meta-status">
@@ -470,20 +494,21 @@ export function initFormsAdmin(state, els, deps) {
                             <span>Deskripsi</span>
                             <textarea rows="3" data-action="meta-description" placeholder="Jelaskan konteks pengisian form...">${escapeHtml(editor.description || '')}</textarea>
                         </label>
-                        <div class="forms-builder-label forms-builder-span-2">
+                        <div class="forms-builder-generated-name forms-builder-span-2">
                             <span>Nama Test Otomatis</span>
                             <small class="muted">${escapeHtml((editor.title || 'Tanpa Judul').trim() || 'Tanpa Judul')} • ${new Date().toLocaleDateString('id-ID')} • v${Number(editor.version || 1)}</small>
                         </div>
-                        <label class="forms-builder-check">
+                        <label class="forms-builder-check forms-builder-setting-toggle">
                             <input type="checkbox" data-action="meta-allow-multiple" ${editor.allow_multiple === true ? 'checked' : ''}>
                             <span>Izinkan multiple submission</span>
                         </label>
                     </div>
                 </section>
 
-                <section class="forms-admin-card">
-                    <div class="forms-admin-card-head">
+                <section class="forms-admin-card forms-builder-section forms-builder-question-section">
+                    <div class="forms-builder-section-head forms-builder-sticky-head">
                         <div>
+                            <span class="forms-builder-section-kicker">Daftar Pertanyaan</span>
                             <h3>Daftar Pertanyaan</h3>
                             <p>Tambahkan, urutkan, dan tandai pertanyaan esai penting agar masuk ke kotak surat admin.</p>
                         </div>
@@ -795,7 +820,7 @@ export function initFormsAdmin(state, els, deps) {
                     </div>
                     <div class="toolbar-select-wrapper" title="Cari data lebih cepat">
                         <i class="fas fa-search"></i>
-                        <input type="search" class="toolbar-input" data-action="${view}-query" value="${escapeHtml(review.query || '')}" placeholder="${view === 'submissions' ? 'Cari nama / username / kode arsip…' : 'Cari nama / field / jawaban…'}">
+                        <input type="search" class="toolbar-input" data-action="${view}-query" value="${escapeHtml(review.query || '')}" placeholder="${view === 'submissions' ? 'Cari nama, username, pimpinan, atau isi jawaban...' : 'Cari nama, field, atau jawaban...'}">
                     </div>
                     <div class="forms-review-filter-group">
                         <button type="button" class="forms-review-filter ${review.filter === 'all' ? 'active' : ''}" data-action="${view}-filter" data-filter="all">Semua</button>
@@ -833,6 +858,29 @@ export function initFormsAdmin(state, els, deps) {
         `;
     }
 
+    function renderAnswerValue(answer) {
+        const rawAnswer = Array.isArray(answer.answer_json) ? answer.answer_json : (answer.answer_text || '');
+        if (Array.isArray(rawAnswer)) {
+            return rawAnswer.length
+                ? `<div class="forms-answer-pills">${rawAnswer.map(v => `<span class="answer-pill">${escapeHtml(v)}</span>`).join('')}</div>`
+                : '<div class="forms-answer-empty">Tidak ada jawaban.</div>';
+        }
+        const text = String(rawAnswer || '').trim();
+        return text
+            ? `<div class="forms-answer-text">${escapeHtml(text)}</div>`
+            : '<div class="forms-answer-empty">Tidak ada jawaban.</div>';
+    }
+
+    function getAnswerStatusView(answer) {
+        const isCorrect = answer.answer_status === 'benar';
+        const isWrong = answer.answer_status === 'salah';
+        return {
+            className: isCorrect ? 'is-success' : (isWrong ? 'is-danger' : 'is-warning'),
+            icon: isCorrect ? 'fa-circle-check' : (isWrong ? 'fa-circle-xmark' : 'fa-circle-dot'),
+            text: isCorrect ? 'Benar' : (isWrong ? 'Salah' : 'Review')
+        };
+    }
+
     function renderSubmissionDetail(item) {
         if (!item) return `<section class="forms-admin-card forms-review-detail-empty">Pilih submission di panel kiri untuk melihat jawaban lengkap.</section>`;
         const status = workflowBadge(getWorkflowStatus('submission', item.id));
@@ -840,9 +888,14 @@ export function initFormsAdmin(state, els, deps) {
         const confidentiality = confidentialityBadge(item.confidentiality_level);
         const canArchiveRead = can('forms.archive_read');
         const canArchiveManage = can('forms.archive_manage');
+        const answers = Array.isArray(item.answers) ? item.answers : [];
+        const focusCount = answers.filter((answer) => answer.focus_inbox === true).length;
+        const scoreObtained = Number(item.score_obtained || 0);
+        const scoreMax = Number(item.score_max || 0);
+        const scoreLabel = scoreMax > 0 ? `${scoreObtained} / ${scoreMax}` : 'Tidak berskor';
         return `
             <section class="forms-admin-card forms-review-detail-card">
-                <div class="forms-admin-card-head">
+                <div class="forms-review-paper-head">
                     <div>
                         <h3>${escapeHtml(item.nama_panjang || item.username)}</h3>
                         <p>@${escapeHtml(item.username || '-')} • ${escapeHtml(item.pimpinan || '-')}</p>
@@ -850,50 +903,43 @@ export function initFormsAdmin(state, els, deps) {
                     <div class="forms-review-badge-stack">
                         <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
                         <span class="forms-review-badge ${status.className}">${status.text}</span>
-                        ${canArchiveRead ? `<span class="forms-review-badge ${archive.className}">${archive.text}</span>` : ''}
-                        ${canArchiveRead ? `<span class="forms-review-badge ${confidentiality.className}">${confidentiality.text}</span>` : ''}
                     </div>
                 </div>
-                <div class="forms-review-action-row">
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="unread"><i class="fas fa-envelope"></i> Set Baru</button>
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up"><i class="fas fa-clock"></i> Set Follow Up</button>
-                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done"><i class="fas fa-check-double"></i> Set Selesai</button>
+
+                <div class="forms-review-summary-strip">
+                    <div><span>Pertanyaan</span><strong>${answers.length}</strong></div>
+                    <div><span>Focus inbox</span><strong>${focusCount}</strong></div>
+                    <div><span>Skor</span><strong>${scoreLabel}</strong></div>
                 </div>
-                <div class="forms-review-score-row">
-                    <span class="forms-review-badge is-focus">Skor: ${Number(item.score_obtained || 0)} / ${Number(item.score_max || 0)}</span>
-                    <span class="small muted">Dinilai otomatis untuk soal pilihan yang punya kunci jawaban.</span>
+
+                <div class="forms-review-action-row forms-review-action-row-compact">
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="unread"><i class="fas fa-envelope"></i> Baru</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up"><i class="fas fa-clock"></i> Follow Up</button>
+                    <button type="button" class="btn btn-secondary forms-inline-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done"><i class="fas fa-check-double"></i> Selesai</button>
                 </div>
                 <div class="forms-admin-answer-list">
-                    ${(item.answers || []).map((answer, index) => {
-                        const isCorrect = answer.answer_status === 'benar';
-                        const isWrong = answer.answer_status === 'salah';
-                        const statusClass = isCorrect ? 'is-success' : (isWrong ? 'is-danger' : 'is-warning');
-                        const statusIcon = isCorrect ? 'fa-circle-check' : (isWrong ? 'fa-circle-xmark' : 'fa-circle-dot');
-                        const statusText = isCorrect ? 'Benar' : (isWrong ? 'Salah' : 'Perlu Review');
-                        
-                        // Detect if answer is long text or list
-                        const rawAnswer = Array.isArray(answer.answer_json) ? answer.answer_json : (answer.answer_text || '-');
-                        const isList = Array.isArray(rawAnswer);
-                        const isLongText = !isList && String(rawAnswer).length > 60;
+                    ${answers.map((answer, index) => {
+                        const statusView = getAnswerStatusView(answer);
+                        const isLongText = !Array.isArray(answer.answer_json) && String(answer.answer_text || '').length > 80;
 
                         return `
                             <div class="forms-answer-detail-card ${answer.focus_inbox ? 'is-focus' : ''}">
                                 <div class="forms-answer-header">
                                     <div class="forms-answer-q-number">${index + 1}</div>
-                                    <div class="forms-answer-q-label">${escapeHtml(answer.label)}</div>
-                                    <div class="forms-answer-status ${statusClass}">
-                                        <i class="fas ${statusIcon}"></i>
-                                        <span>${statusText}</span>
+                                    <div class="forms-answer-q-main">
+                                        <div class="forms-answer-q-label">${escapeHtml(answer.label)}</div>
+                                        <div class="forms-answer-q-meta">
+                                            <span>${escapeHtml(answer.field_type || 'text')}</span>
+                                            ${answer.focus_inbox ? '<span>Focus inbox</span>' : ''}
+                                        </div>
+                                    </div>
+                                    <div class="forms-answer-status ${statusView.className}">
+                                        <i class="fas ${statusView.icon}"></i>
+                                        <span>${statusView.text}</span>
                                     </div>
                                 </div>
                                 <div class="forms-answer-body ${isLongText ? 'is-paragraph' : ''}">
-                                    ${isList ? `
-                                        <div class="forms-answer-pills">
-                                            ${rawAnswer.map(v => `<span class="answer-pill">${escapeHtml(v)}</span>`).join('')}
-                                        </div>
-                                    ` : `
-                                        <div class="forms-answer-text">${escapeHtml(rawAnswer)}</div>
-                                    `}
+                                    ${renderAnswerValue(answer)}
                                 </div>
                                 ${answer.answer_key_text ? `
                                     <div class="forms-answer-key">
@@ -906,6 +952,11 @@ export function initFormsAdmin(state, els, deps) {
                     }).join('')}
                 </div>
                 ${canArchiveRead ? `
+                    <details class="forms-archive-details">
+                    <summary>
+                        <span>Metadata Arsip</span>
+                        <small>${archive.text} - ${confidentiality.text}</small>
+                    </summary>
                     <div class="forms-admin-card-head mt-12">
                         <div>
                             <h3>Metadata Arsip</h3>
@@ -953,6 +1004,7 @@ export function initFormsAdmin(state, els, deps) {
                             </button>
                         </div>
                     ` : '<div class="small muted">Mode baca saja: Anda tidak memiliki izin untuk mengubah metadata arsip.</div>'}
+                    </details>
                 ` : ''}
             </section>
         `;
@@ -987,7 +1039,8 @@ export function initFormsAdmin(state, els, deps) {
                                 const scoreColor = scorePercent >= 80 ? '#10b981' : (scorePercent >= 60 ? '#f59e0b' : '#ef4444');
 
                                 return `
-                                    <button type="button" class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}" data-action="pick-submission" data-id="${item.id}">
+                                    <article class="forms-review-list-item ${Number(selected?.id || 0) === Number(item.id) ? 'active' : ''}">
+                                        <button type="button" class="forms-review-list-main" data-action="pick-submission" data-id="${item.id}">
                                         <div class="forms-review-list-head">
                                             <strong>${escapeHtml(item.nama_panjang || item.username)}</strong>
                                             <span class="forms-review-badge is-time">${formatDateTime(item.submitted_at)}</span>
@@ -1006,11 +1059,12 @@ export function initFormsAdmin(state, els, deps) {
                                             ${hasFocus ? '<span class="forms-review-badge is-focus">Focus Inbox</span>' : ''}
                                             <span class="forms-review-badge ${archive.className}">${archive.text}</span>
                                         </div>
+                                        </button>
                                         <div class="forms-list-quick-actions">
                                             <button type="button" class="quick-action-btn" data-action="workflow-submission" data-id="${item.id}" data-status="follow_up" title="Set Follow Up"><i class="fas fa-clock"></i></button>
                                             <button type="button" class="quick-action-btn" data-action="workflow-submission" data-id="${item.id}" data-status="done" title="Set Selesai"><i class="fas fa-check"></i></button>
                                         </div>
-                                    </button>
+                                    </article>
                                 `;
                             }).join('') : '<div class="small muted">Belum ada submission untuk form ini.</div>'}
                         </div>

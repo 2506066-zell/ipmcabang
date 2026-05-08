@@ -1,6 +1,6 @@
-const STATIC_CACHE = 'static-v43';
+const STATIC_CACHE = 'static-v44';
 const RUNTIME_CACHE = 'runtime-v3';
-const CDN_CACHE = 'cdn-v2';
+const CDN_CACHE = 'cdn-v3';
 const APP_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
 const APP_NOTIFICATION_BADGE = '/icons/icon-192-maskable.png';
 const CDN_ORIGINS = [
@@ -238,7 +238,7 @@ async function cacheFirstCdn(request) {
   }
 
   const response = await fetch(request);
-  if (response && (response.ok || response.type === 'opaque')) {
+  if (response && response.ok) {
     await cache.put(request, response.clone());
     await writeCdnMeta(cache, request.url);
     await trimCdnCache(cache);

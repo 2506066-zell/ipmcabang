@@ -1,6 +1,6 @@
 (() => {
     const DEFAULT_API_URL = '/api';
-    const MODULE_VER = '21';
+    const MODULE_VER = '22';
 
     const STORAGE_KEYS = {
         username: 'ipmquiz_admin_username',

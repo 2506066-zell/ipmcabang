@@ -5656,6 +5656,374 @@ button.priority-card:hover {
     }
 }
 
+/* === Forms Admin Redesign: Builder + Review === */
+.forms-builder-section {
+    display: grid;
+    gap: 18px;
+}
+
+.forms-builder-section-head,
+.forms-review-paper-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.forms-builder-section-head h3,
+.forms-review-paper-head h3 {
+    margin: 4px 0 4px;
+    color: var(--text-primary);
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+.forms-builder-section-head p,
+.forms-review-paper-head p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.forms-builder-section-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--accent-secondary);
+    border: 1px solid rgba(59, 130, 246, 0.24);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.forms-builder-hero-section {
+    border-color: rgba(59, 130, 246, 0.16);
+}
+
+.forms-builder-type-card {
+    min-width: 150px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.52);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    display: grid;
+    gap: 4px;
+}
+
+.forms-builder-type-card span {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.forms-builder-type-card strong {
+    color: var(--text-primary);
+    font-size: 1rem;
+    text-transform: capitalize;
+}
+
+.forms-builder-subsection,
+.forms-builder-generated-name {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.forms-builder-subsection strong,
+.forms-builder-generated-name strong,
+.forms-builder-generated-name small {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.forms-builder-question-section {
+    padding-top: 0;
+    overflow: visible;
+}
+
+.forms-builder-sticky-head {
+    position: sticky;
+    top: 76px;
+    z-index: 5;
+    margin: 0 -20px;
+    padding: 18px 20px;
+    background: rgba(15, 23, 42, 0.9);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: var(--forms-op-radius) var(--forms-op-radius) 0 0;
+    backdrop-filter: blur(12px);
+}
+
+.forms-builder-field-list {
+    display: grid;
+    gap: 16px;
+}
+
+.forms-builder-question-card {
+    border-radius: 18px;
+    padding: 0;
+    overflow: hidden;
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.forms-builder-question-card .forms-builder-field-head {
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.forms-builder-question-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+}
+
+.forms-builder-counter {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--accent-secondary);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.forms-builder-question-title strong {
+    display: block;
+    max-width: 720px;
+    color: var(--text-primary);
+    font-size: 0.98rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.forms-builder-question-meta {
+    margin-top: 7px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.forms-builder-question-meta span {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--text-secondary);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.forms-builder-question-grid {
+    padding: 18px;
+}
+
+.forms-builder-toggle-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 2px;
+}
+
+.forms-builder-check,
+.forms-builder-setting-toggle {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.forms-builder-actions .is-danger:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.forms-review-list-item {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+    transition: all 0.18s ease;
+}
+
+.forms-review-list-item:hover {
+    border-color: rgba(148, 163, 184, 0.28);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.forms-review-list-item.active {
+    border-color: var(--accent-secondary);
+    background: rgba(59, 130, 246, 0.07);
+}
+
+.forms-review-list-main {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    padding: 16px 16px 4px;
+    cursor: pointer;
+}
+
+.forms-list-quick-actions {
+    padding: 0 16px 14px;
+}
+
+.forms-review-paper-head {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.forms-review-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 16px 0 10px;
+}
+
+.forms-review-summary-strip div {
+    border-radius: 14px;
+    padding: 12px;
+    background: rgba(15, 23, 42, 0.48);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    display: grid;
+    gap: 4px;
+}
+
+.forms-review-summary-strip span {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.forms-review-summary-strip strong {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.forms-review-action-row-compact {
+    margin: 10px 0 18px;
+    padding-bottom: 14px;
+}
+
+.forms-answer-q-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.forms-answer-q-meta {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.forms-answer-q-meta span {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--text-secondary);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.forms-answer-empty {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.forms-archive-details {
+    margin-top: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.34);
+    overflow: hidden;
+}
+
+.forms-archive-details summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-weight: 800;
+}
+
+.forms-archive-details summary small {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.forms-archive-details > .forms-builder-grid,
+.forms-archive-details > .forms-admin-card-head,
+.forms-archive-details > .forms-review-action-row,
+.forms-archive-details > .small {
+    margin-left: 16px;
+    margin-right: 16px;
+}
+
+.forms-archive-details > .forms-review-action-row,
+.forms-archive-details > .small {
+    margin-bottom: 16px;
+}
+
+@media (min-width: 1100px) {
+    .forms-admin-review-shell {
+        grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+    }
+
+    .forms-review-list-panel {
+        position: sticky;
+        top: 84px;
+        max-height: calc(100vh - 120px);
+        overflow: auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .forms-builder-grid,
+    .forms-review-summary-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .forms-builder-span-2 {
+        grid-column: span 1;
+    }
+
+    .forms-builder-sticky-head {
+        position: static;
+    }
+
+    .forms-review-paper-head,
+    .forms-builder-section-head {
+        flex-direction: column;
+    }
+}
+
 /* === FORMS ANALYSIS DASHBOARD === */
 .forms-analysis-grid {
     display: grid;
