@@ -453,18 +453,47 @@
                     </div>
                 </div>
 
-                <!-- FORMS TAB -->
+                <!-- FORMS TAB (ZEN 4.0 OVERHAUL) -->
                 <div id="tab-forms" class="hidden">
                     <section class="section-intro">
-                        <h3>Form Ops: Pretest &amp; Posttest</h3>
-                        <p>Halaman ini untuk membuat form evaluasi seperti Google Form, memantau kiriman, dan membaca jawaban esai prioritas.</p>
+                        <h3>Assessment Command Center</h3>
+                        <p>Kelola seluruh siklus evaluasi kader: mulai dari perancangan soal, monitoring live, hingga analisis mendalam hasil peserta.</p>
                     </section>
-                    <div id="forms-admin-root" class="forms-admin-shell">
-                        <div class="small muted">Memuat modul form...</div>
+
+                    <!-- Pipeline Navigator -->
+                    <div class="forms-pipeline-nav">
+                        <button class="pipeline-step active" data-phase="design">
+                            <span class="step-num">1</span>
+                            <div class="step-label">
+                                <strong>Design</strong>
+                                <span>Arsitektur Soal</span>
+                            </div>
+                        </button>
+                        <div class="pipeline-divider"></div>
+                        <button class="pipeline-step" data-phase="launch">
+                            <span class="step-num">2</span>
+                            <div class="step-label">
+                                <strong>Launch</strong>
+                                <span>Status & Jadwal</span>
+                            </div>
+                        </button>
+                        <div class="pipeline-divider"></div>
+                        <button class="pipeline-step" data-phase="review">
+                            <span class="step-num">3</span>
+                            <div class="step-label">
+                                <strong>Review</strong>
+                                <span>Penyortiran Hasil</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div id="forms-admin-root" class="forms-admin-shell-v4">
+                        <div class="small muted align-center py-40">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-16"></i><br>
+                            Menginisialisasi Command Center...
+                        </div>
                     </div>
                 </div>
-
-                
 
                 <!-- RESULTS TAB -->
                 <div id="tab-results" class="hidden">

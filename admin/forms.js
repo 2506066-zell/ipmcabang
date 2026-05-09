@@ -6,6 +6,7 @@ export function initFormsAdmin(state, els, deps) {
     const local = {
         items: [],
         activeId: 0,
+        activePhase: 'design',
         activeView: 'builder',
         detail: null,
         submissions: [],
@@ -803,29 +804,28 @@ export function initFormsAdmin(state, els, deps) {
                 </div>
             </div>
             <div class="forms-admin-toolbar">
-                <div class="forms-admin-view-switch">
-                    <button type="button" class="forms-view-btn ${local.activeView === 'builder' ? 'active' : ''}" data-view="builder" title="Kelola struktur dan pengaturan test"><i class="fas fa-layer-group"></i> Form Builder</button>
-                    <button type="button" class="forms-view-btn ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions" title="Lihat daftar peserta dan hasil jawaban"><i class="fas fa-list-check"></i> Submissions</button>
-                    <button type="button" class="forms-view-btn ${local.activeView === 'analysis' ? 'active' : ''}" data-view="analysis" title="Lihat analisis statistik dan data agregat"><i class="fas fa-chart-line"></i> Analysis</button>
-                    <button type="button" class="forms-view-btn ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox" title="Lihat jawaban fokus yang perlu ditindaklanjuti"><i class="fas fa-inbox"></i> Inbox</button>
+                <div class="forms-smart-filters">
+                    <button type="button" class="filter-chip ${local.activeView === 'submissions' ? 'active' : ''}" data-view="submissions"><i class="fas fa-list-check"></i> Semua Submissions</button>
+                    <button type="button" class="filter-chip ${local.activeView === 'inbox' ? 'active' : ''}" data-view="inbox"><i class="fas fa-inbox"></i> Butuh Review</button>
+                    <button type="button" class="filter-chip ${local.activeView === 'analysis' ? 'active' : ''}" data-view="analysis"><i class="fas fa-chart-line"></i> Analisis Data</button>
                 </div>
-                <div class="forms-review-controls">
-                    <div class="forms-review-filter-group" title="Urutkan daftar">
-                        <button type="button" class="forms-review-filter ${review.sort === 'newest' ? 'active' : ''}" data-action="${view}-sort" data-value="newest">Terbaru</button>
-                        <button type="button" class="forms-review-filter ${review.sort === 'oldest' ? 'active' : ''}" data-action="${view}-sort" data-value="oldest">Terlama</button>
-                        ${view === 'submissions' ? `
-                            <button type="button" class="forms-review-filter ${review.sort === 'score_high' ? 'active' : ''}" data-action="${view}-sort" data-value="score_high">Skor ↑</button>
-                            <button type="button" class="forms-review-filter ${review.sort === 'score_low' ? 'active' : ''}" data-action="${view}-sort" data-value="score_low">Skor ↓</button>
-                        ` : ''}
-                    </div>
-                    <div class="toolbar-select-wrapper" title="Cari data lebih cepat">
+                <div class="forms-smart-filters">
+                    <span class="small muted" style="padding-top: 8px;">Urutkan:</span>
+                    <button type="button" class="filter-chip ${review.sort === 'newest' ? 'active' : ''}" data-action="${view}-sort" data-value="newest"><i class="fas fa-clock"></i> Terbaru</button>
+                    ${view === 'submissions' ? `
+                        <button type="button" class="filter-chip ${review.sort === 'score_high' ? 'active' : ''}" data-action="${view}-sort" data-value="score_high"><i class="fas fa-arrow-up-9-1"></i> Skor Tertinggi</button>
+                        <button type="button" class="filter-chip ${review.sort === 'score_low' ? 'active' : ''}" data-action="${view}-sort" data-value="score_low"><i class="fas fa-arrow-down-1-9"></i> Skor Terendah</button>
+                    ` : ''}
+                    <div class="pipeline-divider" style="margin: 0 4px; height: 18px; align-self: center;"></div>
+                    <span class="small muted" style="padding-top: 8px;">Tampilkan:</span>
+                    <button type="button" class="filter-chip ${review.filter === 'all' ? 'active' : ''}" data-action="${view}-filter" data-filter="all">Semua Data</button>
+                    <button type="button" class="filter-chip ${review.filter === 'focus' ? 'active' : ''}" data-action="${view}-filter" data-filter="focus"><i class="fas fa-star" style="color: var(--accent-secondary)"></i> Focus Review</button>
+                    <button type="button" class="filter-chip ${review.filter === 'unread' ? 'active' : ''}" data-action="${view}-filter" data-filter="unread"><i class="fas fa-circle-dot" style="color: #ef4444"></i> Belum Dibaca</button>
+                </div>
+                <div class="forms-review-controls" style="margin-top: 0; margin-left: 0;">
+                    <div class="toolbar-select-wrapper" style="flex: 1; max-width: 400px;">
                         <i class="fas fa-search"></i>
-                        <input type="search" class="toolbar-input" data-action="${view}-query" value="${escapeHtml(review.query || '')}" placeholder="${view === 'submissions' ? 'Cari nama, username, pimpinan, atau isi jawaban...' : 'Cari nama, field, atau jawaban...'}">
-                    </div>
-                    <div class="forms-review-filter-group">
-                        <button type="button" class="forms-review-filter ${review.filter === 'all' ? 'active' : ''}" data-action="${view}-filter" data-filter="all">Semua</button>
-                        <button type="button" class="forms-review-filter ${review.filter === 'focus' ? 'active' : ''}" data-action="${view}-filter" data-filter="focus"><i class="fas fa-star"></i> Focus</button>
-                        <button type="button" class="forms-review-filter ${review.filter === 'unread' ? 'active' : ''}" data-action="${view}-filter" data-filter="unread"><i class="fas fa-eye-slash"></i> Baru</button>
+                        <input type="search" class="toolbar-input" data-action="${view}-query" value="${escapeHtml(review.query || '')}" placeholder="Cari nama, pimpinan, atau isi jawaban...">
                     </div>
                     ${view === 'submissions' ? `
                         <div class="toolbar-select-wrapper">
@@ -1155,16 +1155,33 @@ export function initFormsAdmin(state, els, deps) {
     function render() {
         const activeItem = local.items.find(i => Number(i.id) === local.activeId);
         const themeClass = activeItem ? `is-${activeItem.type}` : '';
-        const workspace = local.activeView === 'submissions'
-            ? renderSubmissionsViewV2()
-            : (local.activeView === 'inbox' ? renderInboxViewV2() : renderBuilderView());
         
+        let workspace = '';
+        if (local.activePhase === 'design') {
+            workspace = renderBuilderView();
+        } else if (local.activePhase === 'launch') {
+            workspace = renderBuilderView(); // Temporarily reuse builder for launch until split
+        } else if (local.activePhase === 'review') {
+            if (local.activeView === 'inbox') workspace = renderInboxViewV2();
+            else if (local.activeView === 'analysis') workspace = renderAnalysisView();
+            else workspace = renderSubmissionsViewV2();
+        }
+
         root.innerHTML = `
             <div class="forms-admin-layout ${themeClass}">
                 ${renderList()}
                 ${workspace}
             </div>
         `;
+
+        const navBtns = document.querySelectorAll('.forms-pipeline-nav .pipeline-step');
+        navBtns.forEach(btn => {
+            if (btn.dataset.phase === local.activePhase) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     }
 
     function updateEditorValue(action, index, value, checked) {
@@ -1301,6 +1318,7 @@ export function initFormsAdmin(state, els, deps) {
             }
             if (action === 'pick-form') {
                 local.activeId = Number(actionEl.dataset.id || 0);
+                local.activePhase = 'design';
                 local.activeView = 'builder';
                 local.review.submissions.page = 1;
                 local.review.submissions.selectedId = 0;
@@ -1311,6 +1329,7 @@ export function initFormsAdmin(state, els, deps) {
             }
             if (action === 'new-form') {
                 local.activeId = 0;
+                local.activePhase = 'design';
                 local.activeView = 'builder';
                 local.detail = null;
                 local.editor = createBlankForm();
@@ -1575,6 +1594,20 @@ export function initFormsAdmin(state, els, deps) {
             render();
         }
     });
+    const pipelineNav = document.querySelector('.forms-pipeline-nav');
+    if (pipelineNav) {
+        pipelineNav.addEventListener('click', (event) => {
+            const btn = event.target.closest('.pipeline-step');
+            if (!btn) return;
+            const phase = btn.dataset.phase;
+            if (phase) {
+                local.activePhase = phase;
+                if (phase === 'design') local.activeView = 'builder';
+                else if (phase === 'review') local.activeView = 'submissions';
+                render();
+            }
+        });
+    }
 
     window.__adminFormsReload = reloadAll;
 

@@ -6138,6 +6138,118 @@ button.priority-card:hover {
 .dist-bar {
     height: 100%;
     background: var(--accent-secondary);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    padding: 4px;
+}
+
+.forms-stats-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.stat-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.stat-box:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.stat-box .label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.stat-box .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.forms-analysis-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.analysis-item {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.analysis-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 12px;
+}
+
+.analysis-meta strong {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.analysis-progress-bg {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.analysis-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-secondary), var(--accent-success));
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forms-distribution-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dist-item {
+    position: relative;
+    padding-bottom: 8px;
+}
+
+.dist-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.dist-bar-bg {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.dist-bar {
+    height: 100%;
+    background: var(--accent-secondary);
     opacity: 0.7;
     border-radius: 3px;
     transition: width 0.6s var(--ease-out);
@@ -6147,4 +6259,137 @@ button.priority-card:hover {
     background: rgba(245, 158, 11, 0.15);
     color: var(--accent-primary);
     font-weight: 700;
+}
+
+/* === FORMS ZEN 4.0 OVERHAUL === */
+.forms-pipeline-nav {
+    display: flex;
+    align-items: center;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(12px);
+    gap: 16px;
+}
+
+.pipeline-step {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+    text-align: left;
+    opacity: 0.6;
+}
+
+.pipeline-step:hover {
+    background: var(--surface-bg);
+    opacity: 1;
+}
+
+.pipeline-step.active {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    opacity: 1;
+}
+
+.step-num {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-bg);
+    color: var(--text-primary);
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.pipeline-step.active .step-num {
+    background: var(--accent-secondary);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+}
+
+.step-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.step-label strong {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.step-label span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.pipeline-divider {
+    width: 2px;
+    height: 24px;
+    background: var(--border-color);
+}
+
+/* Smart Filter Bar */
+.forms-smart-filters {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+}
+
+.forms-smart-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-chip {
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.filter-chip.active {
+    background: var(--accent-secondary);
+    color: #fff;
+    border-color: var(--accent-secondary);
+}
+
+/* Simplified Cards */
+.forms-admin-shell-v4 {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    height: calc(100vh - 280px);
+    min-height: 500px;
+}
+
+@media (max-width: 1024px) {
+    .forms-admin-shell-v4 {
+        grid-template-columns: 1fr;
+    }
 }
