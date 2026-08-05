@@ -17,7 +17,7 @@ export default function RegisterPage() {
                 <h1>Buat Akun Baru</h1>
                 <p>Isi data dengan benar agar akun langsung bisa dipakai login.</p>
             </div>
-            <form id="register-form" novalidate>
+            <form id="register-form" noValidate>
                 <div className="input-group">
                     <label htmlFor="namaPanjang">Nama Panjang</label>
                     <input />

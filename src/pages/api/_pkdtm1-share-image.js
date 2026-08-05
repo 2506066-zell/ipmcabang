@@ -25,8 +25,8 @@ module.exports = async (req, res) => {
 
   for (const filePath of bannerPaths) {
     try {
-      if (fs.existsSync(filePath)) {
-        const buffer = fs.readFileSync(filePath);
+      if (fs.existsSync(/*turbopackIgnore: true*/ filePath)) {
+        const buffer = fs.readFileSync(/*turbopackIgnore: true*/ filePath);
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Content-Length', String(buffer.length));
         res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
