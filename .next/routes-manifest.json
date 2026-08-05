@@ -1,0 +1,162 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    },
+    {
+      "source": "/articles.html",
+      "destination": "/articles",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/articles\\.html(?:/)?$"
+    },
+    {
+      "source": "/quiz.html",
+      "destination": "/quiz",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/quiz\\.html(?:/)?$"
+    },
+    {
+      "source": "/quiz-gamified.html",
+      "destination": "/quiz",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/quiz-gamified\\.html(?:/)?$"
+    },
+    {
+      "source": "/article.html",
+      "destination": "/articles",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/article\\.html(?:/)?$"
+    },
+    {
+      "source": "/install.html",
+      "destination": "/install",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/install\\.html(?:/)?$"
+    },
+    {
+      "source": "/materi.html",
+      "destination": "/materi",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/materi\\.html(?:/)?$"
+    },
+    {
+      "source": "/absen.html",
+      "destination": "/absen",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/absen\\.html(?:/)?$"
+    },
+    {
+      "source": "/discussions.html",
+      "destination": "/diskusi",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/discussions\\.html(?:/)?$"
+    },
+    {
+      "source": "/struktur-organisasi.html",
+      "destination": "/struktur",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/struktur-organisasi\\.html(?:/)?$"
+    },
+    {
+      "source": "/pendaftaran-pkdtm1.html",
+      "destination": "/pendaftaran/pkdtm1",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/pendaftaran-pkdtm1\\.html(?:/)?$"
+    },
+    {
+      "source": "/ranking.html",
+      "destination": "/ranking",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/ranking\\.html(?:/)?$"
+    },
+    {
+      "source": "/register.html",
+      "destination": "/register",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/register\\.html(?:/)?$"
+    },
+    {
+      "source": "/login.html",
+      "destination": "/login",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/login\\.html(?:/)?$"
+    },
+    {
+      "source": "/help.html",
+      "destination": "/bantuan",
+      "statusCode": 308,
+      "regex": "^(?!/_next)/help\\.html(?:/)?$"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(self)"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        }
+      ],
+      "regex": "^(?:/(.*))(?:/)?$"
+    }
+  ],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

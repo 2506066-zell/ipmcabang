@@ -1,16 +1,35 @@
 {
-  "name": "ipmweb",
-  "version": "1.0.0",
+  "name": "ipm-cabang-panawuan",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
-    "test": "node tests/run.js"
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "@vercel/blob": "^2.3.0",
-    "pg": "^8.11.3",
-    "web-push": "^3.6.7",
     "@simplewebauthn/server": "^9.0.3",
-    "qrcode": "^1.5.3"
+    "@vercel/blob": "^2.3.0",
+    "next": "15.3.4",
+    "pg": "^8.11.3",
+    "qrcode": "^1.5.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22",
+    "@types/pg": "^8.11.6",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   },
   "overrides": {
     "bn.js": "^5.2.3"

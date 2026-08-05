@@ -1,0 +1,6 @@
+{"timestamp":"00:00:08.436","source":"Server","level":"LOG","message":"○ Compiling middleware ..."}
+{"timestamp":"00:00:09.812","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:02:45.453","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:02:45.481","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection:\" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:02:45.497","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection: \" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:02:45.500","source":"Server","level":"LOG","message":"✓ Compiled in 1594ms"}
