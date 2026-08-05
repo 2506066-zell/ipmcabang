@@ -56,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <link rel="icon" href="/ipm-logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/ipm-logo.png" />
+        <link rel="stylesheet" href="/app/css/style.css" />
       </head>
       <body>
         {children}
