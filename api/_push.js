@@ -1,0 +1,151 @@
+const webpush = require('web-push');
+const { query } = require('./_db');
+const PUSH_SEND_CONCURRENCY = Math.max(1, Number(process.env.PUSH_SEND_CONCURRENCY || 20));
+const PUSH_TTL_SECONDS = Math.max(30, Number(process.env.PUSH_TTL_SECONDS || 300));
+const PUSH_TIMEOUT_MS = Math.max(3000, Number(process.env.PUSH_TIMEOUT_MS || 10000));
+const APP_NAME = 'PC IPM Panawuan';
+const DEFAULT_NOTIFICATION_ICON = '/app/media/brand/ipm-logo.png';
+const DEFAULT_NOTIFICATION_BADGE = '/icons/icon-192-maskable.png';
+const REMINDER_IMAGES = {
+  quiz: '/app/media/notifications/reminder-quiz.png',
+  form: '/app/media/notifications/reminder-forms.png',
+  attendance: '/app/media/notifications/reminder-attendance.png',
+  materials: '/app/media/notifications/reminder-materials.png',
+  discussions: '/app/media/notifications/reminder-discussions.png',
+  general: '/app/media/notifications/reminder-home.png'
+};
+const DEFAULT_NOTIFICATION_IMAGE = REMINDER_IMAGES.general;
+
+function getVapid() {
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  const subject = process.env.VAPID_SUBJECT || 'mailto:admin@ipm.local';
+  if (!publicKey || !privateKey) return null;
+  return { publicKey, privateKey, subject };
+}
+
+function initWebPush() {
+  const vapid = getVapid();
+  if (!vapid) return null;
+  webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
+  return vapid;
+}
+
+async function saveSubscription({ endpoint, keys, user_id }) {
+  if (!endpoint || !keys?.p256dh || !keys?.auth) return false;
+  await query`
+    INSERT INTO push_subscriptions (endpoint, p256dh, auth, user_id)
+    VALUES (${endpoint}, ${keys.p256dh}, ${keys.auth}, ${user_id || null})
+    ON CONFLICT (endpoint)
+    DO UPDATE SET
+      p256dh=EXCLUDED.p256dh,
+      auth=EXCLUDED.auth,
+      user_id=COALESCE(EXCLUDED.user_id, push_subscriptions.user_id),
+      updated_at=NOW()
+  `;
+  return true;
+}
+
+async function removeSubscription(endpoint) {
+  if (!endpoint) return;
+  await query`DELETE FROM push_subscriptions WHERE endpoint=${endpoint}`;
+}
+
+function withNotificationBranding(payload) {
+  const next = payload && typeof payload === 'object' ? { ...payload } : {};
+  if (!next.title) next.title = APP_NAME;
+  if (!next.icon) next.icon = DEFAULT_NOTIFICATION_ICON;
+  if (!next.badge) next.badge = DEFAULT_NOTIFICATION_BADGE;
+  // Hanya set default image jika tidak ada image custom dan useLargeImage bukan false
+  if (!next.image && next.useLargeImage !== false) next.image = DEFAULT_NOTIFICATION_IMAGE;
+  if (!next.tag) next.tag = 'ipm-general';
+  if (next.renotify === undefined) next.renotify = false;
+  if (next.requireInteraction === undefined) next.requireInteraction = false;
+  if (!Array.isArray(next.vibrate)) next.vibrate = [180, 60, 180];
+  if (!next.timestamp) next.timestamp = Date.now();
+  next.appName = APP_NAME;
+  next.trustLabel = next.trustLabel || 'Sumber resmi PC IPM Panawuan';
+  next.context = next.context || 'Informasi terverifikasi dari aplikasi IPM';
+  return next;
+}
+
+async function sendToSubscriptions(subs, payload) {
+  const vapid = initWebPush();
+  if (!vapid) {
+    console.error('Push Notification Error: VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY is missing in environment variables.');
+    return { sent: 0, failed: 0, error: 'Konfigurasi VAPID Keys di Server (Vercel) belum lengkap.' };
+  }
+  const body = JSON.stringify(withNotificationBranding(payload));
+  let sent = 0;
+  let failed = 0;
+  let index = 0;
+  const workerCount = Math.min(PUSH_SEND_CONCURRENCY, subs.length || 0);
+
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const i = index++;
+      if (i >= subs.length) return;
+      const s = subs[i];
+      const sub = {
+        endpoint: s.endpoint,
+        keys: {
+          p256dh: s.p256dh,
+          auth: s.auth
+        }
+      };
+      try {
+        await webpush.sendNotification(sub, body, {
+          TTL: PUSH_TTL_SECONDS,
+          urgency: 'high',
+          timeout: PUSH_TIMEOUT_MS
+        });
+        sent++;
+      } catch (e) {
+        failed++;
+        if (e.statusCode === 404 || e.statusCode === 410) {
+          await removeSubscription(s.endpoint);
+        }
+      }
+    }
+  });
+
+  await Promise.all(workers);
+  return { sent, failed };
+}
+
+async function sendToUser(userId, payload) {
+  if (!userId) return { sent: 0, failed: 0 };
+  const subs = (await query`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id=${userId}`).rows;
+  if (!subs.length) return { sent: 0, failed: 0 };
+  return await sendToSubscriptions(subs, payload);
+}
+
+async function sendToUsers(userIds, payload) {
+  if (!Array.isArray(userIds) || userIds.length === 0) return { sent: 0, failed: 0 };
+  const { rawQuery } = require('./_db');
+  const result = await rawQuery(
+    'SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ANY($1::int[])',
+    [userIds]
+  );
+  const subs = result.rows || [];
+  if (!subs.length) return { sent: 0, failed: 0 };
+  return await sendToSubscriptions(subs, payload);
+}
+
+async function sendToAll(payload) {
+  const subs = (await query`SELECT endpoint, p256dh, auth FROM push_subscriptions`).rows;
+  if (!subs.length) return { sent: 0, failed: 0 };
+  return await sendToSubscriptions(subs, payload);
+}
+
+module.exports = {
+  withNotificationBranding,
+  getVapid,
+  initWebPush,
+  saveSubscription,
+  removeSubscription,
+  sendToUser,
+  sendToUsers,
+  sendToAll,
+  REMINDER_IMAGES
+};

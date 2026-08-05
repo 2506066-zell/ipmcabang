@@ -68,3 +68,38 @@ export async function GET(req: Request): Promise<Response> {
     push_subscribers: subscriptionCount.rows[0]?.c || 0,
   });
 }
+
+// POST /api/analytics?action=track
+export async function POST(req: Request): Promise<Response> {
+  const params = getSearchParams(req);
+  if (params.get('action') === 'track') {
+    const dnt = req.headers.get('dnt') || '';
+    if (dnt === '1') return new Response(null, { status: 204 });
+
+    const body = await parseBody(req);
+    const eventName = cleanString(body.event_name || body.event || 'pageview').toLowerCase();
+    const path = cleanString(body.path || body.pathname || '/');
+    const title = cleanString(body.title || '') || null;
+    const referrer = cleanString(body.referrer || '') || null;
+    const sessionId = cleanString(body.session_id || '') || null;
+    
+    // Simplistic tracking insert (without ip hashing to save time, or we can use a static hash for now)
+    const ua = cleanString(req.headers.get('user-agent') || '');
+    if (ua.match(/(bot|spider|crawler|slurp|whatsapp|telegrambot|discordbot)/i)) {
+      return new Response(null, { status: 204 });
+    }
+
+    try {
+      await query`
+        INSERT INTO analytics_events (event_name, path, title, referrer, session_id, ua, props, created_at)
+        VALUES (${eventName}, ${path}, ${title}, ${referrer}, ${sessionId}, ${ua}, ${JSON.stringify(body.props || {})}, NOW())
+      `;
+    } catch (e) {
+      console.warn('Analytics track error:', e);
+    }
+    
+    return okResponse({ status: 'success' });
+  }
+  
+  return errResponse('Unknown action', 404);
+}
