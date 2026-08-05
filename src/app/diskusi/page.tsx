@@ -48,9 +48,9 @@ export default function Page() {
                     <button className="btn-close-modal" id="btn-close-topic"><i className="fas fa-times"></i></button>
                 </div>
                 <div className="topic-modal-body">
-                    <input type="text" id="topic-title" className="topic-input" placeholder="Judul topik diskusi..." maxLength="150" />
+                    <input type="text" id="topic-title" className="topic-input" placeholder="Judul topik diskusi..." maxLength={150} />
                     <span className="topic-char-count" id="topic-title-count">0 / 150</span>
-                    <textarea id="topic-content" className="topic-textarea" placeholder="Tuliskan gagasan, pertanyaan, atau pendapatmu di sini..." rows="5"></textarea>
+                    <textarea id="topic-content" className="topic-textarea" placeholder="Tuliskan gagasan, pertanyaan, atau pendapatmu di sini..." rows={5}></textarea>
                     <button id="btn-submit-topic" className="btn-submit">
                         <i className="fas fa-paper-plane"></i> Posting Diskusi
                     </button>

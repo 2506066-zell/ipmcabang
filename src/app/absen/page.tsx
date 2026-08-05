@@ -223,7 +223,7 @@ export default function Page() {
                                 </label>
                                 <label className="attendance-field">
                                     <span>Keterangan</span>
-                                    <textarea id="attendance-event-description" rows="2" placeholder="Agenda..."></textarea>
+                                    <textarea id="attendance-event-description" rows={2} placeholder="Agenda..."></textarea>
                                 </label>
                                 <button type="submit" className="attendance-primary-btn" id="attendance-create-btn">
                                     <i className="fas fa-plus"></i> Buat Rapat
