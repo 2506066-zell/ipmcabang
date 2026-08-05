@@ -1,7 +1,7 @@
 const ArticleModel = require('../models/ArticleModel');
-const { json, parseJsonBody, cacheHeaders } = require('../api/_util');
-const { requireAdminAuth } = require('../api/_auth');
-const { notifyPublishedArticle } = require('../api/_article_notifications');
+const { json, parseJsonBody, cacheHeaders } = require('../src/pages/api/_util');
+const { requireAdminAuth } = require('../src/pages/api/_auth');
+const { notifyPublishedArticle } = require('../src/pages/api/_article_notifications');
 
 const MAX_ARTICLE_IMAGE_BYTES = 250 * 1024;
 

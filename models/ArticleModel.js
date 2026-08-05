@@ -1,4 +1,4 @@
-const { query, rawQuery } = require('../api/_db');
+const { query, rawQuery } = require('../src/pages/api/_db');
 
 class ArticleModel {
     /**
