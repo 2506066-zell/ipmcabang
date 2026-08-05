@@ -452,56 +452,6 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-bottom: 0;
-width: 4px;
-background: var(--accent-secondary);
-box-shadow: 0 0 10px var(--accent-secondary);
-}
-
-.forms-list-item-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin: 4px 0;
-}
-
-.forms-list-score-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-}
-
-.forms-list-score-bar-bg {
-    width: 60px;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.forms-list-score-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
-
-.forms-list-score-text {
-    font-size: 0.75rem;
-    font-weight: 700;
-    font-family: var(--font-mono);
-    min-width: 35px;
-    text-align: right;
-}
-
-.forms-review-badge-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 4px;
-}
-
 .stat-card:nth-child(1)::after {
     background: var(--accent-secondary);
 }
@@ -2932,12 +2882,6 @@ body.light-mode .writing-mode-content {
 }
 
 
-border-radius: 16px;
-padding: 12px;
-color: #e2e8f0;
-box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
-}
-
 .lockscreen-meta {
     display: flex;
     justify-content: space-between;
@@ -3828,9 +3772,7 @@ button.priority-card:hover {
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
 }
 
-margin: 10px 0 8px;
-font-size: 1rem;
-}
+
 
 .workflow-card p {
     color: var(--text-secondary);
