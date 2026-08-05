@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/materi/layout,_N_T_/materi/page,_N_T_/materi"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/materi/__PAGE__",
+    "/materi",
+    "/_index",
+    "/_head"
+  ]
+}

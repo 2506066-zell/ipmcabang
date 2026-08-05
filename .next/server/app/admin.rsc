@@ -1,0 +1,135 @@
+1:"$Sreact.fragment"
+2:I[39756,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"default"]
+3:I[37457,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"default"]
+13:I[68027,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"default",1]
+:HL["/_next/static/chunks/05-0dg95txbiq.css","style"]
+:HL["/_next/static/chunks/08in~2pkx6426.css","style"]
+:HL["https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap","style"]
+:HL["https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css","style"]
+:HL["/ipm-logo.png","image"]
+0:{"P":null,"c":["","admin"],"q":"","i":false,"f":[[["",{"children":["admin",{"children":["__PAGE__",{}]}]},"$undefined","$undefined",16],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/05-0dg95txbiq.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","script","script-0",{"src":"/_next/static/chunks/01xlw8hd842-c.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/_next/static/chunks/0d3shmwh5_nmn.js","async":true,"nonce":"$undefined"}]],["$","html",null,{"lang":"id","children":[["$","head",null,{"children":[["$","link",null,{"rel":"preconnect","href":"https://fonts.googleapis.com"}],["$","link",null,{"rel":"preconnect","href":"https://fonts.gstatic.com","crossOrigin":"anonymous"}],["$","link",null,{"href":"https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap","rel":"stylesheet"}],["$","link",null,{"rel":"stylesheet","href":"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"}],["$","link",null,{"rel":"icon","href":"/ipm-logo.png","type":"image/png"}],["$","link",null,{"rel":"apple-touch-icon","href":"/ipm-logo.png"}]]}],["$","body",null,{"children":[["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","script",null,{"dangerouslySetInnerHTML":{"__html":"\n              if ('serviceWorker' in navigator) {\n                window.addEventListener('load', function() {\n                  navigator.serviceWorker.register('/sw.js').catch(function(err) {\n                    console.warn('SW registration failed:', err);\n                  });\n                });\n              }\n            "}}]]}]]}]]}],{"children":[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/08in~2pkx6426.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","div",null,{"className":"admin-shell","children":[["$","aside",null,{"className":"admin-sidebar","id":"admin-sidebar","aria-label":"Admin Navigation","children":[["$","div",null,{"className":"admin-sidebar-header","children":[["$","div",null,{"className":"admin-brand","children":[["$","img",null,{"src":"/ipm-logo.png","alt":"Logo IPM","className":"admin-brand-logo"}],["$","div",null,{"className":"admin-brand-text","children":[["$","span",null,{"className":"admin-brand-name","children":"IPM Panawuan"}],["$","span",null,{"className":"admin-brand-role","children":"Panel Admin"}]]}]]}],["$","button",null,{"className":"admin-sidebar-close","id":"admin-sidebar-close","aria-label":"Tutup sidebar","children":["$","i",null,{"className":"fas fa-times"}]}]]}],["$","nav",null,{"className":"admin-nav","aria-label":"Admin menu","children":["$","ul",null,{"className":"admin-nav-list","children":[["$","li","/admin",{"children":["$","a",null,{"href":"/admin","className":"admin-nav-link","data-exact":"true","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-tachometer-alt"}]}],["$","span",null,{"className":"admin-nav-label","children":"Dashboard"}]]}]}],["$","li","/admin/users",{"children":["$","a",null,{"href":"/admin/users","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-users"}]}],"$L4"]}]}],"$L5","$L6","$L7","$L8","$L9","$La","$Lb"]}]}],"$Lc"]}],"$Ld","$Le","$Lf","$L10"]}]]}],{"children":["$L11",{},null,false,null]},null,false,null]},null,false,null],"$L12",false]],"m":"$undefined","G":["$13",["$L14"]],"S":true,"h":null,"s":"$undefined","l":"$undefined","p":"$undefined","d":"$undefined","b":"uLQQ5nC0YAy9ENQGnE9De"}
+18:I[97367,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"ViewportBoundary"]
+1a:I[97367,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"MetadataBoundary"]
+1b:"$Sreact.suspense"
+:HL["/app/css/style.css","style"]
+4:["$","span",null,{"className":"admin-nav-label","children":"Manajemen User"}]
+5:["$","li","/admin/questions",{"children":["$","a",null,{"href":"/admin/questions","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-question-circle"}]}],["$","span",null,{"className":"admin-nav-label","children":"Bank Soal Quiz"}]]}]}]
+6:["$","li","/admin/materials",{"children":["$","a",null,{"href":"/admin/materials","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-book"}]}],["$","span",null,{"className":"admin-nav-label","children":"Materi"}]]}]}]
+7:["$","li","/admin/organization",{"children":["$","a",null,{"href":"/admin/organization","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-sitemap"}]}],["$","span",null,{"className":"admin-nav-label","children":"Struktur Org."}]]}]}]
+8:["$","li","/admin/attendance",{"children":["$","a",null,{"href":"/admin/attendance","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-clipboard-check"}]}],["$","span",null,{"className":"admin-nav-label","children":"Absensi"}]]}]}]
+9:["$","li","/admin/notifications",{"children":["$","a",null,{"href":"/admin/notifications","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-bell"}]}],["$","span",null,{"className":"admin-nav-label","children":"Notifikasi"}]]}]}]
+a:["$","li","/admin/forms",{"children":["$","a",null,{"href":"/admin/forms","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-wpforms"}]}],["$","span",null,{"className":"admin-nav-label","children":"Form & PKDTM1"}]]}]}]
+b:["$","li","/admin/settings",{"children":["$","a",null,{"href":"/admin/settings","className":"admin-nav-link","data-exact":"$undefined","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-cog"}]}],["$","span",null,{"className":"admin-nav-label","children":"Pengaturan"}]]}]}]
+c:["$","div",null,{"className":"admin-sidebar-footer","children":[["$","a",null,{"href":"/","className":"admin-nav-link","target":"_blank","rel":"noopener","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-external-link-alt"}]}],["$","span",null,{"className":"admin-nav-label","children":"Lihat Website"}]]}],["$","button",null,{"className":"admin-nav-link admin-logout-btn","id":"admin-logout-btn","children":[["$","span",null,{"className":"admin-nav-icon","children":["$","i",null,{"className":"fas fa-sign-out-alt"}]}],["$","span",null,{"className":"admin-nav-label","children":"Keluar"}]]}]]}]
+d:["$","div",null,{"className":"admin-sidebar-overlay","id":"admin-sidebar-overlay","aria-hidden":"true"}]
+e:["$","div",null,{"className":"admin-main","children":[["$","header",null,{"className":"admin-topbar","children":[["$","button",null,{"className":"admin-topbar-toggle","id":"admin-sidebar-toggle","aria-label":"Toggle sidebar","children":["$","i",null,{"className":"fas fa-bars"}]}],["$","div",null,{"className":"admin-topbar-breadcrumb","id":"admin-breadcrumb","children":["$","span",null,{"children":"Admin"}]}],["$","div",null,{"className":"admin-topbar-actions","children":["$","div",null,{"className":"admin-user-chip","id":"admin-user-chip","children":[["$","i",null,{"className":"fas fa-user-shield"}],["$","span",null,{"id":"admin-username-display","children":"Admin"}]]}]}]]}],["$","main",null,{"className":"admin-content","id":"admin-page-content","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]
+f:["$","link",null,{"rel":"stylesheet","href":"/app/css/style.css"}]
+15:T897,
+            // Active nav link
+            document.addEventListener('DOMContentLoaded', function() {
+              const links = document.querySelectorAll('.admin-nav-link');
+              const path = window.location.pathname;
+              links.forEach(link => {
+                const href = link.getAttribute('href');
+                const isExact = link.dataset.exact === 'true';
+                const isActive = isExact ? path === href : path.startsWith(href);
+                if (isActive) link.classList.add('active');
+              });
+
+              // Mobile sidebar toggle
+              const toggle = document.getElementById('admin-sidebar-toggle');
+              const sidebar = document.getElementById('admin-sidebar');
+              const overlay = document.getElementById('admin-sidebar-overlay');
+              const close = document.getElementById('admin-sidebar-close');
+
+              function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('open'); }
+              function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+
+              toggle?.addEventListener('click', openSidebar);
+              overlay?.addEventListener('click', closeSidebar);
+              close?.addEventListener('click', closeSidebar);
+
+              // Load admin user
+              fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + (localStorage.getItem('ipm_session') || '') } })
+                .then(r => r.json())
+                .then(d => {
+                  if (d.status === 'success') {
+                    document.getElementById('admin-username-display').textContent = d.user?.nama_panjang || d.user?.username || 'Admin';
+                  }
+                }).catch(() => {});
+
+              // Logout
+              document.getElementById('admin-logout-btn')?.addEventListener('click', function() {
+                if (!confirm('Yakin ingin keluar?')) return;
+                fetch('/api/auth/logout', { method: 'DELETE' }).finally(() => {
+                  localStorage.removeItem('ipm_session');
+                  window.location.href = '/login';
+                });
+              });
+            });
+          10:["$","script",null,{"dangerouslySetInnerHTML":{"__html":"$15"}}]
+16:Tac9,
+            // Load dashboard stats
+            async function loadStats() {
+              try {
+                const session = localStorage.getItem('ipm_session') || '';
+                const headers = { 'Authorization': 'Bearer ' + session };
+
+                const [usersRes, questionsRes] = await Promise.all([
+                  fetch('/api/users?action=extended', { headers }),
+                  fetch('/api/admin/questions?size=1', { headers })
+                ]);
+
+                const users = await usersRes.json();
+                const questions = await questionsRes.json();
+
+                if (users.status === 'success') {
+                  document.getElementById('total-users').textContent = users.users?.length ?? '—';
+                  const active = users.users?.filter(u => u.active).length ?? 0;
+                  document.getElementById('active-sessions').textContent = active;
+                }
+                if (questions.status === 'success') {
+                  document.getElementById('total-questions').textContent = questions.total ?? '—';
+                }
+              } catch(e) {
+                console.error('Stats load error:', e);
+              }
+            }
+
+            // Load activity logs
+            async function loadActivityLogs() {
+              try {
+                const session = localStorage.getItem('ipm_session') || '';
+                const res = await fetch('/api/analytics?action=activityLogs&limit=20', {
+                  headers: { 'Authorization': 'Bearer ' + session }
+                });
+                const data = await res.json();
+                const tbody = document.getElementById('activity-log-body');
+                if (data.status === 'success' && data.logs?.length) {
+                  tbody.innerHTML = data.logs.map(log => `
+                    <tr>
+                      <td class="text-muted" style="font-size:0.8rem">${new Date(log.created_at).toLocaleString('id-ID')}</td>
+                      <td><span class="badge badge-green">${log.action || '-'}</span></td>
+                      <td style="font-size:0.8rem">${JSON.stringify(log.details || {}).slice(0, 100)}</td>
+                    </tr>
+                  `).join('');
+                } else {
+                  tbody.innerHTML = '<tr><td colspan="3" class="admin-table-empty">Belum ada log aktivitas.</td></tr>';
+                }
+              } catch(e) {
+                document.getElementById('activity-log-body').innerHTML = '<tr><td colspan="3" class="admin-table-empty text-muted">Gagal memuat log.</td></tr>';
+              }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              loadStats();
+              loadActivityLogs();
+            });
+          11:["$","$1","c",{"children":[[["$","div",null,{"className":"admin-page-header","children":[["$","h1",null,{"className":"admin-page-title","children":[["$","i",null,{"className":"fas fa-tachometer-alt"}],"Dashboard"]}],["$","p",null,{"className":"admin-page-subtitle","children":"Selamat datang di panel administrasi PC IPM Panawuan"}]]}],["$","div",null,{"className":"admin-stats-grid","id":"admin-stats-grid","children":[["$","div","total-users",{"className":"stat-card stat-card--blue","children":[["$","div",null,{"className":"stat-card-icon","children":["$","i",null,{"className":"fas fa-users"}]}],["$","div",null,{"className":"stat-card-body","children":[["$","div",null,{"className":"stat-card-value","id":"total-users","children":"—"}],["$","div",null,{"className":"stat-card-label","children":"Total Kader"}]]}]]}],["$","div","total-questions",{"className":"stat-card stat-card--purple","children":[["$","div",null,{"className":"stat-card-icon","children":["$","i",null,{"className":"fas fa-question-circle"}]}],["$","div",null,{"className":"stat-card-body","children":[["$","div",null,{"className":"stat-card-value","id":"total-questions","children":"—"}],["$","div",null,{"className":"stat-card-label","children":"Bank Soal"}]]}]]}],["$","div","total-materials",{"className":"stat-card stat-card--green","children":[["$","div",null,{"className":"stat-card-icon","children":["$","i",null,{"className":"fas fa-book"}]}],["$","div",null,{"className":"stat-card-body","children":[["$","div",null,{"className":"stat-card-value","id":"total-materials","children":"—"}],["$","div",null,{"className":"stat-card-label","children":"Materi"}]]}]]}],["$","div","active-sessions",{"className":"stat-card stat-card--amber","children":[["$","div",null,{"className":"stat-card-icon","children":["$","i",null,{"className":"fas fa-signal"}]}],["$","div",null,{"className":"stat-card-body","children":[["$","div",null,{"className":"stat-card-value","id":"active-sessions","children":"—"}],["$","div",null,{"className":"stat-card-label","children":"Sesi Aktif"}]]}]]}]]}],["$","div",null,{"className":"admin-section","children":[["$","h2",null,{"className":"admin-section-title","children":"Aksi Cepat"}],["$","div",null,{"className":"admin-quick-actions","children":[["$","a",null,{"href":"/admin/users","className":"quick-action-card","children":[["$","i",null,{"className":"fas fa-user-plus"}],["$","span",null,{"children":"Tambah Kader"}]]}],["$","a",null,{"href":"/admin/questions","className":"quick-action-card","children":[["$","i",null,{"className":"fas fa-plus-circle"}],["$","span",null,{"children":"Tambah Soal"}]]}],["$","a",null,{"href":"/admin/notifications","className":"quick-action-card","children":[["$","i",null,{"className":"fas fa-paper-plane"}],["$","span",null,{"children":"Kirim Notif"}]]}],["$","a",null,{"href":"/admin/attendance","className":"quick-action-card","children":[["$","i",null,{"className":"fas fa-clipboard-check"}],["$","span",null,{"children":"Monitor Absensi"}]]}],["$","a",null,{"href":"/admin/organization","className":"quick-action-card","children":[["$","i",null,{"className":"fas fa-sitemap"}],["$","span",null,{"children":"Update Struktur"}]]}],["$","a",null,{"href":"/admin/forms","className":"quick-action-card","children":[["$","i",null,{"className":"fas fa-wpforms"}],["$","span",null,{"children":"Kelola PKDTM1"}]]}]]}]]}],["$","div",null,{"className":"admin-section","children":[["$","h2",null,{"className":"admin-section-title","children":"Log Aktivitas Terbaru"}],["$","div",null,{"className":"admin-table-container","children":["$","table",null,{"className":"admin-table","id":"activity-log-table","children":[["$","thead",null,{"children":["$","tr",null,{"children":[["$","th",null,{"children":"Waktu"}],["$","th",null,{"children":"Aksi"}],["$","th",null,{"children":"Detail"}]]}]}],["$","tbody",null,{"id":"activity-log-body","children":["$","tr",null,{"children":["$","td",null,{"colSpan":3,"className":"admin-table-empty","children":[["$","i",null,{"className":"fas fa-spinner fa-spin"}]," Memuat log..."]}]}]}]]}]}]]}],["$","script",null,{"dangerouslySetInnerHTML":{"__html":"$16"}}]],null,"$L17"]}]
+12:["$","$1","h",{"children":[null,["$","$L18",null,{"children":"$L19"}],["$","div",null,{"hidden":true,"children":["$","$L1a",null,{"children":["$","$1b",null,{"name":"Next.Metadata","children":"$L1c"}]}]}],null]}]
+14:["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/05-0dg95txbiq.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]
+1d:I[97367,["/_next/static/chunks/01xlw8hd842-c.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
+17:["$","$L1d",null,{"children":["$","$1b",null,{"name":"Next.MetadataOutlet","children":"$@1e"}]}]
+19:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, viewport-fit=cover"}],["$","meta","2",{"name":"theme-color","content":"#1a6b3c"}]]
+1c:[["$","title","0",{"children":"Dashboard Admin | PC IPM Panawuan"}],["$","meta","1",{"name":"description","content":"Platform digital resmi Pimpinan Cabang Ikatan Pelajar Muhammadiyah (PC IPM) Panawuan — perpustakaan digital, artikel, quiz, dan absensi kader."}],["$","meta","2",{"name":"author","content":"PC IPM Panawuan"}],["$","link","3",{"rel":"manifest","href":"/manifest.json","crossOrigin":"$undefined"}],["$","meta","4",{"name":"keywords","content":"IPM,Ikatan Pelajar Muhammadiyah,Panawuan,IPM Garut,PKDTM"}],["$","meta","5",{"name":"robots","content":"noindex, nofollow"}],["$","meta","6",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","7",{"name":"apple-mobile-web-app-title","content":"IPM Panawuan"}],["$","meta","8",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","9",{"property":"og:title","content":"PC IPM Panawuan - Ikatan Pelajar Muhammadiyah"}],["$","meta","10",{"property":"og:description","content":"Platform Perpustakaan Digital dan Artikel Organisasi Ikatan Pelajar Muhammadiyah PC Panawuan."}],["$","meta","11",{"property":"og:url","content":"https://ipmpanawuan.or.id"}],["$","meta","12",{"property":"og:site_name","content":"PC IPM Panawuan"}],["$","meta","13",{"property":"og:locale","content":"id_ID"}],["$","meta","14",{"property":"og:image","content":"https://ipmpanawuan.or.id/ipm-logo.png"}],["$","meta","15",{"property":"og:image:width","content":"512"}],["$","meta","16",{"property":"og:image:height","content":"512"}],["$","meta","17",{"property":"og:image:alt","content":"Logo PC IPM Panawuan"}],["$","meta","18",{"property":"og:type","content":"website"}],["$","meta","19",{"name":"twitter:card","content":"summary"}],["$","meta","20",{"name":"twitter:title","content":"PC IPM Panawuan - Ikatan Pelajar Muhammadiyah"}],["$","meta","21",{"name":"twitter:description","content":"Platform digital resmi PC IPM Panawuan."}],["$","meta","22",{"name":"twitter:image","content":"https://ipmpanawuan.or.id/ipm-logo.png"}]]
+1e:null

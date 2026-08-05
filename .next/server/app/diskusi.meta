@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/diskusi/layout,_N_T_/diskusi/page,_N_T_/diskusi"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/diskusi/__PAGE__",
+    "/diskusi",
+    "/_index",
+    "/_head"
+  ]
+}
