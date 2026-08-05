@@ -46,7 +46,7 @@ export default function Page() {
                     <i className="fas fa-arrow-left"></i>
                 </button>
                 <div className="detail-header-info">
-                    <h2 className="detail-title" id="detailBidangTitle" tabindex="-1"></h2>
+                    <h2 className="detail-title" id="detailBidangTitle" tabIndex={parseInt('-1')}></h2>
                     <div className="detail-meta">
                         <span id="detailMemberCount"></span>
                         <span id="detailProgramCount"></span>
@@ -90,21 +90,21 @@ export default function Page() {
                     <div className="org-feedback-row">
                         <div className="org-feedback-field">
                             <label htmlFor="orgFeedbackName">Nama (opsional)</label>
-                            <input type="text" id="orgFeedbackName" maxlength="80" placeholder="Nama kamu" />
+                            <input type="text" id="orgFeedbackName" maxLength="80" placeholder="Nama kamu" />
                         </div>
                         <div className="org-feedback-field">
                             <label htmlFor="orgFeedbackContact">Kontak (opsional)</label>
-                            <input type="text" id="orgFeedbackContact" maxlength="120" placeholder="WA / Email / IG" />
+                            <input type="text" id="orgFeedbackContact" maxLength="120" placeholder="WA / Email / IG" />
                         </div>
                     </div>
                     <div className="org-feedback-field">
                         <label htmlFor="orgFeedbackSubject">Topik Program Kerja</label>
-                        <input type="text" id="orgFeedbackSubject" maxlength="140"
+                        <input type="text" id="orgFeedbackSubject" maxLength="140"
                             placeholder="Contoh: Program kaderisasi perlu timeline lebih jelas" />
                     </div>
                     <div className="org-feedback-field">
                         <label htmlFor="orgFeedbackMessage">Pesan</label>
-                        <textarea id="orgFeedbackMessage" rows="4" maxlength="2000"
+                        <textarea id="orgFeedbackMessage" rows="4" maxLength="2000"
                             placeholder="Tulis kritik/saran program kerja secara spesifik agar mudah ditindaklanjuti admin."
                             required></textarea>
                     </div>

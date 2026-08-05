@@ -48,7 +48,7 @@ export default function Page() {
                     <button className="btn-close-modal" id="btn-close-topic"><i className="fas fa-times"></i></button>
                 </div>
                 <div className="topic-modal-body">
-                    <input type="text" id="topic-title" className="topic-input" placeholder="Judul topik diskusi..." maxlength="150" />
+                    <input type="text" id="topic-title" className="topic-input" placeholder="Judul topik diskusi..." maxLength="150" />
                     <span className="topic-char-count" id="topic-title-count">0 / 150</span>
                     <textarea id="topic-content" className="topic-textarea" placeholder="Tuliskan gagasan, pertanyaan, atau pendapatmu di sini..." rows="5"></textarea>
                     <button id="btn-submit-topic" className="btn-submit">
@@ -92,7 +92,7 @@ export default function Page() {
                         </button>
                     </div>
                     <div className="reply-login-prompt" id="reply-login-prompt" hidden>
-                        <p><i className="fas fa-lock" style="margin-right: 6px;"></i> Silakan <a href="login.html">Login</a> untuk membalas diskusi ini.</p>
+                        <p><i className="fas fa-lock" style={{ marginRight: '6px' }}></i> Silakan <a href="login.html">Login</a> untuk membalas diskusi ini.</p>
                     </div>
                 </div>
             </div>

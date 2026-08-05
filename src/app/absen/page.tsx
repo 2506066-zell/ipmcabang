@@ -101,7 +101,7 @@ export default function Page() {
                                 </div>
                             </div>
                             
-                            <form id="attendance-checkin-form" className="attendance-form" style="position: relative;">
+                            <form id="attendance-checkin-form" className="attendance-form" style={{ position: 'relative' }}>
                                 {/* Success feedback is now handled via toasts and status text */}
 
                                 {/* Step 1: Identitas */}
@@ -149,7 +149,7 @@ export default function Page() {
                                                 <i className="fas fa-camera"></i>
                                                 <span>Kamera Siap</span>
                                             </div>
-                                            <video id="attendance-camera-video" className="attendance-camera-video" autoplay playsinline muted hidden></video>
+                                            <video id="attendance-camera-video" className="attendance-camera-video" autoPlay playsInline muted hidden></video>
                                             <div className="attendance-preview" id="attendance-selfie-preview" hidden>
                                                 <img src="" id="attendance-selfie-image" />
                                             </div>
@@ -238,10 +238,10 @@ export default function Page() {
                                     <h3>Aplikasi PWA</h3>
                                     <p>Pasang di perangkat untuk akses lebih cepat.</p>
                                 </div>
-                                <i className="fas fa-mobile-screen-button" style="font-size: 24px; color: var(--c-emerald-700);"></i>
+                                <i className="fas fa-mobile-screen-button" style={{ fontSize: '24px', color: 'var(--c-emerald-700)' }}></i>
                             </div>
-                            <div style="padding: 16px; background: var(--c-emerald-50); border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
-                                <p style="font-size: 0.85rem; color: var(--c-emerald-800); margin: 0;">Nikmati pengalaman absensi yang lebih stabil dan native dengan memasang aplikasi ini di layar utama HP kamu.</p>
+                            <div style={{ padding: '16px', background: 'var(--c-emerald-50)', borderRadius: '12px', marginBottom: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--c-emerald-800)', margin: '0' }}>Nikmati pengalaman absensi yang lebih stabil dan native dengan memasang aplikasi ini di layar utama HP kamu.</p>
                             </div>
                             <button type="button" className="attendance-primary-btn" id="pwa-install-btn">
                                 <i className="fas fa-download"></i> Pasang Aplikasi Sekarang

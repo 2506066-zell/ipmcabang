@@ -7,18 +7,18 @@ export default function Page() {
     <>
       <link rel="stylesheet" href="/app/css/style.css" />
 
-      <main className="main-content" style="padding:16px">
+      <main className="main-content" style={{ padding: '16px' }}>
 
-    <section style="background:#fff;border:1px solid #efefef;border-radius:12px;padding:16px">
-      <h2 style="margin-bottom:12px"><i className="fas fa-circle-question"></i> Pusat Bantuan & Panduan</h2>
+    <section style={{ background: '#fff', border: '1px solid #efefef', borderRadius: '12px', padding: '16px' }}>
+      <h2 style={{ marginBottom: '12px' }}><i className="fas fa-circle-question"></i> Pusat Bantuan & Panduan</h2>
       <p style={{ color: '#64748b;margin-bottom:14px;font-size:14px' }}>
         Panduan lengkap untuk semua fitur utama agar penggunaan lebih mudah, cepat, dan tidak membingungkan.
       </p>
 
-      <div style="display:grid;gap:14px;">
+      <div style={{ display: 'grid', gap: '14px' }}>
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Navigasi Cepat</h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Navigasi Cepat</h3>
+          <ul style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Gunakan ikon <b>menu</b> (hamburger) di kanan atas untuk membuka navigasi.</li>
             <li>Gunakan tombol <b>+</b> (FAB) untuk akses cepat fitur populer.</li>
             <li>Ikon lonceng di header untuk melihat notifikasi.</li>
@@ -26,8 +26,8 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Daftar Akun</h3>
-          <ol style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Daftar Akun</h3>
+          <ol style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Buka halaman <b>Daftar</b>.</li>
             <li>Isi <b>Nama Lengkap</b>, pilih <b>Asal Pimpinan</b>, lalu buat <b>Username</b> dan <b>Password</b>.</li>
             <li>Tekan <b>Kirim</b> untuk menyelesaikan pendaftaran.</li>
@@ -35,8 +35,8 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Login & Profil</h3>
-          <ol style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Login & Profil</h3>
+          <ol style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Masukkan <b>Username</b> dan <b>Password</b>.</li>
             <li>Masuk, lalu klik ikon profil untuk melihat ringkasan akun.</li>
             <li>Gunakan tombol <b>Logout</b> saat selesai.</li>
@@ -44,8 +44,8 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Notifikasi (In-App & Lock Screen)</h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Notifikasi (In-App & Lock Screen)</h3>
+          <ul style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Notifikasi baru muncul di ikon lonceng.</li>
             <li>Aktifkan notifikasi agar update muncul di <b>lock screen</b>.</li>
             <li>Notifikasi otomatis dibersihkan setelah 7 hari, kecuali countdown program kerja.</li>
@@ -53,34 +53,34 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Program Kerja & Countdown</h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Program Kerja & Countdown</h3>
+          <ul style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Countdown menampilkan sisa waktu menuju program kerja berikutnya.</li>
             <li>Countdown juga muncul di modal notifikasi agar mudah dipantau.</li>
           </ul>
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Kuis</h3>
-          <ol style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Kuis</h3>
+          <ol style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Masuk ke menu <b>Quiz</b> lalu pilih <b>set kuis</b> yang tersedia.</li>
             <li>Jawab semua soal sampai selesai. Timer akan berjalan per soal.</li>
             <li>Setiap set kuis hanya bisa dikerjakan <b>1 kali</b> sampai direset admin.</li>
           </ol>
-          <p style="margin:8px 0 0;font-size:13px;color:#64748b;">Catatan: Jika admin mereset set kuis, kamu bisa mengerjakan ulang.</p>
+          <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b' }}>Catatan: Jika admin mereset set kuis, kamu bisa mengerjakan ulang.</p>
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Peringkat</h3>
-          <ol style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Peringkat</h3>
+          <ol style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Buka halaman <b>Peringkat</b> untuk melihat ranking.</li>
             <li>Nama kamu akan disorot agar mudah ditemukan.</li>
           </ol>
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Perpustakaan Digital</h3>
-          <ol style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Perpustakaan Digital</h3>
+          <ol style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Pilih menu <b>Perpustakaan</b>.</li>
             <li>Gunakan pencarian atau filter kategori.</li>
             <li>Tap materi untuk lihat detail atau unduh file.</li>
@@ -88,8 +88,8 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Artikel & Berita</h3>
-          <ol style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Artikel & Berita</h3>
+          <ol style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Pilih menu <b>Artikel</b>.</li>
             <li>Gunakan pencarian dan kategori.</li>
             <li>Baca artikel dan gunakan tombol <b>Bagikan</b> atau <b>Salin Tautan</b>.</li>
@@ -97,8 +97,8 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Instal Aplikasi (PWA)</h3>
-          <ol style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Instal Aplikasi (PWA)</h3>
+          <ol style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Buka menu <b>+</b> (FAB) atau tombol install jika tersedia.</li>
             <li>Pilih <b>Install</b>.</li>
             <li>Ikuti petunjuk dari browser.</li>
@@ -106,16 +106,16 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Keamanan</h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Keamanan</h3>
+          <ul style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Jaga kerahasiaan password.</li>
             <li>Logout jika memakai perangkat bersama.</li>
           </ul>
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Masalah Umum</h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Masalah Umum</h3>
+          <ul style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>Jika data tidak muncul, coba <b>refresh</b> halaman.</li>
             <li>Jika tombol tidak merespons, pastikan koneksi stabil.</li>
             <li>Jika notif tidak muncul, aktifkan notifikasi di browser dan perangkat.</li>
@@ -123,8 +123,8 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">FAQ Singkat</h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>FAQ Singkat</h3>
+          <ul style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li><b>Kenapa kuis tidak bisa diulang?</b> Setiap set kuis hanya 1x percobaan sampai direset admin.</li>
             <li><b>Notif tidak muncul di lock screen?</b> Pastikan izin notifikasi aktif di browser dan perangkat.</li>
             <li><b>Kenapa data kosong?</b> Bisa karena belum ada data baru. Coba muat ulang.</li>
@@ -133,8 +133,8 @@ export default function Page() {
         </div>
 
         <div>
-          <h3 style="margin:0 0 6px;font-size:15px;">Kontak Admin</h3>
-          <ul style="margin:0;padding-left:18px;color:#334155;font-size:14px;line-height:1.6;">
+          <h3 style={{ margin: '0 0 6px', fontSize: '15px' }}>Kontak Admin</h3>
+          <ul style={{ margin: '0', paddingLeft: '18px', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
             <li>WhatsApp: <a href="https://wa.me/62895360420668" style={{ color: '#2563eb;text-decoration:none' }}><b>+62 895-3604-20668</b></a></li>
           </ul>
         </div>

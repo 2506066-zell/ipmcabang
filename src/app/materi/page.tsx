@@ -55,9 +55,9 @@ export default function Page() {
                 <span>Memuat koleksi lainnya...</span>
             </div>
 
-            <div id="empty-state" hidden style="text-align:center; padding:60px 20px;">
+            <div id="empty-state" hidden style={{ textAlign: 'center', padding: '60px 20px' }}>
                 <i className="fas fa-folder-open"
-                    style="font-size:4rem; color:rgba(255,255,255,0.1); margin-bottom:20px;"></i>
+                    style={{ fontSize: '4rem', color: 'rgba(255,255,255,0.1)', marginBottom: '20px' }}></i>
                 <p style={{ color: '#888' }}>Koleksi tidak ditemukan.</p>
             </div>
         </div>
