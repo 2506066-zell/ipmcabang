@@ -4,3 +4,7 @@
 [{"name":"compile-path","duration":1385714,"timestamp":31469354578,"id":9,"parentId":1,"tags":{"trigger":"middleware"},"startTime":1785934234307,"traceId":"21b0eb04c3fc88aa"}]
 [{"name":"turbopack-persistence","duration":553000,"timestamp":31472882515,"id":10,"parentId":3,"tags":{"reason":"idle timeout","snapshot_duration_ms":1.5456109999999998,"persist_duration_ms":551.004568,"task_count":1024},"startTime":1785934238389,"traceId":"21b0eb04c3fc88aa"}]
 [{"name":"turbopack-persistence","duration":232000,"timestamp":32368316448,"id":12,"parentId":3,"tags":{"reason":"idle timeout","snapshot_duration_ms":12.95214,"persist_duration_ms":218.430621,"task_count":92},"startTime":1785935133504,"traceId":"21b0eb04c3fc88aa"}]
+[{"name":"compile-path","duration":38386,"timestamp":33581708797,"id":14,"parentId":1,"tags":{"trigger":"middleware"},"startTime":1785936346661,"traceId":"21b0eb04c3fc88aa"}]
+[{"name":"compile-path","duration":1938,"timestamp":33644243427,"id":15,"parentId":1,"tags":{"trigger":"middleware"},"startTime":1785936409196,"traceId":"21b0eb04c3fc88aa"}]
+[{"name":"compile-path","duration":12493,"timestamp":33644396676,"id":16,"parentId":1,"tags":{"trigger":"middleware"},"startTime":1785936409349,"traceId":"21b0eb04c3fc88aa"}]
+[{"name":"turbopack-persistence","duration":192000,"timestamp":33690573263,"id":17,"parentId":3,"tags":{"reason":"regular snapshot interval","snapshot_duration_ms":1.084453,"persist_duration_ms":190.956984,"task_count":346},"startTime":1785936455717,"traceId":"21b0eb04c3fc88aa"}]

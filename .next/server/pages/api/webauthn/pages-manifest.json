@@ -1,0 +1,3 @@
+{
+  "/api/webauthn": "pages/api/webauthn.js"
+}

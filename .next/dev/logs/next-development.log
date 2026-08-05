@@ -4,3 +4,12 @@
 {"timestamp":"00:02:45.481","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection:\" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
 {"timestamp":"00:02:45.497","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection: \" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
 {"timestamp":"00:02:45.500","source":"Server","level":"LOG","message":"✓ Compiled in 1594ms"}
+{"timestamp":"00:37:56.416","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:37:56.434","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection:\" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:37:56.452","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection: \" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:38:58.861","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:38:58.875","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection:\" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:38:58.888","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection: \" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:38:59.034","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:38:59.046","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection:\" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
+{"timestamp":"00:38:59.061","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection: \" Error: ENOENT: no such file or directory, scandir '/home/zaldy/antigravity/ipmcabang/app'"}
