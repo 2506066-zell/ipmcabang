@@ -6,17 +6,14 @@ export default function Page() {
   return (
     <>
       <link rel="stylesheet" href="/app/css/style.css" />
-      
-      <div id="app-root">
-        {/* Profil Kader page — content loaded by profile JS */}
-        <div id="page-loading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-          <div style={{ textAlign: 'center', color: '#718096' }}>
-            <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '1rem' }}></i>
-            <p>Memuat halaman...</p>
-          </div>
-        </div>
-      </div>
-      <script src="/app/js/pages/profile.js" defer></script>
+
+      <main className="main-content profile-main" style={{ paddingTop: 70, paddingBottom: 100 }}>
+
+        <div id="profile-root" className="profile-root"></div>
+    
+</main>
+
+      <script src="/app/js/core/profile.js" defer></script>
     </>
   );
 }
