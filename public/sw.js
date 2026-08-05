@@ -82,11 +82,19 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      // Gracefully add assets one by one so a 404 doesn't fail the whole install
+      for (const asset of STATIC_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (error) {
+          console.warn('SW: Failed to cache static asset:', asset);
+        }
+      }
+    })
   );
   // NOTE: Do NOT call self.skipWaiting() here automatically.
   // It is triggered via postMessage('SKIP_WAITING') from the client
-  // so the page can control when the reload happens and avoid loops.
 });
 
 self.addEventListener('activate', (event) => {
