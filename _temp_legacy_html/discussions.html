@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ruang Diskusi - PC IPM Panawuan</title>
+    <meta name="description" content="Forum diskusi dan tanya jawab kader PC IPM Panawuan. Tempat berbagi gagasan, berdiskusi, dan berkolaborasi.">
+
+    <!-- PWA Setup -->
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+
+    <!-- Fonts Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" fetchpriority="low">
+    <link rel="stylesheet" href="app/css/style.css">
+    <link rel="stylesheet" href="app/css/profile.css">
+    <link rel="stylesheet" href="app/css/discussions.css?v=2">
+</head>
+<body class="safe-area-padding hidden-scroll">
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="scanner-container">
+                <picture><img src="/ipm%20(2).png" alt="Loading..." class="loading-logo"></picture>
+                <div class="scanner"></div>
+            </div>
+            <p id="loading-text">Memuat Diskusi...</p>
+        </div>
+    </div>
+
+    <!-- Header Mobile -->
+    <header class="mobile-header" id="mobile-header">
+        <div class="logo-container">
+            <img src="ipm%20(2).png" alt="Logo IPM" class="header-logo">
+            <span class="header-title">PC IPM Panawuan</span>
+        </div>
+        <div class="header-right-icons">
+            <button class="header-icon notif-bell" id="notif-bell" aria-label="Notifikasi">
+                <i class="fas fa-bell"></i>
+                <span class="notif-badge" id="notif-badge" hidden>0</span>
+            </button>
+            <a href="ranking.html" class="header-icon" aria-label="Peringkat">
+                <i class="fas fa-trophy"></i>
+            </a>
+            <a href="/profile" class="header-icon" aria-label="Profil">
+                <i class="fas fa-user-circle"></i>
+            </a>
+            <button class="hamburger-menu" id="hamburger-menu" aria-label="Buka Menu" aria-expanded="false" aria-controls="mobile-nav">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html" class="mobile-nav-link"><i class="fas fa-home"></i> Beranda</a></li>
+            <li><a href="struktur-organisasi.html" class="mobile-nav-link"><i class="fas fa-sitemap"></i> Struktur Organisasi</a></li>
+            <li><a href="/articles" class="mobile-nav-link"><i class="fas fa-newspaper"></i> Artikel</a></li>
+            <li><a href="materi.html" class="mobile-nav-link"><i class="fas fa-book"></i> Perpustakaan</a></li>
+            <li><a href="quiz-gamified.html" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Quiz</a></li>
+            <li><a href="discussions.html" class="mobile-nav-link active"><i class="fas fa-comments"></i> Ruang Diskusi</a></li>
+            <li><a href="help.html" class="mobile-nav-link"><i class="fas fa-circle-question"></i> Bantuan</a></li>
+        </ul>
+    </nav>
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+    <main class="main-content">
+        <!-- Forum Hero -->
+        <section class="forum-hero reveal">
+            <div class="container">
+                <span class="forum-hero-badge">
+                    <i class="fas fa-comments"></i> Forum Kader
+                </span>
+                <h1 class="forum-title">Ruang Diskusi</h1>
+                <p class="forum-subtitle">Tempat berekspresi, berbagi gagasan, dan berdiskusi sesama Kader PC IPM Panawuan.</p>
+                <div class="forum-hero-actions">
+                    <button id="btn-new-topic" class="btn-create-topic">
+                        <i class="fas fa-pen-to-square"></i> Buat Topik Baru
+                    </button>
+                </div>
+                <div class="forum-stats" id="forum-stats">
+                    <div class="forum-stat">
+                        <span class="forum-stat-value" id="stat-topics">—</span>
+                        <span class="forum-stat-label">Topik</span>
+                    </div>
+                    <div class="forum-stat">
+                        <span class="forum-stat-value" id="stat-replies">—</span>
+                        <span class="forum-stat-label">Balasan</span>
+                    </div>
+                    <div class="forum-stat">
+                        <span class="forum-stat-value" id="stat-views">—</span>
+                        <span class="forum-stat-label">Views</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- New Topic Modal -->
+        <div class="topic-modal-overlay" id="topic-modal" hidden>
+            <div class="topic-modal">
+                <div class="topic-modal-header">
+                    <h3><i class="fas fa-pen-to-square" style="color: var(--ds-primary); margin-right: 8px;"></i> Buat Diskusi Baru</h3>
+                    <button class="btn-close-modal" id="btn-close-topic"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="topic-modal-body">
+                    <input type="text" id="topic-title" class="topic-input" placeholder="Judul topik diskusi..." maxlength="150">
+                    <span class="topic-char-count" id="topic-title-count">0 / 150</span>
+                    <textarea id="topic-content" class="topic-textarea" placeholder="Tuliskan gagasan, pertanyaan, atau pendapatmu di sini..." rows="5"></textarea>
+                    <button id="btn-submit-topic" class="btn-submit">
+                        <i class="fas fa-paper-plane"></i> Posting Diskusi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container forum-container">
+            <!-- Search Bar -->
+            <div class="forum-search-bar" id="forum-search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" class="forum-search-input" id="forum-search-input" placeholder="Cari topik diskusi...">
+            </div>
+
+            <!-- Discussion List View -->
+            <div id="discussions-list-view">
+                <div id="discussions-feed" class="discussions-feed">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+            </div>
+
+            <!-- Detail View (Hidden initially) -->
+            <div id="discussion-detail-view" hidden>
+                <button id="btn-back-to-list" class="btn-back-thread"><i class="fas fa-arrow-left"></i> Kembali</button>
+                
+                <div id="thread-head" class="thread-head"></div>
+                
+                <div class="replies-section">
+                    <h4 class="replies-title">Balasan</h4>
+                    <div id="replies-list" class="replies-list"></div>
+                    
+                    <div class="reply-form" id="reply-form">
+                        <span class="reply-form-label"><i class="fas fa-reply"></i> Tulis Balasanmu</span>
+                        <textarea id="reply-content" class="reply-textarea" placeholder="Tulis balasanmu di sini..."></textarea>
+                        <button id="btn-submit-reply" class="btn-submit">
+                            <i class="fas fa-paper-plane"></i> Kirim Balasan
+                        </button>
+                    </div>
+                    <div class="reply-login-prompt" id="reply-login-prompt" hidden>
+                        <p><i class="fas fa-lock" style="margin-right: 6px;"></i> Silakan <a href="login.html">Login</a> untuk membalas diskusi ini.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="/app/js/core/toast.js" defer></script>
+    <script src="/app/js/core/main.js?v=16" defer></script>
+    <script src="/app/js/core/profile.js" defer></script>
+    <script src="/app/js/pages/discussions.js?v=2" defer></script>
+</body>
+</html>
