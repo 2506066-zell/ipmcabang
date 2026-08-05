@@ -86,14 +86,13 @@ export default function Page() {
 
             {/* Floating Social Share Bar (Detail only) */}
             <div className="social-share-bar" id="social-share-bar" style={{ display: 'none' }}>
-                <button className="share-btn whatsapp" onClick={() => { /* window.shareArticle('whatsapp') */ }}
-                    title="Bagikan ke WhatsApp">
+                <button className="share-btn whatsapp" title="Bagikan ke WhatsApp">
                     <i className="fab fa-whatsapp"></i>
                 </button>
-                <button className="share-btn twitter" onClick={() => { /* window.shareArticle('twitter') */ }} title="Bagikan ke Twitter">
+                <button className="share-btn twitter" title="Bagikan ke Twitter">
                     <i className="fab fa-x-twitter"></i>
                 </button>
-                <button className="share-btn copy" onClick={() => { /* window.shareArticle('copy') */ }} title="Salin Tautan">
+                <button className="share-btn copy" title="Salin Tautan">
                     <i className="fas fa-link"></i>
                 </button>
             </div>

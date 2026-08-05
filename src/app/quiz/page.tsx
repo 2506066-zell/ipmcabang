@@ -15,14 +15,7 @@ export default function Page() {
         <div className="quiz-page-inner">
           <section className="quiz-banner">
             <div className="quiz-instructions">
-              <button className="quiz-instructions-toggle" id="quiz-instructions-toggle" type="button" onClick={() => {
-                const body = document.getElementById('quiz-instructions-body');
-                const toggle = document.getElementById('quiz-instructions-toggle');
-                if (body && toggle) {
-                  body.classList.toggle('collapsed');
-                  toggle.classList.toggle('collapsed');
-                }
-              }}>
+              <button className="quiz-instructions-toggle" id="quiz-instructions-toggle" type="button">
                 <span className="quiz-instructions-title">Cara Kerja Kuis</span>
                 <i className="fas fa-chevron-down"></i>
               </button>
@@ -52,6 +45,19 @@ export default function Page() {
       <script src="/scripts/vendor/react-dom.production.min.js" defer></script>
       <script src="/scripts/vendor/babel.min.js" defer></script>
       <script type="text/babel" src="/app/js/features/quiz/quiz-react.js" defer></script>
+      <script dangerouslySetInnerHTML={{__html: `
+        document.addEventListener('DOMContentLoaded', () => {
+          const toggle = document.getElementById('quiz-instructions-toggle');
+          const body = document.getElementById('quiz-instructions-body');
+          if (!toggle || !body) return;
+          toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const collapsed = body.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed', collapsed);
+            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          });
+        });
+      `}} />
     </>
   );
 }
